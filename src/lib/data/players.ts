@@ -86,9 +86,7 @@ export async function getPlayer(
   return { data, error: null };
 }
 
-export async function getPlayerGoals(
-  playerId: string,
-): Promise<{
+export async function getPlayerGoals(playerId: string): Promise<{
   data: (Goal & { match_date: string; opponent_name: string })[];
   error: string | null;
 }> {

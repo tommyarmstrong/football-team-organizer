@@ -64,16 +64,28 @@ Open [http://localhost:3000](http://localhost:3000) — you should be redirected
 
 ## Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `npm run dev` | Local development server |
-| `npm run build` | Production build |
-| `npm run start` | Serve production build |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier write |
-| `npm run format:check` | Prettier check |
+| Command                | Description              |
+| ---------------------- | ------------------------ |
+| `npm run dev`          | Local development server |
+| `npm run build`        | Production build         |
+| `npm run start`        | Serve production build   |
+| `npm run lint`         | ESLint                   |
+| `npm run format`       | Prettier write           |
+| `npm run format:check` | Prettier check           |
+| `npm test`             | Vitest unit tests        |
+| `npm run test:watch`   | Vitest watch mode        |
 
-Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky.
+Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky. They do **not** run the full test suite.
+
+## CI / CD
+
+| Stage                                                                   | When                        | What runs                               |
+| ----------------------------------------------------------------------- | --------------------------- | --------------------------------------- |
+| Pre-commit                                                              | Local `git commit`          | ESLint + Prettier on staged files only  |
+| GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) | Every PR and push to `main` | `lint`, `format:check`, `test`, `build` |
+| Vercel                                                                  | After push / PR             | Next.js deploy (preview or production)  |
+
+**Gate:** `main` requires a pull request and a green **Lint, test, and build** check before merge. That keeps failed CI from landing on `main` and triggering a production deploy. Preview deploys still build on the PR in parallel with Actions.
 
 ## Development stages
 
@@ -86,12 +98,12 @@ Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky
 
 ## Deploy (Vercel)
 
-The GitHub repo is linked to the Vercel project **football-team-organizer**. Pushes deploy automatically:
+The GitHub repo is linked to the Vercel project **football-team-organizer**. Deploys:
 
-- **`main`** → production
-- **other branches / PRs** → preview
+- **`main`** (after merge) → production
+- **PR branches** → preview
 
-Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled).
+Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled). Production changes should go through a PR so GitHub Actions can block a bad merge.
 
 ### One-time setup (already done for this project)
 

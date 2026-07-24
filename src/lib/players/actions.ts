@@ -8,19 +8,7 @@ import {
   deactivatePlayer,
   updatePlayer,
 } from "@/lib/data/players";
-
-function str(formData: FormData, key: string): string {
-  return String(formData.get(key) ?? "").trim();
-}
-
-function parseShirtNumber(raw: string): number | null | { error: string } {
-  if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 1) {
-    return { error: "Shirt number must be a positive whole number." };
-  }
-  return n;
-}
+import { parseShirtNumber, str } from "@/lib/form-parse";
 
 export async function createPlayerAction(
   _prev: ActionState,

@@ -5,23 +5,8 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { MATCH_STATUSES, MATCH_VENUES } from "@/lib/constants";
 import { createMatch, updateMatch } from "@/lib/data/matches";
+import { parseOptionalInt, str } from "@/lib/form-parse";
 import type { MatchStatus, MatchVenue } from "@/lib/supabase/database.types";
-
-function str(formData: FormData, key: string): string {
-  return String(formData.get(key) ?? "").trim();
-}
-
-function parseOptionalInt(
-  raw: string,
-  label: string,
-): number | null | { error: string } {
-  if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 0) {
-    return { error: `${label} must be zero or a positive whole number.` };
-  }
-  return n;
-}
 
 export async function createMatchAction(
   _prev: ActionState,

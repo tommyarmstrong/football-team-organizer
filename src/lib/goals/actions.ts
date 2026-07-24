@@ -3,23 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/action-state";
 import { createGoal, deleteGoal, updateGoal } from "@/lib/data/goals";
-
-function str(formData: FormData, key: string): string {
-  return String(formData.get(key) ?? "").trim();
-}
-
-function parseOptionalMinute(raw: string): number | null | { error: string } {
-  if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 0 || n > 120) {
-    return { error: "Minute must be between 0 and 120." };
-  }
-  return n;
-}
-
-function boolFromCheckbox(formData: FormData, key: string): boolean {
-  return formData.get(key) === "on" || formData.get(key) === "true";
-}
+import { boolFromCheckbox, parseOptionalMinute, str } from "@/lib/form-parse";
 
 export async function createGoalAction(
   matchId: string,
