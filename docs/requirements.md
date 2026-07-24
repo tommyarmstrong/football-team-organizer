@@ -351,7 +351,7 @@ Proceed in order. Do not skip ahead to full UI/features without completing the p
 - [x] Supabase project env filled (`.env.local` with URL + publishable key)
 - [x] Auth middleware protecting app routes (email/password **session**; team membership in Stage 4)
 - [x] Login / logout shell + authenticated placeholders
-- [ ] Vercel project connected (preview + env vars) — see README Deploy section
+- [x] Vercel project connected (preview + env vars) — see README Deploy section
 - **Exit:** Authenticated empty shell runs locally; deploy when Vercel is linked
 
 ### Stage 4 — Data schema and models

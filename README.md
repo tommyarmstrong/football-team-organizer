@@ -86,8 +86,30 @@ Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky
 
 ## Deploy (Vercel)
 
-1. Import the GitHub repo in [Vercel](https://vercel.com/new)
-2. Add env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Deploy — preview and production both need these values
+The GitHub repo is linked to the Vercel project **football-team-organizer**. Pushes deploy automatically:
+
+- **`main`** → production
+- **other branches / PRs** → preview
+
+Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled).
+
+### One-time setup (already done for this project)
+
+1. Create/link the Vercel project and connect GitHub:
+   ```bash
+   npx vercel project add football-team-organizer
+   npx vercel link --yes --project football-team-organizer
+   npx vercel git connect https://github.com/tommyarmstrong/football-team-organizer --yes
+   ```
+2. Set env vars for **Production**, **Preview**, and **Development**:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   ```bash
+   npx vercel env add NEXT_PUBLIC_SUPABASE_URL production,preview,development
+   npx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production,preview,development
+   ```
+3. Push to `main` (or open a PR) to trigger a deployment.
+
+Dashboard: [vercel.com/tommyarmstrongs-projects/football-team-organizer](https://vercel.com/tommyarmstrongs-projects/football-team-organizer)
 
 In Supabase Auth URL config, add your Vercel domains to **Redirect URLs** if you later add email links (not required for password-only login).
