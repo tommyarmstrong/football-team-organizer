@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      coaches: {
+        Row: {
+          biography: string | null;
+          created_at: string;
+          dbs_checked: boolean;
+          email: string | null;
+          fa_level_1: boolean;
+          fa_level_2: boolean;
+          first_name: string;
+          id: string;
+          joined_date: string;
+          notes: string | null;
+          phone: string | null;
+          second_name: string;
+          team_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          biography?: string | null;
+          created_at?: string;
+          dbs_checked?: boolean;
+          email?: string | null;
+          fa_level_1?: boolean;
+          fa_level_2?: boolean;
+          first_name: string;
+          id?: string;
+          joined_date: string;
+          notes?: string | null;
+          phone?: string | null;
+          second_name: string;
+          team_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          biography?: string | null;
+          created_at?: string;
+          dbs_checked?: boolean;
+          email?: string | null;
+          fa_level_1?: boolean;
+          fa_level_2?: boolean;
+          first_name?: string;
+          id?: string;
+          joined_date?: string;
+          notes?: string | null;
+          phone?: string | null;
+          second_name?: string;
+          team_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "coaches_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       competitions: {
         Row: {
           created_at: string;
@@ -318,6 +377,7 @@ export type Enums<T extends keyof Database["public"]["Enums"]> =
 export type Team = Tables<"teams">;
 export type TeamMember = Tables<"team_members">;
 export type Competition = Tables<"competitions">;
+export type Coach = Tables<"coaches">;
 export type Player = Tables<"players">;
 export type Match = Tables<"matches">;
 export type Goal = Tables<"goals">;

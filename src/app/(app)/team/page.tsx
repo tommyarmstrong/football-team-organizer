@@ -37,7 +37,8 @@ export default async function TeamPage() {
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>
-            Club details for this season. Squad is managed under Players.
+            Club details for this season. Squad is under Players; coaching staff
+            under Coaches.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -8,6 +8,7 @@ import {
   labelGender,
   labelMatchStatus,
   labelVenue,
+  coachDisplayName,
   playerDisplayName,
   resultLetter,
 } from "@/lib/format";
@@ -63,6 +64,14 @@ describe("playerDisplayName", () => {
         { shirtNumber: null },
       ),
     ).toBe("Alex Smith");
+  });
+});
+
+describe("coachDisplayName", () => {
+  it("joins first and second name", () => {
+    expect(coachDisplayName({ first_name: "Alex", second_name: "Coach" })).toBe(
+      "Alex Coach",
+    );
   });
 });
 

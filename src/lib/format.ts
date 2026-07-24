@@ -43,6 +43,13 @@ export function playerDisplayName(
   return name;
 }
 
+export function coachDisplayName(coach: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${coach.first_name} ${coach.second_name}`.trim();
+}
+
 export function formatScore(
   goalsFor: number | null,
   goalsAgainst: number | null,
