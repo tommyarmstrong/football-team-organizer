@@ -1,1 +1,93 @@
-# football-team-organizer
+# Football Team Organizer
+
+Record match fixtures and results, players, and goals for a youth football team.
+
+**Stack:** Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Supabase (PostgreSQL + Auth) · Vercel
+
+Product scope and staged plan: [`docs/requirements.md`](docs/requirements.md)
+
+## Prerequisites
+
+- Node.js 20+
+- npm
+- A [Supabase](https://supabase.com) project
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+In Supabase **Project Settings → API**, set:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL only, e.g. `https://xxxxx.supabase.co` (no `/rest/v1/` suffix)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — **Publishable** key
+
+In Supabase **Authentication → Providers**, ensure **Email** is enabled (password).
+
+Create a coach user under **Authentication → Users** (Add user), or sign up once if you enable public sign-up. For local MVP, creating the user in the dashboard and disabling “Confirm email” under Auth settings avoids confirmation friction.
+
+### Database (Stage 4)
+
+Apply the versioned migration in `supabase/migrations/`, then seed one team + membership.
+
+**Option A — Supabase CLI (linked project)**
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
+```
+
+**Option B — SQL Editor**
+
+1. Open Supabase Dashboard → **SQL** → New query
+2. Paste and run `supabase/migrations/20260724170000_init_schema.sql`
+3. Copy your Auth user UUID from **Authentication → Users**
+4. Edit `supabase/seed.sql`: replace `00000000-0000-0000-0000-000000000000` with that UUID
+5. Run the edited seed SQL in the SQL Editor
+
+Without a `team_members` row, a signed-in user is redirected to `/no-access` and cannot use app routes.
+
+Regenerate TypeScript types after schema changes (optional; checked-in types live at `src/lib/supabase/database.types.ts`):
+
+```bash
+npx supabase gen types typescript --linked > src/lib/supabase/database.types.ts
+```
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — you should be redirected to `/login`.
+
+## Scripts
+
+| Command | Description |
+| ------- | ----------- |
+| `npm run dev` | Local development server |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier write |
+| `npm run format:check` | Prettier check |
+
+Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky.
+
+## Development stages
+
+1. **Requirements** — living brief in `docs/requirements.md`
+2. **Scaffolding** — complete
+3. **Wiring** — Supabase auth + protected shell (complete; connect Vercel with env vars)
+4. **Schema** — migrations, RLS, membership gate, types, seed (complete; apply SQL to your Supabase project)
+5. **Features** — team → players → matches → goals → dashboard → stats
+6. **Polish** — empty/loading/error states, a11y, branding
+
+## Deploy (Vercel)
+
+1. Import the GitHub repo in [Vercel](https://vercel.com/new)
+2. Add env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Deploy — preview and production both need these values
+
+In Supabase Auth URL config, add your Vercel domains to **Redirect URLs** if you later add email links (not required for password-only login).

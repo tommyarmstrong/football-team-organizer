@@ -1,0 +1,420 @@
+# FOOTBALL TEAM ORGANIZER — Requirements
+
+A modern web application for organizing a youth football team.
+
+The application tracks **players**, **match fixtures and results**, and **goals**, and provides views on results and player performance.
+
+This document is a living product brief. It is **not** intended as a single prompt to build the entire application. Development proceeds in stages (see [Development Plan](#development-plan)), with AI assistance used to research unknowns and propose details for human review before implementation.
+
+---
+
+## Product summary
+
+| Item            | Detail                                                              |
+| --------------- | ------------------------------------------------------------------- |
+| Working name    | Football Team Organizer                                             |
+| Primary users   | Coach / admin (authenticated, email/password)                       |
+| Secondary users | None in MVP (parents / players later)                               |
+| Core job        | Record fixtures, results, squad, and goals; review form and scoring |
+| Hosting         | Vercel (Next.js)                                                    |
+| Data & auth     | Supabase (PostgreSQL + Auth)                                        |
+| Teams in MVP    | One team in use; schema ready for multiple teams later              |
+| Season in MVP   | One season only (label on the team; no `seasons` table yet)         |
+
+### Decided scope (MVP)
+
+| Topic              | Decision                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| Multi-team         | Schema keyed by `team_id` so multi-team can come later; product UI and seed assume **one team** now |
+| Appearances        | **Goals only** in MVP; player appearances / minutes deferred                                        |
+| Opposition scorers | **Not recorded** — store opponent aggregate score (`goals_against`) only                            |
+| Auth               | **Email / password** only (no magic link / OAuth in MVP)                                            |
+| Access             | **Coach / admin only** — no parent or public read in MVP                                            |
+| Seasons            | **One season** in MVP (`season_label` on team); multi-season later                                  |
+
+### Out of scope (v1)
+
+The following are **not** current requirements (may be revisited later):
+
+- Switching between / managing multiple teams in the UI (schema may still use `team_id`)
+- Multi-season history and a dedicated `seasons` table
+- Player appearances / minutes played
+- Opposition goal scorers or opposition squad lists
+- Parent / player / public read-only access
+- Magic link, Google, or other OAuth providers
+- League tables across many clubs
+- Live match scoring / real-time sync during play
+- Payments, subscriptions, or commerce
+- Native mobile apps (responsive web only)
+- Push notifications / SMS
+- Video, tactics boards, or training session plans
+- Public marketing site beyond a simple app shell
+
+---
+
+## Architecture
+
+### Technology stack
+
+| Technology                                | Role                           | Category     |
+| ----------------------------------------- | ------------------------------ | ------------ |
+| Next.js (App Router)                      | Application framework          | Architecture |
+| React                                     | UI components                  | Front end    |
+| TypeScript                                | Type safety                    | Language     |
+| Tailwind CSS                              | Styling                        | CSS          |
+| shadcn/ui                                 | Ready-made UI primitives       | UI library   |
+| Lucide React                              | Icons                          | Assets/UI    |
+| Recharts                                  | Data visualisation             | Charts       |
+| ESLint                                    | Lint                           | Quality      |
+| Prettier                                  | Format                         | Quality      |
+| Husky                                     | Pre-commit hooks               | Git workflow |
+| lint-staged                               | Lint only staged files         | Performance  |
+| Vercel                                    | Host & deploy                  | Deployment   |
+| Supabase                                  | PostgreSQL datastore           | Database     |
+| Supabase Auth                             | User authentication            | Auth         |
+| `@supabase/ssr` + `@supabase/supabase-js` | Server/client Supabase clients | Integration  |
+
+### Design principles
+
+- **UI states:** Custom skeleton loading and explicit error handling
+- **Motion:** CSS transitions and light micro-interactions (not heavy animation libraries in v1)
+- **Config:** Centralized constants and utilities
+- **Components:** Small, reusable modules
+- **Visual identity:** Start with a clean, generic modern UI using the stack above; refine branding later
+- **Data access:** Prefer server components / server actions for mutations; keep client components for interactive UI only
+
+### Environments
+
+| Env        | Purpose                                         |
+| ---------- | ----------------------------------------------- |
+| Local      | `next dev` + local or remote Supabase project   |
+| Preview    | Vercel preview deployments per PR               |
+| Production | Vercel production + Supabase production project |
+
+Secrets (never commit): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and service role key only where server-only and justified.
+
+---
+
+## Domain model (conceptual)
+
+Entities below drive schema design in Stage 4. Field lists reflect agreed MVP decisions; refine names/types in migrations as needed.
+
+**Multi-team readiness:** every team-owned row carries `team_id`. MVP ships with a single team row and coach membership to that team only. Do not build team-switcher UI yet.
+
+### Team
+
+| Field                   | Notes                                                   |
+| ----------------------- | ------------------------------------------------------- |
+| id                      | UUID                                                    |
+| club                    | Club / organisation name                                |
+| name                    | Team name (display)                                     |
+| age_group               | e.g. `U9`, `U11`, `U13` (free text or constrained list) |
+| gender                  | `boys` \| `girls` \| `mixed`                            |
+| home_ground             | Home venue name / address text                          |
+| head_coach_name         | Display name of head coach                              |
+| season_label            | Current season only in MVP, e.g. `2025/26`              |
+| created_at / updated_at | Timestamps                                              |
+
+**Related (not columns on `teams`):**
+
+| Relation         | How                                                                           |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Squad            | `players` where `players.team_id = teams.id` (active players = current squad) |
+| Competitions     | `competitions` where `competitions.team_id = teams.id`                        |
+| Coaches / admins | `team_members` linking auth users to the team with role `coach` or `admin`    |
+
+### Competition
+
+Competitions the team enters this season (league, cup, friendly series, etc.).
+
+| Field      | Notes                                                                |
+| ---------- | -------------------------------------------------------------------- |
+| id         | UUID                                                                 |
+| team_id    | FK → teams                                                           |
+| name       | e.g. `County League`, `Cup`, `Friendly`                              |
+| kind       | Optional: `league` \| `cup` \| `friendly` \| `tournament` \| `other` |
+| created_at | Timestamp                                                            |
+
+### Player (squad member)
+
+| Field                   | Notes                                                      |
+| ----------------------- | ---------------------------------------------------------- |
+| id                      | UUID                                                       |
+| team_id                 | FK → teams (squad membership)                              |
+| first_name, last_name   | Required                                                   |
+| shirt_number            | Optional, unique per team if set                           |
+| position                | Optional enum/label (GK, DEF, MID, FWD, or free text)      |
+| active                  | Soft-archive inactive players (remain on historical goals) |
+| created_at / updated_at | Timestamps                                                 |
+
+### Match (fixture / result)
+
+A match is scheduled (fixture) and may later have a result.
+
+| Field                     | Notes                                                             |
+| ------------------------- | ----------------------------------------------------------------- |
+| id                        | UUID                                                              |
+| team_id                   | FK → teams                                                        |
+| opponent_name             | Free text                                                         |
+| date                      | Match date                                                        |
+| kickoff_time              | Optional time of day                                              |
+| venue                     | `home` \| `away` \| `neutral`                                     |
+| competition_id            | Optional FK → competitions                                        |
+| status                    | `scheduled` \| `played` \| `postponed` \| `cancelled`             |
+| goals_for / goals_against | Null until played; `goals_against` is opponent **aggregate** only |
+| notes                     | Optional                                                          |
+| created_at / updated_at   | Timestamps                                                        |
+
+### Goal
+
+Goals scored by **our** players in a played match. Do **not** record opposition scorers.
+
+| Field            | Notes                           |
+| ---------------- | ------------------------------- |
+| id               | UUID                            |
+| match_id         | FK → matches                    |
+| player_id        | FK → players (our squad scorer) |
+| assist_player_id | Optional FK → players           |
+| period           | Optional (e.g. half / label)    |
+| minute           | Optional                        |
+| is_penalty       | Boolean (default false)         |
+| is_freekick      | Boolean (default false)         |
+| from_setpiece    | Boolean (default false)         |
+| created_at       | Timestamp                       |
+
+Own goals credited to the opponent score only via `goals_against` — no opposition scorer rows. If we need “own goal” as a our-player event later, revisit; not required for MVP scoring tables.
+
+### Appearance (post-MVP)
+
+Track whether a player played in a match (apps / minutes). **Deferred** — MVP uses goals only for performance views.
+
+### Auth user & team membership
+
+Supabase Auth (email/password). Map users to teams via `team_members`:
+
+| Field      | Notes                     |
+| ---------- | ------------------------- |
+| id         | UUID                      |
+| team_id    | FK → teams                |
+| user_id    | FK → auth.users           |
+| role       | `coach` \| `admin` in MVP |
+| created_at | Timestamp                 |
+
+Optional `profiles` table for display name / email cache if useful.
+
+---
+
+## Information architecture
+
+### Primary navigation (authenticated coach / admin)
+
+| Route           | Purpose                                                                      |
+| --------------- | ---------------------------------------------------------------------------- |
+| `/`             | Redirect to dashboard                                                        |
+| `/login`        | Sign in (email/password)                                                     |
+| `/dashboard`    | Season snapshot: next fixture, recent results, top scorers                   |
+| `/team`         | Team profile: name, age group, gender, home ground, head coach, competitions |
+| `/players`      | Squad list; add/edit players                                                 |
+| `/players/[id]` | Player detail: goals summary (appearances later)                             |
+| `/matches`      | Fixture & results list (filters: upcoming / played)                          |
+| `/matches/new`  | Create fixture                                                               |
+| `/matches/[id]` | Match detail: edit result (aggregate score), record our goals                |
+| `/stats`        | Charts: results form, goals by player, etc.                                  |
+
+### Unauthenticated
+
+- `/login` only
+
+### Acceptance criteria (IA)
+
+- Coach/admin can complete the happy path: set up team → add squad → add fixture → enter result + our goals → see stats update
+- Empty states exist for no players / no matches / no goals / no competitions
+- Mobile: primary nav usable via bottom or compact header pattern (decide in UI stage)
+
+---
+
+## Functional requirements
+
+### Auth
+
+1. Coach/admin signs in with **email/password** only (Supabase Auth)
+2. Protected routes require a session **and** membership on the (single) team; users without membership see `/no-access`
+3. Sign out from the app chrome
+4. No parent, player, or anonymous access in MVP
+
+### Team
+
+1. View and edit team profile (name, age group, gender, home ground, head coach, season label)
+2. Manage competitions list for the team
+3. Squad is managed via Players (linked by `team_id`)
+
+### Players
+
+1. List active squad players (name, number, position)
+2. Create / edit player
+3. Deactivate (soft-delete) a player without removing historical goals
+4. View player **goal** summary (no appearances in MVP)
+
+### Matches
+
+1. Create a fixture (opponent, kickoff, venue, optional competition)
+2. List upcoming fixtures and past results
+3. Mark match played and set score (`goals_for` / `goals_against` aggregate only)
+4. Postpone / cancel a fixture
+5. Edit match metadata before/after kickoff (with sensible constraints)
+
+### Goals
+
+1. Add our-player goal(s) to a played match (player, optional minute, penalty flag)
+2. Edit / remove a goal
+3. Goals contribute to player totals and match display
+4. Do not capture opposition scorers
+
+### Dashboard & stats
+
+1. Show next fixture and last result
+2. Top scorers for the (single) season
+3. Simple charts (Recharts): goals by player; results over time / form strip
+
+### Non-functional
+
+1. Responsive layout (see Device Compatibility)
+2. Loading skeletons and error UI on data views
+3. Type-safe DB access (generated types from Supabase preferred)
+4. Migrations versioned in repo (`supabase/migrations`)
+
+---
+
+## Data flow
+
+```text
+Browser (React / Next.js)
+    │
+    ├─ Server Components / Server Actions  ──►  Supabase JS (SSR client)
+    │                                              │
+    └─ Client Components (forms, charts)  ──►  Supabase JS (browser client)
+                                                   │
+                                                   ▼
+                                         Supabase Auth + PostgreSQL
+                                         (RLS policies enforce access)
+```
+
+- **Reads:** Prefer server-side fetch in RSC where possible
+- **Writes:** Server Actions (or route handlers) with auth check
+- **Security:** Row Level Security (RLS) on all tables; anon key only with policies that match product rules
+
+---
+
+## Device compatibility
+
+### Mobile
+
+- Touch-friendly controls
+- No horizontal overflow
+- Responsive to orientation changes
+
+### Desktop
+
+- Use horizontal space for tables and charts
+- Hover affordances where helpful
+- Clean data visualisation
+
+### Target browsers
+
+- iPhone Safari
+- Android Chrome
+- Desktop Chrome
+
+---
+
+## Development plan
+
+Proceed in order. Do not skip ahead to full UI/features without completing the prior stage’s exit criteria.
+
+### Stage 1 — Requirements (this document)
+
+- [x] Working requirements brief
+- [x] MVP scope decisions recorded (multi-team-ready, goals-only, coach/admin, one season, etc.)
+- **Exit:** Agreed MVP scope; open questions answered or deferred
+
+### Stage 2 — Project scaffolding
+
+- [x] Next.js App Router + TypeScript + Tailwind
+- [x] ESLint, Prettier, Husky, lint-staged
+- [x] shadcn/ui initialized; Lucide available
+- [x] Env example file; README with local setup
+- [x] Supabase client/middleware stubs (env optional until Stage 3)
+- **Exit:** `npm run dev` runs; lint/format hooks work on commit
+
+### Stage 3 — Basic wiring
+
+- [x] Supabase project env filled (`.env.local` with URL + publishable key)
+- [x] Auth middleware protecting app routes (email/password **session**; team membership in Stage 4)
+- [x] Login / logout shell + authenticated placeholders
+- [ ] Vercel project connected (preview + env vars) — see README Deploy section
+- **Exit:** Authenticated empty shell runs locally; deploy when Vercel is linked
+
+### Stage 4 — Data schema and models
+
+- [x] SQL migrations for teams, competitions, players, matches, goals, team_members (+ optional profiles)
+- [x] RLS policies for coach/admin on their team only
+- [x] Enforce team membership in middleware / data access (completes Stage 3 auth model)
+- [x] Generated TypeScript types
+- [x] Thin data-access helpers / repositories
+- [x] Seed one team + one coach/admin for local/dev
+- **Exit:** Schema applied; types compile; single-team seed works
+
+### Stage 5 — Core functionality
+
+Implement in vertical slices:
+
+1. Team profile + competitions
+2. Players (squad) CRUD
+3. Matches (fixtures + aggregate results)
+4. Our goals on match detail
+5. Dashboard summary
+6. Stats + Recharts
+
+- [x] Team profile view/edit + competitions CRUD (`/team`)
+- [x] Players list/create/edit/deactivate + goal summary (`/players`, `/players/[id]`)
+- [x] Matches list/filters, create fixture, detail + result (`/matches`, `/matches/new`, `/matches/[id]`)
+- [x] Our-player goals on played matches (add/edit/remove)
+- [x] Dashboard: next fixture, last result, top scorers
+- [x] Stats charts (Recharts): goals by player, results over time, form strip
+- [x] Empty states + loading skeletons on data views
+- [x] `npm run lint` and `npm run build` pass
+- **Exit:** Coach/admin happy path works end-to-end on preview
+
+### Stage 6 — Polish
+
+- [x] Empty/loading/error states consistency (`EmptyState`, `ErrorBanner`, route skeletons; destructive actions surface errors)
+- [x] Accessibility pass (landmarks, nav current page, form labels/required cues, chart text fallbacks, W/D/L not color-only, focus/touch targets)
+- [x] Branding / visual identity pass (light shell polish: header blur, subtle page wash — no redesign)
+- [x] Performance check on lists and charts (`cache()` for team lookup; FormStrip split; Recharts lazy-loaded on `/stats`)
+- [x] `npm run lint` and `npm run build` pass
+- **Exit:** Authenticated MVP feels consistent and production-ready without new domain features
+
+---
+
+## Open questions (remaining)
+
+None blocking MVP. Defer to later phases:
+
+- Team switcher / multi-team UI
+- `seasons` table and historical seasons
+- Appearances / minutes
+- Parent read-only access
+- Additional auth providers
+
+---
+
+## Revision history
+
+| Date       | Change                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| 2026-07-23 | Initial working brief: stack, domain, IA, FR, staged plan                                             |
+| 2026-07-23 | Locked MVP decisions; expanded Team (age group, gender, home ground, head coach, squad, competitions) |
+| 2026-07-24 | Stage 3 wiring: session auth middleware, login/logout, authenticated app shell                        |
+| 2026-07-24 | Stage 4: SQL schema + RLS, membership middleware, DB types, seed SQL                                  |
+| 2026-07-24 | Stage 5: team/competitions, players, matches, goals, dashboard, stats                                 |
+| 2026-07-24 | Stage 6: empty/error consistency, a11y, light shell polish, chart/list performance                    |
