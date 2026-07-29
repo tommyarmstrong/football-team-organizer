@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listCoaches } from "@/lib/data/coaches";
-import { getCurrentTeam } from "@/lib/data/team";
+import { getPrimaryClub } from "@/lib/data/clubs";
+import { getViewerContext } from "@/lib/authz/context";
 import { coachDisplayName, formatShortDate } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -27,35 +28,39 @@ function qualificationSummary(coach: {
 }
 
 export default async function CoachesPage() {
-  const team = await getCurrentTeam();
-  const { data: coaches, error } = await listCoaches(team?.id);
+  const [ctx, club, { data: coaches, error }] = await Promise.all([
+    getViewerContext(),
+    getPrimaryClub(),
+    listCoaches(),
+  ]);
+
+  const canAdd = Boolean(
+    ctx && (ctx.isManagement || ctx.coachTeamIds.length > 0),
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Coaches"
-        description={
-          team
-            ? `Coaching staff for ${team.name} · ${team.season_label}`
-            : "Manage your coaching staff"
-        }
+        description={club ? `Coaching staff at ${club.name}` : "Coaching staff"}
       />
 
-      {!team ? <ErrorBanner message="No team found for your account." /> : null}
       {error ? <ErrorBanner message={error} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add coach</CardTitle>
-          <CardDescription>
-            Record contact details and FA / DBS qualifications for your coaching
-            staff.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CoachForm mode="create" />
-        </CardContent>
-      </Card>
+      {canAdd ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add coach</CardTitle>
+            <CardDescription>
+              Record contact details and FA / DBS qualifications. Coaches can be
+              assigned to one or more teams.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CoachForm mode="create" />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <section className="space-y-3" aria-labelledby="coaches-list-heading">
         <h2 id="coaches-list-heading" className="text-lg font-medium">
@@ -64,7 +69,11 @@ export default async function CoachesPage() {
         {!error && coaches.length === 0 ? (
           <EmptyState
             title="No coaches yet"
-            description="Add your first coach to keep contact and qualification details in one place."
+            description={
+              canAdd
+                ? "Add your first coach to keep contact and qualification details in one place."
+                : "Coaching staff will appear here when club management adds them."
+            }
           />
         ) : null}
         {!error && coaches.length > 0 ? (
@@ -82,7 +91,22 @@ export default async function CoachesPage() {
                       {qualificationSummary(coach)}
                     </p>
                   </div>
-                  <span className="text-muted-foreground text-sm">View</span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {coach.teams.length === 0 ? (
+                      <span className="text-muted-foreground text-xs">
+                        No teams
+                      </span>
+                    ) : (
+                      coach.teams.map((team) => (
+                        <span
+                          key={team.team_coach_id}
+                          className="border-border text-muted-foreground rounded-md border px-2 py-0.5 text-xs"
+                        >
+                          {team.team_name}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </Link>
               </li>
             ))}

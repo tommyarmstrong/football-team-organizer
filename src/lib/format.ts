@@ -50,6 +50,13 @@ export function coachDisplayName(coach: {
   return `${coach.first_name} ${coach.second_name}`.trim();
 }
 
+export function guardianDisplayName(guardian: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${guardian.first_name} ${guardian.second_name}`.trim();
+}
+
 export function formatScore(
   goalsFor: number | null,
   goalsAgainst: number | null,

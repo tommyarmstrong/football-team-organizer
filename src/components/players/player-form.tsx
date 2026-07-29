@@ -58,17 +58,6 @@ export function PlayerForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="shirt_number">Shirt number</Label>
-          <Input
-            id="shirt_number"
-            name="shirt_number"
-            type="number"
-            min={1}
-            defaultValue={player?.shirt_number ?? ""}
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="position">Position</Label>
           <NativeSelect
             id="position"
@@ -84,20 +73,6 @@ export function PlayerForm({
             ))}
           </NativeSelect>
         </div>
-        {mode === "edit" ? (
-          <div className="space-y-2">
-            <Label htmlFor="active">Status</Label>
-            <NativeSelect
-              id="active"
-              name="active"
-              defaultValue={player?.active ? "true" : "false"}
-              disabled={pending}
-            >
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </NativeSelect>
-          </div>
-        ) : null}
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}

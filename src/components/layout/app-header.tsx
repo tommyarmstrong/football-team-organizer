@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { APP_NAME } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/server";
+import { getViewerContext, viewerRoleLabel } from "@/lib/authz/context";
+import { getActiveTeam, listVisibleTeams } from "@/lib/data/team";
 import { AppNav } from "@/components/layout/app-nav";
+import { TeamSwitcher } from "@/components/layout/team-switcher";
 import { Button } from "@/components/ui/button";
 
 export async function AppHeader() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const ctx = await getViewerContext();
+  const [{ data: teams }, activeTeam] = await Promise.all([
+    listVisibleTeams(),
+    getActiveTeam(),
+  ]);
+
+  const showStaff = Boolean(
+    ctx?.isManagement || (ctx && ctx.coachTeamIds.length > 0),
+  );
+  const showManagement = Boolean(ctx?.isManagement);
 
   return (
     <header className="border-border bg-background/80 border-b backdrop-blur-sm">
@@ -21,13 +29,19 @@ export async function AppHeader() {
           >
             {APP_NAME}
           </Link>
-          <AppNav />
+          <AppNav showStaff={showStaff} showManagement={showManagement} />
         </div>
 
-        <div className="flex items-center gap-3">
-          {user?.email ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <TeamSwitcher teams={teams} activeTeamId={activeTeam?.id ?? null} />
+          {ctx ? (
+            <span className="text-muted-foreground hidden text-xs sm:inline">
+              {viewerRoleLabel(ctx)}
+            </span>
+          ) : null}
+          {ctx?.email ? (
             <span className="text-muted-foreground truncate text-xs sm:text-sm">
-              {user.email}
+              {ctx.email}
             </span>
           ) : null}
           <form action={signOut}>

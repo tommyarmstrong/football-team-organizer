@@ -36,6 +36,7 @@ export async function createMatchAction(
     status: "scheduled",
     goals_for: null,
     goals_against: null,
+    player_of_the_match_id: null,
   });
 
   if (error) return { error };
@@ -57,6 +58,8 @@ export async function updateMatchAction(
   const venue = str(formData, "venue") as MatchVenue;
   const status = str(formData, "status") as MatchStatus;
   const competition_id = str(formData, "competition_id") || null;
+  const player_of_the_match_id =
+    str(formData, "player_of_the_match_id") || null;
   const notes = str(formData, "notes") || null;
 
   const goalsForRaw = parseOptionalInt(str(formData, "goals_for"), "Goals for");
@@ -111,6 +114,7 @@ export async function updateMatchAction(
     venue,
     status,
     competition_id,
+    player_of_the_match_id: status === "played" ? player_of_the_match_id : null,
     notes,
     goals_for,
     goals_against,

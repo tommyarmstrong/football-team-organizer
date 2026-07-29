@@ -4,12 +4,13 @@ import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { MATCH_STATUSES, MATCH_VENUES } from "@/lib/constants";
 import { createMatchAction, updateMatchAction } from "@/lib/matches/actions";
-import { labelMatchStatus, labelVenue } from "@/lib/format";
+import { labelMatchStatus, labelVenue, playerDisplayName } from "@/lib/format";
 import type {
   Competition,
   Match,
   MatchStatus,
 } from "@/lib/supabase/database.types";
+import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,10 +23,12 @@ export function MatchForm({
   mode,
   match,
   competitions,
+  players = [],
 }: {
   mode: "create" | "edit";
   match?: Match;
   competitions: Competition[];
+  players?: RosterPlayer[];
 }) {
   const action =
     mode === "create"
@@ -158,6 +161,26 @@ export function MatchForm({
                     defaultValue={match?.goals_against ?? 0}
                     disabled={pending}
                   />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="player_of_the_match_id">
+                    Player of the match
+                  </Label>
+                  <NativeSelect
+                    id="player_of_the_match_id"
+                    name="player_of_the_match_id"
+                    defaultValue={match?.player_of_the_match_id ?? ""}
+                    disabled={pending}
+                  >
+                    <option value="">None</option>
+                    {players.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {playerDisplayName(player, {
+                          shirtNumber: player.shirt_number,
+                        })}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </div>
               </>
             ) : (

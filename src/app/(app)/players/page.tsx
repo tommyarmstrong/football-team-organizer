@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { listActivePlayers } from "@/lib/data/players";
-import { getCurrentTeam } from "@/lib/data/team";
+import { listPlayers } from "@/lib/data/players";
+import { getPrimaryClub } from "@/lib/data/clubs";
+import { getViewerContext } from "@/lib/authz/context";
 import { playerDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -15,44 +16,54 @@ import {
 } from "@/components/ui/card";
 
 export default async function PlayersPage() {
-  const team = await getCurrentTeam();
-  const { data: players, error } = await listActivePlayers(team?.id);
+  const [ctx, club, { data: players, error }] = await Promise.all([
+    getViewerContext(),
+    getPrimaryClub(),
+    listPlayers(),
+  ]);
+
+  const canAdd = Boolean(
+    ctx && (ctx.isManagement || ctx.coachTeamIds.length > 0),
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Players"
         description={
-          team
-            ? `Active squad for ${team.name} · ${team.season_label}`
-            : "Manage your squad"
+          club ? `Players across ${club.name}` : "Players you can see"
         }
       />
 
-      {!team ? <ErrorBanner message="No team found for your account." /> : null}
       {error ? <ErrorBanner message={error} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add player</CardTitle>
-          <CardDescription>
-            New players join the active squad. Deactivate instead of deleting so
-            historical goals stay intact.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PlayerForm mode="create" />
-        </CardContent>
-      </Card>
+      {canAdd ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add player</CardTitle>
+            <CardDescription>
+              Players belong to the club and can be assigned to one or more
+              teams from a player&apos;s page or a team&apos;s squad.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlayerForm mode="create" />
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <section className="space-y-3" aria-labelledby="active-squad-heading">
-        <h2 id="active-squad-heading" className="text-lg font-medium">
-          Active squad
+      <section className="space-y-3" aria-labelledby="players-heading">
+        <h2 id="players-heading" className="text-lg font-medium">
+          All players
         </h2>
         {!error && players.length === 0 ? (
           <EmptyState
             title="No players yet"
-            description="Add your first squad member to start recording goals."
+            description={
+              canAdd
+                ? "Add your first player to the club."
+                : "Players in your teams will appear here."
+            }
           />
         ) : null}
         {!error && players.length > 0 ? (
@@ -64,16 +75,31 @@ export default async function PlayersPage() {
                   className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <div>
-                    <p className="font-medium">
-                      {playerDisplayName(player, {
-                        shirtNumber: player.shirt_number,
-                      })}
-                    </p>
+                    <p className="font-medium">{playerDisplayName(player)}</p>
                     <p className="text-muted-foreground text-sm">
                       {player.position ?? "No position"}
                     </p>
                   </div>
-                  <span className="text-muted-foreground text-sm">View</span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {player.teams.length === 0 ? (
+                      <span className="text-muted-foreground text-xs">
+                        No teams
+                      </span>
+                    ) : (
+                      player.teams.map((team) => (
+                        <span
+                          key={team.team_player_id}
+                          className="border-border text-muted-foreground rounded-md border px-2 py-0.5 text-xs"
+                        >
+                          {team.team_name}
+                          {team.shirt_number != null
+                            ? ` #${team.shirt_number}`
+                            : ""}
+                          {team.active ? "" : " (inactive)"}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </Link>
               </li>
             ))}

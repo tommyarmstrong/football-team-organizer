@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentTeam } from "@/lib/data/team";
+import { canEditActiveTeam, getCurrentTeam } from "@/lib/data/team";
 import { getLastResult, getNextFixture } from "@/lib/data/matches";
 import { getTopScorers } from "@/lib/data/stats";
 import {
@@ -34,10 +34,11 @@ export default async function DashboardPage() {
     );
   }
 
-  const [next, last, scorers] = await Promise.all([
+  const [next, last, scorers, canEdit] = await Promise.all([
     getNextFixture(),
     getLastResult(),
     getTopScorers(5),
+    canEditActiveTeam(),
   ]);
 
   const errors = [next.error, last.error, scorers.error].filter(Boolean);
@@ -48,7 +49,9 @@ export default async function DashboardPage() {
         title="Dashboard"
         description={`${team.name} · ${team.season_label}`}
         actions={
-          <Button render={<Link href="/matches/new" />}>New fixture</Button>
+          canEdit ? (
+            <Button render={<Link href="/matches/new" />}>New fixture</Button>
+          ) : undefined
         }
       />
 
@@ -86,9 +89,11 @@ export default async function DashboardPage() {
                 title="No upcoming fixture"
                 description="Schedule the next match."
                 action={
-                  <Button size="sm" render={<Link href="/matches/new" />}>
-                    New fixture
-                  </Button>
+                  canEdit ? (
+                    <Button size="sm" render={<Link href="/matches/new" />}>
+                      New fixture
+                    </Button>
+                  ) : undefined
                 }
               />
             )}

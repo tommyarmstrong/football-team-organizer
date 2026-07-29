@@ -3,6 +3,8 @@ import type {
   MatchStatus,
   MatchVenue,
   TeamGender,
+  TeamRole,
+  GuardianRelationship,
 } from "@/lib/supabase/database.types";
 
 export const APP_NAME = "Football Team Organizer";
@@ -30,5 +32,32 @@ export const MATCH_STATUSES: MatchStatus[] = [
 ];
 
 export const PLAYER_POSITIONS = ["GK", "DEF", "MID", "FWD"] as const;
+
+export const TEAM_ROLES: TeamRole[] = ["coach", "player"];
+
+export const TEAM_ROLE_LABELS: Record<TeamRole, string> = {
+  coach: "Coach",
+  guardian: "Guardian",
+  player: "Player",
+};
+
+export const GUARDIAN_RELATIONSHIPS: GuardianRelationship[] = [
+  "dad",
+  "mum",
+  "guardian",
+  "football_contact",
+  "other",
+];
+
+export const GUARDIAN_RELATIONSHIP_LABELS: Record<
+  GuardianRelationship,
+  string
+> = {
+  dad: "Dad",
+  mum: "Mum",
+  guardian: "Guardian",
+  football_contact: "Football contact",
+  other: "Other",
+};
 
 export type MatchListFilter = "upcoming" | "played" | "other" | "all";

@@ -1,13 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentTeam } from "@/lib/data/team";
+import { getActiveTeam } from "@/lib/data/team";
 import { resultLetter } from "@/lib/format";
-import type { Match, Player } from "@/lib/supabase/database.types";
+import type { Match } from "@/lib/supabase/database.types";
 
 export type TopScorer = {
-  player: Pick<
-    Player,
-    "id" | "first_name" | "last_name" | "shirt_number" | "position"
-  >;
+  player: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    shirt_number: number | null;
+  };
   goals: number;
 };
 
@@ -29,29 +31,34 @@ export type ResultOverTimePoint = {
 export async function getTopScorers(
   limit = 5,
 ): Promise<{ data: TopScorer[]; error: string | null }> {
-  const team = await getCurrentTeam();
-  if (!team) {
-    return { data: [], error: "No team found for your account." };
-  }
+  const team = await getActiveTeam();
+  if (!team) return { data: [], error: "No team selected." };
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("goals")
-    .select(
-      "player_id, player:players!goals_player_id_fkey(id, first_name, last_name, shirt_number, position, team_id), match:matches!inner(team_id, status)",
-    )
-    .eq("match.team_id", team.id)
-    .eq("match.status", "played");
+  const [{ data, error }, { data: roster }] = await Promise.all([
+    supabase
+      .from("goals")
+      .select(
+        "player_id, player:players!goals_player_id_fkey(id, first_name, last_name), match:matches!inner(team_id, status)",
+      )
+      .eq("match.team_id", team.id)
+      .eq("match.status", "played"),
+    supabase
+      .from("team_players")
+      .select("player_id, shirt_number")
+      .eq("team_id", team.id),
+  ]);
 
-  if (error) {
-    return { data: [], error: error.message };
-  }
+  if (error) return { data: [], error: error.message };
+
+  const shirtByPlayer = new Map<string, number | null>(
+    (roster ?? []).map((r) => [r.player_id, r.shirt_number]),
+  );
 
   const counts = new Map<string, TopScorer>();
-
   for (const row of data ?? []) {
     const player = Array.isArray(row.player) ? row.player[0] : row.player;
-    if (!player || player.team_id !== team.id) continue;
+    if (!player) continue;
     const existing = counts.get(player.id);
     if (existing) {
       existing.goals += 1;
@@ -61,8 +68,7 @@ export async function getTopScorers(
           id: player.id,
           first_name: player.first_name,
           last_name: player.last_name,
-          shirt_number: player.shirt_number,
-          position: player.position,
+          shirt_number: shirtByPlayer.get(player.id) ?? null,
         },
         goals: 1,
       });
@@ -98,10 +104,8 @@ export async function getResultsOverTime(): Promise<{
   error: string | null;
   form: Array<"W" | "D" | "L">;
 }> {
-  const team = await getCurrentTeam();
-  if (!team) {
-    return { data: [], error: "No team found for your account.", form: [] };
-  }
+  const team = await getActiveTeam();
+  if (!team) return { data: [], error: "No team selected.", form: [] };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -111,9 +115,7 @@ export async function getResultsOverTime(): Promise<{
     .eq("status", "played")
     .order("date", { ascending: true });
 
-  if (error) {
-    return { data: [], error: error.message, form: [] };
-  }
+  if (error) return { data: [], error: error.message, form: [] };
 
   const points: ResultOverTimePoint[] = [];
   const form: Array<"W" | "D" | "L"> = [];

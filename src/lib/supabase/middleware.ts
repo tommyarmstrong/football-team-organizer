@@ -13,16 +13,11 @@ function isMembershipExemptPath(pathname: string) {
   return MEMBERSHIP_EXEMPT_PATHS.has(pathname);
 }
 
-async function userHasTeamMembership(
+async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,
-  userId: string,
 ) {
-  const { count, error } = await supabase
-    .from("team_members")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  return !error && (count ?? 0) > 0;
+  const { data, error } = await supabase.rpc("has_app_access");
+  return !error && data === true;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -74,7 +69,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const hasTeam = await userHasTeamMembership(supabase, user.id);
+    const hasTeam = await userHasAppAccess(supabase);
 
     if (!hasTeam && !isMembershipExemptPath(pathname)) {
       const redirectUrl = request.nextUrl.clone();

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCoach } from "@/lib/data/coaches";
+import { getCoach, getCoachTeams } from "@/lib/data/coaches";
+import { getViewerContext, isClubStaff } from "@/lib/authz/context";
 import { coachDisplayName, formatShortDate } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CoachForm } from "@/components/coaches/coach-form";
+import { CoachTeamsSection } from "@/components/coaches/coach-teams-section";
 import { DeleteCoachButton } from "@/components/coaches/delete-coach-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +23,7 @@ export default async function CoachDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const ctx = await getViewerContext();
   const { data: coach, error } = await getCoach(id);
 
   if (error) {
@@ -32,9 +35,20 @@ export default async function CoachDetailPage({
     );
   }
 
-  if (!coach) {
+  if (!coach || !ctx) {
     notFound();
   }
+
+  const { data: teams } = await getCoachTeams(coach.id);
+
+  const canEdit = isClubStaff(ctx, coach.club_id);
+  const currentTeamIds = new Set(teams.map((t) => t.team_id));
+  const availableTeams = ctx.visibleTeams.filter(
+    (team) =>
+      team.club_id === coach.club_id &&
+      ctx.editableTeamIds.includes(team.id) &&
+      !currentTeamIds.has(team.id),
+  );
 
   return (
     <div className="space-y-8">
@@ -61,16 +75,35 @@ export default async function CoachDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit coach</CardTitle>
+          <CardTitle>Teams</CardTitle>
           <CardDescription>
-            Update contact details, biography, and qualifications.
+            Teams this coach is assigned to within the club.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <CoachForm mode="edit" coach={coach} />
-          <DeleteCoachButton coachId={coach.id} />
+        <CardContent>
+          <CoachTeamsSection
+            coachId={coach.id}
+            memberships={teams}
+            availableTeams={availableTeams}
+            canEdit={canEdit}
+          />
         </CardContent>
       </Card>
+
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit coach</CardTitle>
+            <CardDescription>
+              Update contact details, biography, and qualifications.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CoachForm mode="edit" coach={coach} />
+            <DeleteCoachButton coachId={coach.id} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

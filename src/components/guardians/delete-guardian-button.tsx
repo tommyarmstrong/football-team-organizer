@@ -2,13 +2,13 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { deactivatePlayerAction } from "@/lib/players/actions";
+import { deleteGuardianAction } from "@/lib/guardians/actions";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-export function DeactivatePlayerButton({ playerId }: { playerId: string }) {
+export function DeleteGuardianButton({ guardianId }: { guardianId: string }) {
   const [state, formAction, pending] = useActionState(
-    async () => deactivatePlayerAction(playerId),
+    async () => deleteGuardianAction(guardianId),
     INITIAL_ACTION_STATE,
   );
 
@@ -19,7 +19,7 @@ export function DeactivatePlayerButton({ playerId }: { playerId: string }) {
       onSubmit={(event) => {
         if (
           !window.confirm(
-            "Deactivate this player? They leave the active squad, but goal history is kept.",
+            "Delete this guardian? Player links will be removed. This cannot be undone.",
           )
         ) {
           event.preventDefault();
@@ -28,7 +28,7 @@ export function DeactivatePlayerButton({ playerId }: { playerId: string }) {
     >
       {state.error ? <ErrorBanner message={state.error} /> : null}
       <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        {pending ? "Deactivating…" : "Deactivate player"}
+        {pending ? "Deleting…" : "Delete guardian"}
       </Button>
     </form>
   );

@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPlayer, getPlayerGoals } from "@/lib/data/players";
+import {
+  getPlayer,
+  getPlayerContact,
+  getPlayerGoals,
+  getPlayerTeams,
+} from "@/lib/data/players";
+import {
+  canEditPlayer,
+  canManageClub,
+  canViewPlayerContact,
+  getViewerContext,
+} from "@/lib/authz/context";
 import {
   formatMatchDate,
   formatShortDate,
@@ -10,7 +21,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerForm } from "@/components/players/player-form";
-import { DeactivatePlayerButton } from "@/components/players/deactivate-player-button";
+import { PlayerTeamsSection } from "@/components/players/player-teams-section";
+import { PlayerContactForm } from "@/components/players/player-contact-form";
+import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +39,7 @@ export default async function PlayerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const ctx = await getViewerContext();
   const { data: player, error } = await getPlayer(id);
 
   if (error) {
@@ -37,50 +51,107 @@ export default async function PlayerDetailPage({
     );
   }
 
-  if (!player) {
+  if (!player || !ctx) {
     notFound();
   }
 
-  const { data: goals, error: goalsError } = await getPlayerGoals(player.id);
+  const [
+    { data: teams },
+    { data: contact },
+    { data: goals, error: goalsError },
+  ] = await Promise.all([
+    getPlayerTeams(player.id),
+    getPlayerContact(player.id),
+    getPlayerGoals(player.id),
+  ]);
+
+  const playerTeamIds = teams.map((team) => team.team_id);
+  const canEdit = canEditPlayer(ctx, player.club_id, playerTeamIds);
+  const canManage = canManageClub(ctx, player.club_id);
+  const canViewContact = canViewPlayerContact(
+    ctx,
+    player.id,
+    player.club_id,
+    playerTeamIds,
+  );
+
+  const currentTeamIds = new Set(playerTeamIds);
+  const availableTeams = ctx.visibleTeams.filter(
+    (team) =>
+      team.club_id === player.club_id &&
+      ctx.editableTeamIds.includes(team.id) &&
+      !currentTeamIds.has(team.id),
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={playerDisplayName(player, {
-          shirtNumber: player.shirt_number,
-        })}
-        description={[
-          player.position ?? "No position",
-          player.active ? "Active" : "Inactive",
-        ].join(" · ")}
+        title={playerDisplayName(player)}
+        description={player.position ?? "No position"}
         actions={
           <Button variant="outline" size="sm" render={<Link href="/players" />}>
-            Back to squad
+            Back to players
           </Button>
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit player</CardTitle>
-          <CardDescription>
-            Set status to inactive to remove from the active squad without
-            deleting goal history.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <PlayerForm mode="edit" player={player} />
-          {player.active ? (
-            <DeactivatePlayerButton playerId={player.id} />
-          ) : null}
-        </CardContent>
-      </Card>
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit player</CardTitle>
+            <CardDescription>
+              Player identity is shared across the club and all their teams.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <PlayerForm mode="edit" player={player} />
+            {canManage ? <DeletePlayerButton playerId={player.id} /> : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>Goals this season</CardTitle>
+          <CardTitle>Teams</CardTitle>
+          <CardDescription>
+            Teams this player is part of, with per-team shirt number and status.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PlayerTeamsSection
+            playerId={player.id}
+            memberships={teams}
+            availableTeams={availableTeams}
+            canEdit={canEdit}
+          />
+        </CardContent>
+      </Card>
+
+      {canViewContact ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact details</CardTitle>
+            <CardDescription>
+              Sensitive details. Visible to club management, the player&apos;s
+              coaches, and their guardians only.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlayerContactForm
+              playerId={player.id}
+              contact={contact}
+              canEdit={canViewContact}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Goals</CardTitle>
           <CardDescription>
             {goals.length} goal{goals.length === 1 ? "" : "s"} in played matches
+            across their teams
           </CardDescription>
         </CardHeader>
         <CardContent>

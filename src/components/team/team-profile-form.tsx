@@ -20,15 +20,6 @@ export function TeamProfileForm({ team }: { team: Team }) {
   return (
     <form action={formAction} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Club" htmlFor="club">
-          <Input
-            id="club"
-            name="club"
-            required
-            defaultValue={team.club}
-            disabled={pending}
-          />
-        </Field>
         <Field label="Team name" htmlFor="name">
           <Input
             id="name"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
+import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
 import {
   formatKickoffTime,
   formatMatchDate,
@@ -35,15 +36,23 @@ export default async function MatchesPage({
       ? rawFilter
       : "upcoming";
 
-  const { data: matches, error } = await listMatches(filter);
+  const [{ data: matches, error }, team, canEdit] = await Promise.all([
+    listMatches(filter),
+    getActiveTeam(),
+    canEditActiveTeam(),
+  ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Matches"
-        description="Fixtures and results"
+        description={
+          team ? `Fixtures and results · ${team.name}` : "Fixtures and results"
+        }
         actions={
-          <Button render={<Link href="/matches/new" />}>New fixture</Button>
+          canEdit ? (
+            <Button render={<Link href="/matches/new" />}>New fixture</Button>
+          ) : undefined
         }
       />
 
@@ -82,7 +91,9 @@ export default async function MatchesPage({
           }
           description="Create a fixture to get started."
           action={
-            <Button render={<Link href="/matches/new" />}>New fixture</Button>
+            canEdit ? (
+              <Button render={<Link href="/matches/new" />}>New fixture</Button>
+            ) : undefined
           }
         />
       ) : null}

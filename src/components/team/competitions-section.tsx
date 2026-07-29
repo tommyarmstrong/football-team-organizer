@@ -19,9 +19,34 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function CompetitionsSection({
   competitions,
+  canEdit = true,
 }: {
   competitions: Competition[];
+  canEdit?: boolean;
 }) {
+  if (!canEdit) {
+    return competitions.length === 0 ? (
+      <EmptyState
+        title="No competitions yet"
+        description="Competitions this team enters will appear here."
+      />
+    ) : (
+      <ul className="divide-border border-border divide-y rounded-xl border">
+        {competitions.map((competition) => (
+          <li
+            key={competition.id}
+            className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+          >
+            <span className="font-medium">{competition.name}</span>
+            <span className="text-muted-foreground">
+              {labelCompetitionKind(competition.kind)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <AddCompetitionForm />
