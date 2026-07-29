@@ -1,4 +1,4 @@
--- Local / dev seed: club, teams, management membership, coaches, and players.
+-- Local / dev seed: club, teams, managers, coaches, and players.
 --
 -- BEFORE RUNNING:
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
@@ -9,14 +9,14 @@
 --   npx supabase db query --linked -f supabase/seed.sql
 --
 -- Idempotent for the fixed ids below. Re-running updates the club/team/coach/player
--- rows and upserts the management membership for the configured user.
+-- rows and upserts the manager membership for the configured user.
 
 begin;
 
 -- Fixed ids so re-seeding is predictable in local/dev.
 with upserted_club as (
   insert into public.clubs (id, name)
-  values ('11111111-1111-1111-1111-111111111111', 'Example FC')
+  values ('11111111-1111-1111-1111-111111111111', 'The Football Association')
   on conflict (id) do update set name = excluded.name
   returning id
 ),
@@ -27,8 +27,9 @@ upserted_team as (
     name,
     age_group,
     gender,
-    home_ground,
-    head_coach_name,
+    home_venue,
+    training_venue,
+    training_days,
     season_label
   )
   values (
@@ -38,7 +39,8 @@ upserted_team as (
     'U11',
     'mixed',
     'Example Recreation Ground',
-    'Eddie Howe',
+    'Example Training Pitch',
+    array['tue', 'thu'],
     '2025/26'
   )
   on conflict (id) do update set
@@ -46,19 +48,57 @@ upserted_team as (
     name = excluded.name,
     age_group = excluded.age_group,
     gender = excluded.gender,
-    home_ground = excluded.home_ground,
-    head_coach_name = excluded.head_coach_name,
+    home_venue = excluded.home_venue,
+    training_venue = excluded.training_venue,
+    training_days = excluded.training_days,
     season_label = excluded.season_label
   returning id
 )
-insert into public.club_members (club_id, user_id, role)
-select
-  upserted_club.id,
-  '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid, -- <-- replace with your Auth user UUID
-  'management'::public.club_role
-from upserted_club
-on conflict (club_id, user_id) do update set
-  role = excluded.role;
+select 1 from upserted_club, upserted_team;
+
+-- Manager may already exist from the club_members → managers migration (random id).
+-- Remove either the fixed seed id or the club+user pair, then insert cleanly.
+delete from public.managers
+where id = '22222222-2222-2222-2222-222222222222'
+   or (
+     club_id = '11111111-1111-1111-1111-111111111111'
+     and user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'
+   );
+
+insert into public.managers (id, club_id, user_id, first_name, second_name)
+values (
+  '22222222-2222-2222-2222-222222222222',
+  '11111111-1111-1111-1111-111111111111',
+  '05b5a111-bd09-440a-8613-8225e7b9397b', -- <-- replace with your Auth user UUID
+  'Club',
+  'Manager'
+);
+
+-- Team-scoped auth roles (additive: same user may hold several roles on one team).
+-- Example: management + coach + player on U11 Blues; coach only on England.
+insert into public.team_members (team_id, user_id, role)
+values
+  (
+    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
+    'management'::public.team_role
+  ),
+  (
+    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
+    'coach'::public.team_role
+  ),
+  (
+    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
+    'player'::public.team_role
+  ),
+  (
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
+    'coach'::public.team_role
+  )
+on conflict (team_id, user_id, role) do nothing;
 
 -- England 1966 World Cup team.
 insert into public.teams (
@@ -67,8 +107,9 @@ insert into public.teams (
   name,
   age_group,
   gender,
-  home_ground,
-  head_coach_name,
+  home_venue,
+  training_venue,
+  training_days,
   season_label
 )
 values (
@@ -78,7 +119,8 @@ values (
   'Adults',
   'boys',
   'Wembley',
-  'Alf Ramsey',
+  'Lilleshall',
+  array['mon', 'wed', 'fri'],
   '1966'
 )
 on conflict (id) do update set
@@ -86,8 +128,9 @@ on conflict (id) do update set
   name = excluded.name,
   age_group = excluded.age_group,
   gender = excluded.gender,
-  home_ground = excluded.home_ground,
-  head_coach_name = excluded.head_coach_name,
+  home_venue = excluded.home_venue,
+  training_venue = excluded.training_venue,
+  training_days = excluded.training_days,
   season_label = excluded.season_label;
 
 -- Club coaching staff.
@@ -163,17 +206,17 @@ values
   (
     'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000001',
-    'Coach'
+    'Assistant Coach'
   ),
   (
     'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000002',
-    'Coach'
+    'Assistant Coach'
   ),
   (
     'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000003',
-    'Head coach'
+    'Head Coach'
   ),
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -275,7 +318,7 @@ on conflict (id) do update set
   last_name = excluded.last_name,
   position = excluded.position;
 
--- Assign squad to England (shirt numbers match the 1966 World Cup final XI).
+-- Assign squad to England (1966 World Cup squad numbers).
 insert into public.team_players (team_id, player_id, shirt_number, active)
 values
   (
@@ -323,25 +366,25 @@ values
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     'a0000001-0000-4000-8000-000000000008',
-    8,
-    true
-  ),
-  (
-    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-    'a0000001-0000-4000-8000-000000000009',
     9,
     true
   ),
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-    'a0000001-0000-4000-8000-000000000011',
+    'a0000001-0000-4000-8000-000000000009',
     10,
     true
   ),
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'a0000001-0000-4000-8000-000000000011',
+    20,
+    true
+  ),
+  (
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     'a0000001-0000-4000-8000-000000000010',
-    11,
+    21,
     true
   )
 on conflict (team_id, player_id) do update set
@@ -360,5 +403,222 @@ on conflict (id) do update set
   team_id = excluded.team_id,
   name = excluded.name,
   kind = excluded.kind;
+
+-- England World Cup 1966 matches (all home / completed).
+insert into public.matches (
+  id,
+  team_id,
+  opponent_name,
+  date,
+  kickoff_time,
+  venue,
+  competition_id,
+  status,
+  goals_for,
+  goals_against,
+  notes
+)
+values
+  (
+    'e0000001-0000-4000-8000-000000000001',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'Uruguay',
+    '1966-07-11',
+    '19:30',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    0,
+    0,
+    null
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000002',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'Mexico',
+    '1966-07-16',
+    '19:30',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    2,
+    0,
+    null
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000003',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'France',
+    '1966-07-20',
+    '19:30',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    2,
+    0,
+    null
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000004',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'Argentina',
+    '1966-07-23',
+    '15:00',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    1,
+    0,
+    null
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000005',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'Portugal',
+    '1966-07-26',
+    '19:30',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    2,
+    1,
+    null
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000006',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'West Germany',
+    '1966-07-30',
+    '15:00',
+    'home',
+    'd0000001-0000-4000-8000-000000000001',
+    'played',
+    4,
+    2,
+    'After extra time'
+  )
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  opponent_name = excluded.opponent_name,
+  date = excluded.date,
+  kickoff_time = excluded.kickoff_time,
+  venue = excluded.venue,
+  competition_id = excluded.competition_id,
+  status = excluded.status,
+  goals_for = excluded.goals_for,
+  goals_against = excluded.goals_against,
+  notes = excluded.notes;
+
+-- England goal scorers (player ids from the 1966 squad above).
+insert into public.goals (id, match_id, player_id)
+values
+  -- vs Mexico
+  (
+    'f0000001-0000-4000-8000-000000000001',
+    'e0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000008' -- Bobby Charlton
+  ),
+  (
+    'f0000001-0000-4000-8000-000000000002',
+    'e0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000011' -- Roger Hunt
+  ),
+  -- vs France
+  (
+    'f0000001-0000-4000-8000-000000000003',
+    'e0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000011' -- Roger Hunt
+  ),
+  (
+    'f0000001-0000-4000-8000-000000000004',
+    'e0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000009' -- Geoff Hurst
+  ),
+  -- vs Argentina
+  (
+    'f0000001-0000-4000-8000-000000000005',
+    'e0000001-0000-4000-8000-000000000004',
+    'a0000001-0000-4000-8000-000000000009' -- Geoff Hurst
+  ),
+  -- vs Portugal (Bobby Charlton x2)
+  (
+    'f0000001-0000-4000-8000-000000000006',
+    'e0000001-0000-4000-8000-000000000005',
+    'a0000001-0000-4000-8000-000000000008' -- Bobby Charlton
+  ),
+  (
+    'f0000001-0000-4000-8000-000000000007',
+    'e0000001-0000-4000-8000-000000000005',
+    'a0000001-0000-4000-8000-000000000008' -- Bobby Charlton
+  ),
+  -- vs West Germany (Geoff Hurst x3, Martin Peters)
+  (
+    'f0000001-0000-4000-8000-000000000008',
+    'e0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000009' -- Geoff Hurst
+  ),
+  (
+    'f0000001-0000-4000-8000-000000000009',
+    'e0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000010' -- Martin Peters
+  ),
+  (
+    'f0000001-0000-4000-8000-00000000000a',
+    'e0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000009' -- Geoff Hurst
+  ),
+  (
+    'f0000001-0000-4000-8000-00000000000b',
+    'e0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000009' -- Geoff Hurst
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id;
+
+-- Sample disciplinary cards (World Cup final + Argentina QF).
+insert into public.cards (
+  id,
+  match_id,
+  player_id,
+  coach_id,
+  guardian_id,
+  type,
+  coach_notes,
+  referee_notes,
+  club_notes
+)
+values
+  (
+    'ca000001-0000-4000-8000-000000000001',
+    'e0000001-0000-4000-8000-000000000004', -- vs Argentina
+    'a0000001-0000-4000-8000-000000000005', -- Jack Charlton
+    null,
+    null,
+    'yellow_1st',
+    'Late challenge in midfield.',
+    null,
+    null
+  ),
+  (
+    'ca000001-0000-4000-8000-000000000002',
+    'e0000001-0000-4000-8000-000000000006', -- vs West Germany
+    null,
+    'c0000001-0000-4000-8000-000000000004', -- Alf Ramsey
+    null,
+    'other',
+    null,
+    'Spoken to by referee about bench conduct.',
+    'Logged for club records.'
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id,
+  coach_id = excluded.coach_id,
+  guardian_id = excluded.guardian_id,
+  type = excluded.type,
+  coach_notes = excluded.coach_notes,
+  referee_notes = excluded.referee_notes,
+  club_notes = excluded.club_notes;
 
 commit;

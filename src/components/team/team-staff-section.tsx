@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
+import { COACH_TEAM_ROLES } from "@/lib/constants";
 import {
   addCoachToTeamAction,
   createTeamCoachAction,
@@ -128,12 +129,14 @@ function CreateTeamCoachForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-coach-role">Role on this team</Label>
-          <Input
-            id="new-coach-role"
-            name="role"
-            placeholder="e.g. Head coach"
-            disabled={pending}
-          />
+          <NativeSelect id="new-coach-role" name="role" disabled={pending}>
+            <option value="">Select role</option>
+            {COACH_TEAM_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-coach-phone">Phone</Label>
@@ -237,12 +240,14 @@ function AssignCoachForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="assign-role">Role</Label>
-        <Input
-          id="assign-role"
-          name="role"
-          placeholder="e.g. Head coach"
-          disabled={pending}
-        />
+        <NativeSelect id="assign-role" name="role" disabled={pending}>
+          <option value="">Select role</option>
+          {COACH_TEAM_ROLES.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </NativeSelect>
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Assigning…" : "Assign"}

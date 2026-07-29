@@ -45,6 +45,7 @@ export async function createGuardianAction(
   if (!data) return { error: "Could not create guardian." };
 
   revalidatePath("/guardians");
+  revalidatePath("/club");
   redirect(`/guardians/${data.id}`);
 }
 

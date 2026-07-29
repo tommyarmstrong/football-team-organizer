@@ -73,6 +73,16 @@ export function CoachForm({
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="date_of_birth">Date of birth</Label>
+          <Input
+            id="date_of_birth"
+            name="date_of_birth"
+            type="date"
+            defaultValue={coach?.date_of_birth ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"

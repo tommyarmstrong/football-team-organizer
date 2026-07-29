@@ -4,6 +4,7 @@ export type CoachFormFields = {
   first_name: string;
   second_name: string;
   joined_date: string;
+  date_of_birth: string | null;
   phone: string | null;
   email: string | null;
   notes: string | null;
@@ -19,6 +20,7 @@ export function parseCoachForm(formData: FormData): CoachFormParseResult {
   const first_name = str(formData, "first_name");
   const second_name = str(formData, "second_name");
   const joined_date = str(formData, "joined_date");
+  const date_of_birth = str(formData, "date_of_birth") || null;
   const phone = str(formData, "phone") || null;
   const email = str(formData, "email") || null;
   const notes = str(formData, "notes") || null;
@@ -38,6 +40,7 @@ export function parseCoachForm(formData: FormData): CoachFormParseResult {
     first_name,
     second_name,
     joined_date,
+    date_of_birth,
     phone,
     email,
     notes,

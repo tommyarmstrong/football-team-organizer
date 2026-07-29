@@ -2,16 +2,22 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { TEAM_GENDERS } from "@/lib/constants";
+import {
+  AGE_GROUPS,
+  TEAM_GENDERS,
+  TRAINING_DAYS,
+  TRAINING_DAY_LABELS,
+} from "@/lib/constants";
 import { createTeamAction } from "@/lib/team/actions";
-import { labelGender } from "@/lib/format";
+import type { Coach } from "@/lib/supabase/database.types";
+import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-export function CreateTeamForm() {
+export function CreateTeamForm({ coaches = [] }: { coaches?: Coach[] }) {
   const [state, formAction, pending] = useActionState(
     createTeamAction,
     INITIAL_ACTION_STATE,
@@ -26,13 +32,19 @@ export function CreateTeamForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-age">Age group</Label>
-          <Input
+          <NativeSelect
             id="new-team-age"
             name="age_group"
             required
-            placeholder="e.g. U11"
+            defaultValue="U11"
             disabled={pending}
-          />
+          >
+            {AGE_GROUPS.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-gender">Gender</Label>
@@ -51,22 +63,31 @@ export function CreateTeamForm() {
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-team-ground">Home ground</Label>
+          <Label htmlFor="new-team-venue">Home venue</Label>
+          <Input id="new-team-venue" name="home_venue" disabled={pending} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-team-training-venue">Training venue</Label>
           <Input
-            id="new-team-ground"
-            name="home_ground"
-            required
+            id="new-team-training-venue"
+            name="training_venue"
             disabled={pending}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-coach">Head coach</Label>
-          <Input
+          <NativeSelect
             id="new-team-coach"
-            name="head_coach_name"
-            required
+            name="head_coach_id"
             disabled={pending}
-          />
+          >
+            <option value="">None</option>
+            {coaches.map((coach) => (
+              <option key={coach.id} value={coach.id}>
+                {coachDisplayName(coach)}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-season">Season</Label>
@@ -79,6 +100,27 @@ export function CreateTeamForm() {
           />
         </div>
       </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Training days</legend>
+        <div className="flex flex-wrap gap-3">
+          {TRAINING_DAYS.map((day) => (
+            <label
+              key={day}
+              className="flex min-h-9 items-center gap-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                name="training_days"
+                value={day}
+                disabled={pending}
+                className="border-input size-4 rounded"
+              />
+              {TRAINING_DAY_LABELS[day]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 

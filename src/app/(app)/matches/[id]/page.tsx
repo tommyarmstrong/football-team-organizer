@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { matchAllowsEvents } from "@/lib/constants";
+import { listCardsForMatch } from "@/lib/data/cards";
+import { listTeamCoaches } from "@/lib/data/coaches";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listGoalsForMatch } from "@/lib/data/goals";
+import { listGuardians } from "@/lib/data/guardians";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
@@ -15,6 +19,7 @@ import {
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchForm } from "@/components/matches/match-form";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { Button } from "@/components/ui/button";
@@ -49,20 +54,39 @@ export default async function MatchDetailPage({
   }
 
   const canEdit = canEditTeam(ctx, match.team_id);
+  const allowsEvents = matchAllowsEvents(match.status);
 
   const [
     { data: competitions, error: competitionsError },
     { data: goals, error: goalsError },
+    { data: cards, error: cardsError },
     { data: players, error: playersError },
+    { data: coaches, error: coachesError },
+    { data: guardians, error: guardiansError },
   ] = await Promise.all([
     listCompetitions(match.team_id),
     listGoalsForMatch(match.id),
+    listCardsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
+    listTeamCoaches(match.team_id),
+    listGuardians(),
   ]);
 
-  const motm = match.player_of_the_match_id
+  const coachMotm = match.player_of_the_match_id
     ? players.find((p) => p.id === match.player_of_the_match_id)
     : null;
+  const playersMotm = match.players_player_of_the_match_id
+    ? players.find((p) => p.id === match.players_player_of_the_match_id)
+    : null;
+
+  const loadErrors = [
+    competitionsError,
+    playersError,
+    coachesError,
+    guardiansError,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="space-y-8">
@@ -73,7 +97,7 @@ export default async function MatchDetailPage({
           formatKickoffTime(match.kickoff_time),
           labelVenue(match.venue),
           labelMatchStatus(match.status),
-          match.status === "played"
+          allowsEvents
             ? formatScore(match.goals_for, match.goals_against)
             : null,
         ]
@@ -86,19 +110,15 @@ export default async function MatchDetailPage({
         }
       />
 
-      {competitionsError || playersError ? (
-        <ErrorBanner
-          message={[competitionsError, playersError].filter(Boolean).join(" ")}
-        />
-      ) : null}
+      {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {canEdit ? (
         <Card>
           <CardHeader>
             <CardTitle>Match details</CardTitle>
             <CardDescription>
-              Set status to Played, enter the aggregate score, and pick the
-              player of the match.
+              Set status to In progress or Played to enter the score, goals,
+              cards, and players of the match.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,30 +142,52 @@ export default async function MatchDetailPage({
               <ReadOnly label="Date" value={formatMatchDate(match.date)} />
               <ReadOnly label="Venue" value={labelVenue(match.venue)} />
               <ReadOnly label="Status" value={labelMatchStatus(match.status)} />
-              {match.status === "played" ? (
+              {allowsEvents ? (
                 <ReadOnly
                   label="Score"
                   value={formatScore(match.goals_for, match.goals_against)}
                 />
               ) : null}
               {match.notes ? (
-                <ReadOnly label="Notes" value={match.notes} />
+                <ReadOnly label="Coach's notes" value={match.notes} />
+              ) : null}
+              {match.club_notes ? (
+                <ReadOnly label="Club notes" value={match.club_notes} />
               ) : null}
             </dl>
           </CardContent>
         </Card>
       )}
 
-      {match.status === "played" ? (
+      {allowsEvents ? (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Player of the match</CardTitle>
+              <CardTitle>Coach&apos;s player of the match</CardTitle>
             </CardHeader>
             <CardContent>
-              {motm ? (
+              {coachMotm ? (
                 <p className="font-medium">
-                  {playerDisplayName(motm, { shirtNumber: motm.shirt_number })}
+                  {playerDisplayName(coachMotm, {
+                    shirtNumber: coachMotm.shirt_number,
+                  })}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-sm">Not selected.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Player&apos;s player of the match</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {playersMotm ? (
+                <p className="font-medium">
+                  {playerDisplayName(playersMotm, {
+                    shirtNumber: playersMotm.shirt_number,
+                  })}
                 </p>
               ) : (
                 <p className="text-muted-foreground text-sm">Not selected.</p>
@@ -170,12 +212,33 @@ export default async function MatchDetailPage({
               />
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Cards</CardTitle>
+              <CardDescription>
+                Yellow cards, red cards, timeouts, and other cards for a player,
+                coach, or guardian.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {cardsError ? <ErrorBanner message={cardsError} /> : null}
+              <MatchCardsSection
+                matchId={match.id}
+                cards={cards}
+                players={players}
+                coaches={coaches}
+                guardians={guardians}
+                canEdit={canEdit}
+              />
+            </CardContent>
+          </Card>
         </>
       ) : (
         <p className="text-muted-foreground text-sm">
           {canEdit
-            ? "Mark the match as Played to record our goals and player of the match."
-            : "Goals and player of the match appear once the match is played."}
+            ? "Set the match to In progress or Played to record goals, cards, and players of the match."
+            : "Goals, cards, and players of the match appear once the match is in progress or played."}
         </p>
       )}
     </div>

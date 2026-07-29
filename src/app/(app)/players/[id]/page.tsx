@@ -6,6 +6,7 @@ import {
   getPlayerGoals,
   getPlayerTeams,
 } from "@/lib/data/players";
+import { getPlayerGuardians } from "@/lib/data/guardians";
 import {
   canEditPlayer,
   canManageClub,
@@ -22,6 +23,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerForm } from "@/components/players/player-form";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
+import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { PlayerContactForm } from "@/components/players/player-contact-form";
 import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { Button } from "@/components/ui/button";
@@ -59,10 +61,12 @@ export default async function PlayerDetailPage({
     { data: teams },
     { data: contact },
     { data: goals, error: goalsError },
+    { data: guardians },
   ] = await Promise.all([
     getPlayerTeams(player.id),
     getPlayerContact(player.id),
     getPlayerGoals(player.id),
+    getPlayerGuardians(player.id),
   ]);
 
   const playerTeamIds = teams.map((team) => team.team_id);
@@ -87,7 +91,10 @@ export default async function PlayerDetailPage({
     <div className="space-y-8">
       <PageHeader
         title={playerDisplayName(player)}
-        description={player.position ?? "No position"}
+        description={
+          [player.position, player.school].filter(Boolean).join(" · ") ||
+          "No position"
+        }
         actions={
           <Button variant="outline" size="sm" render={<Link href="/players" />}>
             Back to players
@@ -127,6 +134,18 @@ export default async function PlayerDetailPage({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Guardians</CardTitle>
+          <CardDescription>
+            Guardians linked to this player from the Guardians page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PlayerGuardiansSection links={guardians} />
+        </CardContent>
+      </Card>
+
       {canViewContact ? (
         <Card>
           <CardHeader>
@@ -140,6 +159,7 @@ export default async function PlayerDetailPage({
             <PlayerContactForm
               playerId={player.id}
               contact={contact}
+              guardians={guardians}
               canEdit={canViewContact}
             />
           </CardContent>

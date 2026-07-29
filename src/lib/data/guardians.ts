@@ -108,6 +108,45 @@ export async function getGuardianPlayers(
   return { data: rows, error: null };
 }
 
+export type PlayerGuardianLink = {
+  player_guardian_id: string;
+  guardian_id: string;
+  first_name: string;
+  second_name: string;
+  phone: string | null;
+  relationship: GuardianRelationship;
+  legal_guardian: boolean;
+};
+
+export async function getPlayerGuardians(
+  playerId: string,
+): Promise<{ data: PlayerGuardianLink[]; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("player_guardians")
+    .select(
+      "id, guardian_id, relationship, legal_guardian, guardian:guardians(first_name, second_name, phone)",
+    )
+    .eq("player_id", playerId);
+
+  if (error) return { data: [], error: error.message };
+
+  const rows: PlayerGuardianLink[] = (data ?? []).map((pg) => {
+    const guardian = Array.isArray(pg.guardian) ? pg.guardian[0] : pg.guardian;
+    return {
+      player_guardian_id: pg.id,
+      guardian_id: pg.guardian_id,
+      first_name: guardian?.first_name ?? "",
+      second_name: guardian?.second_name ?? "",
+      phone: guardian?.phone ?? null,
+      relationship: pg.relationship as GuardianRelationship,
+      legal_guardian: pg.legal_guardian,
+    };
+  });
+
+  return { data: rows, error: null };
+}
+
 export async function createGuardian(
   input: TablesInsert<"guardians">,
 ): Promise<{ data: Guardian | null; error: string | null }> {

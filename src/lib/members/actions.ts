@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/action-state";
+import { getGuardian } from "@/lib/data/guardians";
 import { addTeamMember, removeTeamMember } from "@/lib/data/members";
 import { TEAM_ROLES } from "@/lib/constants";
 import type { TeamRole } from "@/lib/supabase/database.types";
@@ -42,4 +43,43 @@ export async function removeTeamMemberAction(id: string): Promise<ActionState> {
 
   revalidatePath("/team");
   return { success: "Member removed." };
+}
+
+export async function addGuardianAssistantAction(
+  teamId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const guardianId = str(formData, "guardian_id");
+  if (!guardianId) return { error: "Select a guardian." };
+
+  const { data: guardian, error: loadError } = await getGuardian(guardianId);
+  if (loadError) return { error: loadError };
+  if (!guardian) return { error: "Guardian not found." };
+  if (!guardian.user_id) {
+    return {
+      error:
+        "That guardian has no linked login. Link a user account on the guardian page first.",
+    };
+  }
+
+  const { error } = await addTeamMember({
+    team_id: teamId,
+    user_id: guardian.user_id,
+    role: "guardian_assistant",
+  });
+  if (error) return { error };
+
+  revalidatePath("/team");
+  return { success: "Guardian assistant added." };
+}
+
+export async function removeGuardianAssistantAction(
+  teamMemberId: string,
+): Promise<ActionState> {
+  const { error } = await removeTeamMember(teamMemberId);
+  if (error) return { error };
+
+  revalidatePath("/team");
+  return { success: "Guardian assistant removed." };
 }

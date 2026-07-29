@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { matchAllowsEvents } from "@/lib/constants";
 import type {
   Goal,
   Player,
@@ -64,8 +65,11 @@ export async function createGoal(
 
   if (matchError) return { data: null, error: matchError.message };
   if (!match) return { data: null, error: "Match not found." };
-  if (match.status !== "played") {
-    return { data: null, error: "Goals can only be added to played matches." };
+  if (!matchAllowsEvents(match.status)) {
+    return {
+      data: null,
+      error: "Goals can only be added when the match is in progress or played.",
+    };
   }
 
   const { data, error } = await supabase

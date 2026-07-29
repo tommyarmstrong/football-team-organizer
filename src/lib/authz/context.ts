@@ -6,15 +6,21 @@ import type { Team, TeamRole } from "@/lib/supabase/database.types";
  * Everything needed to make authorization decisions for the signed-in user in a
  * single request. RLS is the source of truth in the database; this context lets
  * the UI hide controls the user is not allowed to use.
+ *
+ * Team roles are additive: a user may hold any combination of roles on a given
+ * team (e.g. coach + player + management on team A, coach only on team B).
+ * Club management is the manager role linked to a login.
  */
 export type ViewerContext = {
   userId: string;
   email: string | null;
   managementClubIds: string[];
-  /** Teams where the user is a coach (team_members.role = 'coach'). */
+  /** Teams where the user holds the team_members role `coach`. */
   coachTeamIds: string[];
-  /** The user's direct team_members role per team. */
-  memberTeamRoles: Record<string, TeamRole>;
+  /** Teams where the user holds the team_members role `management`. */
+  managementTeamIds: string[];
+  /** All team_members roles for the user, keyed by team id. */
+  memberTeamRoles: Record<string, TeamRole[]>;
   guardianPlayerIds: string[];
   selfPlayerIds: string[];
   /** RLS-filtered teams the user can read. */
@@ -33,12 +39,9 @@ export const getViewerContext = cache(
 
     if (!user) return null;
 
-    const [clubMembers, teamMembers, guardianLinks, selfPlayers, teams] =
+    const [managers, teamMembers, guardianLinks, selfPlayers, teams] =
       await Promise.all([
-        supabase
-          .from("club_members")
-          .select("club_id, role")
-          .eq("user_id", user.id),
+        supabase.from("managers").select("club_id").eq("user_id", user.id),
         supabase
           .from("team_members")
           .select("team_id, role")
@@ -51,15 +54,17 @@ export const getViewerContext = cache(
         supabase.from("teams").select("*").order("name", { ascending: true }),
       ]);
 
-    const managementClubIds = (clubMembers.data ?? [])
-      .filter((row) => row.role === "management")
-      .map((row) => row.club_id);
+    const managementClubIds = (managers.data ?? []).map((row) => row.club_id);
 
-    const memberTeamRoles: Record<string, TeamRole> = {};
+    const memberTeamRoles: Record<string, TeamRole[]> = {};
     const coachTeamIds: string[] = [];
+    const managementTeamIds: string[] = [];
     for (const row of teamMembers.data ?? []) {
-      memberTeamRoles[row.team_id] = row.role;
+      const roles = memberTeamRoles[row.team_id] ?? [];
+      roles.push(row.role);
+      memberTeamRoles[row.team_id] = roles;
       if (row.role === "coach") coachTeamIds.push(row.team_id);
+      if (row.role === "management") managementTeamIds.push(row.team_id);
     }
 
     const guardianPlayerIds = (guardianLinks.data ?? []).flatMap((guardian) => {
@@ -72,10 +77,13 @@ export const getViewerContext = cache(
 
     const managementClubSet = new Set(managementClubIds);
     const coachTeamSet = new Set(coachTeamIds);
+    const managementTeamSet = new Set(managementTeamIds);
     const editableTeamIds = visibleTeams
       .filter(
         (team) =>
-          managementClubSet.has(team.club_id) || coachTeamSet.has(team.id),
+          managementClubSet.has(team.club_id) ||
+          managementTeamSet.has(team.id) ||
+          coachTeamSet.has(team.id),
       )
       .map((team) => team.id);
 
@@ -84,15 +92,25 @@ export const getViewerContext = cache(
       email: user.email ?? null,
       managementClubIds,
       coachTeamIds,
+      managementTeamIds,
       memberTeamRoles,
       guardianPlayerIds,
       selfPlayerIds,
       visibleTeams,
       editableTeamIds,
-      isManagement: managementClubIds.length > 0,
+      isManagement:
+        managementClubIds.length > 0 || managementTeamIds.length > 0,
     };
   },
 );
+
+export function hasTeamRole(
+  ctx: ViewerContext,
+  teamId: string,
+  role: TeamRole,
+): boolean {
+  return ctx.memberTeamRoles[teamId]?.includes(role) ?? false;
+}
 
 export function canReadTeam(ctx: ViewerContext, teamId: string): boolean {
   return ctx.visibleTeams.some((team) => team.id === teamId);
@@ -110,7 +128,10 @@ export function canManageClub(ctx: ViewerContext, clubId: string): boolean {
 export function isClubStaff(ctx: ViewerContext, clubId: string): boolean {
   if (ctx.managementClubIds.includes(clubId)) return true;
   return ctx.visibleTeams.some(
-    (team) => team.club_id === clubId && ctx.coachTeamIds.includes(team.id),
+    (team) =>
+      team.club_id === clubId &&
+      (ctx.coachTeamIds.includes(team.id) ||
+        ctx.managementTeamIds.includes(team.id)),
   );
 }
 
@@ -143,8 +164,10 @@ export function viewerRoleLabel(ctx: ViewerContext): string {
   if (ctx.coachTeamIds.length > 0) return "Coach";
   if (ctx.guardianPlayerIds.length > 0) return "Guardian";
   if (ctx.selfPlayerIds.length > 0) return "Player";
-  const roles = Object.values(ctx.memberTeamRoles);
-  if (roles.includes("guardian")) return "Guardian";
+  const roles = Object.values(ctx.memberTeamRoles).flat();
+  if (roles.includes("guardian") || roles.includes("guardian_assistant")) {
+    return "Guardian";
+  }
   if (roles.includes("player")) return "Player";
   return "Member";
 }

@@ -83,23 +83,6 @@ export default async function StatsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Goals by player</CardTitle>
-          <CardDescription>Our goals in played matches</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {goalsByPlayer.data.length === 0 ? (
-            <EmptyState
-              title="No goals yet"
-              description="Add goals on match detail pages to populate this chart."
-            />
-          ) : (
-            <GoalsByPlayerChart data={goalsByPlayer.data} />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Results over time</CardTitle>
           <CardDescription>Goals for vs against by match</CardDescription>
         </CardHeader>
@@ -111,6 +94,23 @@ export default async function StatsPage() {
             />
           ) : (
             <ResultsOverTimeChart data={results.data} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Goals by player</CardTitle>
+          <CardDescription>Our goals in played matches</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {goalsByPlayer.data.length === 0 ? (
+            <EmptyState
+              title="No goals yet"
+              description="Add goals on match detail pages to populate this chart."
+            />
+          ) : (
+            <GoalsByPlayerChart data={goalsByPlayer.data} />
           )}
         </CardContent>
       </Card>

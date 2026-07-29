@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
+import { matchAllowsEvents } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
 import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
 import {
@@ -16,10 +17,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { value: MatchListFilter; label: string }[] = [
+  { value: "all", label: "All" },
   { value: "upcoming", label: "Upcoming" },
   { value: "played", label: "Played" },
   { value: "other", label: "Postponed / cancelled" },
-  { value: "all", label: "All" },
 ];
 
 export default async function MatchesPage({
@@ -34,7 +35,7 @@ export default async function MatchesPage({
     rawFilter === "all" ||
     rawFilter === "upcoming"
       ? rawFilter
-      : "upcoming";
+      : "all";
 
   const [{ data: matches, error }, team, canEdit] = await Promise.all([
     listMatches(filter),
@@ -119,7 +120,7 @@ export default async function MatchesPage({
                   </p>
                 </div>
                 <div className="text-sm sm:text-right">
-                  {match.status === "played" ? (
+                  {matchAllowsEvents(match.status) ? (
                     <p className="font-medium">
                       {formatScore(match.goals_for, match.goals_against)}
                     </p>

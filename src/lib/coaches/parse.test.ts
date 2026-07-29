@@ -27,6 +27,7 @@ describe("parseCoachForm", () => {
       first_name: "Alex",
       second_name: "Coach",
       joined_date: "2024-09-01",
+      date_of_birth: null,
       phone: null,
       email: null,
       notes: null,
@@ -54,6 +55,7 @@ describe("parseCoachForm", () => {
       first_name: "Alex",
       second_name: "Coach",
       joined_date: "2024-09-01",
+      date_of_birth: null,
       phone: null,
       email: null,
       notes: null,
@@ -70,6 +72,7 @@ describe("parseCoachForm", () => {
         coachFormData(
           {
             ...validFields,
+            date_of_birth: "1985-03-12",
             phone: "07123 456789",
             email: "alex@example.com",
             notes: "Available weekends",
@@ -82,6 +85,7 @@ describe("parseCoachForm", () => {
       first_name: "Alex",
       second_name: "Coach",
       joined_date: "2024-09-01",
+      date_of_birth: "1985-03-12",
       phone: "07123 456789",
       email: "alex@example.com",
       notes: "Available weekends",

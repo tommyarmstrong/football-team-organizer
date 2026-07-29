@@ -1,22 +1,27 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { savePlayerContactAction } from "@/lib/players/actions";
 import type { PlayerContact } from "@/lib/supabase/database.types";
+import type { PlayerGuardianLink } from "@/lib/data/guardians";
+import { guardianDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function PlayerContactForm({
   playerId,
   contact,
+  guardians,
   canEdit,
 }: {
   playerId: string;
   contact: PlayerContact | null;
+  guardians: PlayerGuardianLink[];
   canEdit: boolean;
 }) {
   const bound = savePlayerContactAction.bind(null, playerId);
@@ -24,6 +29,20 @@ export function PlayerContactForm({
     bound,
     INITIAL_ACTION_STATE,
   );
+  const [selectedGuardianId, setSelectedGuardianId] = useState(
+    contact?.emergency_guardian_id ?? "",
+  );
+
+  const phoneByGuardian = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const g of guardians) map.set(g.guardian_id, g.phone);
+    return map;
+  }, [guardians]);
+
+  const emergencyGuardian = guardians.find(
+    (g) => g.guardian_id === (contact?.emergency_guardian_id ?? ""),
+  );
+  const selectedPhone = phoneByGuardian.get(selectedGuardianId) ?? null;
 
   if (!canEdit) {
     return (
@@ -33,11 +52,13 @@ export function PlayerContactForm({
         <ReadOnly label="Address" value={contact?.address} />
         <ReadOnly
           label="Emergency contact"
-          value={contact?.emergency_contact_name}
+          value={
+            emergencyGuardian ? guardianDisplayName(emergencyGuardian) : null
+          }
         />
         <ReadOnly
           label="Emergency phone"
-          value={contact?.emergency_contact_phone}
+          value={emergencyGuardian?.phone ?? null}
         />
         <ReadOnly label="Medical notes" value={contact?.medical_notes} />
       </dl>
@@ -77,22 +98,33 @@ export function PlayerContactForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emergency_contact_name">Emergency contact</Label>
-          <Input
-            id="emergency_contact_name"
-            name="emergency_contact_name"
-            defaultValue={contact?.emergency_contact_name ?? ""}
-            disabled={pending}
-          />
+          <Label htmlFor="emergency_guardian_id">Emergency contact</Label>
+          <NativeSelect
+            id="emergency_guardian_id"
+            name="emergency_guardian_id"
+            value={selectedGuardianId}
+            onChange={(e) => setSelectedGuardianId(e.target.value)}
+            disabled={pending || guardians.length === 0}
+          >
+            <option value="">
+              {guardians.length === 0
+                ? "Link a guardian first"
+                : "Select a guardian"}
+            </option>
+            {guardians.map((guardian) => (
+              <option key={guardian.guardian_id} value={guardian.guardian_id}>
+                {guardianDisplayName(guardian)}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emergency_contact_phone">Emergency phone</Label>
+          <Label htmlFor="emergency_phone_display">Emergency phone</Label>
           <Input
-            id="emergency_contact_phone"
-            name="emergency_contact_phone"
-            type="tel"
-            defaultValue={contact?.emergency_contact_phone ?? ""}
-            disabled={pending}
+            id="emergency_phone_display"
+            readOnly
+            value={selectedPhone?.trim() ? selectedPhone : "—"}
+            disabled
           />
         </div>
         <div className="space-y-2 sm:col-span-2">

@@ -99,8 +99,12 @@ function AddCompetitionForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="new-comp-kind">Kind</Label>
-        <NativeSelect id="new-comp-kind" name="kind" disabled={pending}>
-          <option value="">Optional</option>
+        <NativeSelect
+          id="new-comp-kind"
+          name="kind"
+          defaultValue="league"
+          disabled={pending}
+        >
           {COMPETITION_KINDS.map((kind) => (
             <option key={kind} value={kind}>
               {labelCompetitionKind(kind)}
@@ -156,10 +160,9 @@ function CompetitionRow({ competition }: { competition: Competition }) {
           <NativeSelect
             id={`comp-kind-${competition.id}`}
             name="kind"
-            defaultValue={competition.kind ?? ""}
+            defaultValue={competition.kind ?? "league"}
             disabled={pending}
           >
-            <option value="">Optional</option>
             {COMPETITION_KINDS.map((kind) => (
               <option key={kind} value={kind}>
                 {labelCompetitionKind(kind)}

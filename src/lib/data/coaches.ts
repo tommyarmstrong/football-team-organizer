@@ -191,6 +191,55 @@ export async function removeCoachFromTeam(
   return { error: error?.message ?? null };
 }
 
+const HEAD_COACH_ROLE = "Head Coach";
+
+/** Set (or clear) the team's Head Coach assignment in team_coaches. */
+export async function setTeamHeadCoach(
+  teamId: string,
+  coachId: string | null,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { data: existing, error: listError } = await supabase
+    .from("team_coaches")
+    .select("id, coach_id, role")
+    .eq("team_id", teamId);
+
+  if (listError) return { error: listError.message };
+
+  const rows = existing ?? [];
+  const previousHeads = rows.filter(
+    (r) => r.role === HEAD_COACH_ROLE && r.coach_id !== coachId,
+  );
+
+  for (const row of previousHeads) {
+    const { error } = await supabase
+      .from("team_coaches")
+      .update({ role: "Assistant Coach" })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+
+  if (!coachId) return { error: null };
+
+  const already = rows.find((r) => r.coach_id === coachId);
+  if (already) {
+    if (already.role === HEAD_COACH_ROLE) return { error: null };
+    const { error } = await supabase
+      .from("team_coaches")
+      .update({ role: HEAD_COACH_ROLE })
+      .eq("id", already.id);
+    return { error: error?.message ?? null };
+  }
+
+  const { error } = await supabase.from("team_coaches").insert({
+    team_id: teamId,
+    coach_id: coachId,
+    role: HEAD_COACH_ROLE,
+  });
+  return { error: error?.message ?? null };
+}
+
 /** Coaches in a club not currently assigned to the given team. */
 export async function listCoachesNotOnTeam(
   clubId: string,

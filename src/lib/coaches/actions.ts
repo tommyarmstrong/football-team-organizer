@@ -10,6 +10,11 @@ import {
   removeCoachFromTeam,
   updateCoach,
 } from "@/lib/data/coaches";
+import {
+  createCoachObjective,
+  deleteCoachObjective,
+  updateCoachObjective,
+} from "@/lib/data/coach-objectives";
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
 import { parseCoachForm } from "@/lib/coaches/parse";
@@ -32,6 +37,7 @@ export async function createCoachAction(
   if (!data) return { error: "Could not create coach." };
 
   revalidatePath("/coaches");
+  revalidatePath("/club");
   redirect(`/coaches/${data.id}`);
 }
 
@@ -119,4 +125,50 @@ export async function removeCoachFromTeamAction(
   revalidatePath("/coaches");
   revalidatePath("/team");
   return { success: "Coach removed from team." };
+}
+
+export async function addCoachObjectiveAction(
+  coachId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const body = str(formData, "body");
+  if (!body) return { error: "Objective text is required." };
+
+  const { error } = await createCoachObjective({
+    coach_id: coachId,
+    body,
+    sort_order: 0,
+  });
+  if (error) return { error };
+
+  revalidatePath(`/coaches/${coachId}`);
+  return { success: "Objective added." };
+}
+
+export async function updateCoachObjectiveAction(
+  coachId: string,
+  objectiveId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const body = str(formData, "body");
+  if (!body) return { error: "Objective text is required." };
+
+  const { error } = await updateCoachObjective(objectiveId, { body });
+  if (error) return { error };
+
+  revalidatePath(`/coaches/${coachId}`);
+  return { success: "Objective saved." };
+}
+
+export async function deleteCoachObjectiveAction(
+  coachId: string,
+  objectiveId: string,
+): Promise<ActionState> {
+  const { error } = await deleteCoachObjective(objectiveId);
+  if (error) return { error };
+
+  revalidatePath(`/coaches/${coachId}`);
+  return { success: "Objective removed." };
 }

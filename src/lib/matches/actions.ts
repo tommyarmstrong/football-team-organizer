@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
-import { MATCH_STATUSES, MATCH_VENUES } from "@/lib/constants";
+import {
+  MATCH_STATUSES,
+  MATCH_VENUES,
+  matchAllowsEvents,
+} from "@/lib/constants";
 import { createMatch, updateMatch } from "@/lib/data/matches";
 import { parseOptionalInt, str } from "@/lib/form-parse";
 import type { MatchStatus, MatchVenue } from "@/lib/supabase/database.types";
@@ -18,6 +22,7 @@ export async function createMatchAction(
   const venue = str(formData, "venue") as MatchVenue;
   const competition_id = str(formData, "competition_id") || null;
   const notes = str(formData, "notes") || null;
+  const club_notes = str(formData, "club_notes") || null;
 
   if (!opponent_name || !date) {
     return { error: "Opponent and date are required." };
@@ -33,10 +38,12 @@ export async function createMatchAction(
     venue,
     competition_id,
     notes,
+    club_notes,
     status: "scheduled",
     goals_for: null,
     goals_against: null,
     player_of_the_match_id: null,
+    players_player_of_the_match_id: null,
   });
 
   if (error) return { error };
@@ -60,7 +67,10 @@ export async function updateMatchAction(
   const competition_id = str(formData, "competition_id") || null;
   const player_of_the_match_id =
     str(formData, "player_of_the_match_id") || null;
+  const players_player_of_the_match_id =
+    str(formData, "players_player_of_the_match_id") || null;
   const notes = str(formData, "notes") || null;
+  const club_notes = str(formData, "club_notes") || null;
 
   const goalsForRaw = parseOptionalInt(str(formData, "goals_for"), "Goals for");
   const goalsAgainstRaw = parseOptionalInt(
@@ -94,6 +104,7 @@ export async function updateMatchAction(
 
   let goals_for = goalsForRaw as number | null;
   let goals_against = goalsAgainstRaw as number | null;
+  const allowsEvents = matchAllowsEvents(status);
 
   if (status === "played") {
     if (goals_for == null || goals_against == null) {
@@ -101,8 +112,7 @@ export async function updateMatchAction(
         error: "Goals for and against are required when status is played.",
       };
     }
-  } else {
-    // Clearing score when leaving played is intentional (documented in UI).
+  } else if (!allowsEvents) {
     goals_for = null;
     goals_against = null;
   }
@@ -114,8 +124,12 @@ export async function updateMatchAction(
     venue,
     status,
     competition_id,
-    player_of_the_match_id: status === "played" ? player_of_the_match_id : null,
+    player_of_the_match_id: allowsEvents ? player_of_the_match_id : null,
+    players_player_of_the_match_id: allowsEvents
+      ? players_player_of_the_match_id
+      : null,
     notes,
+    club_notes,
     goals_for,
     goals_against,
   });

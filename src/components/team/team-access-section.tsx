@@ -71,14 +71,14 @@ export function TeamAccessSection({
       </form>
 
       <p className="text-muted-foreground text-xs">
-        Coaches can edit this team. Players get read-only access. Guardians are
-        linked to players on the Guardians page, not here.
+        A user may hold any combination of roles on this team (add one row per
+        role). The same person can have different roles on other teams.
       </p>
 
       {members.length === 0 ? (
         <EmptyState
           title="No team accounts linked"
-          description="Add coaches or players by their Auth user id."
+          description="Add any combination of roles by Auth user id (one row per role)."
         />
       ) : (
         <ul className="divide-border border-border divide-y rounded-xl border">

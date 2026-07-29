@@ -338,9 +338,6 @@ export async function listActiveRosterForActiveTeam(): Promise<{
 
 function friendlyRosterError(message: string | null): string | null {
   if (!message) return null;
-  if (message.includes("team_players_shirt_number_uidx")) {
-    return "That shirt number is already used in this team.";
-  }
   if (message.includes("team_players_team_player_unique")) {
     return "That player is already on this team.";
   }

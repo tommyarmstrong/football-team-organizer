@@ -2,20 +2,36 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { TEAM_GENDERS } from "@/lib/constants";
+import {
+  AGE_GROUPS,
+  TEAM_GENDERS,
+  TRAINING_DAYS,
+  TRAINING_DAY_LABELS,
+} from "@/lib/constants";
 import { updateTeamAction } from "@/lib/team/actions";
-import type { Team } from "@/lib/supabase/database.types";
+import type { Coach, Team } from "@/lib/supabase/database.types";
+import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-export function TeamProfileForm({ team }: { team: Team }) {
+export function TeamProfileForm({
+  team,
+  coaches,
+  headCoachId,
+}: {
+  team: Team;
+  coaches: Coach[];
+  headCoachId: string | null;
+}) {
   const [state, formAction, pending] = useActionState(
     updateTeamAction,
     INITIAL_ACTION_STATE,
   );
+
+  const selectedDays = new Set(team.training_days ?? []);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,14 +46,19 @@ export function TeamProfileForm({ team }: { team: Team }) {
           />
         </Field>
         <Field label="Age group" htmlFor="age_group">
-          <Input
+          <NativeSelect
             id="age_group"
             name="age_group"
             required
-            placeholder="e.g. U11"
             defaultValue={team.age_group}
             disabled={pending}
-          />
+          >
+            {AGE_GROUPS.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
         <Field label="Gender" htmlFor="gender">
           <NativeSelect
@@ -49,28 +70,41 @@ export function TeamProfileForm({ team }: { team: Team }) {
           >
             {TEAM_GENDERS.map((g) => (
               <option key={g} value={g}>
-                {g.charAt(0).toUpperCase() + g.slice(1)}
+                {labelGender(g)}
               </option>
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Home ground" htmlFor="home_ground">
+        <Field label="Home venue" htmlFor="home_venue">
           <Input
-            id="home_ground"
-            name="home_ground"
-            required
-            defaultValue={team.home_ground}
+            id="home_venue"
+            name="home_venue"
+            defaultValue={team.home_venue ?? ""}
             disabled={pending}
           />
         </Field>
-        <Field label="Head coach" htmlFor="head_coach_name">
+        <Field label="Training venue" htmlFor="training_venue">
           <Input
-            id="head_coach_name"
-            name="head_coach_name"
-            required
-            defaultValue={team.head_coach_name}
+            id="training_venue"
+            name="training_venue"
+            defaultValue={team.training_venue ?? ""}
             disabled={pending}
           />
+        </Field>
+        <Field label="Head coach" htmlFor="head_coach_id">
+          <NativeSelect
+            id="head_coach_id"
+            name="head_coach_id"
+            defaultValue={headCoachId ?? ""}
+            disabled={pending}
+          >
+            <option value="">None</option>
+            {coaches.map((coach) => (
+              <option key={coach.id} value={coach.id}>
+                {coachDisplayName(coach)}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
         <Field label="Season" htmlFor="season_label">
           <Input
@@ -83,6 +117,28 @@ export function TeamProfileForm({ team }: { team: Team }) {
           />
         </Field>
       </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Training days</legend>
+        <div className="flex flex-wrap gap-3">
+          {TRAINING_DAYS.map((day) => (
+            <label
+              key={day}
+              className="flex min-h-9 items-center gap-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                name="training_days"
+                value={day}
+                defaultChecked={selectedDays.has(day)}
+                disabled={pending}
+                className="border-input size-4 rounded"
+              />
+              {TRAINING_DAY_LABELS[day]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
       {state.success ? (

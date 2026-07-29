@@ -73,6 +73,15 @@ export function PlayerForm({
             ))}
           </NativeSelect>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="school">School</Label>
+          <Input
+            id="school"
+            name="school"
+            defaultValue={player?.school ?? ""}
+            disabled={pending}
+          />
+        </div>
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}

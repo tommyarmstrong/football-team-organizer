@@ -13,48 +13,72 @@ export type Database = {
         Row: {
           id: string;
           name: string;
+          website: string | null;
+          email: string | null;
+          phone: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           name: string;
+          website?: string | null;
+          email?: string | null;
+          phone?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          website?: string | null;
+          email?: string | null;
+          phone?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
       };
-      club_members: {
+      managers: {
         Row: {
           id: string;
           club_id: string;
-          user_id: string;
-          role: Database["public"]["Enums"]["club_role"];
+          user_id: string | null;
+          first_name: string;
+          second_name: string;
+          phone: string | null;
+          email: string | null;
+          notes: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           club_id: string;
-          user_id: string;
-          role?: Database["public"]["Enums"]["club_role"];
+          user_id?: string | null;
+          first_name: string;
+          second_name: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           club_id?: string;
-          user_id?: string;
-          role?: Database["public"]["Enums"]["club_role"];
+          user_id?: string | null;
+          first_name?: string;
+          second_name?: string;
+          phone?: string | null;
+          email?: string | null;
+          notes?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "club_members_club_id_fkey";
+            foreignKeyName: "managers_club_id_fkey";
             columns: ["club_id"];
             isOneToOne: false;
             referencedRelation: "clubs";
@@ -69,8 +93,9 @@ export type Database = {
           name: string;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
-          home_ground: string;
-          head_coach_name: string;
+          home_venue: string | null;
+          training_venue: string | null;
+          training_days: string[] | null;
           season_label: string;
           created_at: string;
           updated_at: string;
@@ -81,8 +106,9 @@ export type Database = {
           name: string;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
-          home_ground: string;
-          head_coach_name: string;
+          home_venue?: string | null;
+          training_venue?: string | null;
+          training_days?: string[] | null;
           season_label: string;
           created_at?: string;
           updated_at?: string;
@@ -93,8 +119,9 @@ export type Database = {
           name?: string;
           age_group?: string;
           gender?: Database["public"]["Enums"]["team_gender"];
-          home_ground?: string;
-          head_coach_name?: string;
+          home_venue?: string | null;
+          training_venue?: string | null;
+          training_days?: string[] | null;
           season_label?: string;
           created_at?: string;
           updated_at?: string;
@@ -149,6 +176,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           position: string | null;
+          school: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -159,6 +187,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           position?: string | null;
+          school?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -169,6 +198,7 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           position?: string | null;
+          school?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -188,8 +218,7 @@ export type Database = {
           phone: string | null;
           email: string | null;
           address: string | null;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
+          emergency_guardian_id: string | null;
           medical_notes: string | null;
           created_at: string;
           updated_at: string;
@@ -199,8 +228,7 @@ export type Database = {
           phone?: string | null;
           email?: string | null;
           address?: string | null;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
+          emergency_guardian_id?: string | null;
           medical_notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -210,8 +238,7 @@ export type Database = {
           phone?: string | null;
           email?: string | null;
           address?: string | null;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
+          emergency_guardian_id?: string | null;
           medical_notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -222,6 +249,13 @@ export type Database = {
             columns: ["player_id"];
             isOneToOne: true;
             referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_contacts_emergency_guardian_id_fkey";
+            columns: ["emergency_guardian_id"];
+            isOneToOne: false;
+            referencedRelation: "guardians";
             referencedColumns: ["id"];
           },
         ];
@@ -367,6 +401,7 @@ export type Database = {
           first_name: string;
           second_name: string;
           joined_date: string;
+          date_of_birth: string | null;
           dbs_checked: boolean;
           fa_level_1: boolean;
           fa_level_2: boolean;
@@ -383,6 +418,7 @@ export type Database = {
           first_name: string;
           second_name: string;
           joined_date: string;
+          date_of_birth?: string | null;
           dbs_checked?: boolean;
           fa_level_1?: boolean;
           fa_level_2?: boolean;
@@ -399,6 +435,7 @@ export type Database = {
           first_name?: string;
           second_name?: string;
           joined_date?: string;
+          date_of_birth?: string | null;
           dbs_checked?: boolean;
           fa_level_1?: boolean;
           fa_level_2?: boolean;
@@ -500,8 +537,10 @@ export type Database = {
           id: string;
           kickoff_time: string | null;
           notes: string | null;
+          club_notes: string | null;
           opponent_name: string;
           player_of_the_match_id: string | null;
+          players_player_of_the_match_id: string | null;
           status: Database["public"]["Enums"]["match_status"];
           team_id: string;
           updated_at: string;
@@ -516,8 +555,10 @@ export type Database = {
           id?: string;
           kickoff_time?: string | null;
           notes?: string | null;
+          club_notes?: string | null;
           opponent_name: string;
           player_of_the_match_id?: string | null;
+          players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
           team_id: string;
           updated_at?: string;
@@ -532,8 +573,10 @@ export type Database = {
           id?: string;
           kickoff_time?: string | null;
           notes?: string | null;
+          club_notes?: string | null;
           opponent_name?: string;
           player_of_the_match_id?: string | null;
+          players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
           team_id?: string;
           updated_at?: string;
@@ -557,6 +600,13 @@ export type Database = {
           {
             foreignKeyName: "matches_player_of_the_match_id_fkey";
             columns: ["player_of_the_match_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "matches_players_player_of_the_match_id_fkey";
+            columns: ["players_player_of_the_match_id"];
             isOneToOne: false;
             referencedRelation: "players";
             referencedColumns: ["id"];
@@ -624,6 +674,109 @@ export type Database = {
           },
         ];
       };
+      cards: {
+        Row: {
+          id: string;
+          match_id: string;
+          player_id: string | null;
+          coach_id: string | null;
+          guardian_id: string | null;
+          type: Database["public"]["Enums"]["card_type"];
+          coach_notes: string | null;
+          referee_notes: string | null;
+          club_notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          match_id: string;
+          player_id?: string | null;
+          coach_id?: string | null;
+          guardian_id?: string | null;
+          type: Database["public"]["Enums"]["card_type"];
+          coach_notes?: string | null;
+          referee_notes?: string | null;
+          club_notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          match_id?: string;
+          player_id?: string | null;
+          coach_id?: string | null;
+          guardian_id?: string | null;
+          type?: Database["public"]["Enums"]["card_type"];
+          coach_notes?: string | null;
+          referee_notes?: string | null;
+          club_notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cards_match_id_fkey";
+            columns: ["match_id"];
+            isOneToOne: false;
+            referencedRelation: "matches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cards_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cards_coach_id_fkey";
+            columns: ["coach_id"];
+            isOneToOne: false;
+            referencedRelation: "coaches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cards_guardian_id_fkey";
+            columns: ["guardian_id"];
+            isOneToOne: false;
+            referencedRelation: "guardians";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      coach_development_objectives: {
+        Row: {
+          id: string;
+          coach_id: string;
+          body: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          coach_id: string;
+          body: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          coach_id?: string;
+          body?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "coach_development_objectives_coach_id_fkey";
+            columns: ["coach_id"];
+            isOneToOne: false;
+            referencedRelation: "coaches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -632,6 +785,7 @@ export type Database = {
       is_club_management: { Args: { p_club_id: string }; Returns: boolean };
       is_club_staff: { Args: { p_club_id: string }; Returns: boolean };
       can_edit_team: { Args: { p_team_id: string }; Returns: boolean };
+      can_edit_match_goals: { Args: { p_team_id: string }; Returns: boolean };
       can_read_team: { Args: { p_team_id: string }; Returns: boolean };
       can_edit_player: { Args: { p_player_id: string }; Returns: boolean };
       can_read_player: { Args: { p_player_id: string }; Returns: boolean };
@@ -646,14 +800,16 @@ export type Database = {
       };
     };
     Enums: {
-      club_role: "management";
-      team_role: "coach" | "guardian" | "player";
+      team_role:
+        "management" | "coach" | "guardian" | "guardian_assistant" | "player";
       guardian_relationship:
-        "dad" | "mum" | "guardian" | "football_contact" | "other";
+        "parent" | "guardian" | "football_contact" | "other";
       competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
-      match_status: "scheduled" | "played" | "postponed" | "cancelled";
+      match_status:
+        "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_venue: "home" | "away" | "neutral";
       team_gender: "boys" | "girls" | "mixed";
+      card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -674,7 +830,7 @@ export type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
 export type Club = Tables<"clubs">;
-export type ClubMember = Tables<"club_members">;
+export type Manager = Tables<"managers">;
 export type Team = Tables<"teams">;
 export type TeamMember = Tables<"team_members">;
 export type Player = Tables<"players">;
@@ -687,11 +843,13 @@ export type Coach = Tables<"coaches">;
 export type TeamCoach = Tables<"team_coaches">;
 export type Match = Tables<"matches">;
 export type Goal = Tables<"goals">;
+export type Card = Tables<"cards">;
+export type CoachDevelopmentObjective = Tables<"coach_development_objectives">;
 
-export type ClubRole = Enums<"club_role">;
 export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
 export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
 export type MatchVenue = Enums<"match_venue">;
 export type MatchStatus = Enums<"match_status">;
+export type CardType = Enums<"card_type">;

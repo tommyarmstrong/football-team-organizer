@@ -108,3 +108,24 @@ export async function createClub(
   if (error) return { data: null, error: error.message };
   return { data: (data as Club) ?? null, error: null };
 }
+
+export async function updateClub(
+  id: string,
+  input: {
+    name: string;
+    website?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  },
+): Promise<{ data: Club | null; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clubs")
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
+}

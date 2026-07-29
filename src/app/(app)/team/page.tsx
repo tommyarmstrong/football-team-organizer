@@ -6,10 +6,18 @@ import {
 import { getActiveTeam } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { listCompetitions } from "@/lib/data/competitions";
-import { listCoachesNotOnTeam, listTeamCoaches } from "@/lib/data/coaches";
+import {
+  listCoaches,
+  listCoachesNotOnTeam,
+  listTeamCoaches,
+} from "@/lib/data/coaches";
 import { listPlayersNotOnTeam, listRosterForTeam } from "@/lib/data/players";
-import { listTeamMembers } from "@/lib/data/members";
+import {
+  listGuardianAssistantCandidates,
+  listGuardianAssistants,
+} from "@/lib/data/members";
 import { labelGender } from "@/lib/format";
+import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -18,7 +26,7 @@ import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
-import { TeamAccessSection } from "@/components/team/team-access-section";
+import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
 import {
   Card,
   CardContent,
@@ -29,7 +37,11 @@ import {
 
 export default async function TeamPage() {
   const ctx = await getViewerContext();
-  const [club, team] = await Promise.all([getPrimaryClub(), getActiveTeam()]);
+  const [club, team, { data: clubCoaches }] = await Promise.all([
+    getPrimaryClub(),
+    getActiveTeam(),
+    listCoaches(),
+  ]);
 
   if (!ctx) {
     return (
@@ -40,12 +52,14 @@ export default async function TeamPage() {
     );
   }
 
-  // Prefer the active team's club — getPrimaryClub() can be null even when the
-  // user is management of the team they can already edit.
   const createClubId = team?.club_id ?? club?.id ?? ctx.managementClubIds[0];
   const canCreateTeam = createClubId
     ? canManageClub(ctx, createClubId)
     : ctx.isManagement;
+
+  const coachesForClub = club
+    ? clubCoaches.filter((c) => c.club_id === club.id)
+    : clubCoaches;
 
   if (!team) {
     return (
@@ -64,7 +78,7 @@ export default async function TeamPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CreateTeamForm />
+              <CreateTeamForm coaches={coachesForClub} />
             </CardContent>
           </Card>
         ) : (
@@ -78,6 +92,7 @@ export default async function TeamPage() {
   }
 
   const canEdit = canEditTeam(ctx, team.id);
+  const teamClubCoaches = clubCoaches.filter((c) => c.club_id === team.club_id);
 
   const [
     { data: competitions, error: competitionsError },
@@ -85,7 +100,8 @@ export default async function TeamPage() {
     { data: playerCandidates },
     { data: teamCoaches, error: teamCoachesError },
     { data: coachCandidates },
-    { data: teamMembers },
+    { data: assistants },
+    { data: assistantCandidates },
   ] = await Promise.all([
     listCompetitions(team.id),
     listRosterForTeam(team.id, { includeInactive: true }),
@@ -93,13 +109,13 @@ export default async function TeamPage() {
       ? listPlayersNotOnTeam(club.id, team.id)
       : Promise.resolve({ data: [], error: null }),
     listTeamCoaches(team.id),
-    club
-      ? listCoachesNotOnTeam(club.id, team.id)
-      : Promise.resolve({ data: [], error: null }),
-    canEdit
-      ? listTeamMembers(team.id)
-      : Promise.resolve({ data: [], error: null }),
+    listCoachesNotOnTeam(team.club_id, team.id),
+    listGuardianAssistants(team.id, team.club_id),
+    listGuardianAssistantCandidates(team.id, team.club_id),
   ]);
+
+  const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
+  const trainingDaysLabel = formatTrainingDays(team.training_days);
 
   return (
     <div className="space-y-8">
@@ -119,14 +135,24 @@ export default async function TeamPage() {
         </CardHeader>
         <CardContent>
           {canEdit ? (
-            <TeamProfileForm key={team.id} team={team} />
+            <TeamProfileForm
+              key={team.id}
+              team={team}
+              coaches={teamClubCoaches}
+              headCoachId={headCoach?.coach_id ?? null}
+            />
           ) : (
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <ReadOnly label="Team name" value={team.name} />
               <ReadOnly label="Age group" value={team.age_group} />
               <ReadOnly label="Gender" value={labelGender(team.gender)} />
-              <ReadOnly label="Home ground" value={team.home_ground} />
-              <ReadOnly label="Head coach" value={team.head_coach_name} />
+              <ReadOnly label="Home venue" value={team.home_venue ?? "—"} />
+              <ReadOnly
+                label="Training venue"
+                value={team.training_venue ?? "—"}
+              />
+              <ReadOnly label="Training days" value={trainingDaysLabel} />
+              <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
               <ReadOnly label="Season" value={team.season_label} />
             </dl>
           )}
@@ -182,6 +208,24 @@ export default async function TeamPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Guardian assistants</CardTitle>
+          <CardDescription>
+            Guardians who can record goal scorers and assists during matches.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <GuardianAssistantsSection
+            key={team.id}
+            teamId={team.id}
+            assistants={assistants}
+            candidates={assistantCandidates}
+            canEdit={canEdit}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Competitions</CardTitle>
           <CardDescription>
             Leagues, cups, and other competitions for {team.season_label}.
@@ -200,25 +244,6 @@ export default async function TeamPage() {
         </CardContent>
       </Card>
 
-      {canEdit ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Team access</CardTitle>
-            <CardDescription>
-              Link coach and player accounts to this team. Guardians are managed
-              on the Guardians page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TeamAccessSection
-              key={team.id}
-              teamId={team.id}
-              members={teamMembers}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
-
       {canCreateTeam ? (
         <Card>
           <CardHeader>
@@ -226,12 +251,17 @@ export default async function TeamPage() {
             <CardDescription>Add another team to {club?.name}.</CardDescription>
           </CardHeader>
           <CardContent>
-            <CreateTeamForm />
+            <CreateTeamForm coaches={teamClubCoaches} />
           </CardContent>
         </Card>
       ) : null}
     </div>
   );
+}
+
+function formatTrainingDays(days: string[] | null): string {
+  if (!days || days.length === 0) return "—";
+  return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDay] ?? d).join(", ");
 }
 
 function ReadOnly({ label, value }: { label: string; value: string }) {

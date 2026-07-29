@@ -13,10 +13,10 @@ const BASE_NAV_ITEMS = [
 ] as const;
 
 const STAFF_NAV_ITEM = { href: "/coaches", label: "Coaches" } as const;
-const MANAGEMENT_NAV_ITEM = {
-  href: "/guardians",
-  label: "Guardians",
-} as const;
+const MANAGEMENT_NAV_ITEMS = [
+  { href: "/club", label: "Club" },
+  { href: "/guardians", label: "Guardians" },
+] as const;
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -34,7 +34,7 @@ export function AppNav({
   const items = [
     ...BASE_NAV_ITEMS,
     ...(showStaff ? [STAFF_NAV_ITEM] : []),
-    ...(showManagement ? [MANAGEMENT_NAV_ITEM] : []),
+    ...(showManagement ? MANAGEMENT_NAV_ITEMS : []),
   ];
 
   return (

@@ -9,18 +9,26 @@ Attribute lists for each domain object, based on the current database schema. Fi
 ### Attributes
 
 - Name (required)
+- Website
+- Email
+- Phone
 
 ---
 
-## Club member
+## Manager
 
-Club-wide access (management). Links an auth user to a club.
+Club-level person (same shape as coach / guardian). Club-wide management
+permissions apply when this record is linked to a login.
 
 ### Attributes
 
 - Club (required)
-- User (required)
-- Role (required) — `management`
+- User — optional link to the person’s auth account
+- First name (required)
+- Second name (required)
+- Phone
+- Email
+- Notes
 
 ---
 
@@ -32,34 +40,30 @@ Belongs to a club. Squad, fixtures, and competitions are scoped to a team.
 
 - Club (required)
 - Name (required)
-- Age group (required) — e.g. `U9`, `U11`
+- Age group (required) — `U7`…`U16` | `Adults`
 - Gender (required) — `boys` | `girls` | `mixed`
 - Home venue
-- Head coach name (required)
+- Training venue
+- Training days — weekdays (`mon`…`sun`)
 - Season label (required) — e.g. `2025/26`
 
-### Required Updates
-
-- Home venue - make optional, not required and change "ground" to "venue"
-- Training venue
-- Training days
-- Coach roles should be drop down with: 'Head Coach' | 'Assistent Coach' | 'Sporting Director' | 'Head of Year' | 'Head of Boys' | 'Head of Girls'
+Head coach is assigned via team coaches with role `Head Coach` (not a free-text field on the team).
 
 ---
 
 ## Team member
 
-Team-scoped access. Links an auth user to a team.
+Team-scoped access. Links an auth user to a team with one role. A user may have
+**multiple** `team_members` rows for the same team (one per role), e.g. coach +
+player + management on team A and only coach on team B.
 
 ### Attributes
 
 - Team (required)
 - User (required)
-- Role (required) — `coach` | `guardian` | `player`
+- Role (required) — `management` | `coach` | `guardian` | `guardian_assistant` | `player`
 
-### Required Updates
-
-- Role options should be `coach` | `guardian assistant` | `guardian` | `player`
+Unique on `(team, user, role)`.
 
 ---
 
@@ -74,12 +78,7 @@ Club-level person. Assigned to teams via team player membership.
 - First name (required)
 - Last name (required)
 - Position
-
-### Required Updates
-
-- Date of birth (date)
-- Season fees paid (tick box)
-- FA registered (tick box)
+- School
 
 ---
 
@@ -93,9 +92,10 @@ Sensitive contact details (1:1 with player). Stricter access than the player pro
 - Phone
 - Email
 - Address
-- Emergency contact name
-- Emergency contact phone
+- Emergency contact — linked guardian
 - Medical notes
+
+Emergency phone is taken from the linked guardian’s phone (not stored separately).
 
 ---
 
@@ -116,7 +116,7 @@ Club-level person. Can be linked to zero, one, or many players.
 For each linked player:
 
 - Player (required)
-- Relationship (required) — `Dad` | `Mum` | `Guardian` | `Football contact` | `Other`
+- Relationship (required) — `Parent` | `Guardian` | `Football contact` | `Other`
 - Legal guardian — checkbox (default off)
 
 ---
@@ -143,6 +143,7 @@ Club-level coaching staff record (distinct from auth team membership).
 - Club (required)
 - First name (required)
 - Second name (required)
+- Date of birth
 - Date joined (required)
 - DBS checked (required) — default `false`
 - FA Level 1 (required) — default `false`
@@ -151,6 +152,10 @@ Club-level coaching staff record (distinct from auth team membership).
 - Email
 - Notes
 - Biography
+
+### Development objectives
+
+Zero, one, or many text objectives per coach (`coach_development_objectives`).
 
 ---
 
@@ -162,7 +167,7 @@ Assigns a club coach to a team.
 
 - Team (required)
 - Coach (required)
-- Role — free-text staff role on that team (e.g. head coach, assistant)
+- Role — `Head Coach` | `Assistant Coach` | `Sporting Director` | `Head of Year` | `Head of Boys` | `Head of Girls`
 
 ---
 
@@ -174,11 +179,7 @@ Competitions a team enters this season.
 
 - Team (required)
 - Name (required)
-- Kind — `league` | `cup` | `friendly` | `tournament` | `other`
-
-### Required Updates
-
-- Default kind to `league`
+- Kind — `league` | `cup` | `friendly` | `tournament` | `other` (default `league`)
 
 ---
 
@@ -194,15 +195,15 @@ Fixture / result for a team.
 - Kick-off time
 - Venue (required) — `home` | `away` | `neutral`
 - Competition
-- Player of the match
-- Status (required) — `scheduled` | `played` | `postponed` | `cancelled` (default `scheduled`)
+- Coach's player of the match
+- Player's player of the match
+- Status (required) — `scheduled` | `in_progress` | `played` | `postponed` | `cancelled` (default `scheduled`)
 - Goals for
 - Goals against — opponent aggregate score only
-- Notes
+- Coach's notes
+- Club notes
 
-### Required Updates
-
-- Add zero, one or multiple goals
+Goals, cards, scores, and both players of the match are editable when status is `in_progress` or `played`.
 
 ---
 
@@ -220,3 +221,18 @@ Goal scored by one of our players. Opposition scorers are not recorded.
 - Penalty (required) — default `false`
 - Free kick (required) — default `false`
 - From set piece (required) — default `false`
+
+---
+
+## Card
+
+Disciplinary / other card recorded against a match. Add zero, one, or many cards per match.
+
+### Attributes
+
+- Match (required)
+- Linked person (required) — exactly one of: Player | Coach | Guardian
+- Type (required) — `Yellow card (1st)` | `Yellow card (2nd)` | `Red card` | `Timeout` | `Other`
+- Coach notes
+- Referee notes
+- Club notes

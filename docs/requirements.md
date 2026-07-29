@@ -110,7 +110,7 @@ Entities below drive schema design in Stage 4. Field lists reflect agreed MVP de
 
 | Role                                                      | Scope                                      | Read                                                                                      | Write                                                                            |
 | --------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Management (`club_members.role = management`)             | Whole club                                 | Everything in the club                                                                    | Everything in the club                                                           |
+| Management (`managers` with linked login)                 | Whole club                                 | Everything in the club                                                                    | Everything in the club                                                           |
 | Coach (`team_members.role = coach`)                       | Assigned teams edit; other club teams read | All club teams' squad/fixture/stats data                                                  | Own teams: squad, matches, goals, player of the match, competitions, team access |
 | Guardian (`guardians` + `player_guardians`)               | Teams of their linked players              | Those teams' squad, fixtures, stats, player of the match; linked players' contact details | Own / linked player contact details only                                         |
 | Player (`players.user_id` / `team_members.role = player`) | Their teams                                | Same read as guardian, for their own teams                                                | Own contact details only                                                         |
@@ -123,9 +123,10 @@ Sensitive contact details live in `player_contacts` with stricter RLS so guardia
 | ----------------------- | ------------------------ |
 | id                      | UUID                     |
 | name                    | Club / organisation name |
+| website / email / phone | Optional contact details |
 | created_at / updated_at | Timestamps               |
 
-Management is recorded in `club_members` (`club_id`, `user_id`, `role = management`). The first management member is created via the `create_club_with_management` RPC to avoid a chicken-and-egg RLS problem.
+Management is recorded in `managers` (club people with optional `user_id`). Linking a login grants club-wide permissions. The first manager is created via the `create_club_with_management` RPC to avoid a chicken-and-egg RLS problem.
 
 ### Team
 
@@ -143,12 +144,12 @@ Management is recorded in `club_members` (`club_id`, `user_id`, `role = manageme
 
 **Related (not columns on `teams`):**
 
-| Relation       | How                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------- |
-| Squad          | `team_players` linking club `players` to the team, with per-team `shirt_number`/`active` |
-| Coaching staff | `team_coaches` linking club `coaches` to the team                                        |
-| Competitions   | `competitions` where `competitions.team_id = teams.id`                                   |
-| Access         | `team_members` linking auth users to the team with role `coach`, `guardian`, or `player` |
+| Relation       | How                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Squad          | `team_players` linking club `players` to the team, with per-team `shirt_number`/`active`                                                                     |
+| Coaching staff | `team_coaches` linking club `coaches` to the team                                                                                                            |
+| Competitions   | `competitions` where `competitions.team_id = teams.id`                                                                                                       |
+| Access         | `team_members` linking auth users to the team; any combination of roles `management`, `coach`, `guardian`, `guardian_assistant`, `player` (one row per role) |
 
 ### Competition
 
@@ -219,29 +220,32 @@ Track whether a player played in a match (apps / minutes). **Deferred** — MVP 
 
 ### Auth user & memberships
 
-Supabase Auth (email/password). Access is derived from three membership tables:
+Supabase Auth (email/password). Access is derived from membership tables and linked people records:
 
-**`club_members`** — club-wide roles:
+**`managers`** — club-level people; optional `user_id` grants club-wide management:
 
-| Field      | Notes           |
-| ---------- | --------------- |
-| id         | UUID            |
-| club_id    | FK → clubs      |
-| user_id    | FK → auth.users |
-| role       | `management`    |
-| created_at | Timestamp       |
+| Field                    | Notes                    |
+| ------------------------ | ------------------------ |
+| id                       | UUID                     |
+| club_id                  | FK → clubs               |
+| user_id                  | Optional FK → auth.users |
+| first_name / second_name | Required                 |
+| phone / email / notes    | Optional                 |
+| created_at / updated_at  | Timestamps               |
 
-**`team_members`** — team-scoped roles:
+**`team_members`** — team-scoped roles (additive; unique on team + user + role):
 
-| Field      | Notes                             |
-| ---------- | --------------------------------- |
-| id         | UUID                              |
-| team_id    | FK → teams                        |
-| user_id    | FK → auth.users                   |
-| role       | `coach` \| `guardian` \| `player` |
-| created_at | Timestamp                         |
+| Field      | Notes                                                                     |
+| ---------- | ------------------------------------------------------------------------- |
+| id         | UUID                                                                      |
+| team_id    | FK → teams                                                                |
+| user_id    | FK → auth.users                                                           |
+| role       | `management` \| `coach` \| `guardian` \| `guardian_assistant` \| `player` |
+| created_at | Timestamp                                                                 |
 
-**`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they appear in any of `club_members`, `team_members`, `guardians.user_id`, or `players.user_id` (checked via the `has_app_access` RPC in middleware).
+A user may hold any combination of roles on one team and a different set on another.
+
+**`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they appear in any of `managers.user_id`, `team_members`, `guardians.user_id`, or `players.user_id` (checked via the `has_app_access` RPC in middleware).
 
 RLS uses SECURITY DEFINER helper functions (`is_club_management`, `is_club_staff`, `can_read_club`, `can_read_team`, `can_read_team_row`, `can_edit_team`, `can_read_player`, `can_read_player_row`, `can_edit_player`, `can_view_player_contact`, `player_club_id`) to enforce these rules on every table.
 

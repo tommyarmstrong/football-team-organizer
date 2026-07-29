@@ -1,4 +1,6 @@
+import { CARD_TYPE_LABELS, MATCH_STATUS_LABELS } from "@/lib/constants";
 import type {
+  CardType,
   CompetitionKind,
   MatchStatus,
   MatchVenue,
@@ -57,6 +59,13 @@ export function guardianDisplayName(guardian: {
   return `${guardian.first_name} ${guardian.second_name}`.trim();
 }
 
+export function managerDisplayName(manager: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${manager.first_name} ${manager.second_name}`.trim();
+}
+
 export function formatScore(
   goalsFor: number | null,
   goalsAgainst: number | null,
@@ -84,12 +93,16 @@ export function labelVenue(venue: MatchVenue): string {
 }
 
 export function labelMatchStatus(status: MatchStatus): string {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return MATCH_STATUS_LABELS[status] ?? status;
 }
 
 export function labelCompetitionKind(kind: CompetitionKind | null): string {
   if (!kind) return "—";
   return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+export function labelCardType(type: CardType): string {
+  return CARD_TYPE_LABELS[type];
 }
 
 function parseDateOnly(date: string): Date {

@@ -27,6 +27,7 @@ export async function createPlayerAction(
   const first_name = str(formData, "first_name");
   const last_name = str(formData, "last_name");
   const position = str(formData, "position") || null;
+  const school = str(formData, "school") || null;
 
   if (!first_name || !last_name) {
     return { error: "First and last name are required." };
@@ -37,12 +38,14 @@ export async function createPlayerAction(
     first_name,
     last_name,
     position,
+    school,
   });
 
   if (error) return { error };
   if (!data) return { error: "Could not create player." };
 
   revalidatePath("/players");
+  revalidatePath("/club");
   redirect(`/players/${data.id}`);
 }
 
@@ -54,12 +57,18 @@ export async function updatePlayerAction(
   const first_name = str(formData, "first_name");
   const last_name = str(formData, "last_name");
   const position = str(formData, "position") || null;
+  const school = str(formData, "school") || null;
 
   if (!first_name || !last_name) {
     return { error: "First and last name are required." };
   }
 
-  const { error } = await updatePlayer(id, { first_name, last_name, position });
+  const { error } = await updatePlayer(id, {
+    first_name,
+    last_name,
+    position,
+    school,
+  });
   if (error) return { error };
 
   revalidatePath("/players");
@@ -84,8 +93,7 @@ export async function savePlayerContactAction(
     phone: str(formData, "phone") || null,
     email: str(formData, "email") || null,
     address: str(formData, "address") || null,
-    emergency_contact_name: str(formData, "emergency_contact_name") || null,
-    emergency_contact_phone: str(formData, "emergency_contact_phone") || null,
+    emergency_guardian_id: str(formData, "emergency_guardian_id") || null,
     medical_notes: str(formData, "medical_notes") || null,
   });
 

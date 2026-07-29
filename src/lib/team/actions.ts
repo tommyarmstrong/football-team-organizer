@@ -17,14 +17,76 @@ import {
   updateTeam,
 } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
+import { setTeamHeadCoach } from "@/lib/data/coaches";
 import type {
   CompetitionKind,
   TeamGender,
 } from "@/lib/supabase/database.types";
-import { COMPETITION_KINDS, TEAM_GENDERS } from "@/lib/constants";
+import {
+  AGE_GROUPS,
+  COMPETITION_KINDS,
+  TEAM_GENDERS,
+  TRAINING_DAYS,
+  type AgeGroup,
+  type TrainingDay,
+} from "@/lib/constants";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
+}
+
+function parseTrainingDays(formData: FormData): TrainingDay[] {
+  return formData
+    .getAll("training_days")
+    .map((v) => String(v))
+    .filter((d): d is TrainingDay =>
+      (TRAINING_DAYS as readonly string[]).includes(d),
+    );
+}
+
+function parseTeamFields(formData: FormData):
+  | {
+      ok: true;
+      name: string;
+      age_group: AgeGroup;
+      gender: TeamGender;
+      home_venue: string | null;
+      training_venue: string | null;
+      training_days: TrainingDay[];
+      season_label: string;
+      head_coach_id: string | null;
+    }
+  | { ok: false; error: string } {
+  const name = str(formData, "name");
+  const age_group = str(formData, "age_group");
+  const gender = str(formData, "gender") as TeamGender;
+  const home_venue = str(formData, "home_venue") || null;
+  const training_venue = str(formData, "training_venue") || null;
+  const training_days = parseTrainingDays(formData);
+  const season_label = str(formData, "season_label");
+  const head_coach_id = str(formData, "head_coach_id") || null;
+
+  if (!name || !age_group || !season_label) {
+    return { error: "Name, age group, and season are required.", ok: false };
+  }
+  if (!(AGE_GROUPS as readonly string[]).includes(age_group)) {
+    return { error: "Select a valid age group.", ok: false };
+  }
+  if (!TEAM_GENDERS.includes(gender)) {
+    return { error: "Invalid gender.", ok: false };
+  }
+
+  return {
+    ok: true,
+    name,
+    age_group: age_group as AgeGroup,
+    gender,
+    home_venue,
+    training_venue,
+    training_days,
+    season_label,
+    head_coach_id,
+  };
 }
 
 export async function setActiveTeamAction(teamId: string): Promise<void> {
@@ -44,39 +106,26 @@ export async function updateTeamAction(
   const team = await getActiveTeam();
   if (!team) return { error: "No team selected." };
 
-  const name = str(formData, "name");
-  const age_group = str(formData, "age_group");
-  const gender = str(formData, "gender") as TeamGender;
-  const home_ground = str(formData, "home_ground");
-  const head_coach_name = str(formData, "head_coach_name");
-  const season_label = str(formData, "season_label");
-
-  if (
-    !name ||
-    !age_group ||
-    !home_ground ||
-    !head_coach_name ||
-    !season_label
-  ) {
-    return { error: "All team fields are required." };
-  }
-  if (!TEAM_GENDERS.includes(gender)) {
-    return { error: "Invalid gender." };
-  }
+  const parsed = parseTeamFields(formData);
+  if (!parsed.ok) return { error: parsed.error };
 
   const { error } = await updateTeam(team.id, {
-    name,
-    age_group,
-    gender,
-    home_ground,
-    head_coach_name,
-    season_label,
+    name: parsed.name,
+    age_group: parsed.age_group,
+    gender: parsed.gender,
+    home_venue: parsed.home_venue,
+    training_venue: parsed.training_venue,
+    training_days: parsed.training_days,
+    season_label: parsed.season_label,
   });
-
   if (error) return { error };
+
+  const headError = await setTeamHeadCoach(team.id, parsed.head_coach_id);
+  if (headError.error) return { error: headError.error };
 
   revalidatePath("/team");
   revalidatePath("/dashboard");
+  revalidatePath("/coaches");
   return { success: "Team profile saved." };
 }
 
@@ -103,38 +152,27 @@ export async function createTeamAction(
     return { error: "No club found for your account." };
   }
 
-  const name = str(formData, "name");
-  const age_group = str(formData, "age_group");
-  const gender = str(formData, "gender") as TeamGender;
-  const home_ground = str(formData, "home_ground");
-  const head_coach_name = str(formData, "head_coach_name");
-  const season_label = str(formData, "season_label");
-
-  if (
-    !name ||
-    !age_group ||
-    !home_ground ||
-    !head_coach_name ||
-    !season_label
-  ) {
-    return { error: "All team fields are required." };
-  }
-  if (!TEAM_GENDERS.includes(gender)) {
-    return { error: "Invalid gender." };
-  }
+  const parsed = parseTeamFields(formData);
+  if (!parsed.ok) return { error: parsed.error };
 
   const { data, error } = await createTeam({
     club_id: clubId,
-    name,
-    age_group,
-    gender,
-    home_ground,
-    head_coach_name,
-    season_label,
+    name: parsed.name,
+    age_group: parsed.age_group,
+    gender: parsed.gender,
+    home_venue: parsed.home_venue,
+    training_venue: parsed.training_venue,
+    training_days: parsed.training_days,
+    season_label: parsed.season_label,
   });
 
   if (error) return { error };
   if (!data) return { error: "Could not create team." };
+
+  if (parsed.head_coach_id) {
+    const headError = await setTeamHeadCoach(data.id, parsed.head_coach_id);
+    if (headError.error) return { error: headError.error };
+  }
 
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_TEAM_COOKIE, data.id, {
@@ -156,7 +194,7 @@ export async function createCompetitionAction(
   const kind =
     kindRaw && COMPETITION_KINDS.includes(kindRaw as CompetitionKind)
       ? (kindRaw as CompetitionKind)
-      : null;
+      : "league";
 
   if (!name) return { error: "Competition name is required." };
 
@@ -178,7 +216,7 @@ export async function updateCompetitionAction(
   const kind =
     kindRaw && COMPETITION_KINDS.includes(kindRaw as CompetitionKind)
       ? (kindRaw as CompetitionKind)
-      : null;
+      : "league";
 
   if (!name) return { error: "Competition name is required." };
 
