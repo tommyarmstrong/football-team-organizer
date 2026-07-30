@@ -175,16 +175,6 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   other: "Other",
 };
 
-export const CARD_PERSON_KINDS = ["player", "coach", "guardian"] as const;
-
-export type CardPersonKind = (typeof CARD_PERSON_KINDS)[number];
-
-export const CARD_PERSON_KIND_LABELS: Record<CardPersonKind, string> = {
-  player: "Player",
-  coach: "Coach",
-  guardian: "Guardian",
-};
-
 export type MatchListFilter = "upcoming" | "played" | "other" | "all";
 
 /** Statuses that allow score, goals, cards, and player-of-the-match fields. */

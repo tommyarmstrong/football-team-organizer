@@ -2,39 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/action-state";
-import {
-  CARD_PERSON_KINDS,
-  CARD_TYPES,
-  type CardPersonKind,
-} from "@/lib/constants";
+import { CARD_TYPES } from "@/lib/constants";
 import { createCard, deleteCard, updateCard } from "@/lib/data/cards";
 import { str } from "@/lib/form-parse";
 import type { CardType, TablesInsert } from "@/lib/supabase/database.types";
 
-function parsePersonLink(formData: FormData):
-  | {
-      player_id: string | null;
-      coach_id: string | null;
-      guardian_id: string | null;
-    }
-  | { error: string } {
-  const person_kind = str(formData, "person_kind") as CardPersonKind;
-  const person_id = str(formData, "person_id");
-
-  if (!CARD_PERSON_KINDS.includes(person_kind)) {
-    return {
-      error: "Select whether this card is for a player, coach, or guardian.",
-    };
+function parsePlayerId(formData: FormData): string | { error: string } {
+  const player_id = str(formData, "player_id");
+  if (!player_id) {
+    return { error: "Select a player." };
   }
-  if (!person_id) {
-    return { error: "Select a person." };
-  }
-
-  return {
-    player_id: person_kind === "player" ? person_id : null,
-    coach_id: person_kind === "coach" ? person_id : null,
-    guardian_id: person_kind === "guardian" ? person_id : null,
-  };
+  return player_id;
 }
 
 function parseCardType(formData: FormData): CardType | { error: string } {
@@ -53,15 +31,15 @@ export async function createCardAction(
   const type = parseCardType(formData);
   if (typeof type === "object") return type;
 
-  const person = parsePersonLink(formData);
-  if ("error" in person) return person;
+  const player_id = parsePlayerId(formData);
+  if (typeof player_id === "object") return player_id;
 
   const input: TablesInsert<"cards"> = {
     match_id: matchId,
     type,
-    player_id: person.player_id,
-    coach_id: person.coach_id,
-    guardian_id: person.guardian_id,
+    player_id,
+    coach_id: null,
+    guardian_id: null,
     coach_notes: str(formData, "coach_notes") || null,
     referee_notes: str(formData, "referee_notes") || null,
     club_notes: str(formData, "club_notes") || null,
@@ -83,14 +61,14 @@ export async function updateCardAction(
   const type = parseCardType(formData);
   if (typeof type === "object") return type;
 
-  const person = parsePersonLink(formData);
-  if ("error" in person) return person;
+  const player_id = parsePlayerId(formData);
+  if (typeof player_id === "object") return player_id;
 
   const { error } = await updateCard(cardId, {
     type,
-    player_id: person.player_id,
-    coach_id: person.coach_id,
-    guardian_id: person.guardian_id,
+    player_id,
+    coach_id: null,
+    guardian_id: null,
     coach_notes: str(formData, "coach_notes") || null,
     referee_notes: str(formData, "referee_notes") || null,
     club_notes: str(formData, "club_notes") || null,
