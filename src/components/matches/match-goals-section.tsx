@@ -22,11 +22,18 @@ export function MatchGoalsSection({
   goals,
   players,
   canEdit = true,
+  periodId = null,
+  periodName = null,
+  showPeriodField = true,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
   players: RosterPlayer[];
   canEdit?: boolean;
+  /** When set, new/edited goals are linked to this period and the label is auto-filled. */
+  periodId?: string | null;
+  periodName?: string | null;
+  showPeriodField?: boolean;
 }) {
   if (!canEdit) {
     return goals.length === 0 ? (
@@ -47,6 +54,7 @@ export function MatchGoalsSection({
             <span className="text-muted-foreground">
               {goal.minute != null ? `${goal.minute}'` : ""}
               {goal.is_penalty ? " · Pen" : ""}
+              {!periodId && goal.period ? ` · ${goal.period}` : ""}
               {goal.assist ? ` · assist ${playerDisplayName(goal.assist)}` : ""}
             </span>
           </li>
@@ -57,18 +65,35 @@ export function MatchGoalsSection({
 
   return (
     <div className="space-y-6">
-      <AddGoalForm matchId={matchId} players={players} />
+      <AddGoalForm
+        matchId={matchId}
+        players={players}
+        periodId={periodId}
+        periodName={periodName}
+        showPeriodField={showPeriodField}
+      />
 
       {goals.length === 0 ? (
         <EmptyState
           title="No goals recorded"
-          description="Add goals scored by our players. Opposition scorers are not tracked — use goals against on the match score."
+          description={
+            periodId
+              ? "Add goals scored in this period."
+              : "Add goals scored by our players. Opposition scorers are not tracked — use goals against on the match score."
+          }
         />
       ) : (
         <ul className="space-y-4">
           {goals.map((goal) => (
             <li key={goal.id} className="border-border rounded-xl border p-4">
-              <GoalRow matchId={matchId} goal={goal} players={players} />
+              <GoalRow
+                matchId={matchId}
+                goal={goal}
+                players={players}
+                periodId={periodId ?? goal.period_id}
+                periodName={periodName ?? goal.period}
+                showPeriodField={showPeriodField && !periodId}
+              />
             </li>
           ))}
         </ul>
@@ -80,9 +105,15 @@ export function MatchGoalsSection({
 function AddGoalForm({
   matchId,
   players,
+  periodId,
+  periodName,
+  showPeriodField,
 }: {
   matchId: string;
   players: RosterPlayer[];
+  periodId: string | null;
+  periodName: string | null;
+  showPeriodField: boolean;
 }) {
   const bound = createGoalAction.bind(null, matchId);
   const [state, formAction, pending] = useActionState(
@@ -94,7 +125,7 @@ function AddGoalForm({
     return (
       <EmptyState
         title="No players available"
-        description="Add squad players before recording goals."
+        description="Select the match-day squad (or add team roster players) before recording goals."
       />
     );
   }
@@ -106,7 +137,18 @@ function AddGoalForm({
       className="border-border space-y-3 rounded-xl border p-4"
     >
       <p className="text-sm font-medium">Add goal</p>
-      <GoalFields players={players} pending={pending} />
+      {periodId ? (
+        <input type="hidden" name="period_id" value={periodId} />
+      ) : null}
+      <GoalFields
+        players={players}
+        pending={pending}
+        showPeriodField={showPeriodField}
+        defaults={{
+          period: periodName,
+          period_id: periodId,
+        }}
+      />
       {state.error ? <ErrorBanner message={state.error} /> : null}
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add goal"}
@@ -119,10 +161,16 @@ function GoalRow({
   matchId,
   goal,
   players,
+  periodId,
+  periodName,
+  showPeriodField,
 }: {
   matchId: string;
   goal: GoalWithPlayers;
   players: RosterPlayer[];
+  periodId: string | null;
+  periodName: string | null;
+  showPeriodField: boolean;
 }) {
   const boundUpdate = updateGoalAction.bind(null, matchId, goal.id);
   const [state, formAction, pending] = useActionState(
@@ -138,14 +186,19 @@ function GoalRow({
   return (
     <div className="space-y-3">
       <form action={formAction} className="space-y-3">
+        {periodId ? (
+          <input type="hidden" name="period_id" value={periodId} />
+        ) : null}
         <GoalFields
           players={players}
           pending={pending}
+          showPeriodField={showPeriodField}
           defaults={{
             player_id: goal.player_id,
             assist_player_id: goal.assist_player_id,
             minute: goal.minute,
-            period: goal.period,
+            period: periodName ?? goal.period,
+            period_id: periodId ?? goal.period_id,
             is_penalty: goal.is_penalty,
             is_freekick: goal.is_freekick,
             from_setpiece: goal.from_setpiece,
@@ -195,14 +248,17 @@ function GoalFields({
   players,
   pending,
   defaults,
+  showPeriodField = true,
 }: {
   players: RosterPlayer[];
   pending: boolean;
+  showPeriodField?: boolean;
   defaults?: {
     player_id?: string;
     assist_player_id?: string | null;
     minute?: number | null;
     period?: string | null;
+    period_id?: string | null;
     is_penalty?: boolean;
     is_freekick?: boolean;
     from_setpiece?: boolean;
@@ -219,7 +275,7 @@ function GoalFields({
       (p.id === defaults?.player_id || p.id === defaults?.assist_player_id),
   );
   const playerOptions = [...options, ...extra];
-  const fieldKey = defaults?.player_id ?? "new";
+  const fieldKey = defaults?.player_id ?? defaults?.period_id ?? "new";
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -274,16 +330,23 @@ function GoalFields({
           disabled={pending}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor={`period-${fieldKey}`}>Period</Label>
-        <Input
-          id={`period-${fieldKey}`}
-          name="period"
-          placeholder="e.g. 1st half"
-          defaultValue={defaults?.period ?? ""}
-          disabled={pending}
-        />
-      </div>
+      {showPeriodField ? (
+        <div className="space-y-2">
+          <Label htmlFor={`period-${fieldKey}`}>Period</Label>
+          <Input
+            id={`period-${fieldKey}`}
+            name="period"
+            placeholder="e.g. 1st half"
+            defaultValue={defaults?.period ?? ""}
+            disabled={pending}
+          />
+        </div>
+      ) : defaults?.period ? (
+        <div className="space-y-2">
+          <Label>Period</Label>
+          <p className="text-sm font-medium">{defaults.period}</p>
+        </div>
+      ) : null}
       <label className="flex min-h-9 items-center gap-2 text-sm">
         <input
           type="checkbox"

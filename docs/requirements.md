@@ -172,9 +172,11 @@ Competitions the team enters this season (league, cup, friendly series, etc.).
 | user_id                 | Optional FK → auth.users (player's own login)         |
 | first_name, last_name   | Required                                              |
 | position                | Optional enum/label (GK, DEF, MID, FWD, or free text) |
+| school                  | Optional                                              |
+| date_of_birth           | Optional date                                         |
 | created_at / updated_at | Timestamps                                            |
 
-Squad membership is per team via **`team_players`** (`team_id`, `player_id`, optional `shirt_number` unique per team, `active`). Sensitive details live in **`player_contacts`** (1:1 with player: phone, email, address, emergency contact, medical notes). Guardians are club-level people (`guardians`: name, phone, email, notes) linked to zero/many players via **`player_guardians`** (`guardian_id`, `player_id`, `relationship`, `legal_guardian`). Optional `guardians.user_id` links a login for guardian app access.
+Squad membership is per team via **`team_players`** (`team_id`, `player_id`, optional `shirt_number` unique per team, `active`). Match-day availability is per match via **`match_players`**. Sensitive details live in **`player_contacts`** (1:1 with player: phone, email, address, emergency contact, medical notes). Guardians are club-level people (`guardians`: name, phone, email, notes) linked to zero/many players via **`player_guardians`** (`guardian_id`, `player_id`, `relationship`, `legal_guardian`). Optional `guardians.user_id` links a login for guardian app access.
 
 ### Match (fixture / result)
 
@@ -196,22 +198,25 @@ A match is scheduled (fixture) and may later have a result.
 | notes                     | Optional                                                                |
 | created_at / updated_at   | Timestamps                                                              |
 
+Match-day available players are stored in **`match_players`**. Periods (halves / quarters) live in **`match_periods`** with starting players in **`match_period_starters`**.
+
 ### Goal
 
 Goals scored by **our** players in a played match. Do **not** record opposition scorers.
 
-| Field            | Notes                           |
-| ---------------- | ------------------------------- |
-| id               | UUID                            |
-| match_id         | FK → matches                    |
-| player_id        | FK → players (our squad scorer) |
-| assist_player_id | Optional FK → players           |
-| period           | Optional (e.g. half / label)    |
-| minute           | Optional                        |
-| is_penalty       | Boolean (default false)         |
-| is_freekick      | Boolean (default false)         |
-| from_setpiece    | Boolean (default false)         |
-| created_at       | Timestamp                       |
+| Field            | Notes                                                       |
+| ---------------- | ----------------------------------------------------------- |
+| id               | UUID                                                        |
+| match_id         | FK → matches                                                |
+| player_id        | FK → players (our squad scorer)                             |
+| assist_player_id | Optional FK → players                                       |
+| period_id        | Optional FK → match_periods                                 |
+| period           | Optional text label (auto-filled from period name when set) |
+| minute           | Optional                                                    |
+| is_penalty       | Boolean (default false)                                     |
+| is_freekick      | Boolean (default false)                                     |
+| from_setpiece    | Boolean (default false)                                     |
+| created_at       | Timestamp                                                   |
 
 Own goals credited to the opponent score only via `goals_against` — no opposition scorer rows. If we need “own goal” as a our-player event later, revisit; not required for MVP scoring tables.
 
