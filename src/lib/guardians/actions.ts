@@ -21,7 +21,7 @@ import {
 import { str } from "@/lib/form-parse";
 
 function revalidateGuardian(guardianId: string, playerId?: string) {
-  revalidatePath("/guardians");
+  revalidatePath("/club");
   revalidatePath(`/guardians/${guardianId}`);
   if (playerId) revalidatePath(`/players/${playerId}`);
 }
@@ -44,7 +44,6 @@ export async function createGuardianAction(
   if (error) return { error };
   if (!data) return { error: "Could not create guardian." };
 
-  revalidatePath("/guardians");
   revalidatePath("/club");
   redirect(`/guardians/${data.id}`);
 }
@@ -68,8 +67,8 @@ export async function deleteGuardianAction(id: string): Promise<ActionState> {
   const { error } = await deleteGuardian(id);
   if (error) return { error };
 
-  revalidatePath("/guardians");
-  redirect("/guardians");
+  revalidatePath("/club");
+  redirect("/club");
 }
 
 export async function linkGuardianToPlayerAction(

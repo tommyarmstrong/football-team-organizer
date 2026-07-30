@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   getViewerContext,
   canEditTeam,
@@ -16,17 +17,18 @@ import {
   listGuardianAssistantCandidates,
   listGuardianAssistants,
 } from "@/lib/data/members";
+import { listVenues } from "@/lib/data/venues";
 import { labelGender } from "@/lib/format";
 import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
-import { TeamProfileForm } from "@/components/team/team-profile-form";
 import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,11 +39,13 @@ import {
 
 export default async function TeamPage() {
   const ctx = await getViewerContext();
-  const [club, team, { data: clubCoaches }] = await Promise.all([
-    getPrimaryClub(),
-    getActiveTeam(),
-    listCoaches(),
-  ]);
+  const [club, team, { data: clubCoaches }, { data: clubVenues }] =
+    await Promise.all([
+      getPrimaryClub(),
+      getActiveTeam(),
+      listCoaches(),
+      listVenues(),
+    ]);
 
   if (!ctx) {
     return (
@@ -60,6 +64,9 @@ export default async function TeamPage() {
   const coachesForClub = club
     ? clubCoaches.filter((c) => c.club_id === club.id)
     : clubCoaches;
+  const venuesForClub = club
+    ? clubVenues.filter((v) => v.club_id === club.id)
+    : clubVenues;
 
   if (!team) {
     return (
@@ -78,7 +85,7 @@ export default async function TeamPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CreateTeamForm coaches={coachesForClub} />
+              <CreateTeamForm coaches={coachesForClub} venues={venuesForClub} />
             </CardContent>
           </Card>
         ) : (
@@ -92,7 +99,7 @@ export default async function TeamPage() {
   }
 
   const canEdit = canEditTeam(ctx, team.id);
-  const teamClubCoaches = clubCoaches.filter((c) => c.club_id === team.club_id);
+  const teamClubVenues = clubVenues.filter((v) => v.club_id === team.club_id);
 
   const [
     { data: competitions, error: competitionsError },
@@ -116,6 +123,10 @@ export default async function TeamPage() {
 
   const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
   const trainingDaysLabel = formatTrainingDays(team.training_days);
+  const homeVenue =
+    teamClubVenues.find((v) => v.id === team.home_venue_id) ?? null;
+  const trainingVenue =
+    teamClubVenues.find((v) => v.id === team.training_venue_id) ?? null;
 
   return (
     <div className="space-y-8">
@@ -133,29 +144,29 @@ export default async function TeamPage() {
               : "Team details (read-only)."}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {canEdit ? (
-            <TeamProfileForm
-              key={team.id}
-              team={team}
-              coaches={teamClubCoaches}
-              headCoachId={headCoach?.coach_id ?? null}
+        <CardContent className="space-y-4">
+          <dl className="grid gap-3 text-sm">
+            <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
+            <ReadOnly
+              label="Home venue"
+              value={homeVenue?.name ?? "—"}
+              href={homeVenue ? `/venues/${homeVenue.id}` : null}
             />
-          ) : (
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <ReadOnly label="Team name" value={team.name} />
-              <ReadOnly label="Age group" value={team.age_group} />
-              <ReadOnly label="Gender" value={labelGender(team.gender)} />
-              <ReadOnly label="Home venue" value={team.home_venue ?? "—"} />
-              <ReadOnly
-                label="Training venue"
-                value={team.training_venue ?? "—"}
-              />
-              <ReadOnly label="Training days" value={trainingDaysLabel} />
-              <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
-              <ReadOnly label="Season" value={team.season_label} />
-            </dl>
-          )}
+            <ReadOnly
+              label="Training venue"
+              value={trainingVenue?.name ?? "—"}
+              href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
+            />
+            <ReadOnly label="Training days" value={trainingDaysLabel} />
+          </dl>
+          {canEdit ? (
+            <Link
+              href="/team/edit"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Edit
+            </Link>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -174,7 +185,6 @@ export default async function TeamPage() {
             <TeamRosterSection
               key={team.id}
               teamId={team.id}
-              clubId={team.club_id}
               roster={roster}
               candidates={playerCandidates}
               canEdit={canEdit}
@@ -197,7 +207,6 @@ export default async function TeamPage() {
             <TeamStaffSection
               key={team.id}
               teamId={team.id}
-              clubId={team.club_id}
               assigned={teamCoaches}
               candidates={coachCandidates}
               canEdit={canEdit}
@@ -243,18 +252,6 @@ export default async function TeamPage() {
           )}
         </CardContent>
       </Card>
-
-      {canCreateTeam ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create another team</CardTitle>
-            <CardDescription>Add another team to {club?.name}.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CreateTeamForm coaches={teamClubCoaches} />
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
@@ -264,11 +261,30 @@ function formatTrainingDays(days: string[] | null): string {
   return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDay] ?? d).join(", ");
 }
 
-function ReadOnly({ label, value }: { label: string; value: string }) {
+function ReadOnly({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string | null;
+}) {
   return (
     <div className="space-y-1">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium">{value}</dd>
+      <dd className="font-medium">
+        {href ? (
+          <Link
+            href={href}
+            className="hover:text-foreground underline-offset-4 hover:underline"
+          >
+            {value}
+          </Link>
+        ) : (
+          value
+        )}
+      </dd>
     </div>
   );
 }

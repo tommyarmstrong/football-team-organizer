@@ -1,4 +1,4 @@
--- Local / dev seed: club, teams, managers, coaches, and players.
+-- Local / dev seed: club, venues, teams, managers, coaches, and players.
 --
 -- BEFORE RUNNING:
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
@@ -8,16 +8,91 @@
 -- Apply via Supabase SQL Editor (Dashboard -> SQL), or:
 --   npx supabase db query --linked -f supabase/seed.sql
 --
--- Idempotent for the fixed ids below. Re-running updates the club/team/coach/player
+-- Idempotent for the fixed ids below. Re-running updates the club/venue/team/coach/player
 -- rows and upserts the manager membership for the configured user.
 
 begin;
+
+-- Drop placeholder venue ids from earlier seed versions (if present).
+delete from public.venues
+where id in (
+  'a0000005-0000-4000-8000-000000000005',
+  'a0000006-0000-4000-8000-000000000006'
+);
 
 -- Fixed ids so re-seeding is predictable in local/dev.
 with upserted_club as (
   insert into public.clubs (id, name)
   values ('11111111-1111-1111-1111-111111111111', 'The Football Association')
   on conflict (id) do update set name = excluded.name
+  returning id
+),
+upserted_venues as (
+  insert into public.venues (
+    id,
+    club_id,
+    name,
+    address_line1,
+    address_line2,
+    town_city,
+    postcode,
+    surface,
+    food_and_drink
+  )
+  values
+    (
+      'a0000001-0000-4000-8000-000000000001',
+      '11111111-1111-1111-1111-111111111111',
+      'Aylward Academy',
+      '1 Windmill Road',
+      'Edmonton',
+      'London',
+      'N18 1NB',
+      'astro'::public.venue_surface,
+      array['tuck_shop', 'local_outlets']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000002-0000-4000-8000-000000000002',
+      '11111111-1111-1111-1111-111111111111',
+      'St Thomas More Catholic School',
+      'Glendale Avenue',
+      'Wood Green',
+      'London',
+      'N22 5HN',
+      'astro'::public.venue_surface,
+      '{}'::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000003-0000-4000-8000-000000000003',
+      '11111111-1111-1111-1111-111111111111',
+      'Wembley Stadium',
+      'Wembley Stadium',
+      'Wembley',
+      'London',
+      'HA9 0WS',
+      'grass'::public.venue_surface,
+      array['cafe', 'ice_cream_van']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000004-0000-4000-8000-000000000004',
+      '11111111-1111-1111-1111-111111111111',
+      'Lilleshall National Sports & Conferencing Centre',
+      'Lilleshall National Sports & Conferencing Centre',
+      'Near Newport',
+      'Shropshire',
+      'TF10 9AT',
+      'grass'::public.venue_surface,
+      array['bbq']::public.venue_food_and_drink[]
+    )
+  on conflict (id) do update set
+    club_id = excluded.club_id,
+    name = excluded.name,
+    address_line1 = excluded.address_line1,
+    address_line2 = excluded.address_line2,
+    town_city = excluded.town_city,
+    postcode = excluded.postcode,
+    surface = excluded.surface,
+    food_and_drink = excluded.food_and_drink
   returning id
 ),
 upserted_team as (
@@ -27,8 +102,8 @@ upserted_team as (
     name,
     age_group,
     gender,
-    home_venue,
-    training_venue,
+    home_venue_id,
+    training_venue_id,
     training_days,
     season_label
   )
@@ -38,8 +113,8 @@ upserted_team as (
     'U11 Blues',
     'U11',
     'mixed',
-    'Example Recreation Ground',
-    'Example Training Pitch',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000002-0000-4000-8000-000000000002',
     array['tue', 'thu'],
     '2025/26'
   )
@@ -48,13 +123,13 @@ upserted_team as (
     name = excluded.name,
     age_group = excluded.age_group,
     gender = excluded.gender,
-    home_venue = excluded.home_venue,
-    training_venue = excluded.training_venue,
+    home_venue_id = excluded.home_venue_id,
+    training_venue_id = excluded.training_venue_id,
     training_days = excluded.training_days,
     season_label = excluded.season_label
   returning id
 )
-select 1 from upserted_club, upserted_team;
+select 1 from upserted_club, upserted_venues, upserted_team;
 
 -- Manager may already exist from the club_members → managers migration (random id).
 -- Remove either the fixed seed id or the club+user pair, then insert cleanly.
@@ -107,8 +182,8 @@ insert into public.teams (
   name,
   age_group,
   gender,
-  home_venue,
-  training_venue,
+  home_venue_id,
+  training_venue_id,
   training_days,
   season_label
 )
@@ -118,8 +193,8 @@ values (
   'England',
   'Adults',
   'boys',
-  'Wembley',
-  'Lilleshall',
+  'a0000003-0000-4000-8000-000000000003',
+  'a0000004-0000-4000-8000-000000000004',
   array['mon', 'wed', 'fri'],
   '1966'
 )
@@ -128,8 +203,8 @@ on conflict (id) do update set
   name = excluded.name,
   age_group = excluded.age_group,
   gender = excluded.gender,
-  home_venue = excluded.home_venue,
-  training_venue = excluded.training_venue,
+  home_venue_id = excluded.home_venue_id,
+  training_venue_id = excluded.training_venue_id,
   training_days = excluded.training_days,
   season_label = excluded.season_label;
 
@@ -404,14 +479,15 @@ on conflict (id) do update set
   name = excluded.name,
   kind = excluded.kind;
 
--- England World Cup 1966 matches (all home / completed).
+-- England World Cup 1966 matches (all home / completed at Wembley).
 insert into public.matches (
   id,
   team_id,
   opponent_name,
   date,
   kickoff_time,
-  venue,
+  home_away,
+  venue_id,
   competition_id,
   status,
   goals_for,
@@ -426,6 +502,7 @@ values
     '1966-07-11',
     '19:30',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     0,
@@ -439,6 +516,7 @@ values
     '1966-07-16',
     '19:30',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     2,
@@ -452,6 +530,7 @@ values
     '1966-07-20',
     '19:30',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     2,
@@ -465,6 +544,7 @@ values
     '1966-07-23',
     '15:00',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     1,
@@ -478,6 +558,7 @@ values
     '1966-07-26',
     '19:30',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     2,
@@ -491,6 +572,7 @@ values
     '1966-07-30',
     '15:00',
     'home',
+    'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000001',
     'played',
     4,
@@ -502,7 +584,8 @@ on conflict (id) do update set
   opponent_name = excluded.opponent_name,
   date = excluded.date,
   kickoff_time = excluded.kickoff_time,
-  venue = excluded.venue,
+  home_away = excluded.home_away,
+  venue_id = excluded.venue_id,
   competition_id = excluded.competition_id,
   status = excluded.status,
   goals_for = excluded.goals_for,

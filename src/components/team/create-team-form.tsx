@@ -9,7 +9,7 @@ import {
   TRAINING_DAY_LABELS,
 } from "@/lib/constants";
 import { createTeamAction } from "@/lib/team/actions";
-import type { Coach } from "@/lib/supabase/database.types";
+import type { Coach, Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,13 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-export function CreateTeamForm({ coaches = [] }: { coaches?: Coach[] }) {
+export function CreateTeamForm({
+  coaches = [],
+  venues = [],
+}: {
+  coaches?: Coach[];
+  venues?: Venue[];
+}) {
   const [state, formAction, pending] = useActionState(
     createTeamAction,
     INITIAL_ACTION_STATE,
@@ -64,15 +70,33 @@ export function CreateTeamForm({ coaches = [] }: { coaches?: Coach[] }) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-venue">Home venue</Label>
-          <Input id="new-team-venue" name="home_venue" disabled={pending} />
+          <NativeSelect
+            id="new-team-venue"
+            name="home_venue_id"
+            disabled={pending}
+          >
+            <option value="">None</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-training-venue">Training venue</Label>
-          <Input
+          <NativeSelect
             id="new-team-training-venue"
-            name="training_venue"
+            name="training_venue_id"
             disabled={pending}
-          />
+          >
+            <option value="">None</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-coach">Head coach</Label>

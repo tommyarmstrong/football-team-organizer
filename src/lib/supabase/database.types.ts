@@ -86,6 +86,56 @@ export type Database = {
           },
         ];
       };
+      venues: {
+        Row: {
+          id: string;
+          club_id: string;
+          name: string;
+          address_line1: string | null;
+          address_line2: string | null;
+          town_city: string | null;
+          postcode: string | null;
+          surface: Database["public"]["Enums"]["venue_surface"];
+          food_and_drink: Database["public"]["Enums"]["venue_food_and_drink"][];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          name: string;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          town_city?: string | null;
+          postcode?: string | null;
+          surface?: Database["public"]["Enums"]["venue_surface"];
+          food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          name?: string;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          town_city?: string | null;
+          postcode?: string | null;
+          surface?: Database["public"]["Enums"]["venue_surface"];
+          food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venues_club_id_fkey";
+            columns: ["club_id"];
+            isOneToOne: false;
+            referencedRelation: "clubs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       teams: {
         Row: {
           id: string;
@@ -93,8 +143,8 @@ export type Database = {
           name: string;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
-          home_venue: string | null;
-          training_venue: string | null;
+          home_venue_id: string | null;
+          training_venue_id: string | null;
           training_days: string[] | null;
           season_label: string;
           created_at: string;
@@ -106,8 +156,8 @@ export type Database = {
           name: string;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
-          home_venue?: string | null;
-          training_venue?: string | null;
+          home_venue_id?: string | null;
+          training_venue_id?: string | null;
           training_days?: string[] | null;
           season_label: string;
           created_at?: string;
@@ -119,8 +169,8 @@ export type Database = {
           name?: string;
           age_group?: string;
           gender?: Database["public"]["Enums"]["team_gender"];
-          home_venue?: string | null;
-          training_venue?: string | null;
+          home_venue_id?: string | null;
+          training_venue_id?: string | null;
           training_days?: string[] | null;
           season_label?: string;
           created_at?: string;
@@ -132,6 +182,20 @@ export type Database = {
             columns: ["club_id"];
             isOneToOne: false;
             referencedRelation: "clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "teams_home_venue_id_fkey";
+            columns: ["home_venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "teams_training_venue_id_fkey";
+            columns: ["training_venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
             referencedColumns: ["id"];
           },
         ];
@@ -409,6 +473,7 @@ export type Database = {
           email: string | null;
           notes: string | null;
           biography: string | null;
+          philosophy: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -426,6 +491,7 @@ export type Database = {
           email?: string | null;
           notes?: string | null;
           biography?: string | null;
+          philosophy?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -443,6 +509,7 @@ export type Database = {
           email?: string | null;
           notes?: string | null;
           biography?: string | null;
+          philosophy?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -544,7 +611,8 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"];
           team_id: string;
           updated_at: string;
-          venue: Database["public"]["Enums"]["match_venue"];
+          home_away: Database["public"]["Enums"]["match_home_away"];
+          venue_id: string | null;
         };
         Insert: {
           competition_id?: string | null;
@@ -562,7 +630,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"];
           team_id: string;
           updated_at?: string;
-          venue: Database["public"]["Enums"]["match_venue"];
+          home_away: Database["public"]["Enums"]["match_home_away"];
+          venue_id?: string | null;
         };
         Update: {
           competition_id?: string | null;
@@ -580,7 +649,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"];
           team_id?: string;
           updated_at?: string;
-          venue?: Database["public"]["Enums"]["match_venue"];
+          home_away?: Database["public"]["Enums"]["match_home_away"];
+          venue_id?: string | null;
         };
         Relationships: [
           {
@@ -609,6 +679,13 @@ export type Database = {
             columns: ["players_player_of_the_match_id"];
             isOneToOne: false;
             referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "matches_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
             referencedColumns: ["id"];
           },
         ];
@@ -807,9 +884,12 @@ export type Database = {
       competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
-      match_venue: "home" | "away" | "neutral";
+      match_home_away: "home" | "away" | "neutral";
       team_gender: "boys" | "girls" | "mixed";
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
+      venue_surface: "astro" | "grass" | "indoor" | "varies" | "unknown";
+      venue_food_and_drink:
+        "bbq" | "cafe" | "tuck_shop" | "local_outlets" | "ice_cream_van";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -831,6 +911,7 @@ export type Enums<T extends keyof Database["public"]["Enums"]> =
 
 export type Club = Tables<"clubs">;
 export type Manager = Tables<"managers">;
+export type Venue = Tables<"venues">;
 export type Team = Tables<"teams">;
 export type TeamMember = Tables<"team_members">;
 export type Player = Tables<"players">;
@@ -850,6 +931,8 @@ export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
 export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
-export type MatchVenue = Enums<"match_venue">;
+export type MatchHomeAway = Enums<"match_home_away">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;
+export type VenueSurface = Enums<"venue_surface">;
+export type VenueFoodAndDrink = Enums<"venue_food_and_drink">;

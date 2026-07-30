@@ -9,7 +9,7 @@ import {
   TRAINING_DAY_LABELS,
 } from "@/lib/constants";
 import { updateTeamAction } from "@/lib/team/actions";
-import type { Coach, Team } from "@/lib/supabase/database.types";
+import type { Coach, Team, Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,12 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 export function TeamProfileForm({
   team,
   coaches,
+  venues,
   headCoachId,
 }: {
   team: Team;
   coaches: Coach[];
+  venues: Venue[];
   headCoachId: string | null;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -75,19 +77,13 @@ export function TeamProfileForm({
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Home venue" htmlFor="home_venue">
+        <Field label="Season" htmlFor="season_label">
           <Input
-            id="home_venue"
-            name="home_venue"
-            defaultValue={team.home_venue ?? ""}
-            disabled={pending}
-          />
-        </Field>
-        <Field label="Training venue" htmlFor="training_venue">
-          <Input
-            id="training_venue"
-            name="training_venue"
-            defaultValue={team.training_venue ?? ""}
+            id="season_label"
+            name="season_label"
+            required
+            placeholder="e.g. 2025/26"
+            defaultValue={team.season_label}
             disabled={pending}
           />
         </Field>
@@ -106,15 +102,35 @@ export function TeamProfileForm({
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Season" htmlFor="season_label">
-          <Input
-            id="season_label"
-            name="season_label"
-            required
-            placeholder="e.g. 2025/26"
-            defaultValue={team.season_label}
+        <Field label="Home venue" htmlFor="home_venue_id">
+          <NativeSelect
+            id="home_venue_id"
+            name="home_venue_id"
+            defaultValue={team.home_venue_id ?? ""}
             disabled={pending}
-          />
+          >
+            <option value="">None</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <Field label="Training venue" htmlFor="training_venue_id">
+          <NativeSelect
+            id="training_venue_id"
+            name="training_venue_id"
+            defaultValue={team.training_venue_id ?? ""}
+            disabled={pending}
+          >
+            <option value="">None</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
       </div>
 
@@ -141,11 +157,6 @@ export function TeamProfileForm({
       </fieldset>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save team"}

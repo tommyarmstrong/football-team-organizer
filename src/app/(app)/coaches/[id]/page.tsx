@@ -6,11 +6,9 @@ import { getViewerContext, isClubStaff } from "@/lib/authz/context";
 import { coachDisplayName, formatShortDate } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { CoachForm } from "@/components/coaches/coach-form";
 import { CoachObjectivesSection } from "@/components/coaches/coach-objectives-section";
 import { CoachTeamsSection } from "@/components/coaches/coach-teams-section";
-import { DeleteCoachButton } from "@/components/coaches/delete-coach-button";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,6 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+function yesNo(value: boolean): string {
+  return value ? "Yes" : "No";
+}
 
 export default async function CoachDetailPage({
   params,
@@ -55,35 +57,78 @@ export default async function CoachDetailPage({
       !currentTeamIds.has(team.id),
   );
 
+  const joinedLine = [
+    `Joined ${formatShortDate(coach.joined_date)}`,
+    coach.date_of_birth ? `DOB ${formatShortDate(coach.date_of_birth)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const qualificationsLine = [
+    `DBS: ${yesNo(coach.dbs_checked)}`,
+    `FA1: ${yesNo(coach.fa_level_1)}`,
+    `FA2: ${yesNo(coach.fa_level_2)}`,
+  ].join(" · ");
+
   return (
     <div className="space-y-8">
       <PageHeader
         title={coachDisplayName(coach)}
-        description={[
-          `Joined ${formatShortDate(coach.joined_date)}`,
-          coach.date_of_birth
-            ? `DOB ${formatShortDate(coach.date_of_birth)}`
-            : null,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
+        description={
+          <div className="space-y-1">
+            <p>{joinedLine}</p>
+            <p>{qualificationsLine}</p>
+          </div>
+        }
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/coaches" />}>
-            Back to coaches
-          </Button>
+          <>
+            {canEdit ? (
+              <Link
+                href={`/coaches/${coach.id}/edit`}
+                className={buttonVariants({ size: "sm" })}
+              >
+                Edit
+              </Link>
+            ) : null}
+            <Link
+              href="/coaches"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Back to coaches
+            </Link>
+          </>
         }
       />
 
-      {coach.biography ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Biography</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Biography</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {coach.biography ? (
             <p className="text-sm whitespace-pre-wrap">{coach.biography}</p>
-          </CardContent>
-        </Card>
-      ) : null}
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No biography recorded.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Philosophy</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {coach.philosophy ? (
+            <p className="text-sm whitespace-pre-wrap">{coach.philosophy}</p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No philosophy recorded.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -118,20 +163,18 @@ export default async function CoachDetailPage({
         </CardContent>
       </Card>
 
-      {canEdit ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Edit coach</CardTitle>
-            <CardDescription>
-              Update contact details, biography, and qualifications.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <CoachForm mode="edit" coach={coach} />
-            <DeleteCoachButton coachId={coach.id} />
-          </CardContent>
-        </Card>
-      ) : null}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {coach.notes ? (
+            <p className="text-sm whitespace-pre-wrap">{coach.notes}</p>
+          ) : (
+            <p className="text-muted-foreground text-sm">No notes recorded.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

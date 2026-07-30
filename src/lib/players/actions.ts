@@ -44,7 +44,6 @@ export async function createPlayerAction(
   if (error) return { error };
   if (!data) return { error: "Could not create player." };
 
-  revalidatePath("/players");
   revalidatePath("/club");
   redirect(`/players/${data.id}`);
 }
@@ -71,7 +70,7 @@ export async function updatePlayerAction(
   });
   if (error) return { error };
 
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath(`/players/${id}`);
   return { success: "Player saved." };
 }
@@ -80,8 +79,8 @@ export async function deletePlayerAction(id: string): Promise<ActionState> {
   const { error } = await deletePlayer(id);
   if (error) return { error };
 
-  revalidatePath("/players");
-  redirect("/players");
+  revalidatePath("/club");
+  redirect("/club");
 }
 
 export async function savePlayerContactAction(
@@ -124,7 +123,7 @@ export async function addPlayerToTeamAction(
   if (error) return { error };
 
   revalidatePath(`/players/${playerId}`);
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Player added to team." };
 }
@@ -150,7 +149,7 @@ export async function addRosterPlayerAction(
   if (error) return { error };
 
   revalidatePath("/team");
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath(`/players/${playerId}`);
   return { success: "Player added to squad." };
 }
@@ -195,7 +194,7 @@ export async function createRosterPlayerAction(
   if (rosterError) return { error: rosterError };
 
   revalidatePath("/team");
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath(`/players/${data.id}`);
   return { success: "Player added to squad." };
 }
@@ -219,7 +218,7 @@ export async function updateRosterEntryAction(
   if (error) return { error };
 
   revalidatePath(`/players/${playerId}`);
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Squad details saved." };
 }
@@ -232,7 +231,7 @@ export async function removePlayerFromTeamAction(
   if (error) return { error };
 
   revalidatePath(`/players/${playerId}`);
-  revalidatePath("/players");
+  revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Player removed from team." };
 }

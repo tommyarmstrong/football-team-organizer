@@ -1,3 +1,4 @@
+import { listVenues } from "@/lib/data/venues";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
@@ -13,8 +14,8 @@ import {
   formatKickoffTime,
   formatMatchDate,
   formatScore,
+  labelHomeAway,
   labelMatchStatus,
-  labelVenue,
   playerDisplayName,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
@@ -22,7 +23,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchForm } from "@/components/matches/match-form";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -56,6 +57,8 @@ export default async function MatchDetailPage({
   const canEdit = canEditTeam(ctx, match.team_id);
   const allowsEvents = matchAllowsEvents(match.status);
 
+  const clubId = ctx.visibleTeams.find((t) => t.id === match.team_id)?.club_id;
+
   const [
     { data: competitions, error: competitionsError },
     { data: goals, error: goalsError },
@@ -63,6 +66,7 @@ export default async function MatchDetailPage({
     { data: players, error: playersError },
     { data: coaches, error: coachesError },
     { data: guardians, error: guardiansError },
+    { data: venues, error: venuesError },
   ] = await Promise.all([
     listCompetitions(match.team_id),
     listGoalsForMatch(match.id),
@@ -70,6 +74,7 @@ export default async function MatchDetailPage({
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listTeamCoaches(match.team_id),
     listGuardians(),
+    listVenues(clubId),
   ]);
 
   const coachMotm = match.player_of_the_match_id
@@ -84,6 +89,7 @@ export default async function MatchDetailPage({
     playersError,
     coachesError,
     guardiansError,
+    venuesError,
   ]
     .filter(Boolean)
     .join(" ");
@@ -95,7 +101,8 @@ export default async function MatchDetailPage({
         description={[
           formatMatchDate(match.date),
           formatKickoffTime(match.kickoff_time),
-          labelVenue(match.venue),
+          labelHomeAway(match.home_away),
+          match.venue?.name ?? null,
           labelMatchStatus(match.status),
           allowsEvents
             ? formatScore(match.goals_for, match.goals_against)
@@ -104,9 +111,12 @@ export default async function MatchDetailPage({
           .filter(Boolean)
           .join(" · ")}
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/matches" />}>
+          <Link
+            href="/matches"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
             Back
-          </Button>
+          </Link>
         }
       />
 
@@ -126,6 +136,7 @@ export default async function MatchDetailPage({
               mode="edit"
               match={match}
               competitions={competitions}
+              venues={venues}
               players={players}
             />
           </CardContent>
@@ -140,7 +151,11 @@ export default async function MatchDetailPage({
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <ReadOnly label="Opponent" value={match.opponent_name} />
               <ReadOnly label="Date" value={formatMatchDate(match.date)} />
-              <ReadOnly label="Venue" value={labelVenue(match.venue)} />
+              <ReadOnly
+                label="Home / away"
+                value={labelHomeAway(match.home_away)}
+              />
+              <ReadOnly label="Venue" value={match.venue?.name ?? "Unknown"} />
               <ReadOnly label="Status" value={labelMatchStatus(match.status)} />
               {allowsEvents ? (
                 <ReadOnly

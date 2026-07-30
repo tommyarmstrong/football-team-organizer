@@ -32,6 +32,23 @@ permissions apply when this record is linked to a login.
 
 ---
 
+## Venue
+
+Club-level place used as a home or training ground.
+
+### Attributes
+
+- Club (required)
+- Name (required)
+- Address line 1
+- Address line 2
+- Town / city
+- Postcode
+- Surface (required) — `Astro` | `Grass` | `Indoor` | `Varies` | `Unknown` (default `Unknown`)
+- Food & Drink — zero or more of `BBQ` | `Cafe` | `Tuck shop` | `Local outlets` | `Ice cream van`
+
+---
+
 ## Team
 
 Belongs to a club. Squad, fixtures, and competitions are scoped to a team.
@@ -42,8 +59,8 @@ Belongs to a club. Squad, fixtures, and competitions are scoped to a team.
 - Name (required)
 - Age group (required) — `U7`…`U16` | `Adults`
 - Gender (required) — `boys` | `girls` | `mixed`
-- Home venue
-- Training venue
+- Home venue — linked venue
+- Training venue — linked venue
 - Training days — weekdays (`mon`…`sun`)
 - Season label (required) — e.g. `2025/26`
 
@@ -150,8 +167,9 @@ Club-level coaching staff record (distinct from auth team membership).
 - FA Level 2 (required) — default `false`
 - Phone
 - Email
-- Notes
 - Biography
+- Philosophy
+- Notes
 
 ### Development objectives
 
@@ -193,7 +211,8 @@ Fixture / result for a team.
 - Opponent name (required)
 - Date (required)
 - Kick-off time
-- Venue (required) — `home` | `away` | `neutral`
+- Home / away (required) — `home` | `away` | `neutral`
+- Venue — linked venue, or unknown when unset
 - Competition
 - Coach's player of the match
 - Player's player of the match

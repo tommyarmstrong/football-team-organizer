@@ -6,14 +6,14 @@ import {
   formatKickoffTime,
   formatMatchDate,
   formatScore,
-  labelVenue,
+  labelHomeAway,
   playerDisplayName,
   resultLetter,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -50,7 +50,9 @@ export default async function DashboardPage() {
         description={`${team.name} · ${team.season_label}`}
         actions={
           canEdit ? (
-            <Button render={<Link href="/matches/new" />}>New fixture</Button>
+            <Link href="/matches/new" className={buttonVariants()}>
+              New fixture
+            </Link>
           ) : undefined
         }
       />
@@ -78,7 +80,8 @@ export default async function DashboardPage() {
                     ? ` · ${formatKickoffTime(next.data.kickoff_time)}`
                     : ""}
                   {" · "}
-                  {labelVenue(next.data.venue)}
+                  {labelHomeAway(next.data.home_away)}
+                  {next.data.venue ? ` · ${next.data.venue.name}` : ""}
                   {next.data.competition
                     ? ` · ${next.data.competition.name}`
                     : ""}
@@ -90,9 +93,12 @@ export default async function DashboardPage() {
                 description="Schedule the next match."
                 action={
                   canEdit ? (
-                    <Button size="sm" render={<Link href="/matches/new" />}>
+                    <Link
+                      href="/matches/new"
+                      className={buttonVariants({ size: "sm" })}
+                    >
                       New fixture
-                    </Button>
+                    </Link>
                   ) : undefined
                 }
               />

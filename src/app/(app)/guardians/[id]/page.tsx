@@ -9,7 +9,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { GuardianForm } from "@/components/guardians/guardian-form";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
 import { DeleteGuardianButton } from "@/components/guardians/delete-guardian-button";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -62,13 +62,12 @@ export default async function GuardianDetailPage({
         title={guardianDisplayName(guardian)}
         description={guardian.email ?? guardian.phone ?? "Guardian"}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link href="/guardians" />}
+          <Link
+            href="/club"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Back to guardians
-          </Button>
+            Back to club
+          </Link>
         }
       />
 

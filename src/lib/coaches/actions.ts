@@ -54,7 +54,8 @@ export async function updateCoachAction(
 
   revalidatePath("/coaches");
   revalidatePath(`/coaches/${id}`);
-  return { success: "Coach saved." };
+  revalidatePath(`/coaches/${id}/edit`);
+  redirect(`/coaches/${id}`);
 }
 
 export async function deleteCoachAction(id: string): Promise<ActionState> {

@@ -153,6 +153,18 @@ export function CoachForm({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="philosophy">Philosophy</Label>
+        <Textarea
+          id="philosophy"
+          name="philosophy"
+          rows={4}
+          placeholder="Playing style, principles, and approach to coaching"
+          defaultValue={coach?.philosophy ?? ""}
+          disabled={pending}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
         <Textarea
           id="notes"

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ManagerForm } from "@/components/managers/manager-form";
 import { DeleteManagerButton } from "@/components/managers/delete-manager-button";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -46,9 +46,12 @@ export default async function ManagerDetailPage({
         title={managerDisplayName(manager)}
         description={manager.email ?? manager.phone ?? "Manager"}
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/club" />}>
+          <Link
+            href="/club"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
             Back to club
-          </Button>
+          </Link>
         }
       />
 

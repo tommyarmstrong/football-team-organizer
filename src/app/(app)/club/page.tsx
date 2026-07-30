@@ -20,11 +20,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ClubForm } from "@/components/clubs/club-form";
 import { ClubTeamLink } from "@/components/clubs/club-team-link";
-import { PlayerForm } from "@/components/players/player-form";
-import { CoachForm } from "@/components/coaches/coach-form";
-import { GuardianForm } from "@/components/guardians/guardian-form";
-import { ManagerForm } from "@/components/managers/manager-form";
-import { CreateTeamForm } from "@/components/team/create-team-form";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -93,40 +89,31 @@ export default async function ClubPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Players</CardTitle>
+          <CardTitle>Teams</CardTitle>
           <CardDescription>
-            Players belong to the club and can be assigned to one or more teams.
+            Teams for {club.name}. Open a team to edit its profile and squad.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <PlayerForm mode="create" />
-          {playersError ? <ErrorBanner message={playersError} /> : null}
-          {!playersError && players.length === 0 ? (
+          {teamsError ? <ErrorBanner message={teamsError} /> : null}
+          {!teamsError && teams.length === 0 ? (
             <EmptyState
-              title="No players yet"
-              description="Add your first player to the club."
+              title="No teams yet"
+              description="Add your first team for this club."
             />
           ) : null}
-          {!playersError && players.length > 0 ? (
+          {!teamsError && teams.length > 0 ? (
             <ul className="divide-border border-border divide-y rounded-xl border">
-              {players.map((player) => (
-                <li key={player.id}>
-                  <Link
-                    href={`/players/${player.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div>
-                      <p className="font-medium">{playerDisplayName(player)}</p>
-                      <p className="text-muted-foreground text-sm">
-                        {player.position ?? "No position"}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground text-xs">Edit</span>
-                  </Link>
+              {teams.map((team) => (
+                <li key={team.id}>
+                  <ClubTeamLink team={team} />
                 </li>
               ))}
             </ul>
           ) : null}
+          <Link href="/teams/new" className={buttonVariants()}>
+            Add team
+          </Link>
         </CardContent>
       </Card>
 
@@ -139,7 +126,6 @@ export default async function ClubPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <CoachForm mode="create" />
           {coachesError ? <ErrorBanner message={coachesError} /> : null}
           {!coachesError && coaches.length === 0 ? (
             <EmptyState
@@ -167,6 +153,94 @@ export default async function ClubPage() {
               ))}
             </ul>
           ) : null}
+          <Link href="/coaches/new" className={buttonVariants()}>
+            Add coach
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Management</CardTitle>
+          <CardDescription>
+            Club managers for {club.name}. Same kind of people record as coaches
+            and guardians, with broader permissions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {managersError ? <ErrorBanner message={managersError} /> : null}
+          {!managersError && managers.length === 0 ? (
+            <EmptyState
+              title="No managers yet"
+              description="Add a manager with name and contact details."
+            />
+          ) : null}
+          {!managersError && managers.length > 0 ? (
+            <ul className="divide-border border-border divide-y rounded-xl border">
+              {managers.map((manager) => (
+                <li key={manager.id}>
+                  <Link
+                    href={`/managers/${manager.id}`}
+                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        {managerDisplayName(manager)}
+                      </p>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {manager.email ?? manager.phone ?? "No contact details"}
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground text-xs">Edit</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Link href="/managers/new" className={buttonVariants()}>
+            Add manager
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Players</CardTitle>
+          <CardDescription>
+            Players belong to the club and can be assigned to one or more teams.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {playersError ? <ErrorBanner message={playersError} /> : null}
+          {!playersError && players.length === 0 ? (
+            <EmptyState
+              title="No players yet"
+              description="Add your first player to the club."
+            />
+          ) : null}
+          {!playersError && players.length > 0 ? (
+            <ul className="divide-border border-border divide-y rounded-xl border">
+              {players.map((player) => (
+                <li key={player.id}>
+                  <Link
+                    href={`/players/${player.id}`}
+                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <div>
+                      <p className="font-medium">{playerDisplayName(player)}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {player.position ?? "No position"}
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground text-xs">Edit</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Link href="/players/new" className={buttonVariants()}>
+            Add player
+          </Link>
         </CardContent>
       </Card>
 
@@ -179,7 +253,6 @@ export default async function ClubPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <GuardianForm mode="create" />
           {guardiansError ? <ErrorBanner message={guardiansError} /> : null}
           {!guardiansError && guardians.length === 0 ? (
             <EmptyState
@@ -228,77 +301,9 @@ export default async function ClubPage() {
               ))}
             </ul>
           ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Teams</CardTitle>
-          <CardDescription>
-            Create teams for {club.name}, or open a team to edit its profile and
-            squad.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <CreateTeamForm coaches={coaches} />
-          {teamsError ? <ErrorBanner message={teamsError} /> : null}
-          {!teamsError && teams.length === 0 ? (
-            <EmptyState
-              title="No teams yet"
-              description="Add your first team above."
-            />
-          ) : null}
-          {!teamsError && teams.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {teams.map((team) => (
-                <li key={team.id}>
-                  <ClubTeamLink team={team} />
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Management</CardTitle>
-          <CardDescription>
-            Club managers for {club.name}. Same kind of people record as coaches
-            and guardians, with broader permissions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <ManagerForm mode="create" />
-          {managersError ? <ErrorBanner message={managersError} /> : null}
-          {!managersError && managers.length === 0 ? (
-            <EmptyState
-              title="No managers yet"
-              description="Add a manager with name and contact details."
-            />
-          ) : null}
-          {!managersError && managers.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {managers.map((manager) => (
-                <li key={manager.id}>
-                  <Link
-                    href={`/managers/${manager.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {managerDisplayName(manager)}
-                      </p>
-                      <p className="text-muted-foreground truncate text-sm">
-                        {manager.email ?? manager.phone ?? "No contact details"}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground text-xs">Edit</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <Link href="/guardians/new" className={buttonVariants()}>
+            Add guardian
+          </Link>
         </CardContent>
       </Card>
     </div>

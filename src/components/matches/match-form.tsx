@@ -3,16 +3,21 @@
 import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
+  MATCH_HOME_AWAYS,
   MATCH_STATUSES,
-  MATCH_VENUES,
   matchAllowsEvents,
 } from "@/lib/constants";
 import { createMatchAction, updateMatchAction } from "@/lib/matches/actions";
-import { labelMatchStatus, labelVenue, playerDisplayName } from "@/lib/format";
+import {
+  labelHomeAway,
+  labelMatchStatus,
+  playerDisplayName,
+} from "@/lib/format";
 import type {
   Competition,
   Match,
   MatchStatus,
+  Venue,
 } from "@/lib/supabase/database.types";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
@@ -26,11 +31,13 @@ export function MatchForm({
   mode,
   match,
   competitions,
+  venues = [],
   players = [],
 }: {
   mode: "create" | "edit";
   match?: Match;
   competitions: Competition[];
+  venues?: Venue[];
   players?: RosterPlayer[];
 }) {
   const action =
@@ -89,17 +96,33 @@ export function MatchForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="venue">Venue</Label>
+          <Label htmlFor="home_away">Home / away</Label>
           <NativeSelect
-            id="venue"
-            name="venue"
+            id="home_away"
+            name="home_away"
             required
-            defaultValue={match?.venue ?? "home"}
+            defaultValue={match?.home_away ?? "home"}
             disabled={pending}
           >
-            {MATCH_VENUES.map((venue) => (
-              <option key={venue} value={venue}>
-                {labelVenue(venue)}
+            {MATCH_HOME_AWAYS.map((value) => (
+              <option key={value} value={value}>
+                {labelHomeAway(value)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="venue_id">Venue</Label>
+          <NativeSelect
+            id="venue_id"
+            name="venue_id"
+            defaultValue={match?.venue_id ?? ""}
+            disabled={pending}
+          >
+            <option value="">Unknown</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
               </option>
             ))}
           </NativeSelect>

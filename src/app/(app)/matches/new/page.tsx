@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { listCompetitions } from "@/lib/data/competitions";
 import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MatchForm } from "@/components/matches/match-form";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,16 +38,20 @@ export default async function NewMatchPage() {
           title="Read-only access"
           description="Only coaches and club management can add fixtures for this team."
           action={
-            <Button variant="outline" render={<Link href="/matches" />}>
+            <Link
+              href="/matches"
+              className={buttonVariants({ variant: "outline" })}
+            >
               Back to matches
-            </Button>
+            </Link>
           }
         />
       </div>
     );
   }
 
-  const { data: competitions, error } = await listCompetitions(team.id);
+  const [{ data: competitions, error }, { data: venues, error: venuesError }] =
+    await Promise.all([listCompetitions(team.id), listVenues(team.club_id)]);
 
   return (
     <div className="space-y-6">
@@ -54,13 +59,17 @@ export default async function NewMatchPage() {
         title="New fixture"
         description={`Schedule a match for ${team.name}`}
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/matches" />}>
+          <Link
+            href="/matches"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
             Back
-          </Button>
+          </Link>
         }
       />
 
       {error ? <ErrorBanner message={error} /> : null}
+      {venuesError ? <ErrorBanner message={venuesError} /> : null}
 
       <Card>
         <CardHeader>
@@ -71,7 +80,11 @@ export default async function NewMatchPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MatchForm mode="create" competitions={competitions} />
+          <MatchForm
+            mode="create"
+            competitions={competitions}
+            venues={venues}
+          />
         </CardContent>
       </Card>
     </div>

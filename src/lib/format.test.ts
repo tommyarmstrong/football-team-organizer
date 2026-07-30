@@ -7,7 +7,7 @@ import {
   labelCompetitionKind,
   labelGender,
   labelMatchStatus,
-  labelVenue,
+  labelHomeAway,
   coachDisplayName,
   playerDisplayName,
   resultLetter,
@@ -104,7 +104,7 @@ describe("resultLetter", () => {
 describe("label helpers", () => {
   it("capitalizes enum-like values", () => {
     expect(labelGender("boys")).toBe("Boys");
-    expect(labelVenue("home")).toBe("Home");
+    expect(labelHomeAway("home")).toBe("Home");
     expect(labelMatchStatus("scheduled")).toBe("Scheduled");
     expect(labelMatchStatus("in_progress")).toBe("In progress");
     expect(labelCompetitionKind("league")).toBe("League");

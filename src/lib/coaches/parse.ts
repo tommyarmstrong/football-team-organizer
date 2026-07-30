@@ -9,6 +9,7 @@ export type CoachFormFields = {
   email: string | null;
   notes: string | null;
   biography: string | null;
+  philosophy: string | null;
   dbs_checked: boolean;
   fa_level_1: boolean;
   fa_level_2: boolean;
@@ -25,6 +26,7 @@ export function parseCoachForm(formData: FormData): CoachFormParseResult {
   const email = str(formData, "email") || null;
   const notes = str(formData, "notes") || null;
   const biography = str(formData, "biography") || null;
+  const philosophy = str(formData, "philosophy") || null;
   const dbs_checked = boolFromCheckbox(formData, "dbs_checked");
   const fa_level_1 = boolFromCheckbox(formData, "fa_level_1");
   const fa_level_2 = boolFromCheckbox(formData, "fa_level_2");
@@ -45,6 +47,7 @@ export function parseCoachForm(formData: FormData): CoachFormParseResult {
     email,
     notes,
     biography,
+    philosophy,
     dbs_checked,
     fa_level_1,
     fa_level_2,

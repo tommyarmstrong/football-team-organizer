@@ -1,11 +1,13 @@
 import type {
   CardType,
   CompetitionKind,
+  MatchHomeAway,
   MatchStatus,
-  MatchVenue,
   TeamGender,
   TeamRole,
   GuardianRelationship,
+  VenueFoodAndDrink,
+  VenueSurface,
 } from "@/lib/supabase/database.types";
 
 export const APP_NAME = "Football Team Organizer";
@@ -72,7 +74,39 @@ export const COMPETITION_KINDS: CompetitionKind[] = [
   "other",
 ];
 
-export const MATCH_VENUES: MatchVenue[] = ["home", "away", "neutral"];
+export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
+
+export const VENUE_SURFACES: VenueSurface[] = [
+  "astro",
+  "grass",
+  "indoor",
+  "varies",
+  "unknown",
+];
+
+export const VENUE_SURFACE_LABELS: Record<VenueSurface, string> = {
+  astro: "Astro",
+  grass: "Grass",
+  indoor: "Indoor",
+  varies: "Varies",
+  unknown: "Unknown",
+};
+
+export const VENUE_FOOD_AND_DRINKS: VenueFoodAndDrink[] = [
+  "bbq",
+  "cafe",
+  "tuck_shop",
+  "local_outlets",
+  "ice_cream_van",
+];
+
+export const VENUE_FOOD_AND_DRINK_LABELS: Record<VenueFoodAndDrink, string> = {
+  bbq: "BBQ",
+  cafe: "Cafe",
+  tuck_shop: "Tuck shop",
+  local_outlets: "Local outlets",
+  ice_cream_van: "Ice cream van",
+};
 
 export const MATCH_STATUSES: MatchStatus[] = [
   "scheduled",

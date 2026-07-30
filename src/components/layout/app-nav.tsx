@@ -7,16 +7,13 @@ import { cn } from "@/lib/utils";
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/team", label: "Team" },
-  { href: "/players", label: "Players" },
+  { href: "/venues", label: "Venues" },
   { href: "/matches", label: "Matches" },
   { href: "/stats", label: "Stats" },
 ] as const;
 
 const STAFF_NAV_ITEM = { href: "/coaches", label: "Coaches" } as const;
-const MANAGEMENT_NAV_ITEMS = [
-  { href: "/club", label: "Club" },
-  { href: "/guardians", label: "Guardians" },
-] as const;
+const MANAGEMENT_NAV_ITEMS = [{ href: "/club", label: "Club" }] as const;
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);

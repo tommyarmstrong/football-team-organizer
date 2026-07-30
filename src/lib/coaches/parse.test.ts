@@ -32,6 +32,7 @@ describe("parseCoachForm", () => {
       email: null,
       notes: null,
       biography: null,
+      philosophy: null,
       dbs_checked: false,
       fa_level_1: false,
       fa_level_2: false,
@@ -49,6 +50,7 @@ describe("parseCoachForm", () => {
           email: "  ",
           notes: "  ",
           biography: "  ",
+          philosophy: "  ",
         }),
       ),
     ).toEqual({
@@ -60,13 +62,14 @@ describe("parseCoachForm", () => {
       email: null,
       notes: null,
       biography: null,
+      philosophy: null,
       dbs_checked: false,
       fa_level_1: false,
       fa_level_2: false,
     });
   });
 
-  it("includes biography, contact fields, and checked qualifications", () => {
+  it("includes biography, philosophy, contact fields, and checked qualifications", () => {
     expect(
       parseCoachForm(
         coachFormData(
@@ -77,6 +80,7 @@ describe("parseCoachForm", () => {
             email: "alex@example.com",
             notes: "Available weekends",
             biography: "Former academy coach with 10 years experience.",
+            philosophy: "Possession-based football with high pressing.",
           },
           ["dbs_checked", "fa_level_1", "fa_level_2"],
         ),
@@ -90,6 +94,7 @@ describe("parseCoachForm", () => {
       email: "alex@example.com",
       notes: "Available weekends",
       biography: "Former academy coach with 10 years experience.",
+      philosophy: "Possession-based football with high pressing.",
       dbs_checked: true,
       fa_level_1: true,
       fa_level_2: true,

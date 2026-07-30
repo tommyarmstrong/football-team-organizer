@@ -26,7 +26,7 @@ import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { PlayerContactForm } from "@/components/players/player-contact-form";
 import { DeletePlayerButton } from "@/components/players/delete-player-button";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -96,9 +96,12 @@ export default async function PlayerDetailPage({
           "No position"
         }
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/players" />}>
-            Back to players
-          </Button>
+          <Link
+            href="/club"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Back to club
+          </Link>
         }
       />
 
@@ -138,7 +141,7 @@ export default async function PlayerDetailPage({
         <CardHeader>
           <CardTitle>Guardians</CardTitle>
           <CardDescription>
-            Guardians linked to this player from the Guardians page.
+            Guardians linked to this player from the Club page.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -6,19 +6,22 @@ import type {
   Match,
   TablesInsert,
   TablesUpdate,
+  Venue,
 } from "@/lib/supabase/database.types";
 
 export type { Match };
 
-export type MatchWithCompetition = Match & {
+export type MatchWithRelations = Match & {
   competition: Pick<Competition, "id" | "name" | "kind"> | null;
+  venue: Pick<Venue, "id" | "name"> | null;
 };
 
-const MATCH_SELECT = "*, competition:competitions(id, name, kind)";
+const MATCH_SELECT =
+  "*, competition:competitions(id, name, kind), venue:venues(id, name)";
 
 export async function listMatches(
   filter: MatchListFilter = "all",
-): Promise<{ data: MatchWithCompetition[]; error: string | null }> {
+): Promise<{ data: MatchWithRelations[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) {
     return { data: [], error: "No team selected." };
@@ -50,7 +53,7 @@ export async function listMatches(
 
 export async function getMatch(
   id: string,
-): Promise<{ data: MatchWithCompetition | null; error: string | null }> {
+): Promise<{ data: MatchWithRelations | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
@@ -100,7 +103,7 @@ export async function updateMatch(
 }
 
 export async function getNextFixture(): Promise<{
-  data: MatchWithCompetition | null;
+  data: MatchWithRelations | null;
   error: string | null;
 }> {
   const team = await getActiveTeam();
@@ -140,7 +143,7 @@ export async function getNextFixture(): Promise<{
 }
 
 export async function getLastResult(): Promise<{
-  data: MatchWithCompetition | null;
+  data: MatchWithRelations | null;
   error: string | null;
 }> {
   const team = await getActiveTeam();
@@ -161,19 +164,25 @@ export async function getLastResult(): Promise<{
   return { data: normalizeMatchRow(data), error: null };
 }
 
-type RawMatchRow = Match & { competition: unknown };
+type RawMatchRow = Match & {
+  competition: unknown;
+  venue: unknown;
+};
 
-function normalizeMatchRow(row: RawMatchRow): MatchWithCompetition {
-  const competition = Array.isArray(row.competition)
-    ? (row.competition[0] ?? null)
-    : (row.competition as MatchWithCompetition["competition"]);
+function normalizeRelation<T>(value: unknown): T | null {
+  if (Array.isArray(value)) return (value[0] as T | undefined) ?? null;
+  return (value as T | null) ?? null;
+}
+
+function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
   return {
     id: row.id,
     team_id: row.team_id,
     opponent_name: row.opponent_name,
     date: row.date,
     kickoff_time: row.kickoff_time,
-    venue: row.venue,
+    home_away: row.home_away,
+    venue_id: row.venue_id,
     competition_id: row.competition_id,
     player_of_the_match_id: row.player_of_the_match_id,
     players_player_of_the_match_id: row.players_player_of_the_match_id,
@@ -184,6 +193,7 @@ function normalizeMatchRow(row: RawMatchRow): MatchWithCompetition {
     club_notes: row.club_notes,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    competition,
+    competition: normalizeRelation(row.competition),
+    venue: normalizeRelation(row.venue),
   };
 }

@@ -6,48 +6,34 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { COACH_TEAM_ROLES } from "@/lib/constants";
 import {
   addCoachToTeamAction,
-  createTeamCoachAction,
   removeCoachFromTeamAction,
 } from "@/lib/coaches/actions";
 import type { Coach } from "@/lib/supabase/database.types";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function TeamStaffSection({
   teamId,
-  clubId,
   assigned,
   candidates,
   canEdit,
 }: {
   teamId: string;
-  clubId: string;
   assigned: TeamCoachEntry[];
   candidates: Coach[];
   canEdit: boolean;
 }) {
   return (
-    <div className="space-y-6">
-      {canEdit ? (
-        <div className="space-y-4">
-          <CreateTeamCoachForm teamId={teamId} clubId={clubId} />
-          {candidates.length > 0 ? (
-            <AssignCoachForm teamId={teamId} candidates={candidates} />
-          ) : null}
-        </div>
-      ) : null}
-
+    <div className="space-y-4">
       {assigned.length === 0 ? (
         <EmptyState
           title="No coaches assigned"
           description={
             canEdit
-              ? "Create a coach above, or assign existing club coaching staff."
+              ? "Select a club coach below to assign them to this team."
               : "Coaching staff for this team will appear here."
           }
         />
@@ -74,128 +60,11 @@ export function TeamStaffSection({
           ))}
         </ul>
       )}
-    </div>
-  );
-}
 
-function CreateTeamCoachForm({
-  teamId,
-  clubId,
-}: {
-  teamId: string;
-  clubId: string;
-}) {
-  const bound = createTeamCoachAction.bind(null, teamId, clubId);
-  const [state, formAction, pending] = useActionState(
-    bound,
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      key={state.success ?? "idle"}
-      action={formAction}
-      className="border-border space-y-3 rounded-xl border p-4"
-    >
-      <p className="text-sm font-medium">Add new coach to team</p>
-      <div className="grid gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-first">First name</Label>
-          <Input
-            id="new-coach-first"
-            name="first_name"
-            required
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-second">Second name</Label>
-          <Input
-            id="new-coach-second"
-            name="second_name"
-            required
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-joined">Joined date</Label>
-          <Input
-            id="new-coach-joined"
-            name="joined_date"
-            type="date"
-            required
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-role">Role on this team</Label>
-          <NativeSelect id="new-coach-role" name="role" disabled={pending}>
-            <option value="">Select role</option>
-            {COACH_TEAM_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-phone">Phone</Label>
-          <Input
-            id="new-coach-phone"
-            name="phone"
-            type="tel"
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-coach-email">Email</Label>
-          <Input
-            id="new-coach-email"
-            name="email"
-            type="email"
-            disabled={pending}
-          />
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-4 text-sm">
-        <label className="flex min-h-9 items-center gap-2">
-          <input
-            type="checkbox"
-            name="dbs_checked"
-            disabled={pending}
-            className="border-input size-4 rounded"
-          />
-          DBS checked
-        </label>
-        <label className="flex min-h-9 items-center gap-2">
-          <input
-            type="checkbox"
-            name="fa_level_1"
-            disabled={pending}
-            className="border-input size-4 rounded"
-          />
-          FA Level 1
-        </label>
-        <label className="flex min-h-9 items-center gap-2">
-          <input
-            type="checkbox"
-            name="fa_level_2"
-            disabled={pending}
-            className="border-input size-4 rounded"
-          />
-          FA Level 2
-        </label>
-      </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add coach"}
-      </Button>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
+      {canEdit ? (
+        <AssignCoachForm teamId={teamId} candidates={candidates} />
       ) : null}
-    </form>
+    </div>
   );
 }
 
@@ -215,45 +84,55 @@ function AssignCoachForm({
     INITIAL_ACTION_STATE,
   );
 
+  if (candidates.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        Every club coach is already assigned to this team.
+      </p>
+    );
+  }
+
   return (
     <form
       key={state.success ?? "idle"}
       action={formAction}
-      className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <input type="hidden" name="team_id" value={teamId} />
-      <div className="space-y-2">
-        <Label htmlFor="assign-coach">Assign existing coach</Label>
-        <NativeSelect
-          id="assign-coach"
-          name="coach_id"
-          required
-          disabled={pending}
-        >
-          <option value="">Select a club coach</option>
-          {candidates.map((coach) => (
-            <option key={coach.id} value={coach.id}>
-              {coach.first_name} {coach.second_name}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="assign-role">Role</Label>
-        <NativeSelect id="assign-role" name="role" disabled={pending}>
-          <option value="">Select role</option>
-          {COACH_TEAM_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+      <NativeSelect
+        id="assign-coach"
+        name="coach_id"
+        required
+        disabled={pending}
+        aria-label="Select coach"
+        className="min-w-0 flex-1"
+      >
+        <option value="">Select coach</option>
+        {candidates.map((coach) => (
+          <option key={coach.id} value={coach.id}>
+            {coach.first_name} {coach.second_name}
+          </option>
+        ))}
+      </NativeSelect>
+      <NativeSelect
+        id="assign-role"
+        name="role"
+        disabled={pending}
+        aria-label="Role"
+        className="sm:w-40"
+      >
+        <option value="">Select role</option>
+        {COACH_TEAM_ROLES.map((role) => (
+          <option key={role} value={role}>
+            {role}
+          </option>
+        ))}
+      </NativeSelect>
       <Button type="submit" disabled={pending}>
-        {pending ? "Assigning…" : "Assign"}
+        {pending ? "Adding…" : "Add"}
       </Button>
       {state.error ? (
-        <div className="sm:col-span-3">
+        <div className="w-full sm:basis-full">
           <ErrorBanner message={state.error} />
         </div>
       ) : null}

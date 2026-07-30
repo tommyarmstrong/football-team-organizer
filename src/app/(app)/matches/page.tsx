@@ -7,13 +7,13 @@ import {
   formatKickoffTime,
   formatMatchDate,
   formatScore,
+  labelHomeAway,
   labelMatchStatus,
-  labelVenue,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { value: MatchListFilter; label: string }[] = [
@@ -52,7 +52,9 @@ export default async function MatchesPage({
         }
         actions={
           canEdit ? (
-            <Button render={<Link href="/matches/new" />}>New fixture</Button>
+            <Link href="/matches/new" className={buttonVariants()}>
+              New fixture
+            </Link>
           ) : undefined
         }
       />
@@ -93,7 +95,9 @@ export default async function MatchesPage({
           description="Create a fixture to get started."
           action={
             canEdit ? (
-              <Button render={<Link href="/matches/new" />}>New fixture</Button>
+              <Link href="/matches/new" className={buttonVariants()}>
+                New fixture
+              </Link>
             ) : undefined
           }
         />
@@ -115,7 +119,8 @@ export default async function MatchesPage({
                       ? ` · ${formatKickoffTime(match.kickoff_time)}`
                       : ""}
                     {" · "}
-                    {labelVenue(match.venue)}
+                    {labelHomeAway(match.home_away)}
+                    {match.venue ? ` · ${match.venue.name}` : ""}
                     {match.competition ? ` · ${match.competition.name}` : ""}
                   </p>
                 </div>

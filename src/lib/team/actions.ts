@@ -50,8 +50,8 @@ function parseTeamFields(formData: FormData):
       name: string;
       age_group: AgeGroup;
       gender: TeamGender;
-      home_venue: string | null;
-      training_venue: string | null;
+      home_venue_id: string | null;
+      training_venue_id: string | null;
       training_days: TrainingDay[];
       season_label: string;
       head_coach_id: string | null;
@@ -60,8 +60,8 @@ function parseTeamFields(formData: FormData):
   const name = str(formData, "name");
   const age_group = str(formData, "age_group");
   const gender = str(formData, "gender") as TeamGender;
-  const home_venue = str(formData, "home_venue") || null;
-  const training_venue = str(formData, "training_venue") || null;
+  const home_venue_id = str(formData, "home_venue_id") || null;
+  const training_venue_id = str(formData, "training_venue_id") || null;
   const training_days = parseTrainingDays(formData);
   const season_label = str(formData, "season_label");
   const head_coach_id = str(formData, "head_coach_id") || null;
@@ -81,8 +81,8 @@ function parseTeamFields(formData: FormData):
     name,
     age_group: age_group as AgeGroup,
     gender,
-    home_venue,
-    training_venue,
+    home_venue_id,
+    training_venue_id,
     training_days,
     season_label,
     head_coach_id,
@@ -113,8 +113,8 @@ export async function updateTeamAction(
     name: parsed.name,
     age_group: parsed.age_group,
     gender: parsed.gender,
-    home_venue: parsed.home_venue,
-    training_venue: parsed.training_venue,
+    home_venue_id: parsed.home_venue_id,
+    training_venue_id: parsed.training_venue_id,
     training_days: parsed.training_days,
     season_label: parsed.season_label,
   });
@@ -124,9 +124,11 @@ export async function updateTeamAction(
   if (headError.error) return { error: headError.error };
 
   revalidatePath("/team");
+  revalidatePath("/team/edit");
   revalidatePath("/dashboard");
   revalidatePath("/coaches");
-  return { success: "Team profile saved." };
+  revalidatePath("/venues");
+  redirect("/team");
 }
 
 export async function createTeamAction(
@@ -160,8 +162,8 @@ export async function createTeamAction(
     name: parsed.name,
     age_group: parsed.age_group,
     gender: parsed.gender,
-    home_venue: parsed.home_venue,
-    training_venue: parsed.training_venue,
+    home_venue_id: parsed.home_venue_id,
+    training_venue_id: parsed.training_venue_id,
     training_days: parsed.training_days,
     season_label: parsed.season_label,
   });
@@ -182,6 +184,7 @@ export async function createTeamAction(
   });
 
   revalidatePath("/", "layout");
+  revalidatePath("/club");
   redirect("/team");
 }
 
@@ -225,6 +228,7 @@ export async function updateCompetitionAction(
 
   revalidatePath("/team");
   revalidatePath("/matches");
+  revalidatePath(`/competitions/${id}`);
   return { success: "Competition updated." };
 }
 
@@ -236,5 +240,5 @@ export async function deleteCompetitionAction(
 
   revalidatePath("/team");
   revalidatePath("/matches");
-  return { success: "Competition deleted." };
+  redirect("/team");
 }

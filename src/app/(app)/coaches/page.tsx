@@ -6,14 +6,7 @@ import { coachDisplayName, formatShortDate } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { CoachForm } from "@/components/coaches/coach-form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 
 function qualificationSummary(coach: {
   dbs_checked: boolean;
@@ -46,21 +39,6 @@ export default async function CoachesPage() {
       />
 
       {error ? <ErrorBanner message={error} /> : null}
-
-      {canAdd ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add coach</CardTitle>
-            <CardDescription>
-              Record contact details and FA / DBS qualifications. Coaches can be
-              assigned to one or more teams.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CoachForm mode="create" />
-          </CardContent>
-        </Card>
-      ) : null}
 
       <section className="space-y-3" aria-labelledby="coaches-list-heading">
         <h2 id="coaches-list-heading" className="text-lg font-medium">
@@ -111,6 +89,11 @@ export default async function CoachesPage() {
               </li>
             ))}
           </ul>
+        ) : null}
+        {canAdd ? (
+          <Link href="/coaches/new" className={buttonVariants()}>
+            Add coach
+          </Link>
         ) : null}
       </section>
     </div>

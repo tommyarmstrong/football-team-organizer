@@ -187,7 +187,8 @@ A match is scheduled (fixture) and may later have a result.
 | opponent_name             | Free text                                                               |
 | date                      | Match date                                                              |
 | kickoff_time              | Optional time of day                                                    |
-| venue                     | `home` \| `away` \| `neutral`                                           |
+| home_away                 | `home` \| `away` \| `neutral`                                           |
+| venue_id                  | Optional FK → venues (`null` = unknown)                                 |
 | competition_id            | Optional FK → competitions                                              |
 | player_of_the_match_id    | Optional FK → players (set when played; editable by coaches/management) |
 | status                    | `scheduled` \| `played` \| `postponed` \| `cancelled`                   |
@@ -315,7 +316,7 @@ Team-scoped screens act on the **active team** chosen in the header switcher. Th
 
 ### Matches
 
-1. Create a fixture (opponent, kickoff, venue, optional competition)
+1. Create a fixture (opponent, kickoff, home/away, optional venue, optional competition)
 2. List upcoming fixtures and past results
 3. Mark match played and set score (`goals_for` / `goals_against` aggregate only)
 4. Postpone / cancel a fixture
