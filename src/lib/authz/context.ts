@@ -14,6 +14,8 @@ import type { Team, TeamRole } from "@/lib/supabase/database.types";
 export type ViewerContext = {
   userId: string;
   email: string | null;
+  /** Display name from auth metadata, or email local-part when unavailable. */
+  displayName: string | null;
   managementClubIds: string[];
   /** Teams where the user holds the team_members role `coach`. */
   coachTeamIds: string[];
@@ -29,6 +31,26 @@ export type ViewerContext = {
   editableTeamIds: string[];
   isManagement: boolean;
 };
+
+/** Prefer auth metadata name; fall back to email local-part. */
+export function resolveAuthDisplayName(user: {
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}): string | null {
+  const meta = user.user_metadata ?? {};
+  for (const key of ["full_name", "name", "display_name"] as const) {
+    const value = meta[key];
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed) return trimmed;
+    }
+  }
+
+  const email = user.email?.trim();
+  if (!email) return null;
+  const localPart = email.split("@")[0]?.trim();
+  return localPart || null;
+}
 
 export const getViewerContext = cache(
   async (): Promise<ViewerContext | null> => {
@@ -90,6 +112,7 @@ export const getViewerContext = cache(
     return {
       userId: user.id,
       email: user.email ?? null,
+      displayName: resolveAuthDisplayName(user),
       managementClubIds,
       coachTeamIds,
       managementTeamIds,
