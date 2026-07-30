@@ -123,6 +123,14 @@ export async function updateMatch(
   return { data, error: null };
 }
 
+export async function deleteMatch(
+  id: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("matches").delete().eq("id", id);
+  return { error: error?.message ?? null };
+}
+
 export async function getNextFixture(): Promise<{
   data: MatchWithRelations | null;
   error: string | null;

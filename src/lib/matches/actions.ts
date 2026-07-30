@@ -8,7 +8,7 @@ import {
   MATCH_STATUSES,
   matchAllowsEvents,
 } from "@/lib/constants";
-import { createMatch, updateMatch } from "@/lib/data/matches";
+import { createMatch, deleteMatch, updateMatch } from "@/lib/data/matches";
 import { getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
@@ -136,4 +136,15 @@ export async function updateMatchAction(
   revalidatePath("/stats");
   revalidatePath("/club");
   return { success: "Match saved." };
+}
+
+export async function deleteMatchAction(id: string): Promise<ActionState> {
+  const { error } = await deleteMatch(id);
+  if (error) return { error };
+
+  revalidatePath("/matches");
+  revalidatePath("/dashboard");
+  revalidatePath("/stats");
+  revalidatePath("/club");
+  return {};
 }
