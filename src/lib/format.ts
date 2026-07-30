@@ -2,8 +2,10 @@ import {
   CARD_TYPE_LABELS,
   COACH_OBJECTIVE_STATUS_LABELS,
   COACH_OBJECTIVE_TYPE_LABELS,
+  GOAL_KIND_LABELS,
   MATCH_STATUS_LABELS,
   OPPOSITION_GOAL_LABEL,
+  OWN_GOAL_LABEL,
   PLAYER_OBJECTIVE_STATUS_LABELS,
   PLAYER_OBJECTIVE_TYPE_LABELS,
   VENUE_FOOD_AND_DRINK_LABELS,
@@ -64,10 +66,30 @@ export function playerDisplayName(
 
 export function goalScorerLabel(goal: {
   is_opposition: boolean;
+  is_own_goal?: boolean;
   scorer: { first_name: string; last_name: string } | null;
 }): string {
+  if (goal.is_own_goal) return OWN_GOAL_LABEL;
   if (goal.is_opposition || !goal.scorer) return OPPOSITION_GOAL_LABEL;
   return playerDisplayName(goal.scorer);
+}
+
+export function goalKindLabel(goal: {
+  is_penalty: boolean;
+  is_freekick: boolean;
+  from_setpiece: boolean;
+}): string | null {
+  if (goal.is_penalty) return `(${GOAL_KIND_LABELS.penalty})`;
+  if (goal.is_freekick) return `(${GOAL_KIND_LABELS.freekick})`;
+  if (goal.from_setpiece) return `(${GOAL_KIND_LABELS.setpiece})`;
+  return null;
+}
+
+export function formatGoalMinute(
+  minute: number | null | undefined,
+): string | null {
+  if (minute == null) return null;
+  return `'${minute}`;
 }
 
 export function coachDisplayName(coach: {

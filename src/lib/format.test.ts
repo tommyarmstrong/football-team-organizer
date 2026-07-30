@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   coachDisplayName,
+  formatGoalMinute,
   formatKickoffTime,
   formatMatchDate,
   formatMatchVersusTitle,
   formatScore,
   formatShortDate,
+  goalKindLabel,
+  goalScorerLabel,
   labelCompetitionKind,
   labelGender,
   labelHomeAway,
@@ -74,6 +77,72 @@ describe("coachDisplayName", () => {
     expect(coachDisplayName({ first_name: "Alex", second_name: "Coach" })).toBe(
       "Alex Coach",
     );
+  });
+});
+
+describe("goalScorerLabel", () => {
+  it("labels own goals and opposition goals", () => {
+    expect(
+      goalScorerLabel({
+        is_opposition: false,
+        is_own_goal: true,
+        scorer: null,
+      }),
+    ).toBe("Own Goal");
+    expect(
+      goalScorerLabel({
+        is_opposition: true,
+        is_own_goal: false,
+        scorer: null,
+      }),
+    ).toBe("Opponent Goal");
+    expect(
+      goalScorerLabel({
+        is_opposition: false,
+        is_own_goal: false,
+        scorer: { first_name: "Alex", last_name: "Smith" },
+      }),
+    ).toBe("Alex Smith");
+  });
+});
+
+describe("goalKindLabel", () => {
+  it("returns a single bracketed kind or null", () => {
+    expect(
+      goalKindLabel({
+        is_penalty: true,
+        is_freekick: false,
+        from_setpiece: false,
+      }),
+    ).toBe("(Penalty)");
+    expect(
+      goalKindLabel({
+        is_penalty: false,
+        is_freekick: true,
+        from_setpiece: false,
+      }),
+    ).toBe("(Direct Free Kick)");
+    expect(
+      goalKindLabel({
+        is_penalty: false,
+        is_freekick: false,
+        from_setpiece: true,
+      }),
+    ).toBe("(Set Piece)");
+    expect(
+      goalKindLabel({
+        is_penalty: false,
+        is_freekick: false,
+        from_setpiece: false,
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("formatGoalMinute", () => {
+  it("prefixes the minute with an apostrophe", () => {
+    expect(formatGoalMinute(12)).toBe("'12");
+    expect(formatGoalMinute(null)).toBeNull();
   });
 });
 

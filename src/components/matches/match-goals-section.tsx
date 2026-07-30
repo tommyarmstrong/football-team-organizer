@@ -6,9 +6,16 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   OPPOSITION_GOAL_LABEL,
   OPPOSITION_SCORER_VALUE,
+  OWN_GOAL_LABEL,
+  OWN_GOAL_SCORER_VALUE,
 } from "@/lib/constants";
 import { createGoalAction, deleteGoalAction } from "@/lib/goals/actions";
-import { goalScorerLabel, playerDisplayName } from "@/lib/format";
+import {
+  formatGoalMinute,
+  goalKindLabel,
+  goalScorerLabel,
+  playerDisplayName,
+} from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
 import { cn } from "@/lib/utils";
@@ -18,14 +25,6 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
-
-function goalKindLabels(goal: GoalWithPlayers): string[] {
-  const labels: string[] = [];
-  if (goal.is_penalty) labels.push("Penalty");
-  if (goal.is_freekick) labels.push("Free kick");
-  if (goal.from_setpiece) labels.push("Set piece");
-  return labels;
-}
 
 export function goalChipClassName(
   isOpposition: boolean,
@@ -49,6 +48,26 @@ export function GoalScorerChip({
     <span className={goalChipClassName(goal.is_opposition, className)}>
       <span aria-hidden="true">⚽</span>
       <span className="truncate">{goalScorerLabel(goal)}</span>
+    </span>
+  );
+}
+
+export function GoalAssistChip({
+  player,
+  className,
+}: {
+  player: { first_name: string; last_name: string };
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "bg-background inline-flex items-center gap-1.5 rounded-lg border border-amber-400/90 px-2.5 py-1 font-medium",
+        className,
+      )}
+    >
+      <span aria-hidden="true">🤝</span>
+      <span className="truncate">{playerDisplayName(player)}</span>
     </span>
   );
 }
@@ -94,35 +113,33 @@ export function MatchGoalsSection({
       ) : (
         <ul className="divide-border border-border divide-y rounded-xl border">
           {goals.map((goal) => {
-            const kinds = goalKindLabels(goal);
+            const kind = goalKindLabel(goal);
+            const minuteLabel = formatGoalMinute(goal.minute);
             return (
               <li key={goal.id} className="flex items-stretch">
                 <Link
                   href={`/matches/${matchId}/goals/${goal.id}`}
-                  className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 items-center gap-x-3 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
-                  <GoalScorerChip goal={goal} />
-                  {kinds.map((label) => (
-                    <span
-                      key={label}
-                      className="text-muted-foreground text-xs font-medium"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                  {goal.assist ? (
-                    <span className="text-muted-foreground text-xs">
-                      Assist: {playerDisplayName(goal.assist)}
-                    </span>
-                  ) : null}
+                  <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
+                    <GoalScorerChip goal={goal} />
+                    {goal.assist && !goal.is_own_goal && !goal.is_opposition ? (
+                      <GoalAssistChip player={goal.assist} />
+                    ) : null}
+                    {kind ? (
+                      <span className="text-muted-foreground shrink-0 text-xs font-medium">
+                        {kind}
+                      </span>
+                    ) : null}
+                    {minuteLabel ? (
+                      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        {minuteLabel}
+                      </span>
+                    ) : null}
+                  </span>
                   {goal.period ? (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-muted-foreground shrink-0 text-xs">
                       {goal.period}
-                    </span>
-                  ) : null}
-                  {goal.minute != null ? (
-                    <span className="text-muted-foreground text-xs tabular-nums">
-                      {goal.minute}&apos;
                     </span>
                   ) : null}
                 </Link>
@@ -198,18 +215,17 @@ function AddGoalForm({
           <option value="" disabled>
             Select scorer
           </option>
-          {playerOptions.length > 0 ? (
-            <optgroup label={teamName}>
-              {playerOptions.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {playerDisplayName(player, {
-                    shirtNumber: player.shirt_number,
-                  })}
-                  {!player.active ? " (inactive)" : ""}
-                </option>
-              ))}
-            </optgroup>
-          ) : null}
+          <optgroup label={teamName}>
+            {playerOptions.map((player) => (
+              <option key={player.id} value={player.id}>
+                {playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                })}
+                {!player.active ? " (inactive)" : ""}
+              </option>
+            ))}
+            <option value={OWN_GOAL_SCORER_VALUE}>{OWN_GOAL_LABEL}</option>
+          </optgroup>
           <optgroup label={opponentName || "Opposition"}>
             <option value={OPPOSITION_SCORER_VALUE}>
               {OPPOSITION_GOAL_LABEL}

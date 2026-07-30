@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   boolFromCheckbox,
+  goalKindFromFlags,
+  parseGoalKind,
   parseOptionalInt,
   parseOptionalMinute,
   parseShirtNumber,
@@ -24,6 +26,51 @@ describe("boolFromCheckbox", () => {
     expect(boolFromCheckbox(formData, "is_penalty")).toBe(true);
     expect(boolFromCheckbox(formData, "is_freekick")).toBe(true);
     expect(boolFromCheckbox(formData, "from_setpiece")).toBe(false);
+  });
+});
+
+describe("parseGoalKind", () => {
+  it("defaults to no kind flags", () => {
+    expect(parseGoalKind(new FormData())).toEqual({
+      is_penalty: false,
+      is_freekick: false,
+      from_setpiece: false,
+    });
+  });
+
+  it("parses mutually exclusive kinds", () => {
+    const formData = new FormData();
+    formData.set("goal_kind", "freekick");
+    expect(parseGoalKind(formData)).toEqual({
+      is_penalty: false,
+      is_freekick: true,
+      from_setpiece: false,
+    });
+  });
+
+  it("rejects unknown kinds", () => {
+    const formData = new FormData();
+    formData.set("goal_kind", "header");
+    expect(parseGoalKind(formData)).toEqual({ error: "Invalid goal type." });
+  });
+});
+
+describe("goalKindFromFlags", () => {
+  it("maps flags back to a single kind", () => {
+    expect(
+      goalKindFromFlags({
+        is_penalty: true,
+        is_freekick: false,
+        from_setpiece: false,
+      }),
+    ).toBe("penalty");
+    expect(
+      goalKindFromFlags({
+        is_penalty: false,
+        is_freekick: false,
+        from_setpiece: false,
+      }),
+    ).toBe("none");
   });
 });
 
