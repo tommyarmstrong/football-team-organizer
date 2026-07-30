@@ -1,16 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
+  GOAL_KIND_LABELS,
   OPPOSITION_GOAL_LABEL,
   OPPOSITION_SCORER_VALUE,
+  OWN_GOAL_LABEL,
+  OWN_GOAL_SCORER_VALUE,
 } from "@/lib/constants";
 import {
   deleteGoalAndReturnToMatchAction,
   saveGoalAndReturnToMatchAction,
 } from "@/lib/goals/actions";
-import { goalScorerLabel, playerDisplayName } from "@/lib/format";
+import { goalKindFromFlags } from "@/lib/form-parse";
+import {
+  goalKindLabel,
+  goalScorerLabel,
+  playerDisplayName,
+} from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import type { RosterPlayer } from "@/lib/data/players";
@@ -47,7 +55,7 @@ export function MatchGoalEditSection({
         <div className="space-y-1">
           <dt className="text-muted-foreground">Assist</dt>
           <dd className="font-medium">
-            {goal.is_opposition
+            {goal.is_opposition || goal.is_own_goal
               ? "—"
               : goal.assist
                 ? playerDisplayName(goal.assist)
@@ -57,7 +65,7 @@ export function MatchGoalEditSection({
         <div className="space-y-1">
           <dt className="text-muted-foreground">Minute</dt>
           <dd className="font-medium">
-            {goal.minute != null ? `${goal.minute}'` : "—"}
+            {goal.minute != null ? `'${goal.minute}` : "—"}
           </dd>
         </div>
         <div className="space-y-1">
@@ -65,16 +73,8 @@ export function MatchGoalEditSection({
           <dd className="font-medium">{goal.period ?? "—"}</dd>
         </div>
         <div className="space-y-1 sm:col-span-2">
-          <dt className="text-muted-foreground">Flags</dt>
-          <dd className="font-medium">
-            {[
-              goal.is_penalty ? "Penalty" : null,
-              goal.is_freekick ? "Free kick" : null,
-              goal.from_setpiece ? "Set piece" : null,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "None"}
-          </dd>
+          <dt className="text-muted-foreground">Type</dt>
+          <dd className="font-medium">{goalKindLabel(goal) ?? "None"}</dd>
         </div>
       </dl>
     );
@@ -90,6 +90,12 @@ export function MatchGoalEditSection({
       opponentName={opponentName}
     />
   );
+}
+
+function defaultScorerValue(goal: GoalWithPlayers): string {
+  if (goal.is_own_goal) return OWN_GOAL_SCORER_VALUE;
+  if (goal.is_opposition) return OPPOSITION_SCORER_VALUE;
+  return goal.player_id ?? "";
 }
 
 function EditableGoalSection({
@@ -114,6 +120,13 @@ function EditableGoalSection({
     INITIAL_ACTION_STATE,
   );
 
+  const [scorerValue, setScorerValue] = useState(() =>
+    defaultScorerValue(goal),
+  );
+  const assistsAllowed =
+    scorerValue !== OPPOSITION_SCORER_VALUE &&
+    scorerValue !== OWN_GOAL_SCORER_VALUE;
+
   const activePlayers = players.filter((p) => p.active);
   const options = activePlayers.length > 0 ? activePlayers : players;
   const optionIds = new Set(options.map((p) => p.id));
@@ -123,9 +136,7 @@ function EditableGoalSection({
       (p.id === goal.player_id || p.id === goal.assist_player_id),
   );
   const playerOptions = [...options, ...extra];
-  const defaultScorer = goal.is_opposition
-    ? OPPOSITION_SCORER_VALUE
-    : (goal.player_id ?? "");
+  const defaultKind = goalKindFromFlags(goal);
 
   return (
     <div className="space-y-6">
@@ -140,21 +151,21 @@ function EditableGoalSection({
               name="player_id"
               required
               disabled={pending}
-              defaultValue={defaultScorer}
+              value={scorerValue}
+              onChange={(event) => setScorerValue(event.target.value)}
             >
               <option value="" disabled>
                 Select scorer
               </option>
-              {playerOptions.length > 0 ? (
-                <optgroup label={teamName}>
-                  {playerOptions.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {playerDisplayName(p, { shirtNumber: p.shirt_number })}
-                      {!p.active ? " (inactive)" : ""}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null}
+              <optgroup label={teamName}>
+                {playerOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {playerDisplayName(p, { shirtNumber: p.shirt_number })}
+                    {!p.active ? " (inactive)" : ""}
+                  </option>
+                ))}
+                <option value={OWN_GOAL_SCORER_VALUE}>{OWN_GOAL_LABEL}</option>
+              </optgroup>
               <optgroup label={opponentName || "Opposition"}>
                 <option value={OPPOSITION_SCORER_VALUE}>
                   {OPPOSITION_GOAL_LABEL}
@@ -167,15 +178,20 @@ function EditableGoalSection({
             <NativeSelect
               id={`assist-${goal.id}`}
               name="assist_player_id"
-              disabled={pending}
-              defaultValue={goal.assist_player_id ?? ""}
+              disabled={pending || !assistsAllowed}
+              defaultValue={assistsAllowed ? (goal.assist_player_id ?? "") : ""}
+              key={assistsAllowed ? "assist-on" : "assist-off"}
             >
-              <option value="">None</option>
-              {playerOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {playerDisplayName(p, { shirtNumber: p.shirt_number })}
-                </option>
-              ))}
+              <option value="">
+                {assistsAllowed ? "None" : "Not available"}
+              </option>
+              {assistsAllowed
+                ? playerOptions.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {playerDisplayName(p, { shirtNumber: p.shirt_number })}
+                    </option>
+                  ))
+                : null}
             </NativeSelect>
           </div>
           <div className="space-y-2">
@@ -206,36 +222,55 @@ function EditableGoalSection({
               ))}
             </NativeSelect>
           </div>
-          <label className="flex min-h-9 items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="is_penalty"
-              defaultChecked={goal.is_penalty}
-              disabled={pending}
-              className="border-input size-4 rounded"
-            />
-            Penalty
-          </label>
-          <label className="flex min-h-9 items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="is_freekick"
-              defaultChecked={goal.is_freekick}
-              disabled={pending}
-              className="border-input size-4 rounded"
-            />
-            Free kick
-          </label>
-          <label className="flex min-h-9 items-center gap-2 text-sm sm:col-span-2">
-            <input
-              type="checkbox"
-              name="from_setpiece"
-              defaultChecked={goal.from_setpiece}
-              disabled={pending}
-              className="border-input size-4 rounded"
-            />
-            From set piece
-          </label>
+          <fieldset className="space-y-2 sm:col-span-2">
+            <legend className="text-sm font-medium">Type (optional)</legend>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
+              <label className="flex min-h-9 items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="goal_kind"
+                  value="none"
+                  defaultChecked={defaultKind === "none"}
+                  disabled={pending}
+                  className="border-input size-4"
+                />
+                None
+              </label>
+              <label className="flex min-h-9 items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="goal_kind"
+                  value="penalty"
+                  defaultChecked={defaultKind === "penalty"}
+                  disabled={pending}
+                  className="border-input size-4"
+                />
+                {GOAL_KIND_LABELS.penalty}
+              </label>
+              <label className="flex min-h-9 items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="goal_kind"
+                  value="freekick"
+                  defaultChecked={defaultKind === "freekick"}
+                  disabled={pending}
+                  className="border-input size-4"
+                />
+                {GOAL_KIND_LABELS.freekick}
+              </label>
+              <label className="flex min-h-9 items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="goal_kind"
+                  value="setpiece"
+                  defaultChecked={defaultKind === "setpiece"}
+                  disabled={pending}
+                  className="border-input size-4"
+                />
+                {GOAL_KIND_LABELS.setpiece}
+              </label>
+            </div>
+          </fieldset>
         </div>
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>

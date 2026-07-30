@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
-import { OPPOSITION_SCORER_VALUE } from "@/lib/constants";
+import {
+  OPPOSITION_SCORER_VALUE,
+  OWN_GOAL_SCORER_VALUE,
+} from "@/lib/constants";
 import { createGoal, deleteGoal, updateGoal } from "@/lib/data/goals";
 import { createClient } from "@/lib/supabase/server";
-import { boolFromCheckbox, parseOptionalMinute, str } from "@/lib/form-parse";
+import { parseGoalKind, parseOptionalMinute, str } from "@/lib/form-parse";
 
 function revalidateGoal(matchId: string, goalId?: string) {
   revalidatePath(`/matches/${matchId}`);
@@ -49,20 +52,27 @@ async function resolvePeriodFields(
   return { period_id, period };
 }
 
-function parseScorer(
-  formData: FormData,
-):
-  | { is_opposition: true; player_id: null }
-  | { is_opposition: false; player_id: string }
-  | { error: string } {
+type ParsedScorer =
+  | { is_opposition: true; is_own_goal: false; player_id: null }
+  | { is_opposition: false; is_own_goal: true; player_id: null }
+  | { is_opposition: false; is_own_goal: false; player_id: string };
+
+function parseScorer(formData: FormData): ParsedScorer | { error: string } {
   const raw = str(formData, "player_id");
   if (!raw) {
     return { error: "Select a scorer." };
   }
   if (raw === OPPOSITION_SCORER_VALUE) {
-    return { is_opposition: true, player_id: null };
+    return { is_opposition: true, is_own_goal: false, player_id: null };
   }
-  return { is_opposition: false, player_id: raw };
+  if (raw === OWN_GOAL_SCORER_VALUE) {
+    return { is_opposition: false, is_own_goal: true, player_id: null };
+  }
+  return { is_opposition: false, is_own_goal: false, player_id: raw };
+}
+
+function assistsAllowed(scorer: ParsedScorer): boolean {
+  return !scorer.is_opposition && !scorer.is_own_goal;
 }
 
 export async function createGoalAction(
@@ -83,6 +93,7 @@ export async function createGoalAction(
     player_id: scorer.player_id,
     assist_player_id: null,
     is_opposition: scorer.is_opposition,
+    is_own_goal: scorer.is_own_goal,
     period_id: periodFields.period_id,
     period: periodFields.period,
     minute: null,
@@ -107,16 +118,19 @@ export async function saveGoalAndReturnToMatchAction(
   const scorer = parseScorer(formData);
   if ("error" in scorer) return scorer;
 
-  const assist_player_id = scorer.is_opposition
-    ? null
-    : str(formData, "assist_player_id") || null;
+  const kind = parseGoalKind(formData);
+  if ("error" in kind) return kind;
+
+  const assist_player_id = assistsAllowed(scorer)
+    ? str(formData, "assist_player_id") || null
+    : null;
   const minute = parseOptionalMinute(str(formData, "minute"));
 
   if (minute && typeof minute === "object" && "error" in minute) {
     return { error: minute.error };
   }
   if (
-    !scorer.is_opposition &&
+    assistsAllowed(scorer) &&
     assist_player_id &&
     assist_player_id === scorer.player_id
   ) {
@@ -132,12 +146,13 @@ export async function saveGoalAndReturnToMatchAction(
     player_id: scorer.player_id,
     assist_player_id,
     is_opposition: scorer.is_opposition,
+    is_own_goal: scorer.is_own_goal,
     period_id: periodFields.period_id,
     period: periodFields.period,
     minute: minute as number | null,
-    is_penalty: boolFromCheckbox(formData, "is_penalty"),
-    is_freekick: boolFromCheckbox(formData, "is_freekick"),
-    from_setpiece: boolFromCheckbox(formData, "from_setpiece"),
+    is_penalty: kind.is_penalty,
+    is_freekick: kind.is_freekick,
+    from_setpiece: kind.from_setpiece,
   });
 
   if (error) return { error };

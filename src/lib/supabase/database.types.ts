@@ -695,6 +695,7 @@ export type Database = {
           id: string;
           is_freekick: boolean;
           is_opposition: boolean;
+          is_own_goal: boolean;
           is_penalty: boolean;
           match_id: string;
           minute: number | null;
@@ -709,6 +710,7 @@ export type Database = {
           id?: string;
           is_freekick?: boolean;
           is_opposition?: boolean;
+          is_own_goal?: boolean;
           is_penalty?: boolean;
           match_id: string;
           minute?: number | null;
@@ -723,6 +725,7 @@ export type Database = {
           id?: string;
           is_freekick?: boolean;
           is_opposition?: boolean;
+          is_own_goal?: boolean;
           is_penalty?: boolean;
           match_id?: string;
           minute?: number | null;
