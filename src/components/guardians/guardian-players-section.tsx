@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 type PlayerOption = {
   id: string;
@@ -52,19 +53,18 @@ export function GuardianPlayersSection({
         >
           <div className="space-y-2">
             <Label htmlFor="guardian-player">Player</Label>
-            <NativeSelect
+            <SearchableSelect
               id="guardian-player"
               name="player_id"
               required
               disabled={pending}
-            >
-              <option value="">Select a player</option>
-              {availablePlayers.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {playerDisplayName(player)}
-                </option>
-              ))}
-            </NativeSelect>
+              placeholder="Search players by name…"
+              emptyMessage="No players match that name."
+              options={availablePlayers.map((player) => ({
+                value: player.id,
+                label: playerDisplayName(player),
+              }))}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="guardian-relationship">Relationship</Label>

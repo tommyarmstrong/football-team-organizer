@@ -7,19 +7,17 @@ import { listCoaches } from "@/lib/data/coaches";
 import { listGuardians } from "@/lib/data/guardians";
 import { listManagers } from "@/lib/data/managers";
 import { listVisibleTeams } from "@/lib/data/team";
-import {
-  coachDisplayName,
-  formatShortDate,
-  guardianDisplayName,
-  managerDisplayName,
-  playerDisplayName,
-} from "@/lib/format";
-import { GUARDIAN_RELATIONSHIP_LABELS } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ClubForm } from "@/components/clubs/club-form";
 import { ClubTeamLink } from "@/components/clubs/club-team-link";
+import {
+  ClubCoachesList,
+  ClubGuardiansList,
+  ClubManagersList,
+  ClubPlayersList,
+} from "@/components/clubs/club-people-lists";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -134,24 +132,7 @@ export default async function ClubPage() {
             />
           ) : null}
           {!coachesError && coaches.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {coaches.map((coach) => (
-                <li key={coach.id}>
-                  <Link
-                    href={`/coaches/${coach.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div>
-                      <p className="font-medium">{coachDisplayName(coach)}</p>
-                      <p className="text-muted-foreground text-sm">
-                        Joined {formatShortDate(coach.joined_date)}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground text-xs">Edit</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ClubCoachesList coaches={coaches} />
           ) : null}
           <Link href="/coaches/new" className={buttonVariants()}>
             Add coach
@@ -176,26 +157,7 @@ export default async function ClubPage() {
             />
           ) : null}
           {!managersError && managers.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {managers.map((manager) => (
-                <li key={manager.id}>
-                  <Link
-                    href={`/managers/${manager.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {managerDisplayName(manager)}
-                      </p>
-                      <p className="text-muted-foreground truncate text-sm">
-                        {manager.email ?? manager.phone ?? "No contact details"}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground text-xs">Edit</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ClubManagersList managers={managers} />
           ) : null}
           <Link href="/managers/new" className={buttonVariants()}>
             Add manager
@@ -219,24 +181,7 @@ export default async function ClubPage() {
             />
           ) : null}
           {!playersError && players.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {players.map((player) => (
-                <li key={player.id}>
-                  <Link
-                    href={`/players/${player.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div>
-                      <p className="font-medium">{playerDisplayName(player)}</p>
-                      <p className="text-muted-foreground text-sm">
-                        {player.position ?? "No position"}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground text-xs">Edit</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ClubPlayersList players={players} />
           ) : null}
           <Link href="/players/new" className={buttonVariants()}>
             Add player
@@ -261,45 +206,7 @@ export default async function ClubPage() {
             />
           ) : null}
           {!guardiansError && guardians.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {guardians.map((guardian) => (
-                <li key={guardian.id}>
-                  <Link
-                    href={`/guardians/${guardian.id}`}
-                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {guardianDisplayName(guardian)}
-                      </p>
-                      <p className="text-muted-foreground truncate text-sm">
-                        {guardian.email ??
-                          guardian.phone ??
-                          "No contact details"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap justify-end gap-1">
-                      {guardian.players.length === 0 ? (
-                        <span className="text-muted-foreground text-xs">
-                          Edit
-                        </span>
-                      ) : (
-                        guardian.players.map((link) => (
-                          <span
-                            key={link.player_guardian_id}
-                            className="border-border text-muted-foreground rounded-md border px-2 py-0.5 text-xs"
-                          >
-                            {link.player_first_name} {link.player_last_name}
-                            {" · "}
-                            {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ClubGuardiansList guardians={guardians} />
           ) : null}
           <Link href="/guardians/new" className={buttonVariants()}>
             Add guardian

@@ -12,9 +12,9 @@ import type { GuardianAssistantEntry } from "@/lib/data/members";
 import { guardianDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function GuardianAssistantsSection({
   teamId,
@@ -94,19 +94,18 @@ function AddAssistantForm({
     >
       <div className="space-y-2">
         <Label htmlFor="assistant-guardian">Add guardian assistant</Label>
-        <NativeSelect
+        <SearchableSelect
           id="assistant-guardian"
           name="guardian_id"
           required
           disabled={pending}
-        >
-          <option value="">Select a guardian</option>
-          {candidates.map((guardian) => (
-            <option key={guardian.id} value={guardian.id}>
-              {guardianDisplayName(guardian)}
-            </option>
-          ))}
-        </NativeSelect>
+          placeholder="Search guardians by name…"
+          emptyMessage="No guardians match that name."
+          options={candidates.map((guardian) => ({
+            value: guardian.id,
+            label: guardianDisplayName(guardian),
+          }))}
+        />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add"}

@@ -10,10 +10,12 @@ import {
 } from "@/lib/coaches/actions";
 import type { Coach } from "@/lib/supabase/database.types";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
+import { coachDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamStaffSection({
   teamId,
@@ -99,21 +101,20 @@ function AssignCoachForm({
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <input type="hidden" name="team_id" value={teamId} />
-      <NativeSelect
+      <SearchableSelect
         id="assign-coach"
         name="coach_id"
         required
         disabled={pending}
         aria-label="Select coach"
         className="min-w-0 flex-1"
-      >
-        <option value="">Select coach</option>
-        {candidates.map((coach) => (
-          <option key={coach.id} value={coach.id}>
-            {coach.first_name} {coach.second_name}
-          </option>
-        ))}
-      </NativeSelect>
+        placeholder="Search coaches by name…"
+        emptyMessage="No coaches match that name."
+        options={candidates.map((coach) => ({
+          value: coach.id,
+          label: coachDisplayName(coach),
+        }))}
+      />
       <NativeSelect
         id="assign-role"
         name="role"
