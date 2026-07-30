@@ -1,20 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
-  CoachDevelopmentObjective,
+  PlayerDevelopmentObjective,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
-export type { CoachDevelopmentObjective };
+export type { PlayerDevelopmentObjective };
 
-export async function listCoachObjectives(
-  coachId: string,
-): Promise<{ data: CoachDevelopmentObjective[]; error: string | null }> {
+export async function listPlayerObjectives(
+  playerId: string,
+): Promise<{ data: PlayerDevelopmentObjective[]; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("coach_development_objectives")
+    .from("player_development_objectives")
     .select("*")
-    .eq("coach_id", coachId)
+    .eq("player_id", playerId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -22,12 +22,12 @@ export async function listCoachObjectives(
   return { data: data ?? [], error: null };
 }
 
-export async function getCoachObjective(
+export async function getPlayerObjective(
   id: string,
-): Promise<{ data: CoachDevelopmentObjective | null; error: string | null }> {
+): Promise<{ data: PlayerDevelopmentObjective | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("coach_development_objectives")
+    .from("player_development_objectives")
     .select("*")
     .eq("id", id)
     .maybeSingle();
@@ -36,12 +36,12 @@ export async function getCoachObjective(
   return { data, error: null };
 }
 
-export async function createCoachObjective(
-  input: TablesInsert<"coach_development_objectives">,
-): Promise<{ data: CoachDevelopmentObjective | null; error: string | null }> {
+export async function createPlayerObjective(
+  input: TablesInsert<"player_development_objectives">,
+): Promise<{ data: PlayerDevelopmentObjective | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("coach_development_objectives")
+    .from("player_development_objectives")
     .insert(input)
     .select("*")
     .single();
@@ -50,13 +50,13 @@ export async function createCoachObjective(
   return { data, error: null };
 }
 
-export async function updateCoachObjective(
+export async function updatePlayerObjective(
   id: string,
-  input: TablesUpdate<"coach_development_objectives">,
-): Promise<{ data: CoachDevelopmentObjective | null; error: string | null }> {
+  input: TablesUpdate<"player_development_objectives">,
+): Promise<{ data: PlayerDevelopmentObjective | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("coach_development_objectives")
+    .from("player_development_objectives")
     .update(input)
     .eq("id", id)
     .select("*")
@@ -66,12 +66,12 @@ export async function updateCoachObjective(
   return { data, error: null };
 }
 
-export async function deleteCoachObjective(
+export async function deletePlayerObjective(
   id: string,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const { error } = await supabase
-    .from("coach_development_objectives")
+    .from("player_development_objectives")
     .delete()
     .eq("id", id);
   return { error: error?.message ?? null };

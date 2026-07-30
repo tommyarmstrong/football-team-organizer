@@ -941,6 +941,9 @@ export type Database = {
           id: string;
           coach_id: string;
           body: string;
+          objective_type: Database["public"]["Enums"]["coach_objective_type"];
+          target_date: string | null;
+          status: Database["public"]["Enums"]["coach_objective_status"];
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -949,6 +952,9 @@ export type Database = {
           id?: string;
           coach_id: string;
           body: string;
+          objective_type?: Database["public"]["Enums"]["coach_objective_type"];
+          target_date?: string | null;
+          status?: Database["public"]["Enums"]["coach_objective_status"];
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -957,6 +963,9 @@ export type Database = {
           id?: string;
           coach_id?: string;
           body?: string;
+          objective_type?: Database["public"]["Enums"]["coach_objective_type"];
+          target_date?: string | null;
+          status?: Database["public"]["Enums"]["coach_objective_status"];
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -967,6 +976,47 @@ export type Database = {
             columns: ["coach_id"];
             isOneToOne: false;
             referencedRelation: "coaches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      player_development_objectives: {
+        Row: {
+          id: string;
+          player_id: string;
+          body: string;
+          objective_type: Database["public"]["Enums"]["player_objective_type"];
+          status: Database["public"]["Enums"]["player_objective_status"];
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          player_id: string;
+          body: string;
+          objective_type?: Database["public"]["Enums"]["player_objective_type"];
+          status?: Database["public"]["Enums"]["player_objective_status"];
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          player_id?: string;
+          body?: string;
+          objective_type?: Database["public"]["Enums"]["player_objective_type"];
+          status?: Database["public"]["Enums"]["player_objective_status"];
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_development_objectives_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
             referencedColumns: ["id"];
           },
         ];
@@ -1007,6 +1057,19 @@ export type Database = {
       venue_surface: "astro" | "grass" | "indoor" | "varies" | "unknown";
       venue_food_and_drink:
         "bbq" | "cafe" | "tuck_shop" | "local_outlets" | "ice_cream_van";
+      coach_objective_type:
+        "coaching" | "communications" | "time_management" | "admin" | "other";
+      coach_objective_status:
+        "in_progress" | "ready_for_review" | "complete" | "deferred";
+      player_objective_type:
+        | "skills"
+        | "confidence"
+        | "team_work"
+        | "positional"
+        | "following_coaching"
+        | "other";
+      player_objective_status:
+        "emerging" | "expected" | "exceeding" | "complete";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1046,6 +1109,8 @@ export type MatchPeriodStarter = Tables<"match_period_starters">;
 export type Goal = Tables<"goals">;
 export type Card = Tables<"cards">;
 export type CoachDevelopmentObjective = Tables<"coach_development_objectives">;
+export type PlayerDevelopmentObjective =
+  Tables<"player_development_objectives">;
 
 export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
@@ -1056,3 +1121,7 @@ export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;
 export type VenueSurface = Enums<"venue_surface">;
 export type VenueFoodAndDrink = Enums<"venue_food_and_drink">;
+export type CoachObjectiveType = Enums<"coach_objective_type">;
+export type CoachObjectiveStatus = Enums<"coach_objective_status">;
+export type PlayerObjectiveType = Enums<"player_objective_type">;
+export type PlayerObjectiveStatus = Enums<"player_objective_status">;

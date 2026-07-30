@@ -1,30 +1,35 @@
 import Link from "next/link";
-import { deleteCoachObjectiveAction } from "@/lib/coaches/actions";
+import { deletePlayerObjectiveAction } from "@/lib/players/actions";
 import {
-  formatShortDate,
-  labelCoachObjectiveStatus,
-  labelCoachObjectiveType,
+  labelPlayerObjectiveStatus,
+  labelPlayerObjectiveType,
 } from "@/lib/format";
-import type { CoachDevelopmentObjective } from "@/lib/supabase/database.types";
+import type { PlayerDevelopmentObjective } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { buttonVariants } from "@/components/ui/button";
 
-export function CoachObjectivesSection({
-  coachId,
+export function PlayerObjectivesSection({
+  playerId,
   objectives,
   canEdit,
 }: {
-  coachId: string;
-  objectives: CoachDevelopmentObjective[];
+  playerId: string;
+  objectives: PlayerDevelopmentObjective[];
   canEdit: boolean;
 }) {
   return (
     <div className="space-y-4">
+      <p className="text-muted-foreground text-sm">
+        For younger children it is usually recommended that objectives are
+        limited to no more than one or two items, which they can focus on,
+        rather than being overwhelmed by information.
+      </p>
+
       {canEdit ? (
         <div className="flex justify-end">
           <Link
-            href={`/coaches/${coachId}/objectives/new`}
+            href={`/players/${playerId}/objectives/new`}
             className={buttonVariants({ size: "sm" })}
           >
             Add
@@ -37,13 +42,13 @@ export function CoachObjectivesSection({
           title="No development objectives"
           description={
             canEdit
-              ? "Add zero or more objectives for this coach."
+              ? "Add zero or more objectives for this player."
               : "Development objectives will appear here when added."
           }
           action={
             canEdit ? (
               <Link
-                href={`/coaches/${coachId}/objectives/new`}
+                href={`/players/${playerId}/objectives/new`}
                 className={buttonVariants()}
               >
                 Add
@@ -56,20 +61,17 @@ export function CoachObjectivesSection({
           {objectives.map((objective) => (
             <li key={objective.id} className="flex items-stretch">
               <Link
-                href={`/coaches/${coachId}/objectives/${objective.id}`}
+                href={`/players/${playerId}/objectives/${objective.id}`}
                 className="hover:bg-muted/50 flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{objective.body}</p>
                   <p className="text-muted-foreground text-sm">
-                    {labelCoachObjectiveType(objective.objective_type)}
-                    {objective.target_date
-                      ? ` · Target ${formatShortDate(objective.target_date)}`
-                      : ""}
+                    {labelPlayerObjectiveType(objective.objective_type)}
                   </p>
                 </div>
                 <div className="text-muted-foreground shrink-0 text-sm sm:text-right">
-                  {labelCoachObjectiveStatus(objective.status)}
+                  {labelPlayerObjectiveStatus(objective.status)}
                 </div>
               </Link>
               {canEdit ? (
@@ -77,9 +79,9 @@ export function CoachObjectivesSection({
                   <ListDeleteButton
                     label="Delete objective"
                     confirmMessage="Delete this development objective? This cannot be undone."
-                    deleteAction={deleteCoachObjectiveAction.bind(
+                    deleteAction={deletePlayerObjectiveAction.bind(
                       null,
-                      coachId,
+                      playerId,
                       objective.id,
                     )}
                   />

@@ -12,8 +12,14 @@ import {
   updateRosterEntry,
   upsertPlayerContact,
 } from "@/lib/data/players";
+import {
+  createPlayerObjective,
+  deletePlayerObjective,
+  updatePlayerObjective,
+} from "@/lib/data/player-objectives";
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
+import { parsePlayerObjectiveForm } from "@/lib/objectives/parse";
 import { parseShirtNumber, str } from "@/lib/form-parse";
 
 export async function createPlayerAction(
@@ -238,4 +244,62 @@ export async function removePlayerFromTeamAction(
   revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Player removed from team." };
+}
+
+export async function addPlayerObjectiveAction(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parsePlayerObjectiveForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { data, error } = await createPlayerObjective({
+    player_id: playerId,
+    ...parsed,
+    sort_order: 0,
+  });
+  if (error) return { error };
+  if (!data) return { error: "Could not create objective." };
+
+  revalidatePath(`/players/${playerId}`);
+  redirect(`/players/${playerId}`);
+}
+
+export async function updatePlayerObjectiveAction(
+  playerId: string,
+  objectiveId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parsePlayerObjectiveForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { error } = await updatePlayerObjective(objectiveId, parsed);
+  if (error) return { error };
+
+  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/players/${playerId}/objectives/${objectiveId}`);
+  redirect(`/players/${playerId}`);
+}
+
+export async function deletePlayerObjectiveAction(
+  playerId: string,
+  objectiveId: string,
+): Promise<ActionState> {
+  const { error } = await deletePlayerObjective(objectiveId);
+  if (error) return { error };
+
+  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/players/${playerId}/objectives/${objectiveId}`);
+  return { success: "Objective removed." };
+}
+
+export async function deletePlayerObjectiveAndReturnAction(
+  playerId: string,
+  objectiveId: string,
+): Promise<ActionState> {
+  const result = await deletePlayerObjectiveAction(playerId, objectiveId);
+  if (result.error) return result;
+  redirect(`/players/${playerId}`);
 }

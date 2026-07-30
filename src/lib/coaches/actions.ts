@@ -18,6 +18,7 @@ import {
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
 import { parseCoachForm } from "@/lib/coaches/parse";
+import { parseCoachObjectiveForm } from "@/lib/objectives/parse";
 import { str } from "@/lib/form-parse";
 
 export async function createCoachAction(
@@ -133,18 +134,19 @@ export async function addCoachObjectiveAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const body = str(formData, "body");
-  if (!body) return { error: "Objective text is required." };
+  const parsed = parseCoachObjectiveForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
 
-  const { error } = await createCoachObjective({
+  const { data, error } = await createCoachObjective({
     coach_id: coachId,
-    body,
+    ...parsed,
     sort_order: 0,
   });
   if (error) return { error };
+  if (!data) return { error: "Could not create objective." };
 
   revalidatePath(`/coaches/${coachId}`);
-  return { success: "Objective added." };
+  redirect(`/coaches/${coachId}`);
 }
 
 export async function updateCoachObjectiveAction(
@@ -153,14 +155,15 @@ export async function updateCoachObjectiveAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const body = str(formData, "body");
-  if (!body) return { error: "Objective text is required." };
+  const parsed = parseCoachObjectiveForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
 
-  const { error } = await updateCoachObjective(objectiveId, { body });
+  const { error } = await updateCoachObjective(objectiveId, parsed);
   if (error) return { error };
 
   revalidatePath(`/coaches/${coachId}`);
-  return { success: "Objective saved." };
+  revalidatePath(`/coaches/${coachId}/objectives/${objectiveId}`);
+  redirect(`/coaches/${coachId}`);
 }
 
 export async function deleteCoachObjectiveAction(
@@ -171,5 +174,15 @@ export async function deleteCoachObjectiveAction(
   if (error) return { error };
 
   revalidatePath(`/coaches/${coachId}`);
+  revalidatePath(`/coaches/${coachId}/objectives/${objectiveId}`);
   return { success: "Objective removed." };
+}
+
+export async function deleteCoachObjectiveAndReturnAction(
+  coachId: string,
+  objectiveId: string,
+): Promise<ActionState> {
+  const result = await deleteCoachObjectiveAction(coachId, objectiveId);
+  if (result.error) return result;
+  redirect(`/coaches/${coachId}`);
 }
