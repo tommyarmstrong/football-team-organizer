@@ -33,12 +33,15 @@ export function MatchForm({
   competitions,
   venues = [],
   players = [],
+  matchDaySquadCount,
 }: {
   mode: "create" | "edit";
   match?: Match;
   competitions: Competition[];
   venues?: Venue[];
   players?: RosterPlayer[];
+  /** Read-only match-day squad size (edit mode). */
+  matchDaySquadCount?: number;
 }) {
   const action =
     mode === "create"
@@ -146,6 +149,17 @@ export function MatchForm({
 
         {mode === "edit" ? (
           <>
+            <div className="space-y-2">
+              <Label htmlFor="match_day_squad_count">Match-day squad</Label>
+              <Input
+                id="match_day_squad_count"
+                readOnly
+                value={
+                  matchDaySquadCount == null ? "—" : String(matchDaySquadCount)
+                }
+                disabled
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <NativeSelect

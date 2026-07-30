@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { setMatchSquad } from "@/lib/data/match-players";
+import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import type { MatchListFilter } from "@/lib/constants";
 import type {
@@ -83,6 +85,20 @@ export async function createMatch(
     .single();
 
   if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: "Could not create match." };
+
+  // Default match-day squad: every active player on the team roster.
+  const { data: roster, error: rosterError } = await listRosterForTeam(team.id);
+  if (rosterError) return { data: null, error: rosterError };
+
+  if (roster.length > 0) {
+    const { error: squadError } = await setMatchSquad(
+      data.id,
+      roster.map((player) => player.id),
+    );
+    if (squadError) return { data: null, error: squadError };
+  }
+
   return { data, error: null };
 }
 
