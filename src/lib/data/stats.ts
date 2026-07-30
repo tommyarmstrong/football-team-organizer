@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
-import { resultLetter } from "@/lib/format";
-import type { Match } from "@/lib/supabase/database.types";
+import { resultLetter, scoreFromGoals } from "@/lib/format";
 
 export type TopScorer = {
   player: {
@@ -42,7 +41,8 @@ export async function getTopScorers(
         "player_id, player:players!goals_player_id_fkey(id, first_name, last_name), match:matches!inner(team_id, status)",
       )
       .eq("match.team_id", team.id)
-      .eq("match.status", "played"),
+      .eq("match.status", "played")
+      .eq("is_opposition", false),
     supabase
       .from("team_players")
       .select("player_id, shirt_number")
@@ -110,7 +110,7 @@ export async function getResultsOverTime(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
-    .select("id, date, opponent_name, goals_for, goals_against, status")
+    .select("id, date, opponent_name, status, goals(is_opposition)")
     .eq("team_id", team.id)
     .eq("status", "played")
     .order("date", { ascending: true });
@@ -120,21 +120,19 @@ export async function getResultsOverTime(): Promise<{
   const points: ResultOverTimePoint[] = [];
   const form: Array<"W" | "D" | "L"> = [];
 
-  for (const match of (data ?? []) as Pick<
-    Match,
-    "id" | "date" | "opponent_name" | "goals_for" | "goals_against"
-  >[]) {
-    const letter = resultLetter(match.goals_for, match.goals_against);
-    if (!letter || match.goals_for == null || match.goals_against == null) {
-      continue;
-    }
+  for (const match of data ?? []) {
+    const { goalsFor, goalsAgainst } = scoreFromGoals(
+      Array.isArray(match.goals) ? match.goals : [],
+    );
+    const letter = resultLetter(goalsFor, goalsAgainst);
+    if (!letter) continue;
     form.push(letter);
     points.push({
       matchId: match.id,
       date: match.date,
       label: match.opponent_name,
-      goalsFor: match.goals_for,
-      goalsAgainst: match.goals_against,
+      goalsFor,
+      goalsAgainst,
       result: letter,
     });
   }

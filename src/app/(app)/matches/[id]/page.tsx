@@ -13,10 +13,12 @@ import { listRosterForTeam } from "@/lib/data/players";
 import {
   formatKickoffTime,
   formatMatchDate,
+  formatMatchVersusTitle,
   formatScore,
   labelHomeAway,
   labelMatchStatus,
   playerDisplayName,
+  scoreFromGoals,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -59,7 +61,10 @@ export default async function MatchDetailPage({
   const canEdit = canEditTeam(ctx, match.team_id);
   const allowsEvents = matchAllowsEvents(match.status);
 
-  const clubId = ctx.visibleTeams.find((t) => t.id === match.team_id)?.club_id;
+  const team = ctx.visibleTeams.find((t) => t.id === match.team_id);
+  const clubId = team?.club_id;
+  const teamName = team?.name ?? "Our team";
+  const opponentName = match.opponent_name;
 
   const [
     { data: competitions, error: competitionsError },
@@ -97,8 +102,6 @@ export default async function MatchDetailPage({
     ? players.find((p) => p.id === match.players_player_of_the_match_id)
     : null;
 
-  const orphanGoals = goals.filter((g) => !g.period_id);
-
   const loadErrors = [
     competitionsError,
     playersError,
@@ -109,19 +112,20 @@ export default async function MatchDetailPage({
     .filter(Boolean)
     .join(" ");
 
+  const { goalsFor, goalsAgainst } = scoreFromGoals(goals);
+  const scoreLabel = allowsEvents ? formatScore(goalsFor, goalsAgainst) : null;
+
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`vs ${match.opponent_name}`}
+        title={formatMatchVersusTitle(teamName, opponentName, match.home_away)}
         description={[
           formatMatchDate(match.date),
           formatKickoffTime(match.kickoff_time),
           labelHomeAway(match.home_away),
           match.venue?.name ?? null,
           labelMatchStatus(match.status),
-          allowsEvents
-            ? formatScore(match.goals_for, match.goals_against)
-            : null,
+          scoreLabel,
         ]
           .filter(Boolean)
           .join(" · ")}
@@ -142,8 +146,8 @@ export default async function MatchDetailPage({
           <CardHeader>
             <CardTitle>Match details</CardTitle>
             <CardDescription>
-              Set status to In progress or Played to enter the score, goals,
-              cards, and players of the match.
+              Set status to In progress or Played to record goals, cards, and
+              players of the match. Score comes from goals recorded below.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -177,11 +181,8 @@ export default async function MatchDetailPage({
                 value={String(matchSquadIds.size)}
               />
               <ReadOnly label="Status" value={labelMatchStatus(match.status)} />
-              {allowsEvents ? (
-                <ReadOnly
-                  label="Score"
-                  value={formatScore(match.goals_for, match.goals_against)}
-                />
+              {scoreLabel ? (
+                <ReadOnly label="Score" value={scoreLabel} />
               ) : null}
               {match.notes ? (
                 <ReadOnly label="Coach's notes" value={match.notes} />
@@ -252,42 +253,41 @@ export default async function MatchDetailPage({
             <CardHeader>
               <CardTitle>Periods</CardTitle>
               <CardDescription>
-                Halves, quarters, or other periods. Set starting players for
-                each period and add goals — the period is filled in
-                automatically.
+                Quarters, halves, and other periods. Open a period to set
+                starting players and goals.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {periodsError ? <ErrorBanner message={periodsError} /> : null}
-              {goalsError ? <ErrorBanner message={goalsError} /> : null}
               <MatchPeriodsSection
                 matchId={match.id}
                 periods={periods}
                 goals={goals}
-                squadPlayers={eventPlayers}
                 canEdit={canEdit}
               />
             </CardContent>
           </Card>
 
-          {orphanGoals.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Other goals</CardTitle>
-                <CardDescription>
-                  Goals not linked to a period yet.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <MatchGoalsSection
-                  matchId={match.id}
-                  goals={orphanGoals}
-                  players={eventPlayers}
-                  canEdit={canEdit}
-                />
-              </CardContent>
-            </Card>
-          ) : null}
+          <Card>
+            <CardHeader>
+              <CardTitle>Goals</CardTitle>
+              <CardDescription>
+                Goals scored by our team or the opposition. Open a goal to set
+                assist, minute, period, and flags.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {goalsError ? <ErrorBanner message={goalsError} /> : null}
+              <MatchGoalsSection
+                matchId={match.id}
+                goals={goals}
+                players={eventPlayers}
+                teamName={teamName}
+                opponentName={opponentName}
+                canEdit={canEdit}
+              />
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

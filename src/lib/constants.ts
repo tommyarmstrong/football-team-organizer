@@ -175,9 +175,60 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   other: "Other",
 };
 
+export const CARD_TYPE_EMOJIS: Record<CardType, string> = {
+  yellow_1st: "🟨",
+  yellow_2nd: "🟨🟨",
+  red: "🟥",
+  timeout: "⏳",
+  other: "⚠️",
+};
+
 export type MatchListFilter = "upcoming" | "played" | "other" | "all";
 
-/** Statuses that allow score, goals, cards, and player-of-the-match fields. */
+export const MATCH_PERIOD_NAMES = [
+  "Quarter 1",
+  "Quarter 2",
+  "Quarter 3",
+  "Quarter 4",
+  "Half 1",
+  "Half 2",
+  "Single period match",
+  "Extra time 1",
+  "Extra time 2",
+  "Penalty Shootout",
+] as const;
+
+export type MatchPeriodName = (typeof MATCH_PERIOD_NAMES)[number];
+
+/** Auto sort ranks: quarters, then halves, then single, then ET, penalty last. */
+export const MATCH_PERIOD_SORT_ORDER: Record<MatchPeriodName, number> = {
+  "Quarter 1": 10,
+  "Quarter 2": 20,
+  "Quarter 3": 30,
+  "Quarter 4": 40,
+  "Half 1": 50,
+  "Half 2": 60,
+  "Single period match": 70,
+  "Extra time 1": 80,
+  "Extra time 2": 90,
+  "Penalty Shootout": 100,
+};
+
+export function isMatchPeriodName(value: string): value is MatchPeriodName {
+  return (MATCH_PERIOD_NAMES as readonly string[]).includes(value);
+}
+
+export function matchPeriodSortOrder(name: string): number {
+  if (isMatchPeriodName(name)) return MATCH_PERIOD_SORT_ORDER[name];
+  return 999;
+}
+
+/** Statuses that allow goals, cards, and player-of-the-match fields. */
 export function matchAllowsEvents(status: MatchStatus): boolean {
   return status === "played" || status === "in_progress";
 }
+
+/** Form value for recording a goal scored by the opposition. */
+export const OPPOSITION_SCORER_VALUE = "__opposition__";
+
+export const OPPOSITION_GOAL_LABEL = "Opponent Goal";

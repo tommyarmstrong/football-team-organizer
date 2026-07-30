@@ -179,29 +179,11 @@ export function MatchForm({
             </div>
             {showEvents ? (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="goals_for">Goals for</Label>
-                  <Input
-                    id="goals_for"
-                    name="goals_for"
-                    type="number"
-                    min={0}
-                    required={status === "played"}
-                    defaultValue={match?.goals_for ?? 0}
-                    disabled={pending}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goals_against">Goals against</Label>
-                  <Input
-                    id="goals_against"
-                    name="goals_against"
-                    type="number"
-                    min={0}
-                    required={status === "played"}
-                    defaultValue={match?.goals_against ?? 0}
-                    disabled={pending}
-                  />
+                <div className="space-y-2 sm:col-span-2">
+                  <p className="text-muted-foreground text-sm">
+                    Score is taken from goals recorded below (including
+                    opposition goals).
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="player_of_the_match_id">
@@ -246,9 +228,9 @@ export function MatchForm({
               </>
             ) : (
               <p className="text-muted-foreground text-sm sm:col-span-2">
-                Score and players of the match are available when status is In
-                progress or Played. Changing away from those statuses clears the
-                stored score (goals and cards recorded below are kept).
+                Players of the match are available when status is In progress or
+                Played. Changing away from those statuses clears player of the
+                match selections (goals and cards recorded below are kept).
               </p>
             )}
           </>

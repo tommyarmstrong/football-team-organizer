@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
+import { isMatchPeriodName, matchPeriodSortOrder } from "@/lib/constants";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import {
   createPeriod,
@@ -13,8 +15,11 @@ import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import { str } from "@/lib/form-parse";
 
-function revalidateMatch(matchId: string) {
+function revalidateMatch(matchId: string, periodId?: string) {
   revalidatePath(`/matches/${matchId}`);
+  if (periodId) {
+    revalidatePath(`/matches/${matchId}/periods/${periodId}`);
+  }
   revalidatePath("/dashboard");
   revalidatePath("/stats");
 }
@@ -34,24 +39,27 @@ async function defaultStarterPlayerIds(matchId: string): Promise<string[]> {
   return roster.map((player) => player.id);
 }
 
+function parsePeriodName(formData: FormData): ActionState | string {
+  const name = str(formData, "name");
+  if (!name) return { error: "Period name is required." };
+  if (!isMatchPeriodName(name)) {
+    return { error: "Choose a valid period from the list." };
+  }
+  return name;
+}
+
 export async function createPeriodAction(
   matchId: string,
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const name = str(formData, "name");
-  if (!name) return { error: "Period name is required." };
-
-  const sortRaw = str(formData, "sort_order");
-  const sort_order = sortRaw ? Number(sortRaw) : 0;
-  if (!Number.isInteger(sort_order) || sort_order < 0) {
-    return { error: "Sort order must be zero or a positive whole number." };
-  }
+  const parsed = parsePeriodName(formData);
+  if (typeof parsed !== "string") return parsed;
 
   const { data, error } = await createPeriod({
     match_id: matchId,
-    name,
-    sort_order,
+    name: parsed,
+    sort_order: matchPeriodSortOrder(parsed),
   });
   if (error) return { error };
   if (!data) return { error: "Could not create period." };
@@ -66,30 +74,28 @@ export async function createPeriodAction(
     if (startersError) return { error: startersError };
   }
 
-  revalidateMatch(matchId);
-  return { success: "Period added." };
+  revalidateMatch(matchId, data.id);
+  redirect(`/matches/${matchId}/periods/${data.id}`);
 }
 
-export async function updatePeriodAction(
+/** Saves period name/order and returns to the match page. */
+export async function savePeriodAndReturnToMatchAction(
   matchId: string,
   periodId: string,
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const name = str(formData, "name");
-  if (!name) return { error: "Period name is required." };
+  const parsed = parsePeriodName(formData);
+  if (typeof parsed !== "string") return parsed;
 
-  const sortRaw = str(formData, "sort_order");
-  const sort_order = sortRaw ? Number(sortRaw) : 0;
-  if (!Number.isInteger(sort_order) || sort_order < 0) {
-    return { error: "Sort order must be zero or a positive whole number." };
-  }
-
-  const { error } = await updatePeriod(periodId, { name, sort_order });
+  const { error } = await updatePeriod(periodId, {
+    name: parsed,
+    sort_order: matchPeriodSortOrder(parsed),
+  });
   if (error) return { error };
 
-  revalidateMatch(matchId);
-  return { success: "Period saved." };
+  revalidateMatch(matchId, periodId);
+  redirect(`/matches/${matchId}`);
 }
 
 export async function deletePeriodAction(
@@ -100,7 +106,16 @@ export async function deletePeriodAction(
   if (error) return { error };
 
   revalidateMatch(matchId);
-  return { success: "Period removed." };
+  return {};
+}
+
+export async function deletePeriodAndReturnToMatchAction(
+  matchId: string,
+  periodId: string,
+): Promise<ActionState> {
+  const result = await deletePeriodAction(matchId, periodId);
+  if (result.error) return result;
+  redirect(`/matches/${matchId}`);
 }
 
 export async function savePeriodStartersAction(
@@ -117,6 +132,6 @@ export async function savePeriodStartersAction(
   const { error } = await setPeriodStarters(periodId, playerIds);
   if (error) return { error };
 
-  revalidateMatch(matchId);
+  revalidateMatch(matchId, periodId);
   return { success: "Starting players saved." };
 }

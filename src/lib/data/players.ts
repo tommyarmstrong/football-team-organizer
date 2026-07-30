@@ -202,6 +202,7 @@ export async function getPlayerGoals(playerId: string): Promise<{
       is_penalty: row.is_penalty,
       is_freekick: row.is_freekick,
       from_setpiece: row.from_setpiece,
+      is_opposition: row.is_opposition,
       created_at: row.created_at,
       match_date: match?.date ?? "",
       opponent_name: match?.opponent_name ?? "",

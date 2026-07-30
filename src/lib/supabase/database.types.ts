@@ -602,8 +602,6 @@ export type Database = {
           competition_id: string | null;
           created_at: string;
           date: string;
-          goals_against: number | null;
-          goals_for: number | null;
           id: string;
           kickoff_time: string | null;
           notes: string | null;
@@ -621,8 +619,6 @@ export type Database = {
           competition_id?: string | null;
           created_at?: string;
           date: string;
-          goals_against?: number | null;
-          goals_for?: number | null;
           id?: string;
           kickoff_time?: string | null;
           notes?: string | null;
@@ -640,8 +636,6 @@ export type Database = {
           competition_id?: string | null;
           created_at?: string;
           date?: string;
-          goals_against?: number | null;
-          goals_for?: number | null;
           id?: string;
           kickoff_time?: string | null;
           notes?: string | null;
@@ -700,12 +694,13 @@ export type Database = {
           from_setpiece: boolean;
           id: string;
           is_freekick: boolean;
+          is_opposition: boolean;
           is_penalty: boolean;
           match_id: string;
           minute: number | null;
           period: string | null;
           period_id: string | null;
-          player_id: string;
+          player_id: string | null;
         };
         Insert: {
           assist_player_id?: string | null;
@@ -713,12 +708,13 @@ export type Database = {
           from_setpiece?: boolean;
           id?: string;
           is_freekick?: boolean;
+          is_opposition?: boolean;
           is_penalty?: boolean;
           match_id: string;
           minute?: number | null;
           period?: string | null;
           period_id?: string | null;
-          player_id: string;
+          player_id?: string | null;
         };
         Update: {
           assist_player_id?: string | null;
@@ -726,12 +722,13 @@ export type Database = {
           from_setpiece?: boolean;
           id?: string;
           is_freekick?: boolean;
+          is_opposition?: boolean;
           is_penalty?: boolean;
           match_id?: string;
           minute?: number | null;
           period?: string | null;
           period_id?: string | null;
-          player_id?: string;
+          player_id?: string | null;
         };
         Relationships: [
           {
