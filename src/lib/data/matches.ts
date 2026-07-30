@@ -3,6 +3,7 @@ import { setMatchSquad } from "@/lib/data/match-players";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import type { MatchListFilter } from "@/lib/constants";
+import { scoreFromGoals } from "@/lib/format";
 import type {
   Competition,
   Match,
@@ -16,10 +17,14 @@ export type { Match };
 export type MatchWithRelations = Match & {
   competition: Pick<Competition, "id" | "name" | "kind"> | null;
   venue: Pick<Venue, "id" | "name"> | null;
+  /** Derived from goal rows (not stored on matches). */
+  goals_for: number;
+  /** Derived from goal rows (not stored on matches). */
+  goals_against: number;
 };
 
 const MATCH_SELECT =
-  "*, competition:competitions(id, name, kind), venue:venues(id, name)";
+  "*, competition:competitions(id, name, kind), venue:venues(id, name), goals(is_opposition)";
 
 export async function listMatches(
   filter: MatchListFilter = "all",
@@ -183,6 +188,7 @@ export async function getLastResult(): Promise<{
 type RawMatchRow = Match & {
   competition: unknown;
   venue: unknown;
+  goals?: Array<{ is_opposition: boolean }> | null;
 };
 
 function normalizeRelation<T>(value: unknown): T | null {
@@ -191,6 +197,10 @@ function normalizeRelation<T>(value: unknown): T | null {
 }
 
 function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
+  const { goalsFor, goalsAgainst } = scoreFromGoals(
+    Array.isArray(row.goals) ? row.goals : [],
+  );
+
   return {
     id: row.id,
     team_id: row.team_id,
@@ -203,8 +213,8 @@ function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
     player_of_the_match_id: row.player_of_the_match_id,
     players_player_of_the_match_id: row.players_player_of_the_match_id,
     status: row.status,
-    goals_for: row.goals_for,
-    goals_against: row.goals_against,
+    goals_for: goalsFor,
+    goals_against: goalsAgainst,
     notes: row.notes,
     club_notes: row.club_notes,
     created_at: row.created_at,

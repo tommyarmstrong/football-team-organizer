@@ -12,6 +12,46 @@ export type MatchPeriodWithStarters = MatchPeriod & {
   starter_player_ids: string[];
 };
 
+type PeriodRow = MatchPeriod & {
+  starters:
+    | {
+        id: string;
+        player_id: string;
+        player:
+          | Pick<Player, "id" | "first_name" | "last_name">
+          | Pick<Player, "id" | "first_name" | "last_name">[]
+          | null;
+      }[]
+    | null;
+};
+
+function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
+  const starterRows = Array.isArray(row.starters) ? row.starters : [];
+  const starters: Pick<Player, "id" | "first_name" | "last_name">[] = [];
+  const starter_player_ids: string[] = [];
+
+  for (const s of starterRows) {
+    const player = Array.isArray(s.player) ? s.player[0] : s.player;
+    if (!player) continue;
+    starters.push(player);
+    starter_player_ids.push(player.id);
+  }
+
+  return {
+    id: row.id,
+    match_id: row.match_id,
+    name: row.name,
+    sort_order: row.sort_order,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    starters,
+    starter_player_ids,
+  };
+}
+
+const PERIOD_SELECT =
+  "*, starters:match_period_starters(id, player_id, player:players(id, first_name, last_name))";
+
 export async function listPeriodsForMatch(
   matchId: string,
 ): Promise<{ data: MatchPeriodWithStarters[]; error: string | null }> {
@@ -19,40 +59,34 @@ export async function listPeriodsForMatch(
 
   const { data, error } = await supabase
     .from("match_periods")
-    .select(
-      "*, starters:match_period_starters(id, player_id, player:players(id, first_name, last_name))",
-    )
+    .select(PERIOD_SELECT)
     .eq("match_id", matchId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (error) return { data: [], error: error.message };
 
-  const rows: MatchPeriodWithStarters[] = (data ?? []).map((row) => {
-    const starterRows = Array.isArray(row.starters) ? row.starters : [];
-    const starters: Pick<Player, "id" | "first_name" | "last_name">[] = [];
-    const starter_player_ids: string[] = [];
+  return {
+    data: (data ?? []).map((row) => mapPeriodRow(row as PeriodRow)),
+    error: null,
+  };
+}
 
-    for (const s of starterRows) {
-      const player = Array.isArray(s.player) ? s.player[0] : s.player;
-      if (!player) continue;
-      starters.push(player);
-      starter_player_ids.push(player.id);
-    }
+export async function getPeriod(
+  periodId: string,
+): Promise<{ data: MatchPeriodWithStarters | null; error: string | null }> {
+  const supabase = await createClient();
 
-    return {
-      id: row.id,
-      match_id: row.match_id,
-      name: row.name,
-      sort_order: row.sort_order,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      starters,
-      starter_player_ids,
-    };
-  });
+  const { data, error } = await supabase
+    .from("match_periods")
+    .select(PERIOD_SELECT)
+    .eq("id", periodId)
+    .maybeSingle();
 
-  return { data: rows, error: null };
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: null };
+
+  return { data: mapPeriodRow(data as PeriodRow), error: null };
 }
 
 export async function createPeriod(

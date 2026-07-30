@@ -112,7 +112,7 @@ export default async function MatchesPage({
                 className="hover:bg-muted/50 flex flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium">vs {match.opponent_name}</p>
+                  <p className="font-medium">{match.opponent_name}</p>
                   <p className="text-muted-foreground text-sm">
                     {formatMatchDate(match.date)}
                     {formatKickoffTime(match.kickoff_time)

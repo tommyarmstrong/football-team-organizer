@@ -1,6 +1,7 @@
 import {
   CARD_TYPE_LABELS,
   MATCH_STATUS_LABELS,
+  OPPOSITION_GOAL_LABEL,
   VENUE_FOOD_AND_DRINK_LABELS,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
@@ -53,6 +54,14 @@ export function playerDisplayName(
   return name;
 }
 
+export function goalScorerLabel(goal: {
+  is_opposition: boolean;
+  scorer: { first_name: string; last_name: string } | null;
+}): string {
+  if (goal.is_opposition || !goal.scorer) return OPPOSITION_GOAL_LABEL;
+  return playerDisplayName(goal.scorer);
+}
+
 export function coachDisplayName(coach: {
   first_name: string;
   second_name: string;
@@ -72,6 +81,19 @@ export function managerDisplayName(manager: {
   second_name: string;
 }): string {
   return `${manager.first_name} ${manager.second_name}`.trim();
+}
+
+export function scoreFromGoals(goals: Array<{ is_opposition: boolean }>): {
+  goalsFor: number;
+  goalsAgainst: number;
+} {
+  let goalsFor = 0;
+  let goalsAgainst = 0;
+  for (const goal of goals) {
+    if (goal.is_opposition) goalsAgainst += 1;
+    else goalsFor += 1;
+  }
+  return { goalsFor, goalsAgainst };
 }
 
 export function formatScore(
@@ -98,6 +120,18 @@ export function labelGender(gender: TeamGender): string {
 
 export function labelHomeAway(homeAway: MatchHomeAway): string {
   return homeAway.charAt(0).toUpperCase() + homeAway.slice(1);
+}
+
+/** Away: opposition first; home / neutral / unknown: our team first. */
+export function formatMatchVersusTitle(
+  teamName: string,
+  opponentName: string,
+  homeAway: MatchHomeAway | null | undefined,
+): string {
+  if (homeAway === "away") {
+    return `${opponentName} vs ${teamName}`;
+  }
+  return `${teamName} vs ${opponentName}`;
 }
 
 export function labelVenueSurface(surface: VenueSurface): string {

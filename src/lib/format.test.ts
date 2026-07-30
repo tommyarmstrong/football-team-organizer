@@ -1,16 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  coachDisplayName,
   formatKickoffTime,
   formatMatchDate,
+  formatMatchVersusTitle,
   formatScore,
   formatShortDate,
   labelCompetitionKind,
   labelGender,
-  labelMatchStatus,
   labelHomeAway,
-  coachDisplayName,
+  labelMatchStatus,
   playerDisplayName,
   resultLetter,
+  scoreFromGoals,
 } from "@/lib/format";
 
 describe("formatMatchDate", () => {
@@ -75,6 +77,22 @@ describe("coachDisplayName", () => {
   });
 });
 
+describe("scoreFromGoals", () => {
+  it("counts our goals and opposition goals separately", () => {
+    expect(
+      scoreFromGoals([
+        { is_opposition: false },
+        { is_opposition: false },
+        { is_opposition: true },
+      ]),
+    ).toEqual({ goalsFor: 2, goalsAgainst: 1 });
+  });
+
+  it("returns zeros when there are no goals", () => {
+    expect(scoreFromGoals([])).toEqual({ goalsFor: 0, goalsAgainst: 0 });
+  });
+});
+
 describe("formatScore", () => {
   it("returns an em dash when either side is missing", () => {
     expect(formatScore(null, 1)).toBe("—");
@@ -112,5 +130,25 @@ describe("label helpers", () => {
 
   it("returns an em dash for null competition kind", () => {
     expect(labelCompetitionKind(null)).toBe("—");
+  });
+});
+
+describe("formatMatchVersusTitle", () => {
+  it("puts our team first for home, neutral, and unknown", () => {
+    expect(formatMatchVersusTitle("U12 Blues", "Rivals FC", "home")).toBe(
+      "U12 Blues vs Rivals FC",
+    );
+    expect(formatMatchVersusTitle("U12 Blues", "Rivals FC", "neutral")).toBe(
+      "U12 Blues vs Rivals FC",
+    );
+    expect(formatMatchVersusTitle("U12 Blues", "Rivals FC", null)).toBe(
+      "U12 Blues vs Rivals FC",
+    );
+  });
+
+  it("puts opposition first for away", () => {
+    expect(formatMatchVersusTitle("U12 Blues", "Rivals FC", "away")).toBe(
+      "Rivals FC vs U12 Blues",
+    );
   });
 });

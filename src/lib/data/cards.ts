@@ -56,6 +56,48 @@ export async function listCardsForMatch(
   return { data: rows, error: null };
 }
 
+export async function getCard(
+  cardId: string,
+): Promise<{ data: CardWithPerson | null; error: string | null }> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("cards")
+    .select(
+      "*, player:players!cards_player_id_fkey(id, first_name, last_name), coach:coaches!cards_coach_id_fkey(id, first_name, second_name), guardian:guardians!cards_guardian_id_fkey(id, first_name, second_name)",
+    )
+    .eq("id", cardId)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: null };
+
+  const player = Array.isArray(data.player) ? data.player[0] : data.player;
+  const coach = Array.isArray(data.coach) ? data.coach[0] : data.coach;
+  const guardian = Array.isArray(data.guardian)
+    ? data.guardian[0]
+    : data.guardian;
+
+  return {
+    data: {
+      id: data.id,
+      match_id: data.match_id,
+      player_id: data.player_id,
+      coach_id: data.coach_id,
+      guardian_id: data.guardian_id,
+      type: data.type,
+      coach_notes: data.coach_notes,
+      referee_notes: data.referee_notes,
+      club_notes: data.club_notes,
+      created_at: data.created_at,
+      player: player ?? null,
+      coach: coach ?? null,
+      guardian: guardian ?? null,
+    },
+    error: null,
+  };
+}
+
 export async function createCard(
   input: TablesInsert<"cards">,
 ): Promise<{ data: Card | null; error: string | null }> {

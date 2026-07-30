@@ -1,10 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
+import { OPPOSITION_SCORER_VALUE } from "@/lib/constants";
 import { createGoal, deleteGoal, updateGoal } from "@/lib/data/goals";
 import { createClient } from "@/lib/supabase/server";
 import { boolFromCheckbox, parseOptionalMinute, str } from "@/lib/form-parse";
+
+function revalidateGoal(matchId: string, goalId?: string) {
+  revalidatePath(`/matches/${matchId}`);
+  if (goalId) {
+    revalidatePath(`/matches/${matchId}/goals/${goalId}`);
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/stats");
+  revalidatePath("/club");
+}
 
 async function resolvePeriodFields(
   matchId: string,
@@ -33,9 +45,24 @@ async function resolvePeriodFields(
     return { error: "Period does not belong to this match." };
   }
 
-  // Always sync the denormalized text label from the period entity.
   period = data.name;
   return { period_id, period };
+}
+
+function parseScorer(
+  formData: FormData,
+):
+  | { is_opposition: true; player_id: null }
+  | { is_opposition: false; player_id: string }
+  | { error: string } {
+  const raw = str(formData, "player_id");
+  if (!raw) {
+    return { error: "Select a scorer." };
+  }
+  if (raw === OPPOSITION_SCORER_VALUE) {
+    return { is_opposition: true, player_id: null };
+  }
+  return { is_opposition: false, player_id: raw };
 }
 
 export async function createGoalAction(
@@ -43,63 +70,56 @@ export async function createGoalAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const player_id = str(formData, "player_id");
-  const assist_player_id = str(formData, "assist_player_id") || null;
-  const minute = parseOptionalMinute(str(formData, "minute"));
-
-  if (!player_id) {
-    return { error: "Select a scorer." };
-  }
-  if (minute && typeof minute === "object" && "error" in minute) {
-    return { error: minute.error };
-  }
-  if (assist_player_id && assist_player_id === player_id) {
-    return { error: "Assist player must be different from the scorer." };
-  }
+  const scorer = parseScorer(formData);
+  if ("error" in scorer) return scorer;
 
   const periodFields = await resolvePeriodFields(matchId, formData);
   if ("error" in periodFields) {
     return { error: periodFields.error };
   }
 
-  const { error } = await createGoal({
+  const { data, error } = await createGoal({
     match_id: matchId,
-    player_id,
-    assist_player_id,
+    player_id: scorer.player_id,
+    assist_player_id: null,
+    is_opposition: scorer.is_opposition,
     period_id: periodFields.period_id,
     period: periodFields.period,
-    minute: minute as number | null,
-    is_penalty: boolFromCheckbox(formData, "is_penalty"),
-    is_freekick: boolFromCheckbox(formData, "is_freekick"),
-    from_setpiece: boolFromCheckbox(formData, "from_setpiece"),
+    minute: null,
+    is_penalty: false,
+    is_freekick: false,
+    from_setpiece: false,
   });
 
   if (error) return { error };
+  if (!data) return { error: "Could not create goal." };
 
-  revalidatePath(`/matches/${matchId}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/stats");
-  revalidatePath("/club");
-  return { success: "Goal added." };
+  revalidateGoal(matchId, data.id);
+  redirect(`/matches/${matchId}/goals/${data.id}`);
 }
 
-export async function updateGoalAction(
+export async function saveGoalAndReturnToMatchAction(
   matchId: string,
   goalId: string,
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const player_id = str(formData, "player_id");
-  const assist_player_id = str(formData, "assist_player_id") || null;
+  const scorer = parseScorer(formData);
+  if ("error" in scorer) return scorer;
+
+  const assist_player_id = scorer.is_opposition
+    ? null
+    : str(formData, "assist_player_id") || null;
   const minute = parseOptionalMinute(str(formData, "minute"));
 
-  if (!player_id) {
-    return { error: "Select a scorer." };
-  }
   if (minute && typeof minute === "object" && "error" in minute) {
     return { error: minute.error };
   }
-  if (assist_player_id && assist_player_id === player_id) {
+  if (
+    !scorer.is_opposition &&
+    assist_player_id &&
+    assist_player_id === scorer.player_id
+  ) {
     return { error: "Assist player must be different from the scorer." };
   }
 
@@ -109,8 +129,9 @@ export async function updateGoalAction(
   }
 
   const { error } = await updateGoal(goalId, {
-    player_id,
+    player_id: scorer.player_id,
     assist_player_id,
+    is_opposition: scorer.is_opposition,
     period_id: periodFields.period_id,
     period: periodFields.period,
     minute: minute as number | null,
@@ -121,11 +142,8 @@ export async function updateGoalAction(
 
   if (error) return { error };
 
-  revalidatePath(`/matches/${matchId}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/stats");
-  revalidatePath("/club");
-  return { success: "Goal updated." };
+  revalidateGoal(matchId, goalId);
+  redirect(`/matches/${matchId}`);
 }
 
 export async function deleteGoalAction(
@@ -135,9 +153,15 @@ export async function deleteGoalAction(
   const { error } = await deleteGoal(goalId);
   if (error) return { error };
 
-  revalidatePath(`/matches/${matchId}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/stats");
-  revalidatePath("/club");
-  return { success: "Goal removed." };
+  revalidateGoal(matchId);
+  return {};
+}
+
+export async function deleteGoalAndReturnToMatchAction(
+  matchId: string,
+  goalId: string,
+): Promise<ActionState> {
+  const result = await deleteGoalAction(matchId, goalId);
+  if (result.error) return result;
+  redirect(`/matches/${matchId}`);
 }

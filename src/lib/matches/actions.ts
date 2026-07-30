@@ -11,7 +11,7 @@ import {
 import { createMatch, updateMatch } from "@/lib/data/matches";
 import { getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
-import { parseOptionalInt, str } from "@/lib/form-parse";
+import { str } from "@/lib/form-parse";
 import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
 
 async function parseVenueId(
@@ -64,8 +64,6 @@ export async function createMatchAction(
     notes,
     club_notes,
     status: "scheduled",
-    goals_for: null,
-    goals_against: null,
     player_of_the_match_id: null,
     players_player_of_the_match_id: null,
   });
@@ -96,12 +94,6 @@ export async function updateMatchAction(
   const notes = str(formData, "notes") || null;
   const club_notes = str(formData, "club_notes") || null;
 
-  const goalsForRaw = parseOptionalInt(str(formData, "goals_for"), "Goals for");
-  const goalsAgainstRaw = parseOptionalInt(
-    str(formData, "goals_against"),
-    "Goals against",
-  );
-
   if (!opponent_name || !date) {
     return { error: "Opponent and date are required." };
   }
@@ -111,20 +103,6 @@ export async function updateMatchAction(
   if (!MATCH_STATUSES.includes(status)) {
     return { error: "Invalid status." };
   }
-  if (
-    goalsForRaw &&
-    typeof goalsForRaw === "object" &&
-    "error" in goalsForRaw
-  ) {
-    return { error: goalsForRaw.error };
-  }
-  if (
-    goalsAgainstRaw &&
-    typeof goalsAgainstRaw === "object" &&
-    "error" in goalsAgainstRaw
-  ) {
-    return { error: goalsAgainstRaw.error };
-  }
 
   const team = await getActiveTeam();
   if (!team) return { error: "No team selected." };
@@ -132,20 +110,7 @@ export async function updateMatchAction(
   const venueResult = await parseVenueId(formData, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
-  let goals_for = goalsForRaw as number | null;
-  let goals_against = goalsAgainstRaw as number | null;
   const allowsEvents = matchAllowsEvents(status);
-
-  if (status === "played") {
-    if (goals_for == null || goals_against == null) {
-      return {
-        error: "Goals for and against are required when status is played.",
-      };
-    }
-  } else if (!allowsEvents) {
-    goals_for = null;
-    goals_against = null;
-  }
 
   const { error } = await updateMatch(id, {
     opponent_name,
@@ -161,8 +126,6 @@ export async function updateMatchAction(
       : null,
     notes,
     club_notes,
-    goals_for,
-    goals_against,
   });
 
   if (error) return { error };
