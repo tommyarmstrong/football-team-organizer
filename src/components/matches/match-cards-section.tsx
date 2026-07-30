@@ -1,22 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createCardAction,
   deleteCardAction,
   updateCardAction,
 } from "@/lib/cards/actions";
-import {
-  CARD_PERSON_KIND_LABELS,
-  CARD_PERSON_KINDS,
-  CARD_TYPE_LABELS,
-  CARD_TYPES,
-  type CardPersonKind,
-} from "@/lib/constants";
+import { CARD_TYPE_LABELS, CARD_TYPES } from "@/lib/constants";
 import type { CardWithPerson } from "@/lib/data/cards";
-import type { TeamCoachEntry } from "@/lib/data/coaches";
-import type { Guardian } from "@/lib/data/guardians";
 import type { RosterPlayer } from "@/lib/data/players";
 import {
   coachDisplayName,
@@ -31,14 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-function cardPersonKind(card: CardWithPerson): CardPersonKind {
-  if (card.coach_id) return "coach";
-  if (card.guardian_id) return "guardian";
-  return "player";
-}
-
-function cardPersonId(card: CardWithPerson): string {
-  return card.player_id ?? card.coach_id ?? card.guardian_id ?? "";
+function cardPlayerId(card: CardWithPerson): string {
+  return card.player_id ?? "";
 }
 
 function cardPersonLabel(card: CardWithPerson): string {
@@ -52,15 +38,11 @@ export function MatchCardsSection({
   matchId,
   cards,
   players,
-  coaches,
-  guardians,
   canEdit = true,
 }: {
   matchId: string;
   cards: CardWithPerson[];
   players: RosterPlayer[];
-  coaches: TeamCoachEntry[];
-  guardians: Guardian[];
   canEdit?: boolean;
 }) {
   if (!canEdit) {
@@ -78,8 +60,7 @@ export function MatchCardsSection({
           >
             <span className="font-medium">{cardPersonLabel(card)}</span>
             <span className="text-muted-foreground">
-              {labelCardType(card.type)} ·{" "}
-              {CARD_PERSON_KIND_LABELS[cardPersonKind(card)]}
+              {labelCardType(card.type)}
             </span>
           </li>
         ))}
@@ -89,29 +70,18 @@ export function MatchCardsSection({
 
   return (
     <div className="space-y-6">
-      <AddCardForm
-        matchId={matchId}
-        players={players}
-        coaches={coaches}
-        guardians={guardians}
-      />
+      <AddCardForm matchId={matchId} players={players} />
 
       {cards.length === 0 ? (
         <EmptyState
           title="No cards recorded"
-          description="Add yellow cards, red cards, timeouts, or other cards for a player, coach, or guardian."
+          description="Add yellow cards, red cards, timeouts, or other cards for a player."
         />
       ) : (
         <ul className="space-y-4">
           {cards.map((card) => (
             <li key={card.id} className="border-border rounded-xl border p-4">
-              <CardRow
-                matchId={matchId}
-                card={card}
-                players={players}
-                coaches={coaches}
-                guardians={guardians}
-              />
+              <CardRow matchId={matchId} card={card} players={players} />
             </li>
           ))}
         </ul>
@@ -123,13 +93,9 @@ export function MatchCardsSection({
 function AddCardForm({
   matchId,
   players,
-  coaches,
-  guardians,
 }: {
   matchId: string;
   players: RosterPlayer[];
-  coaches: TeamCoachEntry[];
-  guardians: Guardian[];
 }) {
   const bound = createCardAction.bind(null, matchId);
   const [state, formAction, pending] = useActionState(
@@ -137,14 +103,11 @@ function AddCardForm({
     INITIAL_ACTION_STATE,
   );
 
-  const hasAnyone =
-    players.length > 0 || coaches.length > 0 || guardians.length > 0;
-
-  if (!hasAnyone) {
+  if (players.length === 0) {
     return (
       <EmptyState
-        title="No people available"
-        description="Add players, coaches, or guardians before recording cards."
+        title="No players available"
+        description="Add players before recording cards."
       />
     );
   }
@@ -156,12 +119,7 @@ function AddCardForm({
       className="border-border space-y-3 rounded-xl border p-4"
     >
       <p className="text-sm font-medium">Add card</p>
-      <CardFields
-        players={players}
-        coaches={coaches}
-        guardians={guardians}
-        pending={pending}
-      />
+      <CardFields players={players} pending={pending} />
       {state.error ? <ErrorBanner message={state.error} /> : null}
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add card"}
@@ -174,14 +132,10 @@ function CardRow({
   matchId,
   card,
   players,
-  coaches,
-  guardians,
 }: {
   matchId: string;
   card: CardWithPerson;
   players: RosterPlayer[];
-  coaches: TeamCoachEntry[];
-  guardians: Guardian[];
 }) {
   const boundUpdate = updateCardAction.bind(null, matchId, card.id);
   const [state, formAction, pending] = useActionState(
@@ -199,12 +153,9 @@ function CardRow({
       <form action={formAction} className="space-y-3">
         <CardFields
           players={players}
-          coaches={coaches}
-          guardians={guardians}
           pending={pending}
           defaults={{
-            person_kind: cardPersonKind(card),
-            person_id: cardPersonId(card),
+            player_id: cardPlayerId(card),
             type: card.type,
             coach_notes: card.coach_notes,
             referee_notes: card.referee_notes,
@@ -251,101 +202,46 @@ function CardRow({
 
 function CardFields({
   players,
-  coaches,
-  guardians,
   pending,
   defaults,
 }: {
   players: RosterPlayer[];
-  coaches: TeamCoachEntry[];
-  guardians: Guardian[];
   pending: boolean;
   defaults?: {
-    person_kind?: CardPersonKind;
-    person_id?: string;
+    player_id?: string;
     type?: string;
     coach_notes?: string | null;
     referee_notes?: string | null;
     club_notes?: string | null;
   };
 }) {
-  const defaultKind =
-    defaults?.person_kind ??
-    (players.length > 0 ? "player" : coaches.length > 0 ? "coach" : "guardian");
-  const [personKind, setPersonKind] = useState<CardPersonKind>(defaultKind);
-  const fieldKey = defaults?.person_id ?? "new";
-
+  const fieldKey = defaults?.player_id ?? "new";
   const activePlayers = players.filter((p) => p.active);
   const playerOptions = activePlayers.length > 0 ? activePlayers : players;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="space-y-2">
-        <Label htmlFor={`person_kind-${fieldKey}`}>
-          Person type <span className="text-muted-foreground">(required)</span>
+      <div className="space-y-2 sm:col-span-2">
+        <Label htmlFor={`player_id-${fieldKey}`}>
+          Player <span className="text-muted-foreground">(required)</span>
         </Label>
         <NativeSelect
-          id={`person_kind-${fieldKey}`}
-          name="person_kind"
+          id={`player_id-${fieldKey}`}
+          name="player_id"
           required
           aria-required="true"
-          value={personKind}
-          disabled={pending}
-          onChange={(event) =>
-            setPersonKind(event.target.value as CardPersonKind)
-          }
-        >
-          {CARD_PERSON_KINDS.map((kind) => (
-            <option key={kind} value={kind}>
-              {CARD_PERSON_KIND_LABELS[kind]}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`person_id-${fieldKey}`}>
-          Person <span className="text-muted-foreground">(required)</span>
-        </Label>
-        <NativeSelect
-          key={`${personKind}-${fieldKey}`}
-          id={`person_id-${fieldKey}`}
-          name="person_id"
-          required
-          aria-required="true"
-          defaultValue={
-            personKind === defaults?.person_kind
-              ? (defaults.person_id ?? "")
-              : ""
-          }
+          defaultValue={defaults?.player_id ?? ""}
           disabled={pending}
         >
           <option value="" disabled>
-            Select {CARD_PERSON_KIND_LABELS[personKind].toLowerCase()}
+            Select player
           </option>
-          {personKind === "player"
-            ? playerOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {playerDisplayName(p, { shirtNumber: p.shirt_number })}
-                  {!p.active ? " (inactive)" : ""}
-                </option>
-              ))
-            : null}
-          {personKind === "coach"
-            ? coaches.map((c) => (
-                <option key={c.coach_id} value={c.coach_id}>
-                  {c.name}
-                  {c.role ? ` (${c.role})` : ""}
-                </option>
-              ))
-            : null}
-          {personKind === "guardian"
-            ? guardians.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {guardianDisplayName(g)}
-                </option>
-              ))
-            : null}
+          {playerOptions.map((p) => (
+            <option key={p.id} value={p.id}>
+              {playerDisplayName(p, { shirtNumber: p.shirt_number })}
+              {!p.active ? " (inactive)" : ""}
+            </option>
+          ))}
         </NativeSelect>
       </div>
 

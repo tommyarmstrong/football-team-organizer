@@ -4,10 +4,8 @@ import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { matchAllowsEvents } from "@/lib/constants";
 import { listCardsForMatch } from "@/lib/data/cards";
-import { listTeamCoaches } from "@/lib/data/coaches";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listGoalsForMatch } from "@/lib/data/goals";
-import { listGuardians } from "@/lib/data/guardians";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
@@ -70,8 +68,6 @@ export default async function MatchDetailPage({
     { data: players, error: playersError },
     { data: matchPlayerRows, error: matchPlayersError },
     { data: periods, error: periodsError },
-    { data: coaches, error: coachesError },
-    { data: guardians, error: guardiansError },
     { data: venues, error: venuesError },
   ] = await Promise.all([
     listCompetitions(match.team_id),
@@ -80,8 +76,6 @@ export default async function MatchDetailPage({
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
     listPeriodsForMatch(match.id),
-    listTeamCoaches(match.team_id),
-    listGuardians(),
     listVenues(clubId),
   ]);
 
@@ -110,8 +104,6 @@ export default async function MatchDetailPage({
     playersError,
     matchPlayersError,
     periodsError,
-    coachesError,
-    guardiansError,
     venuesError,
   ]
     .filter(Boolean)
@@ -301,8 +293,7 @@ export default async function MatchDetailPage({
             <CardHeader>
               <CardTitle>Cards</CardTitle>
               <CardDescription>
-                Yellow cards, red cards, timeouts, and other cards for a player,
-                coach, or guardian.
+                Yellow cards, red cards, timeouts, and other cards for a player.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -311,8 +302,6 @@ export default async function MatchDetailPage({
                 matchId={match.id}
                 cards={cards}
                 players={eventPlayers}
-                coaches={coaches}
-                guardians={guardians}
                 canEdit={canEdit}
               />
             </CardContent>
