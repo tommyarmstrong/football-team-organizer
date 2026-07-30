@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { XIcon } from "lucide-react";
+import { useActionState, useState, useTransition } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createPeriodAction,
@@ -16,6 +17,7 @@ import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
@@ -254,17 +256,25 @@ function PeriodStarters({
   canEdit: boolean;
 }) {
   const selected = new Set(period.starter_player_ids);
+  const selectedPlayers = squadPlayers.filter((p) => selected.has(p.id));
 
   if (!canEdit) {
     return (
       <div className="space-y-2">
         <h4 className="text-sm font-medium">Starting players</h4>
-        {period.starters.length === 0 ? (
+        {selectedPlayers.length === 0 ? (
           <p className="text-muted-foreground text-sm">None selected.</p>
         ) : (
-          <ul className="text-sm">
-            {period.starters.map((p) => (
-              <li key={p.id}>{playerDisplayName(p)}</li>
+          <ul className="flex flex-wrap gap-2">
+            {selectedPlayers.map((player) => (
+              <li
+                key={player.id}
+                className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1.5 text-sm font-medium"
+              >
+                {playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                })}
+              </li>
             ))}
           </ul>
         )}
@@ -286,67 +296,126 @@ function PeriodStarters({
 
   return (
     <StartersForm
+      key={period.starter_player_ids.slice().sort().join(",")}
       matchId={matchId}
-      period={period}
+      periodId={period.id}
       squadPlayers={squadPlayers}
-      selected={selected}
+      selectedPlayerIds={period.starter_player_ids}
     />
   );
 }
 
 function StartersForm({
   matchId,
-  period,
+  periodId,
   squadPlayers,
-  selected,
+  selectedPlayerIds,
 }: {
   matchId: string;
-  period: MatchPeriodWithStarters;
+  periodId: string;
   squadPlayers: RosterPlayer[];
-  selected: Set<string>;
+  selectedPlayerIds: string[];
 }) {
-  const bound = savePeriodStartersAction.bind(null, matchId, period.id);
-  const [state, formAction, pending] = useActionState(
+  const bound = savePeriodStartersAction.bind(null, matchId, periodId);
+  const [state, formAction, actionPending] = useActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
+  const [pending, startTransition] = useTransition();
+  const [selectedIds, setSelectedIds] = useState(selectedPlayerIds);
+
+  const selected = new Set(selectedIds);
+  const selectedPlayers = squadPlayers.filter((p) => selected.has(p.id));
+  const availablePlayers = squadPlayers.filter((p) => !selected.has(p.id));
+  const isPending = pending || actionPending;
+
+  function persist(nextIds: string[]) {
+    setSelectedIds(nextIds);
+    const formData = new FormData();
+    for (const id of nextIds) {
+      formData.append("player_id", id);
+    }
+    startTransition(() => {
+      formAction(formData);
+    });
+  }
+
+  function removePlayer(playerId: string) {
+    persist(selectedIds.filter((id) => id !== playerId));
+  }
+
+  function addPlayer(playerId: string) {
+    if (!playerId || selected.has(playerId)) return;
+    persist([...selectedIds, playerId]);
+  }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <div className="space-y-3">
       <h4 className="text-sm font-medium">Starting players</h4>
       <p className="text-muted-foreground text-xs">
-        Players who start this period are assumed to complete it.
+        Players who start this period are assumed to complete it. Remove a
+        player to deselect them, or add them back below.
       </p>
-      <ul className="border-border divide-border max-h-56 divide-y overflow-y-auto rounded-lg border">
-        {squadPlayers.map((player) => (
-          <li key={player.id}>
-            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm">
-              <input
-                type="checkbox"
-                name="player_id"
-                value={player.id}
-                defaultChecked={selected.has(player.id)}
-                disabled={pending}
-                className="border-input size-4 rounded"
-              />
+
+      {selectedPlayers.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          No starting players selected.
+        </p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {selectedPlayers.map((player) => (
+            <li
+              key={player.id}
+              className="border-border bg-background inline-flex items-center gap-1 rounded-lg border py-1 pr-1 pl-2.5 text-sm font-medium"
+            >
               <span>
                 {playerDisplayName(player, {
                   shirtNumber: player.shirt_number,
                 })}
               </span>
-            </label>
-          </li>
-        ))}
-      </ul>
+              <button
+                type="button"
+                onClick={() => removePlayer(player.id)}
+                disabled={isPending}
+                aria-label={`Remove ${playerDisplayName(player)} from starting players`}
+                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+              >
+                <XIcon className="size-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
+        <NativeSelect
+          id={`add_period_starter_${periodId}`}
+          value=""
+          disabled={isPending || availablePlayers.length === 0}
+          onChange={(e) => addPlayer(e.target.value)}
+        >
+          <option value="">
+            {availablePlayers.length === 0
+              ? "All available players selected"
+              : "Select a player to add…"}
+          </option>
+          {availablePlayers.map((player) => (
+            <option key={player.id} value={player.id}>
+              {playerDisplayName(player, {
+                shirtNumber: player.shirt_number,
+              })}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+
       {state.error ? <ErrorBanner message={state.error} /> : null}
       {state.success ? (
         <p className="text-muted-foreground text-sm" role="status">
           {state.success}
         </p>
       ) : null}
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "Saving…" : "Save starters"}
-      </Button>
-    </form>
+    </div>
   );
 }

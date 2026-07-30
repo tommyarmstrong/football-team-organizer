@@ -161,6 +161,7 @@ export default async function MatchDetailPage({
               competitions={competitions}
               venues={venues}
               players={eventPlayers}
+              matchDaySquadCount={matchSquadIds.size}
             />
           </CardContent>
         </Card>
@@ -179,6 +180,10 @@ export default async function MatchDetailPage({
                 value={labelHomeAway(match.home_away)}
               />
               <ReadOnly label="Venue" value={match.venue?.name ?? "Unknown"} />
+              <ReadOnly
+                label="Match-day squad"
+                value={String(matchSquadIds.size)}
+              />
               <ReadOnly label="Status" value={labelMatchStatus(match.status)} />
               {allowsEvents ? (
                 <ReadOnly
