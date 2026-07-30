@@ -13,7 +13,9 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { buttonVariants } from "@/components/ui/button";
+import { deleteMatchAction } from "@/lib/matches/actions";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { value: MatchListFilter; label: string }[] = [
@@ -106,10 +108,10 @@ export default async function MatchesPage({
       {!error && matches.length > 0 ? (
         <ul className="divide-border border-border divide-y rounded-xl border">
           {matches.map((match) => (
-            <li key={match.id}>
+            <li key={match.id} className="flex items-stretch">
               <Link
                 href={`/matches/${match.id}`}
-                className="hover:bg-muted/50 flex flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                className="hover:bg-muted/50 flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-medium">{match.opponent_name}</p>
@@ -136,6 +138,15 @@ export default async function MatchesPage({
                   )}
                 </div>
               </Link>
+              {canEdit ? (
+                <div className="flex items-center pr-2">
+                  <ListDeleteButton
+                    label={`Delete match vs ${match.opponent_name}`}
+                    confirmMessage={`Delete the match against ${match.opponent_name}? This cannot be undone.`}
+                    deleteAction={deleteMatchAction.bind(null, match.id)}
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
