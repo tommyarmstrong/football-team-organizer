@@ -96,6 +96,7 @@ Club-level person. Assigned to teams via team player membership.
 - Last name (required)
 - Position
 - School
+- Date of birth
 
 ---
 
@@ -226,6 +227,40 @@ Goals, cards, scores, and both players of the match are editable when status is 
 
 ---
 
+## Match player
+
+Match-day availability: which team players are available for a given match.
+
+### Attributes
+
+- Match (required)
+- Player (required)
+
+Unique on `(match, player)`.
+
+---
+
+## Match period
+
+A half, quarter, or other segment of a match. Multiple periods per match.
+
+### Attributes
+
+- Match (required)
+- Name (required) — e.g. `1st half`, `Quarter 1`
+- Sort order (required) — default `0`
+
+### Starting players (`match_period_starters`)
+
+Players who start the period (assumed to complete it). Linked to players in the match-day squad.
+
+- Period (required)
+- Player (required)
+
+Unique on `(period, player)`.
+
+---
+
 ## Goal
 
 Goal scored by one of our players. Opposition scorers are not recorded.
@@ -235,7 +270,8 @@ Goal scored by one of our players. Opposition scorers are not recorded.
 - Match (required)
 - Player (required) — scorer
 - Assist player
-- Period
+- Period — optional free-text label (auto-filled from the linked period name when set)
+- Period link — optional FK to match period
 - Minute
 - Penalty (required) — default `false`
 - Free kick (required) — default `false`

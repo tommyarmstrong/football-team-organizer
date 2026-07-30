@@ -8,6 +8,8 @@ import { listTeamCoaches } from "@/lib/data/coaches";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listGoalsForMatch } from "@/lib/data/goals";
 import { listGuardians } from "@/lib/data/guardians";
+import { listMatchPlayers } from "@/lib/data/match-players";
+import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
@@ -23,6 +25,8 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchForm } from "@/components/matches/match-form";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
+import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
+import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -64,6 +68,8 @@ export default async function MatchDetailPage({
     { data: goals, error: goalsError },
     { data: cards, error: cardsError },
     { data: players, error: playersError },
+    { data: matchPlayerRows, error: matchPlayersError },
+    { data: periods, error: periodsError },
     { data: coaches, error: coachesError },
     { data: guardians, error: guardiansError },
     { data: venues, error: venuesError },
@@ -72,10 +78,23 @@ export default async function MatchDetailPage({
     listGoalsForMatch(match.id),
     listCardsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
+    listMatchPlayers(match.id),
+    listPeriodsForMatch(match.id),
     listTeamCoaches(match.team_id),
     listGuardians(),
     listVenues(clubId),
   ]);
+
+  const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
+  const hasMatchSquad = matchSquadIds.size > 0;
+  const eventPlayers = hasMatchSquad
+    ? players.filter(
+        (p) =>
+          matchSquadIds.has(p.id) ||
+          p.id === match.player_of_the_match_id ||
+          p.id === match.players_player_of_the_match_id,
+      )
+    : players;
 
   const coachMotm = match.player_of_the_match_id
     ? players.find((p) => p.id === match.player_of_the_match_id)
@@ -84,9 +103,13 @@ export default async function MatchDetailPage({
     ? players.find((p) => p.id === match.players_player_of_the_match_id)
     : null;
 
+  const orphanGoals = goals.filter((g) => !g.period_id);
+
   const loadErrors = [
     competitionsError,
     playersError,
+    matchPlayersError,
+    periodsError,
     coachesError,
     guardiansError,
     venuesError,
@@ -137,7 +160,7 @@ export default async function MatchDetailPage({
               match={match}
               competitions={competitions}
               venues={venues}
-              players={players}
+              players={eventPlayers}
             />
           </CardContent>
         </Card>
@@ -173,6 +196,24 @@ export default async function MatchDetailPage({
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Match-day squad</CardTitle>
+          <CardDescription>
+            Players available for this match. Not every squad player plays every
+            game.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MatchSquadSection
+            matchId={match.id}
+            roster={players}
+            selectedPlayerIds={[...matchSquadIds]}
+            canEdit={canEdit}
+          />
+        </CardContent>
+      </Card>
 
       {allowsEvents ? (
         <>
@@ -212,21 +253,44 @@ export default async function MatchDetailPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Our goals</CardTitle>
+              <CardTitle>Periods</CardTitle>
               <CardDescription>
-                Goals scored by our players only.
+                Halves, quarters, or other periods. Set starting players for
+                each period and add goals — the period is filled in
+                automatically.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {periodsError ? <ErrorBanner message={periodsError} /> : null}
               {goalsError ? <ErrorBanner message={goalsError} /> : null}
-              <MatchGoalsSection
+              <MatchPeriodsSection
                 matchId={match.id}
+                periods={periods}
                 goals={goals}
-                players={players}
+                squadPlayers={eventPlayers}
                 canEdit={canEdit}
               />
             </CardContent>
           </Card>
+
+          {orphanGoals.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Other goals</CardTitle>
+                <CardDescription>
+                  Goals not linked to a period yet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <MatchGoalsSection
+                  matchId={match.id}
+                  goals={orphanGoals}
+                  players={eventPlayers}
+                  canEdit={canEdit}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>
@@ -241,7 +305,7 @@ export default async function MatchDetailPage({
               <MatchCardsSection
                 matchId={match.id}
                 cards={cards}
-                players={players}
+                players={eventPlayers}
                 coaches={coaches}
                 guardians={guardians}
                 canEdit={canEdit}
@@ -252,8 +316,8 @@ export default async function MatchDetailPage({
       ) : (
         <p className="text-muted-foreground text-sm">
           {canEdit
-            ? "Set the match to In progress or Played to record goals, cards, and players of the match."
-            : "Goals, cards, and players of the match appear once the match is in progress or played."}
+            ? "Set the match to In progress or Played to record periods, goals, cards, and players of the match."
+            : "Periods, goals, cards, and players of the match appear once the match is in progress or played."}
         </p>
       )}
     </div>

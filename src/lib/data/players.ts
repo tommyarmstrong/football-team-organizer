@@ -197,6 +197,7 @@ export async function getPlayerGoals(playerId: string): Promise<{
       player_id: row.player_id,
       assist_player_id: row.assist_player_id,
       period: row.period,
+      period_id: row.period_id,
       minute: row.minute,
       is_penalty: row.is_penalty,
       is_freekick: row.is_freekick,

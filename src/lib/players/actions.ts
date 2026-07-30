@@ -28,6 +28,7 @@ export async function createPlayerAction(
   const last_name = str(formData, "last_name");
   const position = str(formData, "position") || null;
   const school = str(formData, "school") || null;
+  const date_of_birth = str(formData, "date_of_birth") || null;
 
   if (!first_name || !last_name) {
     return { error: "First and last name are required." };
@@ -39,6 +40,7 @@ export async function createPlayerAction(
     last_name,
     position,
     school,
+    date_of_birth,
   });
 
   if (error) return { error };
@@ -57,6 +59,7 @@ export async function updatePlayerAction(
   const last_name = str(formData, "last_name");
   const position = str(formData, "position") || null;
   const school = str(formData, "school") || null;
+  const date_of_birth = str(formData, "date_of_birth") || null;
 
   if (!first_name || !last_name) {
     return { error: "First and last name are required." };
@@ -67,6 +70,7 @@ export async function updatePlayerAction(
     last_name,
     position,
     school,
+    date_of_birth,
   });
   if (error) return { error };
 

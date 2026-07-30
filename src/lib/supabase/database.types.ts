@@ -241,6 +241,7 @@ export type Database = {
           last_name: string;
           position: string | null;
           school: string | null;
+          date_of_birth: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -252,6 +253,7 @@ export type Database = {
           last_name: string;
           position?: string | null;
           school?: string | null;
+          date_of_birth?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -263,6 +265,7 @@ export type Database = {
           last_name?: string;
           position?: string | null;
           school?: string | null;
+          date_of_birth?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -701,6 +704,7 @@ export type Database = {
           match_id: string;
           minute: number | null;
           period: string | null;
+          period_id: string | null;
           player_id: string;
         };
         Insert: {
@@ -713,6 +717,7 @@ export type Database = {
           match_id: string;
           minute?: number | null;
           period?: string | null;
+          period_id?: string | null;
           player_id: string;
         };
         Update: {
@@ -725,6 +730,7 @@ export type Database = {
           match_id?: string;
           minute?: number | null;
           period?: string | null;
+          period_id?: string | null;
           player_id?: string;
         };
         Relationships: [
@@ -743,7 +749,121 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "goals_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: false;
+            referencedRelation: "match_periods";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "goals_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      match_players: {
+        Row: {
+          id: string;
+          match_id: string;
+          player_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          match_id: string;
+          player_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          match_id?: string;
+          player_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "match_players_match_id_fkey";
+            columns: ["match_id"];
+            isOneToOne: false;
+            referencedRelation: "matches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "match_players_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      match_periods: {
+        Row: {
+          id: string;
+          match_id: string;
+          name: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          match_id: string;
+          name: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          match_id?: string;
+          name?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "match_periods_match_id_fkey";
+            columns: ["match_id"];
+            isOneToOne: false;
+            referencedRelation: "matches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      match_period_starters: {
+        Row: {
+          id: string;
+          period_id: string;
+          player_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          period_id: string;
+          player_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          period_id?: string;
+          player_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "match_period_starters_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: false;
+            referencedRelation: "match_periods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "match_period_starters_player_id_fkey";
             columns: ["player_id"];
             isOneToOne: false;
             referencedRelation: "players";
@@ -923,6 +1043,9 @@ export type Competition = Tables<"competitions">;
 export type Coach = Tables<"coaches">;
 export type TeamCoach = Tables<"team_coaches">;
 export type Match = Tables<"matches">;
+export type MatchPlayer = Tables<"match_players">;
+export type MatchPeriod = Tables<"match_periods">;
+export type MatchPeriodStarter = Tables<"match_period_starters">;
 export type Goal = Tables<"goals">;
 export type Card = Tables<"cards">;
 export type CoachDevelopmentObjective = Tables<"coach_development_objectives">;
