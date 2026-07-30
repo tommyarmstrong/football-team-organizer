@@ -44,3 +44,6 @@ next-env.d.ts
 
 # supabase CLI local cache
 supabase/.temp
+
+# Work in progress feature development
+docs/feature_requests_1.md

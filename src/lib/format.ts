@@ -1,8 +1,18 @@
+import {
+  CARD_TYPE_LABELS,
+  MATCH_STATUS_LABELS,
+  VENUE_FOOD_AND_DRINK_LABELS,
+  VENUE_SURFACE_LABELS,
+} from "@/lib/constants";
 import type {
+  CardType,
   CompetitionKind,
+  MatchHomeAway,
   MatchStatus,
-  MatchVenue,
   TeamGender,
+  Venue,
+  VenueFoodAndDrink,
+  VenueSurface,
 } from "@/lib/supabase/database.types";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -43,6 +53,27 @@ export function playerDisplayName(
   return name;
 }
 
+export function coachDisplayName(coach: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${coach.first_name} ${coach.second_name}`.trim();
+}
+
+export function guardianDisplayName(guardian: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${guardian.first_name} ${guardian.second_name}`.trim();
+}
+
+export function managerDisplayName(manager: {
+  first_name: string;
+  second_name: string;
+}): string {
+  return `${manager.first_name} ${manager.second_name}`.trim();
+}
+
 export function formatScore(
   goalsFor: number | null,
   goalsAgainst: number | null,
@@ -65,17 +96,60 @@ export function labelGender(gender: TeamGender): string {
   return gender.charAt(0).toUpperCase() + gender.slice(1);
 }
 
-export function labelVenue(venue: MatchVenue): string {
-  return venue.charAt(0).toUpperCase() + venue.slice(1);
+export function labelHomeAway(homeAway: MatchHomeAway): string {
+  return homeAway.charAt(0).toUpperCase() + homeAway.slice(1);
+}
+
+export function labelVenueSurface(surface: VenueSurface): string {
+  return VENUE_SURFACE_LABELS[surface] ?? surface;
+}
+
+export function labelVenueFoodAndDrink(
+  foodAndDrink: VenueFoodAndDrink,
+): string {
+  return VENUE_FOOD_AND_DRINK_LABELS[foodAndDrink] ?? foodAndDrink;
+}
+
+export function formatVenueFoodAndDrink(
+  foodAndDrink: VenueFoodAndDrink[] | VenueFoodAndDrink | null | undefined,
+): string | null {
+  const values = Array.isArray(foodAndDrink)
+    ? foodAndDrink
+    : foodAndDrink
+      ? [foodAndDrink]
+      : [];
+  if (values.length === 0) return null;
+  return values.map(labelVenueFoodAndDrink).join(", ");
+}
+
+export function formatVenueAddress(
+  venue: Pick<
+    Venue,
+    "address_line1" | "address_line2" | "town_city" | "postcode"
+  >,
+): string | null {
+  const parts = [
+    venue.address_line1,
+    venue.address_line2,
+    venue.town_city,
+    venue.postcode,
+  ]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 export function labelMatchStatus(status: MatchStatus): string {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return MATCH_STATUS_LABELS[status] ?? status;
 }
 
 export function labelCompetitionKind(kind: CompetitionKind | null): string {
   if (!kind) return "—";
   return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+export function labelCardType(type: CardType): string {
+  return CARD_TYPE_LABELS[type];
 }
 
 function parseDateOnly(date: string): Date {

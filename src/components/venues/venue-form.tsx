@@ -1,0 +1,143 @@
+"use client";
+
+import { useActionState } from "react";
+import { INITIAL_ACTION_STATE } from "@/lib/action-state";
+import {
+  VENUE_FOOD_AND_DRINKS,
+  VENUE_FOOD_AND_DRINK_LABELS,
+  VENUE_SURFACES,
+  VENUE_SURFACE_LABELS,
+} from "@/lib/constants";
+import { createVenueAction, updateVenueAction } from "@/lib/venues/actions";
+import type { Venue } from "@/lib/supabase/database.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { ErrorBanner } from "@/components/shared/error-banner";
+
+export function VenueForm({
+  venue,
+  mode,
+}: {
+  venue?: Venue;
+  mode: "create" | "edit";
+}) {
+  const action =
+    mode === "create"
+      ? createVenueAction
+      : updateVenueAction.bind(null, venue!.id);
+
+  const [state, formAction, pending] = useActionState(
+    action,
+    INITIAL_ACTION_STATE,
+  );
+
+  const selectedFoodAndDrink = new Set(
+    Array.isArray(venue?.food_and_drink) ? venue.food_and_drink : [],
+  );
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="name">
+            Name <span className="text-muted-foreground">(required)</span>
+          </Label>
+          <Input
+            id="name"
+            name="name"
+            required
+            aria-required="true"
+            defaultValue={venue?.name}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="address_line1">Address line 1</Label>
+          <Input
+            id="address_line1"
+            name="address_line1"
+            defaultValue={venue?.address_line1 ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="address_line2">Address line 2</Label>
+          <Input
+            id="address_line2"
+            name="address_line2"
+            defaultValue={venue?.address_line2 ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="town_city">Town / city</Label>
+          <Input
+            id="town_city"
+            name="town_city"
+            defaultValue={venue?.town_city ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="postcode">Postcode</Label>
+          <Input
+            id="postcode"
+            name="postcode"
+            defaultValue={venue?.postcode ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="surface">Surface</Label>
+          <NativeSelect
+            id="surface"
+            name="surface"
+            required
+            defaultValue={venue?.surface ?? "unknown"}
+            disabled={pending}
+          >
+            {VENUE_SURFACES.map((surface) => (
+              <option key={surface} value={surface}>
+                {VENUE_SURFACE_LABELS[surface]}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <fieldset className="space-y-2 sm:col-span-2">
+          <legend className="text-sm font-medium">Food & Drink</legend>
+          <div className="flex flex-wrap gap-3">
+            {VENUE_FOOD_AND_DRINKS.map((option) => (
+              <label
+                key={option}
+                className="flex min-h-9 items-center gap-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  name="food_and_drink"
+                  value={option}
+                  defaultChecked={selectedFoodAndDrink.has(option)}
+                  disabled={pending}
+                  className="border-input size-4 rounded"
+                />
+                {VENUE_FOOD_AND_DRINK_LABELS[option]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </div>
+
+      {state.error ? <ErrorBanner message={state.error} /> : null}
+      {state.success ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          {state.success}
+        </p>
+      ) : null}
+
+      <Button type="submit" disabled={pending}>
+        {pending ? "Saving…" : mode === "create" ? "Add venue" : "Save venue"}
+      </Button>
+    </form>
+  );
+}

@@ -9,7 +9,7 @@ import {
 } from "@/lib/goals/actions";
 import { playerDisplayName } from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
-import type { Player } from "@/lib/supabase/database.types";
+import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,11 +21,40 @@ export function MatchGoalsSection({
   matchId,
   goals,
   players,
+  canEdit = true,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
-  players: Player[];
+  players: RosterPlayer[];
+  canEdit?: boolean;
 }) {
+  if (!canEdit) {
+    return goals.length === 0 ? (
+      <EmptyState
+        title="No goals recorded"
+        description="Goals scored by our players will appear here."
+      />
+    ) : (
+      <ul className="divide-border border-border divide-y rounded-xl border">
+        {goals.map((goal) => (
+          <li
+            key={goal.id}
+            className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+          >
+            <span className="font-medium">
+              {playerDisplayName(goal.scorer)}
+            </span>
+            <span className="text-muted-foreground">
+              {goal.minute != null ? `${goal.minute}'` : ""}
+              {goal.is_penalty ? " · Pen" : ""}
+              {goal.assist ? ` · assist ${playerDisplayName(goal.assist)}` : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <AddGoalForm matchId={matchId} players={players} />
@@ -53,7 +82,7 @@ function AddGoalForm({
   players,
 }: {
   matchId: string;
-  players: Player[];
+  players: RosterPlayer[];
 }) {
   const bound = createGoalAction.bind(null, matchId);
   const [state, formAction, pending] = useActionState(
@@ -93,7 +122,7 @@ function GoalRow({
 }: {
   matchId: string;
   goal: GoalWithPlayers;
-  players: Player[];
+  players: RosterPlayer[];
 }) {
   const boundUpdate = updateGoalAction.bind(null, matchId, goal.id);
   const [state, formAction, pending] = useActionState(
@@ -154,10 +183,7 @@ function GoalRow({
         </Button>
       </form>
       <p className="text-muted-foreground text-xs">
-        Current:{" "}
-        {playerDisplayName(goal.scorer, {
-          shirtNumber: goal.scorer.shirt_number,
-        })}
+        Current: {playerDisplayName(goal.scorer)}
         {goal.minute != null ? ` ${goal.minute}'` : ""}
         {goal.is_penalty ? " (pen)" : ""}
       </p>
@@ -170,7 +196,7 @@ function GoalFields({
   pending,
   defaults,
 }: {
-  players: Player[];
+  players: RosterPlayer[];
   pending: boolean;
   defaults?: {
     player_id?: string;

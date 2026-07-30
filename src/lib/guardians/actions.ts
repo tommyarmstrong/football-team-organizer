@@ -1,0 +1,127 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import type { ActionState } from "@/lib/action-state";
+import {
+  createGuardian,
+  deleteGuardian,
+  linkGuardianToPlayer,
+  unlinkGuardianFromPlayer,
+  updateGuardian,
+  updateGuardianPlayerLink,
+} from "@/lib/data/guardians";
+import { resolveStaffClubId } from "@/lib/data/clubs";
+import { getActiveTeam } from "@/lib/data/team";
+import {
+  parseGuardianForm,
+  parseGuardianRelationship,
+  parseLegalGuardian,
+} from "@/lib/guardians/parse";
+import { str } from "@/lib/form-parse";
+
+function revalidateGuardian(guardianId: string, playerId?: string) {
+  revalidatePath("/club");
+  revalidatePath(`/guardians/${guardianId}`);
+  if (playerId) revalidatePath(`/players/${playerId}`);
+}
+
+export async function createGuardianAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const activeTeam = await getActiveTeam();
+  const clubId = await resolveStaffClubId(activeTeam?.club_id);
+  if (!clubId) return { error: "No club found for your account." };
+
+  const parsed = parseGuardianForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { data, error } = await createGuardian({
+    club_id: clubId,
+    ...parsed,
+  });
+  if (error) return { error };
+  if (!data) return { error: "Could not create guardian." };
+
+  revalidatePath("/club");
+  redirect(`/guardians/${data.id}`);
+}
+
+export async function updateGuardianAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parseGuardianForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { error } = await updateGuardian(id, parsed);
+  if (error) return { error };
+
+  revalidateGuardian(id);
+  return { success: "Guardian saved." };
+}
+
+export async function deleteGuardianAction(id: string): Promise<ActionState> {
+  const { error } = await deleteGuardian(id);
+  if (error) return { error };
+
+  revalidatePath("/club");
+  redirect("/club");
+}
+
+export async function linkGuardianToPlayerAction(
+  guardianId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const playerId = str(formData, "player_id");
+  if (!playerId) return { error: "Select a player." };
+
+  const relationship = parseGuardianRelationship(formData);
+  if (typeof relationship === "object") return relationship;
+
+  const { error } = await linkGuardianToPlayer({
+    guardian_id: guardianId,
+    player_id: playerId,
+    relationship,
+    legal_guardian: parseLegalGuardian(formData),
+  });
+  if (error) return { error };
+
+  revalidateGuardian(guardianId, playerId);
+  return { success: "Player linked." };
+}
+
+export async function updateGuardianPlayerLinkAction(
+  linkId: string,
+  guardianId: string,
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const relationship = parseGuardianRelationship(formData);
+  if (typeof relationship === "object") return relationship;
+
+  const { error } = await updateGuardianPlayerLink(linkId, {
+    relationship,
+    legal_guardian: parseLegalGuardian(formData),
+  });
+  if (error) return { error };
+
+  revalidateGuardian(guardianId, playerId);
+  return { success: "Link updated." };
+}
+
+export async function unlinkGuardianFromPlayerAction(
+  linkId: string,
+  guardianId: string,
+  playerId: string,
+): Promise<ActionState> {
+  const { error } = await unlinkGuardianFromPlayer(linkId);
+  if (error) return { error };
+
+  revalidateGuardian(guardianId, playerId);
+  return { success: "Player unlinked." };
+}

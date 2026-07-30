@@ -1,31 +1,44 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { MATCH_STATUSES, MATCH_VENUES } from "@/lib/constants";
+import {
+  MATCH_HOME_AWAYS,
+  MATCH_STATUSES,
+  matchAllowsEvents,
+} from "@/lib/constants";
 import { createMatchAction, updateMatchAction } from "@/lib/matches/actions";
-import { labelMatchStatus, labelVenue } from "@/lib/format";
+import {
+  labelHomeAway,
+  labelMatchStatus,
+  playerDisplayName,
+} from "@/lib/format";
 import type {
   Competition,
   Match,
   MatchStatus,
+  Venue,
 } from "@/lib/supabase/database.types";
+import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { useState } from "react";
 
 export function MatchForm({
   mode,
   match,
   competitions,
+  venues = [],
+  players = [],
 }: {
   mode: "create" | "edit";
   match?: Match;
   competitions: Competition[];
+  venues?: Venue[];
+  players?: RosterPlayer[];
 }) {
   const action =
     mode === "create"
@@ -40,6 +53,7 @@ export function MatchForm({
   const [status, setStatus] = useState<MatchStatus>(
     match?.status ?? "scheduled",
   );
+  const showEvents = matchAllowsEvents(status);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -82,17 +96,33 @@ export function MatchForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="venue">Venue</Label>
+          <Label htmlFor="home_away">Home / away</Label>
           <NativeSelect
-            id="venue"
-            name="venue"
+            id="home_away"
+            name="home_away"
             required
-            defaultValue={match?.venue ?? "home"}
+            defaultValue={match?.home_away ?? "home"}
             disabled={pending}
           >
-            {MATCH_VENUES.map((venue) => (
-              <option key={venue} value={venue}>
-                {labelVenue(venue)}
+            {MATCH_HOME_AWAYS.map((value) => (
+              <option key={value} value={value}>
+                {labelHomeAway(value)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="venue_id">Venue</Label>
+          <NativeSelect
+            id="venue_id"
+            name="venue_id"
+            defaultValue={match?.venue_id ?? ""}
+            disabled={pending}
+          >
+            <option value="">Unknown</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
               </option>
             ))}
           </NativeSelect>
@@ -133,7 +163,7 @@ export function MatchForm({
                 ))}
               </NativeSelect>
             </div>
-            {status === "played" ? (
+            {showEvents ? (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="goals_for">Goals for</Label>
@@ -142,7 +172,7 @@ export function MatchForm({
                     name="goals_for"
                     type="number"
                     min={0}
-                    required
+                    required={status === "played"}
                     defaultValue={match?.goals_for ?? 0}
                     disabled={pending}
                   />
@@ -154,27 +184,77 @@ export function MatchForm({
                     name="goals_against"
                     type="number"
                     min={0}
-                    required
+                    required={status === "played"}
                     defaultValue={match?.goals_against ?? 0}
                     disabled={pending}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="player_of_the_match_id">
+                    Coach&apos;s player of the match
+                  </Label>
+                  <NativeSelect
+                    id="player_of_the_match_id"
+                    name="player_of_the_match_id"
+                    defaultValue={match?.player_of_the_match_id ?? ""}
+                    disabled={pending}
+                  >
+                    <option value="">None</option>
+                    {players.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {playerDisplayName(player, {
+                          shirtNumber: player.shirt_number,
+                        })}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="players_player_of_the_match_id">
+                    Player&apos;s player of the match
+                  </Label>
+                  <NativeSelect
+                    id="players_player_of_the_match_id"
+                    name="players_player_of_the_match_id"
+                    defaultValue={match?.players_player_of_the_match_id ?? ""}
+                    disabled={pending}
+                  >
+                    <option value="">None</option>
+                    {players.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {playerDisplayName(player, {
+                          shirtNumber: player.shirt_number,
+                        })}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
               </>
             ) : (
               <p className="text-muted-foreground text-sm sm:col-span-2">
-                Score is only required when status is Played. Changing away from
-                Played clears the stored score (goals recorded below are kept).
+                Score and players of the match are available when status is In
+                progress or Played. Changing away from those statuses clears the
+                stored score (goals and cards recorded below are kept).
               </p>
             )}
           </>
         ) : null}
 
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">Coach&apos;s notes</Label>
           <Textarea
             id="notes"
             name="notes"
             defaultValue={match?.notes ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="club_notes">Club notes</Label>
+          <Textarea
+            id="club_notes"
+            name="club_notes"
+            defaultValue={match?.club_notes ?? ""}
             disabled={pending}
           />
         </div>

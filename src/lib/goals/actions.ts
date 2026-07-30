@@ -41,7 +41,7 @@ export async function createGoalAction(
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/dashboard");
   revalidatePath("/stats");
-  revalidatePath("/players");
+  revalidatePath("/club");
   return { success: "Goal added." };
 }
 
@@ -81,7 +81,7 @@ export async function updateGoalAction(
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/dashboard");
   revalidatePath("/stats");
-  revalidatePath("/players");
+  revalidatePath("/club");
   return { success: "Goal updated." };
 }
 
@@ -95,6 +95,6 @@ export async function deleteGoalAction(
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/dashboard");
   revalidatePath("/stats");
-  revalidatePath("/players");
+  revalidatePath("/club");
   return { success: "Goal removed." };
 }

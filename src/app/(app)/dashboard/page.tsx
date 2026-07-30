@@ -1,19 +1,19 @@
 import Link from "next/link";
-import { getCurrentTeam } from "@/lib/data/team";
+import { canEditActiveTeam, getCurrentTeam } from "@/lib/data/team";
 import { getLastResult, getNextFixture } from "@/lib/data/matches";
 import { getTopScorers } from "@/lib/data/stats";
 import {
   formatKickoffTime,
   formatMatchDate,
   formatScore,
-  labelVenue,
+  labelHomeAway,
   playerDisplayName,
   resultLetter,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -34,10 +34,11 @@ export default async function DashboardPage() {
     );
   }
 
-  const [next, last, scorers] = await Promise.all([
+  const [next, last, scorers, canEdit] = await Promise.all([
     getNextFixture(),
     getLastResult(),
     getTopScorers(5),
+    canEditActiveTeam(),
   ]);
 
   const errors = [next.error, last.error, scorers.error].filter(Boolean);
@@ -48,7 +49,11 @@ export default async function DashboardPage() {
         title="Dashboard"
         description={`${team.name} · ${team.season_label}`}
         actions={
-          <Button render={<Link href="/matches/new" />}>New fixture</Button>
+          canEdit ? (
+            <Link href="/matches/new" className={buttonVariants()}>
+              New fixture
+            </Link>
+          ) : undefined
         }
       />
 
@@ -75,7 +80,8 @@ export default async function DashboardPage() {
                     ? ` · ${formatKickoffTime(next.data.kickoff_time)}`
                     : ""}
                   {" · "}
-                  {labelVenue(next.data.venue)}
+                  {labelHomeAway(next.data.home_away)}
+                  {next.data.venue ? ` · ${next.data.venue.name}` : ""}
                   {next.data.competition
                     ? ` · ${next.data.competition.name}`
                     : ""}
@@ -86,9 +92,14 @@ export default async function DashboardPage() {
                 title="No upcoming fixture"
                 description="Schedule the next match."
                 action={
-                  <Button size="sm" render={<Link href="/matches/new" />}>
-                    New fixture
-                  </Button>
+                  canEdit ? (
+                    <Link
+                      href="/matches/new"
+                      className={buttonVariants({ size: "sm" })}
+                    >
+                      New fixture
+                    </Link>
+                  ) : undefined
                 }
               />
             )}

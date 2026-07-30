@@ -7,7 +7,8 @@ import {
   labelCompetitionKind,
   labelGender,
   labelMatchStatus,
-  labelVenue,
+  labelHomeAway,
+  coachDisplayName,
   playerDisplayName,
   resultLetter,
 } from "@/lib/format";
@@ -66,6 +67,14 @@ describe("playerDisplayName", () => {
   });
 });
 
+describe("coachDisplayName", () => {
+  it("joins first and second name", () => {
+    expect(coachDisplayName({ first_name: "Alex", second_name: "Coach" })).toBe(
+      "Alex Coach",
+    );
+  });
+});
+
 describe("formatScore", () => {
   it("returns an em dash when either side is missing", () => {
     expect(formatScore(null, 1)).toBe("—");
@@ -95,8 +104,9 @@ describe("resultLetter", () => {
 describe("label helpers", () => {
   it("capitalizes enum-like values", () => {
     expect(labelGender("boys")).toBe("Boys");
-    expect(labelVenue("home")).toBe("Home");
+    expect(labelHomeAway("home")).toBe("Home");
     expect(labelMatchStatus("scheduled")).toBe("Scheduled");
+    expect(labelMatchStatus("in_progress")).toBe("In progress");
     expect(labelCompetitionKind("league")).toBe("League");
   });
 

@@ -10,37 +10,42 @@ This document is a living product brief. It is **not** intended as a single prom
 
 ## Product summary
 
-| Item            | Detail                                                              |
-| --------------- | ------------------------------------------------------------------- |
-| Working name    | Football Team Organizer                                             |
-| Primary users   | Coach / admin (authenticated, email/password)                       |
-| Secondary users | None in MVP (parents / players later)                               |
-| Core job        | Record fixtures, results, squad, and goals; review form and scoring |
-| Hosting         | Vercel (Next.js)                                                    |
-| Data & auth     | Supabase (PostgreSQL + Auth)                                        |
-| Teams in MVP    | One team in use; schema ready for multiple teams later              |
-| Season in MVP   | One season only (label on the team; no `seasons` table yet)         |
+| Item            | Detail                                                                  |
+| --------------- | ----------------------------------------------------------------------- |
+| Working name    | Football Team Organizer                                                 |
+| Primary users   | Club management and coaches (authenticated, email/password)             |
+| Secondary users | Guardians and players (authenticated, read-only, restricted fields)     |
+| Core job        | Run a club of many teams: squads, fixtures, results, goals, and scoring |
+| Hosting         | Vercel (Next.js)                                                        |
+| Data & auth     | Supabase (PostgreSQL + Auth)                                            |
+| Teams           | A club owns **many teams** (e.g. U10 Boys, U11 Girls A/B)               |
+| Season in MVP   | One season only (label on each team; no `seasons` table yet)            |
 
-### Decided scope (MVP)
+### Decided scope
 
-| Topic              | Decision                                                                                            |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| Multi-team         | Schema keyed by `team_id` so multi-team can come later; product UI and seed assume **one team** now |
-| Appearances        | **Goals only** in MVP; player appearances / minutes deferred                                        |
-| Opposition scorers | **Not recorded** — store opponent aggregate score (`goals_against`) only                            |
-| Auth               | **Email / password** only (no magic link / OAuth in MVP)                                            |
-| Access             | **Coach / admin only** — no parent or public read in MVP                                            |
-| Seasons            | **One season** in MVP (`season_label` on team); multi-season later                                  |
+| Topic              | Decision                                                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Club & teams       | A first-class `clubs` entity owns many `teams`. Users switch the active team in the header                                                      |
+| People             | `players` and `coaches` are **club-level people** assigned to zero/one/many teams via junction tables                                           |
+| Roles              | Club **management** (see/edit everything), team **coach** (edit own teams, read other club teams), **guardian/player** (read-only, their teams) |
+| Field-level access | Sensitive player contact details are readable only by management, the player's coaches, guardians, and the player                               |
+| Player of match    | Coaches/management set it; guardians/players can view but not edit                                                                              |
+| Appearances        | **Goals only**; player appearances / minutes deferred                                                                                           |
+| Opposition scorers | **Not recorded** — store opponent aggregate score (`goals_against`) only                                                                        |
+| Auth               | **Email / password** only (no magic link / OAuth in MVP)                                                                                        |
+| Seasons            | **One season** (`season_label` on each team); multi-season later                                                                                |
 
 ### Out of scope (v1)
 
 The following are **not** current requirements (may be revisited later):
 
-- Switching between / managing multiple teams in the UI (schema may still use `team_id`)
+- Multi-club tenancy / a platform super-admin across clubs
+- URL-prefixed per-team routes (`/teams/[id]/…`); the app uses an active-team switcher instead
+- Email-based invitations (guardians/players/coaches are linked by their Supabase Auth user id for now)
 - Multi-season history and a dedicated `seasons` table
 - Player appearances / minutes played
 - Opposition goal scorers or opposition squad lists
-- Parent / player / public read-only access
+- Guardian / player / public read-only access
 - Magic link, Google, or other OAuth providers
 - League tables across many clubs
 - Live match scoring / real-time sync during play
@@ -99,14 +104,36 @@ Secrets (never commit): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_K
 
 Entities below drive schema design in Stage 4. Field lists reflect agreed MVP decisions; refine names/types in migrations as needed.
 
-**Multi-team readiness:** every team-owned row carries `team_id`. MVP ships with a single team row and coach membership to that team only. Do not build team-switcher UI yet.
+**Club platform:** a `clubs` row owns many `teams`. Team-owned rows (matches, competitions, goals) carry `team_id`. People (`players`, `coaches`) are club-level and linked to teams through `team_players` / `team_coaches`. Access is governed by RLS via club/team membership helpers. The header provides an active-team switcher for team-scoped screens.
+
+### Roles & access
+
+| Role                                                      | Scope                                      | Read                                                                                      | Write                                                                            |
+| --------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Management (`managers` with linked login)                 | Whole club                                 | Everything in the club                                                                    | Everything in the club                                                           |
+| Coach (`team_members.role = coach`)                       | Assigned teams edit; other club teams read | All club teams' squad/fixture/stats data                                                  | Own teams: squad, matches, goals, player of the match, competitions, team access |
+| Guardian (`guardians` + `player_guardians`)               | Teams of their linked players              | Those teams' squad, fixtures, stats, player of the match; linked players' contact details | Own / linked player contact details only                                         |
+| Player (`players.user_id` / `team_members.role = player`) | Their teams                                | Same read as guardian, for their own teams                                                | Own contact details only                                                         |
+
+Sensitive contact details live in `player_contacts` with stricter RLS so guardians/players cannot see other players' contacts.
+
+### Club
+
+| Field                   | Notes                    |
+| ----------------------- | ------------------------ |
+| id                      | UUID                     |
+| name                    | Club / organisation name |
+| website / email / phone | Optional contact details |
+| created_at / updated_at | Timestamps               |
+
+Management is recorded in `managers` (club people with optional `user_id`). Linking a login grants club-wide permissions. The first manager is created via the `create_club_with_management` RPC to avoid a chicken-and-egg RLS problem.
 
 ### Team
 
 | Field                   | Notes                                                   |
 | ----------------------- | ------------------------------------------------------- |
 | id                      | UUID                                                    |
-| club                    | Club / organisation name                                |
+| club_id                 | FK → clubs                                              |
 | name                    | Team name (display)                                     |
 | age_group               | e.g. `U9`, `U11`, `U13` (free text or constrained list) |
 | gender                  | `boys` \| `girls` \| `mixed`                            |
@@ -117,11 +144,12 @@ Entities below drive schema design in Stage 4. Field lists reflect agreed MVP de
 
 **Related (not columns on `teams`):**
 
-| Relation         | How                                                                           |
-| ---------------- | ----------------------------------------------------------------------------- |
-| Squad            | `players` where `players.team_id = teams.id` (active players = current squad) |
-| Competitions     | `competitions` where `competitions.team_id = teams.id`                        |
-| Coaches / admins | `team_members` linking auth users to the team with role `coach` or `admin`    |
+| Relation       | How                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Squad          | `team_players` linking club `players` to the team, with per-team `shirt_number`/`active`                                                                     |
+| Coaching staff | `team_coaches` linking club `coaches` to the team                                                                                                            |
+| Competitions   | `competitions` where `competitions.team_id = teams.id`                                                                                                       |
+| Access         | `team_members` linking auth users to the team; any combination of roles `management`, `coach`, `guardian`, `guardian_assistant`, `player` (one row per role) |
 
 ### Competition
 
@@ -135,35 +163,38 @@ Competitions the team enters this season (league, cup, friendly series, etc.).
 | kind       | Optional: `league` \| `cup` \| `friendly` \| `tournament` \| `other` |
 | created_at | Timestamp                                                            |
 
-### Player (squad member)
+### Player (club-level person)
 
-| Field                   | Notes                                                      |
-| ----------------------- | ---------------------------------------------------------- |
-| id                      | UUID                                                       |
-| team_id                 | FK → teams (squad membership)                              |
-| first_name, last_name   | Required                                                   |
-| shirt_number            | Optional, unique per team if set                           |
-| position                | Optional enum/label (GK, DEF, MID, FWD, or free text)      |
-| active                  | Soft-archive inactive players (remain on historical goals) |
-| created_at / updated_at | Timestamps                                                 |
+| Field                   | Notes                                                 |
+| ----------------------- | ----------------------------------------------------- |
+| id                      | UUID                                                  |
+| club_id                 | FK → clubs                                            |
+| user_id                 | Optional FK → auth.users (player's own login)         |
+| first_name, last_name   | Required                                              |
+| position                | Optional enum/label (GK, DEF, MID, FWD, or free text) |
+| created_at / updated_at | Timestamps                                            |
+
+Squad membership is per team via **`team_players`** (`team_id`, `player_id`, optional `shirt_number` unique per team, `active`). Sensitive details live in **`player_contacts`** (1:1 with player: phone, email, address, emergency contact, medical notes). Guardians are club-level people (`guardians`: name, phone, email, notes) linked to zero/many players via **`player_guardians`** (`guardian_id`, `player_id`, `relationship`, `legal_guardian`). Optional `guardians.user_id` links a login for guardian app access.
 
 ### Match (fixture / result)
 
 A match is scheduled (fixture) and may later have a result.
 
-| Field                     | Notes                                                             |
-| ------------------------- | ----------------------------------------------------------------- |
-| id                        | UUID                                                              |
-| team_id                   | FK → teams                                                        |
-| opponent_name             | Free text                                                         |
-| date                      | Match date                                                        |
-| kickoff_time              | Optional time of day                                              |
-| venue                     | `home` \| `away` \| `neutral`                                     |
-| competition_id            | Optional FK → competitions                                        |
-| status                    | `scheduled` \| `played` \| `postponed` \| `cancelled`             |
-| goals_for / goals_against | Null until played; `goals_against` is opponent **aggregate** only |
-| notes                     | Optional                                                          |
-| created_at / updated_at   | Timestamps                                                        |
+| Field                     | Notes                                                                   |
+| ------------------------- | ----------------------------------------------------------------------- |
+| id                        | UUID                                                                    |
+| team_id                   | FK → teams                                                              |
+| opponent_name             | Free text                                                               |
+| date                      | Match date                                                              |
+| kickoff_time              | Optional time of day                                                    |
+| home_away                 | `home` \| `away` \| `neutral`                                           |
+| venue_id                  | Optional FK → venues (`null` = unknown)                                 |
+| competition_id            | Optional FK → competitions                                              |
+| player_of_the_match_id    | Optional FK → players (set when played; editable by coaches/management) |
+| status                    | `scheduled` \| `played` \| `postponed` \| `cancelled`                   |
+| goals_for / goals_against | Null until played; `goals_against` is opponent **aggregate** only       |
+| notes                     | Optional                                                                |
+| created_at / updated_at   | Timestamps                                                              |
 
 ### Goal
 
@@ -188,38 +219,64 @@ Own goals credited to the opponent score only via `goals_against` — no opposit
 
 Track whether a player played in a match (apps / minutes). **Deferred** — MVP uses goals only for performance views.
 
-### Auth user & team membership
+### Auth user & memberships
 
-Supabase Auth (email/password). Map users to teams via `team_members`:
+Supabase Auth (email/password). Access is derived from membership tables and linked people records:
 
-| Field      | Notes                     |
-| ---------- | ------------------------- |
-| id         | UUID                      |
-| team_id    | FK → teams                |
-| user_id    | FK → auth.users           |
-| role       | `coach` \| `admin` in MVP |
-| created_at | Timestamp                 |
+**`managers`** — club-level people; optional `user_id` grants club-wide management:
 
-Optional `profiles` table for display name / email cache if useful.
+| Field                    | Notes                    |
+| ------------------------ | ------------------------ |
+| id                       | UUID                     |
+| club_id                  | FK → clubs               |
+| user_id                  | Optional FK → auth.users |
+| first_name / second_name | Required                 |
+| phone / email / notes    | Optional                 |
+| created_at / updated_at  | Timestamps               |
+
+**`team_members`** — team-scoped roles (additive; unique on team + user + role):
+
+| Field      | Notes                                                                     |
+| ---------- | ------------------------------------------------------------------------- |
+| id         | UUID                                                                      |
+| team_id    | FK → teams                                                                |
+| user_id    | FK → auth.users                                                           |
+| role       | `management` \| `coach` \| `guardian` \| `guardian_assistant` \| `player` |
+| created_at | Timestamp                                                                 |
+
+A user may hold any combination of roles on one team and a different set on another.
+
+**`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they appear in any of `managers.user_id`, `team_members`, `guardians.user_id`, or `players.user_id` (checked via the `has_app_access` RPC in middleware).
+
+RLS uses SECURITY DEFINER helper functions (`is_club_management`, `is_club_staff`, `can_read_club`, `can_read_team`, `can_read_team_row`, `can_edit_team`, `can_read_player`, `can_read_player_row`, `can_edit_player`, `can_view_player_contact`, `player_club_id`) to enforce these rules on every table.
+
+Policies must never reference another RLS-protected table directly: policy expressions run as the calling user, so `clubs`/`teams`/`players`/`player_guardians` would recurse into each other. The `*_row` helpers take the row's own columns as arguments, which also keeps `insert … returning` working (the new row is not yet visible to a self-lookup).
 
 ---
 
 ## Information architecture
 
-### Primary navigation (authenticated coach / admin)
+Team-scoped screens act on the **active team** chosen in the header switcher. The switcher and nav adapt to the user's role (the Coaches area is hidden from guardians/players).
 
-| Route           | Purpose                                                                      |
-| --------------- | ---------------------------------------------------------------------------- |
-| `/`             | Redirect to dashboard                                                        |
-| `/login`        | Sign in (email/password)                                                     |
-| `/dashboard`    | Season snapshot: next fixture, recent results, top scorers                   |
-| `/team`         | Team profile: name, age group, gender, home ground, head coach, competitions |
-| `/players`      | Squad list; add/edit players                                                 |
-| `/players/[id]` | Player detail: goals summary (appearances later)                             |
-| `/matches`      | Fixture & results list (filters: upcoming / played)                          |
-| `/matches/new`  | Create fixture                                                               |
-| `/matches/[id]` | Match detail: edit result (aggregate score), record our goals                |
-| `/stats`        | Charts: results form, goals by player, etc.                                  |
+### Primary navigation (authenticated)
+
+| Route             | Purpose                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `/`               | Redirect to dashboard                                                                             |
+| `/login`          | Sign in (email/password)                                                                          |
+| `/no-access`      | Create a new club (bootstrap management) or ask to be added                                       |
+| `/dashboard`      | Active team snapshot: next fixture, recent results, top scorers                                   |
+| `/team`           | Active team: profile, squad, coaching staff, competitions, team access; create teams (management) |
+| `/players`        | Club player directory; add players (staff); per-player teams, contacts                            |
+| `/players/[id]`   | Player detail: teams, contact details (permission-gated), goals                                   |
+| `/guardians`      | Club guardian directory (management); add/edit people, link players                               |
+| `/guardians/[id]` | Guardian detail: profile, player links (relationship + legal guardian)                            |
+| `/coaches`        | Club coaching staff directory (staff only)                                                        |
+| `/coaches/[id]`   | Coach detail: profile, qualifications, team assignments                                           |
+| `/matches`        | Active team fixtures & results (read-only for guardians/players)                                  |
+| `/matches/new`    | Create fixture (coaches/management)                                                               |
+| `/matches/[id]`   | Match detail: result, our goals, player of the match (edit gated by role)                         |
+| `/stats`          | Active team charts: results form, goals by player, etc.                                           |
 
 ### Unauthenticated
 
@@ -237,27 +294,29 @@ Optional `profiles` table for display name / email cache if useful.
 
 ### Auth
 
-1. Coach/admin signs in with **email/password** only (Supabase Auth)
-2. Protected routes require a session **and** membership on the (single) team; users without membership see `/no-access`
+1. Users sign in with **email/password** only (Supabase Auth)
+2. Protected routes require a session **and** club/team access (`has_app_access`); users without access see `/no-access`, where they can create a new club
 3. Sign out from the app chrome
-4. No parent, player, or anonymous access in MVP
+4. Guardians and players get authenticated, read-only access scoped to their teams
 
-### Team
+### Club & team
 
-1. View and edit team profile (name, age group, gender, home ground, head coach, season label)
-2. Manage competitions list for the team
-3. Squad is managed via Players (linked by `team_id`)
+1. Create a club (bootstraps the creator as management)
+2. Management creates teams within the club and switches the active team
+3. View/edit the active team profile (coaches/management); guardians/players see it read-only
+4. Manage the squad (`team_players`), coaching staff (`team_coaches`), competitions, and team access (`team_members`)
 
 ### Players
 
-1. List active squad players (name, number, position)
-2. Create / edit player
-3. Deactivate (soft-delete) a player without removing historical goals
-4. View player **goal** summary (no appearances in MVP)
+1. Players are club-level people, listed in a directory and assigned to teams
+2. Create / edit player identity (staff); assign to teams with per-team shirt number and active status
+3. Maintain sensitive contact details in `player_contacts`, visible only to management, the player's coaches, guardians, and the player
+4. Link guardians to players
+5. View player **goal** summary across their teams (no appearances in MVP)
 
 ### Matches
 
-1. Create a fixture (opponent, kickoff, venue, optional competition)
+1. Create a fixture (opponent, kickoff, home/away, optional venue, optional competition)
 2. List upcoming fixtures and past results
 3. Mark match played and set score (`goals_for` / `goals_against` aggregate only)
 4. Postpone / cancel a fixture
@@ -403,7 +462,7 @@ None blocking MVP. Defer to later phases:
 - Team switcher / multi-team UI
 - `seasons` table and historical seasons
 - Appearances / minutes
-- Parent read-only access
+- Guardian read-only access
 - Additional auth providers
 
 ---

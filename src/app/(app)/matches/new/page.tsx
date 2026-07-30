@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { listCompetitions } from "@/lib/data/competitions";
+import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { EmptyState } from "@/components/shared/empty-state";
 import { MatchForm } from "@/components/matches/match-form";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,31 +16,75 @@ import {
 } from "@/components/ui/card";
 
 export default async function NewMatchPage() {
-  const { data: competitions, error } = await listCompetitions();
+  const [team, canEdit] = await Promise.all([
+    getActiveTeam(),
+    canEditActiveTeam(),
+  ]);
+
+  if (!team) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title="New fixture" />
+        <ErrorBanner message="No team selected." />
+      </div>
+    );
+  }
+
+  if (!canEdit) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="New fixture" />
+        <EmptyState
+          title="Read-only access"
+          description="Only coaches and club management can add fixtures for this team."
+          action={
+            <Link
+              href="/matches"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Back to matches
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  const [{ data: competitions, error }, { data: venues, error: venuesError }] =
+    await Promise.all([listCompetitions(team.id), listVenues(team.club_id)]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="New fixture"
-        description="Schedule a match for your team"
+        description={`Schedule a match for ${team.name}`}
         actions={
-          <Button variant="outline" size="sm" render={<Link href="/matches" />}>
+          <Link
+            href="/matches"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
             Back
-          </Button>
+          </Link>
         }
       />
 
       {error ? <ErrorBanner message={error} /> : null}
+      {venuesError ? <ErrorBanner message={venuesError} /> : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Fixture details</CardTitle>
           <CardDescription>
-            Score and goals are entered later when the match is played.
+            Score, goals, and player of the match are entered later when the
+            match is played.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MatchForm mode="create" competitions={competitions} />
+          <MatchForm
+            mode="create"
+            competitions={competitions}
+            venues={venues}
+          />
         </CardContent>
       </Card>
     </div>

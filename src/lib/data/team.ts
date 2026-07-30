@@ -1,98 +1,99 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getViewerContext } from "@/lib/authz/context";
 import type {
   Team,
-  TeamMember,
+  TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
-export type TeamMembership = TeamMember & {
-  team: Team;
-};
-
 export type { Team };
 
-/**
- * Returns the signed-in user's first team membership (MVP: one team).
- * Relies on RLS so callers only see their own `team_members` rows.
- * Cached per request so parallel page data helpers share one lookup.
- */
-export const getCurrentTeamMembership = cache(
-  async (): Promise<TeamMembership | null> => {
+export const ACTIVE_TEAM_COOKIE = "fto_active_team";
+
+/** All teams the signed-in user can see (RLS-filtered), ordered by name. */
+export const listVisibleTeams = cache(
+  async (): Promise<{ data: Team[]; error: string | null }> => {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return null;
-    }
-
     const { data, error } = await supabase
-      .from("team_members")
-      .select("*, team:teams(*)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .from("teams")
+      .select("*")
+      .order("name", { ascending: true });
 
-    if (error || !data) {
-      return null;
-    }
-
-    const { team, ...membership } = data;
-    if (!team || Array.isArray(team)) {
-      return null;
-    }
-
-    return { ...membership, team };
+    if (error) return { data: [], error: error.message };
+    return { data: data ?? [], error: null };
   },
 );
 
-/** True when the signed-in user has at least one coach/admin membership. */
-export async function userHasTeamAccess(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+/**
+ * The active team for team-scoped screens. Resolved from the active-team cookie
+ * when it points at a team the user can see; otherwise the first visible team.
+ */
+export const getActiveTeam = cache(async (): Promise<Team | null> => {
+  const { data: teams } = await listVisibleTeams();
+  if (teams.length === 0) return null;
 
-  if (!user) {
-    return false;
+  const cookieStore = await cookies();
+  const cookieTeamId = cookieStore.get(ACTIVE_TEAM_COOKIE)?.value;
+  if (cookieTeamId) {
+    const match = teams.find((team) => team.id === cookieTeamId);
+    if (match) return match;
   }
 
-  const { count, error } = await supabase
-    .from("team_members")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  return !error && (count ?? 0) > 0;
-}
-
-/** MVP helper: the single team for the current coach/admin, if any. */
-export const getCurrentTeam = cache(async (): Promise<Team | null> => {
-  const membership = await getCurrentTeamMembership();
-  return membership?.team ?? null;
+  return teams[0];
 });
 
-export async function updateCurrentTeam(
+/** Backwards-compatible alias used across the app for the current team. */
+export const getCurrentTeam = getActiveTeam;
+
+export async function getTeam(
+  id: string,
+): Promise<{ data: Team | null; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
+}
+
+export async function updateTeam(
+  id: string,
   input: TablesUpdate<"teams">,
 ): Promise<{ data: Team | null; error: string | null }> {
-  const team = await getCurrentTeam();
-  if (!team) {
-    return { data: null, error: "No team found for your account." };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("teams")
     .update(input)
-    .eq("id", team.id)
+    .eq("id", id)
     .select("*")
     .single();
 
-  if (error) {
-    return { data: null, error: error.message };
-  }
-
+  if (error) return { data: null, error: error.message };
   return { data, error: null };
+}
+
+export async function createTeam(
+  input: TablesInsert<"teams">,
+): Promise<{ data: Team | null; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .insert(input)
+    .select("*")
+    .single();
+
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
+}
+
+/** True when the active team is editable by the current user. */
+export async function canEditActiveTeam(): Promise<boolean> {
+  const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
+  if (!ctx || !team) return false;
+  return ctx.editableTeamIds.includes(team.id);
 }

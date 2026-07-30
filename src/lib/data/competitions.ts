@@ -30,6 +30,29 @@ export async function listCompetitions(
   return { data: data ?? [], error: null };
 }
 
+export async function getCompetition(
+  id: string,
+): Promise<{ data: Competition | null; error: string | null }> {
+  const team = await getCurrentTeam();
+  if (!team) {
+    return { data: null, error: "No team found for your account." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("competitions")
+    .select("*")
+    .eq("id", id)
+    .eq("team_id", team.id)
+    .maybeSingle();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  return { data, error: null };
+}
+
 export async function createCompetition(input: {
   name: string;
   kind: CompetitionKind | null;
