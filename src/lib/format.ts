@@ -1,15 +1,23 @@
 import {
   CARD_TYPE_LABELS,
+  COACH_OBJECTIVE_STATUS_LABELS,
+  COACH_OBJECTIVE_TYPE_LABELS,
   MATCH_STATUS_LABELS,
   OPPOSITION_GOAL_LABEL,
+  PLAYER_OBJECTIVE_STATUS_LABELS,
+  PLAYER_OBJECTIVE_TYPE_LABELS,
   VENUE_FOOD_AND_DRINK_LABELS,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
 import type {
   CardType,
+  CoachObjectiveStatus,
+  CoachObjectiveType,
   CompetitionKind,
   MatchHomeAway,
   MatchStatus,
+  PlayerObjectiveStatus,
+  PlayerObjectiveType,
   TeamGender,
   Venue,
   VenueFoodAndDrink,
@@ -184,6 +192,26 @@ export function labelCompetitionKind(kind: CompetitionKind | null): string {
 
 export function labelCardType(type: CardType): string {
   return CARD_TYPE_LABELS[type];
+}
+
+export function labelCoachObjectiveType(type: CoachObjectiveType): string {
+  return COACH_OBJECTIVE_TYPE_LABELS[type];
+}
+
+export function labelCoachObjectiveStatus(
+  status: CoachObjectiveStatus,
+): string {
+  return COACH_OBJECTIVE_STATUS_LABELS[status];
+}
+
+export function labelPlayerObjectiveType(type: PlayerObjectiveType): string {
+  return PLAYER_OBJECTIVE_TYPE_LABELS[type];
+}
+
+export function labelPlayerObjectiveStatus(
+  status: PlayerObjectiveStatus,
+): string {
+  return PLAYER_OBJECTIVE_STATUS_LABELS[status];
 }
 
 function parseDateOnly(date: string): Date {

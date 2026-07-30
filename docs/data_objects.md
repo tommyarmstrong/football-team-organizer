@@ -98,6 +98,16 @@ Club-level person. Assigned to teams via team player membership.
 - School
 - Date of birth
 
+### Development objectives
+
+Zero, one, or many objectives per player (`player_development_objectives`).
+
+#### Attributes
+
+- Body / objective text (required)
+- Type (required) — `Skills` | `Confidence` | `Team work` | `Positional` | `Following coaching` | `Other` (default `Other`)
+- Status (required) — `Emerging` | `Expected` | `Exceeding` | `Complete` (default `Emerging`)
+
 ---
 
 ## Player contact
@@ -174,7 +184,14 @@ Club-level coaching staff record (distinct from auth team membership).
 
 ### Development objectives
 
-Zero, one, or many text objectives per coach (`coach_development_objectives`).
+Zero, one, or many objectives per coach (`coach_development_objectives`).
+
+#### Attributes
+
+- Body / objective text (required)
+- Type (required) — `Coaching` | `Communications` | `Time Management` | `Admin` | `Other` (default `Other`)
+- Target date
+- Status (required) — `In Progress` | `Ready for Review` | `Complete` | `Deferred` (default `In Progress`)
 
 ---
 

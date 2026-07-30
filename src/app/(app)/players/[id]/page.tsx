@@ -6,6 +6,7 @@ import {
   getPlayerGoals,
   getPlayerTeams,
 } from "@/lib/data/players";
+import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import { getPlayerGuardians } from "@/lib/data/guardians";
 import {
   canEditPlayer,
@@ -25,6 +26,7 @@ import { PlayerForm } from "@/components/players/player-form";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { PlayerContactForm } from "@/components/players/player-contact-form";
+import { PlayerObjectivesSection } from "@/components/players/player-objectives-section";
 import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -62,11 +64,13 @@ export default async function PlayerDetailPage({
     { data: contact },
     { data: goals, error: goalsError },
     { data: guardians },
+    { data: objectives, error: objectivesError },
   ] = await Promise.all([
     getPlayerTeams(player.id),
     getPlayerContact(player.id),
     getPlayerGoals(player.id),
     getPlayerGuardians(player.id),
+    listPlayerObjectives(player.id),
   ]);
 
   const playerTeamIds = teams.map((team) => team.team_id);
@@ -168,6 +172,25 @@ export default async function PlayerDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Development objectives</CardTitle>
+          <CardDescription>
+            Optional goals for this player&apos;s development.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {objectivesError ? <ErrorBanner message={objectivesError} /> : null}
+          {!objectivesError ? (
+            <PlayerObjectivesSection
+              playerId={player.id}
+              objectives={objectives}
+              canEdit={canEdit}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

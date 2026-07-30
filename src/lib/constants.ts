@@ -1,8 +1,12 @@
 import type {
   CardType,
+  CoachObjectiveStatus,
+  CoachObjectiveType,
   CompetitionKind,
   MatchHomeAway,
   MatchStatus,
+  PlayerObjectiveStatus,
+  PlayerObjectiveType,
   TeamGender,
   TeamRole,
   GuardianRelationship,
@@ -232,3 +236,72 @@ export function matchAllowsEvents(status: MatchStatus): boolean {
 export const OPPOSITION_SCORER_VALUE = "__opposition__";
 
 export const OPPOSITION_GOAL_LABEL = "Opponent Goal";
+
+export const COACH_OBJECTIVE_TYPES: CoachObjectiveType[] = [
+  "coaching",
+  "communications",
+  "time_management",
+  "admin",
+  "other",
+];
+
+export const COACH_OBJECTIVE_TYPE_LABELS: Record<CoachObjectiveType, string> = {
+  coaching: "Coaching",
+  communications: "Communications",
+  time_management: "Time Management",
+  admin: "Admin",
+  other: "Other",
+};
+
+export const COACH_OBJECTIVE_STATUSES: CoachObjectiveStatus[] = [
+  "in_progress",
+  "ready_for_review",
+  "complete",
+  "deferred",
+];
+
+export const COACH_OBJECTIVE_STATUS_LABELS: Record<
+  CoachObjectiveStatus,
+  string
+> = {
+  in_progress: "In Progress",
+  ready_for_review: "Ready for Review",
+  complete: "Complete",
+  deferred: "Deferred",
+};
+
+export const PLAYER_OBJECTIVE_TYPES: PlayerObjectiveType[] = [
+  "skills",
+  "confidence",
+  "team_work",
+  "positional",
+  "following_coaching",
+  "other",
+];
+
+export const PLAYER_OBJECTIVE_TYPE_LABELS: Record<PlayerObjectiveType, string> =
+  {
+    skills: "Skills",
+    confidence: "Confidence",
+    team_work: "Team work",
+    positional: "Positional",
+    following_coaching: "Following coaching",
+    other: "Other",
+  };
+
+export const PLAYER_OBJECTIVE_STATUSES: PlayerObjectiveStatus[] = [
+  "emerging",
+  "expected",
+  "exceeding",
+  "complete",
+];
+
+export const PLAYER_OBJECTIVE_STATUS_LABELS: Record<
+  PlayerObjectiveStatus,
+  string
+> = {
+  emerging: "Emerging",
+  expected: "Expected",
+  exceeding: "Exceeding",
+  complete: "Complete",
+};
