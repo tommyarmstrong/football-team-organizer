@@ -26,7 +26,7 @@ export async function AppHeader() {
   return (
     <header className="border-border club-themed-header bg-background/80 border-b backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-3">
-        <div className="min-w-0">
+        <div className="flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
             className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 text-base font-semibold tracking-tight focus-visible:ring-2 focus-visible:outline-none sm:text-lg"
@@ -35,19 +35,12 @@ export async function AppHeader() {
               iconUrl={club?.icon_url}
               alt={club ? `${club.name} icon` : "Club icon"}
               size={32}
-              className="size-8"
+              className="size-8 shrink-0"
             />
             <span className="truncate">{brandName}</span>
           </Link>
-        </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="hidden min-w-0 flex-1 md:block">
-            <AppNav showStaff={showStaff} showManagement={showManagement} />
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 md:ml-auto">
-            <TeamSwitcher teams={teams} activeTeamId={activeTeam?.id ?? null} />
+          <div className="flex shrink-0 items-center gap-2">
             <div className="md:hidden">
               <MobileNavMenu
                 showStaff={showStaff}
@@ -61,6 +54,16 @@ export async function AppHeader() {
                 roleLabel={viewerRoleLabel(ctx)}
               />
             ) : null}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="hidden min-w-0 flex-1 md:block">
+            <AppNav showStaff={showStaff} showManagement={showManagement} />
+          </div>
+
+          <div className="flex shrink-0 items-center justify-end md:ml-auto">
+            <TeamSwitcher teams={teams} activeTeamId={activeTeam?.id ?? null} />
           </div>
         </div>
       </div>
