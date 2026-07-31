@@ -158,68 +158,70 @@ function EditLinkForm({
   );
 
   return (
-    <form
-      action={formAction}
-      className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_10rem_auto_auto_auto] sm:items-end"
-    >
-      <div className="space-y-1">
-        <p className="text-sm font-medium">
-          {playerDisplayName({
-            first_name: link.player_first_name,
-            last_name: link.player_last_name,
-          })}
-        </p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor={`relationship-${link.player_guardian_id}`}>
-          Relationship
-        </Label>
-        <NativeSelect
-          id={`relationship-${link.player_guardian_id}`}
-          name="relationship"
-          required
-          disabled={pending}
-          defaultValue={link.relationship}
-        >
-          {GUARDIAN_RELATIONSHIPS.map((value) => (
-            <option key={value} value={value}>
-              {GUARDIAN_RELATIONSHIP_LABELS[value]}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
-        <input
-          type="checkbox"
-          name="legal_guardian"
-          defaultChecked={link.legal_guardian}
-          disabled={pending}
-          className="border-input size-4 rounded"
-        />
-        Legal guardian
-      </label>
-      <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "…" : "Save"}
-      </Button>
+    <div className="border-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-end">
+      <form
+        action={formAction}
+        className="grid flex-1 gap-3 sm:grid-cols-[1fr_10rem_auto_auto] sm:items-end"
+      >
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            {playerDisplayName({
+              first_name: link.player_first_name,
+              last_name: link.player_last_name,
+            })}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`relationship-${link.player_guardian_id}`}>
+            Relationship
+          </Label>
+          <NativeSelect
+            id={`relationship-${link.player_guardian_id}`}
+            name="relationship"
+            required
+            disabled={pending}
+            defaultValue={link.relationship}
+          >
+            {GUARDIAN_RELATIONSHIPS.map((value) => (
+              <option key={value} value={value}>
+                {GUARDIAN_RELATIONSHIP_LABELS[value]}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+          <input
+            type="checkbox"
+            name="legal_guardian"
+            defaultChecked={link.legal_guardian}
+            disabled={pending}
+            className="border-input size-4 rounded"
+          />
+          Legal guardian
+        </label>
+        <Button type="submit" size="sm" disabled={pending}>
+          {pending ? "…" : "Save"}
+        </Button>
+        {state.error ? (
+          <div className="sm:col-span-4">
+            <ErrorBanner message={state.error} />
+          </div>
+        ) : null}
+        {state.success ? (
+          <p
+            className="text-muted-foreground text-xs sm:col-span-4"
+            role="status"
+          >
+            {state.success}
+          </p>
+        ) : null}
+      </form>
       <UnlinkButton
         linkId={link.player_guardian_id}
         guardianId={guardianId}
         playerId={link.player_id}
       />
-      {state.error ? (
-        <div className="sm:col-span-5">
-          <ErrorBanner message={state.error} />
-        </div>
-      ) : null}
-      {state.success ? (
-        <p
-          className="text-muted-foreground text-xs sm:col-span-5"
-          role="status"
-        >
-          {state.success}
-        </p>
-      ) : null}
-    </form>
+    </div>
   );
 }
 
