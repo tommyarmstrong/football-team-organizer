@@ -41,6 +41,18 @@ describe("venueMapsQuery", () => {
       }),
     ).toBe("Wembley Stadium, Wembley, London, HA9 0WS");
   });
+
+  it("uses the address alone when the venue name is blank", () => {
+    expect(
+      venueMapsQuery({
+        name: "  ",
+        address_line1: "1 Windmill Road",
+        address_line2: null,
+        town_city: "London",
+        postcode: "N18 1NB",
+      }),
+    ).toBe("1 Windmill Road, London, N18 1NB");
+  });
 });
 
 describe("googleMapsSearchUrl", () => {

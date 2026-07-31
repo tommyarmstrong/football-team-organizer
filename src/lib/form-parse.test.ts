@@ -6,6 +6,7 @@ import {
   parseOptionalInt,
   parseOptionalMinute,
   parseShirtNumber,
+  parseYesNo,
   str,
 } from "@/lib/form-parse";
 
@@ -38,13 +39,39 @@ describe("parseGoalKind", () => {
     });
   });
 
-  it("parses mutually exclusive kinds", () => {
+  it("treats explicit none as no kind flags", () => {
     const formData = new FormData();
-    formData.set("goal_kind", "freekick");
+    formData.set("goal_kind", "none");
     expect(parseGoalKind(formData)).toEqual({
+      is_penalty: false,
+      is_freekick: false,
+      from_setpiece: false,
+    });
+  });
+
+  it("parses mutually exclusive kinds", () => {
+    const freekick = new FormData();
+    freekick.set("goal_kind", "freekick");
+    expect(parseGoalKind(freekick)).toEqual({
       is_penalty: false,
       is_freekick: true,
       from_setpiece: false,
+    });
+
+    const penalty = new FormData();
+    penalty.set("goal_kind", "penalty");
+    expect(parseGoalKind(penalty)).toEqual({
+      is_penalty: true,
+      is_freekick: false,
+      from_setpiece: false,
+    });
+
+    const setpiece = new FormData();
+    setpiece.set("goal_kind", "setpiece");
+    expect(parseGoalKind(setpiece)).toEqual({
+      is_penalty: false,
+      is_freekick: false,
+      from_setpiece: true,
     });
   });
 
@@ -64,6 +91,20 @@ describe("goalKindFromFlags", () => {
         from_setpiece: false,
       }),
     ).toBe("penalty");
+    expect(
+      goalKindFromFlags({
+        is_penalty: false,
+        is_freekick: true,
+        from_setpiece: false,
+      }),
+    ).toBe("freekick");
+    expect(
+      goalKindFromFlags({
+        is_penalty: false,
+        is_freekick: false,
+        from_setpiece: true,
+      }),
+    ).toBe("setpiece");
     expect(
       goalKindFromFlags({
         is_penalty: false,
@@ -137,5 +178,34 @@ describe("parseOptionalMinute", () => {
     expect(parseOptionalMinute("12.5")).toEqual({
       error: "Minute must be between 0 and 120.",
     });
+  });
+});
+
+describe("parseYesNo", () => {
+  it("parses yes/true and no/false case-insensitively", () => {
+    const yes = new FormData();
+    yes.set("knockout", "Yes");
+    expect(parseYesNo(yes, "knockout")).toBe(true);
+
+    const trueValue = new FormData();
+    trueValue.set("knockout", "TRUE");
+    expect(parseYesNo(trueValue, "knockout")).toBe(true);
+
+    const no = new FormData();
+    no.set("knockout", "no");
+    expect(parseYesNo(no, "knockout", true)).toBe(false);
+
+    const falseValue = new FormData();
+    falseValue.set("knockout", "false");
+    expect(parseYesNo(falseValue, "knockout", true)).toBe(false);
+  });
+
+  it("falls back to the default for blank or unknown values", () => {
+    expect(parseYesNo(new FormData(), "knockout")).toBe(false);
+    expect(parseYesNo(new FormData(), "knockout", true)).toBe(true);
+
+    const unknown = new FormData();
+    unknown.set("knockout", "maybe");
+    expect(parseYesNo(unknown, "knockout", false)).toBe(false);
   });
 });
