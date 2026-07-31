@@ -19,6 +19,11 @@ export const APP_NAME = "Football Team Organizer";
 export const APP_DESCRIPTION =
   "Record fixtures, results, players, and goals for your youth football team.";
 
+/** Default glossy football shown when a club has no uploaded icon. */
+export const DEFAULT_CLUB_ICON_SRC = "/football-icon.svg";
+
+export const CLUB_ICONS_BUCKET = "club-icons";
+
 export const TEAM_GENDERS: TeamGender[] = ["boys", "girls", "mixed"];
 
 export const AGE_GROUPS = [
