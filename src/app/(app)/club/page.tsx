@@ -77,11 +77,14 @@ export default async function ClubPage() {
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>
-            Edit the club name and contact details.
+            Edit the club name, icon, colours, and contact details.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ClubForm club={club} />
+          <ClubForm
+            key={`${club.updated_at}-${club.icon_url ?? ""}-${club.colour ?? ""}`}
+            club={club}
+          />
         </CardContent>
       </Card>
 

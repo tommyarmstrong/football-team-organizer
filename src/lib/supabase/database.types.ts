@@ -16,6 +16,8 @@ export type Database = {
           website: string | null;
           email: string | null;
           phone: string | null;
+          icon_url: string | null;
+          colour: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -25,6 +27,8 @@ export type Database = {
           website?: string | null;
           email?: string | null;
           phone?: string | null;
+          icon_url?: string | null;
+          colour?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,6 +38,8 @@ export type Database = {
           website?: string | null;
           email?: string | null;
           phone?: string | null;
+          icon_url?: string | null;
+          colour?: string | null;
           created_at?: string;
           updated_at?: string;
         };

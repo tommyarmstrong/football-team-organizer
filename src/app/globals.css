@@ -81,6 +81,7 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --club-colour: transparent;
 }
 
 .dark {
@@ -138,4 +139,45 @@
   a:focus-visible {
     @apply ring-ring ring-offset-background ring-2 ring-offset-2 outline-none;
   }
+}
+
+/* Club colour look-and-feel (only when a colour is set). */
+[data-club-colour="true"] {
+  --border: color-mix(in srgb, var(--club-colour) 55%, transparent);
+  --input: color-mix(in srgb, var(--club-colour) 40%, oklch(0.922 0 0));
+  --ring: color-mix(in srgb, var(--club-colour) 65%, oklch(0.708 0 0));
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--club-colour) 10%, transparent),
+    transparent 16rem
+  );
+}
+
+[data-club-colour="true"] .club-themed-header {
+  background-color: color-mix(
+    in srgb,
+    var(--club-colour) 16%,
+    var(--background) 84%
+  );
+  border-bottom-color: color-mix(in srgb, var(--club-colour) 72%, transparent);
+  border-bottom-width: 2px;
+}
+
+[data-club-colour="true"] [data-slot="card"] {
+  background-color: color-mix(in srgb, var(--club-colour) 4%, var(--card));
+  box-shadow: 0 0 0 1.5px
+    color-mix(in srgb, var(--club-colour) 70%, transparent);
+}
+
+[data-club-colour="true"] [data-slot="card-footer"] {
+  border-top-color: color-mix(in srgb, var(--club-colour) 55%, transparent);
+}
+
+[data-club-colour="true"] .rounded-xl.border,
+[data-club-colour="true"] .rounded-lg.border {
+  border-color: color-mix(in srgb, var(--club-colour) 60%, transparent);
+}
+
+[data-club-colour="true"] .divide-y > :not(:first-child) {
+  border-top-color: color-mix(in srgb, var(--club-colour) 45%, transparent);
 }
