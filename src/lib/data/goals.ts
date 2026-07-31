@@ -1,16 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
+import {
+  mapPlayerNameEmbed,
+  PLAYER_NAME_EMBED,
+  type NamedPlayer,
+} from "@/lib/people/named-player";
 import type {
   Goal,
-  Player,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
 export type GoalWithPlayers = Goal & {
-  scorer: Pick<Player, "id" | "first_name" | "last_name"> | null;
-  assist: Pick<Player, "id" | "first_name" | "last_name"> | null;
+  scorer: NamedPlayer | null;
+  assist: NamedPlayer | null;
 };
+
+const GOAL_SELECT = `*, scorer:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED})`;
 
 function mapGoalRow(row: {
   id: string;
@@ -26,21 +32,11 @@ function mapGoalRow(row: {
   is_opposition: boolean;
   is_own_goal: boolean;
   created_at: string;
-  scorer:
-    | Pick<Player, "id" | "first_name" | "last_name">
-    | Pick<Player, "id" | "first_name" | "last_name">[]
-    | null;
-  assist:
-    | Pick<Player, "id" | "first_name" | "last_name">
-    | Pick<Player, "id" | "first_name" | "last_name">[]
-    | null;
+  scorer: unknown;
+  assist: unknown;
 }): GoalWithPlayers {
-  const scorer = Array.isArray(row.scorer)
-    ? (row.scorer[0] ?? null)
-    : row.scorer;
-  const assist = Array.isArray(row.assist)
-    ? (row.assist[0] ?? null)
-    : row.assist;
+  const scorerRaw = Array.isArray(row.scorer) ? row.scorer[0] : row.scorer;
+  const assistRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
   return {
     id: row.id,
     match_id: row.match_id,
@@ -55,8 +51,12 @@ function mapGoalRow(row: {
     is_opposition: row.is_opposition,
     is_own_goal: row.is_own_goal,
     created_at: row.created_at,
-    scorer,
-    assist,
+    scorer: mapPlayerNameEmbed(
+      scorerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    ),
+    assist: mapPlayerNameEmbed(
+      assistRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    ),
   };
 }
 
@@ -67,16 +67,19 @@ export async function listGoalsForMatch(
 
   const { data, error } = await supabase
     .from("goals")
-    .select(
-      "*, scorer:players!goals_player_id_fkey(id, first_name, last_name), assist:players!goals_assist_player_id_fkey(id, first_name, last_name)",
-    )
+    .select(GOAL_SELECT)
     .eq("match_id", matchId)
     .order("minute", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
 
   if (error) return { data: [], error: error.message };
 
-  return { data: (data ?? []).map(mapGoalRow), error: null };
+  return {
+    data: (data ?? []).map((row) =>
+      mapGoalRow(row as Parameters<typeof mapGoalRow>[0]),
+    ),
+    error: null,
+  };
 }
 
 export async function getGoal(
@@ -86,16 +89,17 @@ export async function getGoal(
 
   const { data, error } = await supabase
     .from("goals")
-    .select(
-      "*, scorer:players!goals_player_id_fkey(id, first_name, last_name), assist:players!goals_assist_player_id_fkey(id, first_name, last_name)",
-    )
+    .select(GOAL_SELECT)
     .eq("id", goalId)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: null };
 
-  return { data: mapGoalRow(data), error: null };
+  return {
+    data: mapGoalRow(data as Parameters<typeof mapGoalRow>[0]),
+    error: null,
+  };
 }
 
 export async function createGoal(

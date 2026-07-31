@@ -15,19 +15,43 @@ Attribute lists for each domain object, based on the current database schema. Fi
 
 ---
 
+## Person
+
+Central identity for anyone who may hold one or more roles. Not club-scoped;
+club association lives on role rows (`managers`, `coaches`, `guardians`,
+`players`) via `person_id`.
+
+### Attributes
+
+- First name (required)
+- Last name (required)
+- Email
+- Phone
+- Auth user — optional Supabase Auth UUID
+- Account status (required) — `none` | `invited` | `active` | `disabled`
+
+### Invitations (`person_invitations`)
+
+Secure invite-only onboarding (hashed token, expiry, single-use).
+
+- Person (required)
+- Email (required)
+- Token hash (required)
+- Expires at (required)
+- Accepted at / revoked at
+- Invited by — Auth user who sent the invite
+
+---
+
 ## Manager
 
-Club-level person (same shape as coach / guardian). Club-wide management
-permissions apply when this record is linked to a login.
+Club-level role linked to a `people` record. Club-wide management permissions
+apply when the linked person has an Auth login.
 
 ### Attributes
 
 - Club (required)
-- User — optional link to the person’s auth account
-- First name (required)
-- Second name (required)
-- Phone
-- Email
+- Person (required)
 - Notes
 
 ---
@@ -86,14 +110,13 @@ Unique on `(team, user, role)`.
 
 ## Player
 
-Club-level person. Assigned to teams via team player membership.
+Club-level role linked to a `people` record. Assigned to teams via team player
+membership. Players get a `people` row but are not invited to log in by default.
 
 ### Attributes
 
 - Club (required)
-- User — optional link to the player’s auth account
-- First name (required)
-- Last name (required)
+- Person (required)
 - Position
 - School
 - Date of birth
@@ -129,14 +152,13 @@ Emergency phone is taken from the linked guardian’s phone (not stored separate
 
 ## Guardian
 
-Club-level person. Can be linked to zero, one, or many players.
+Club-level role linked to a `people` record. Can be linked to zero, one, or many
+players.
 
 ### Attributes
 
-- First name (required)
-- Second name (required)
-- Phone
-- Email
+- Club (required)
+- Person (required)
 - Notes
 
 ### Player links (`player_guardians`)
@@ -164,20 +186,18 @@ Squad membership: which players are on which team.
 
 ## Coach
 
-Club-level coaching staff record (distinct from auth team membership).
+Club-level coaching staff role linked to a `people` record (distinct from auth
+team membership).
 
 ### Attributes
 
 - Club (required)
-- First name (required)
-- Second name (required)
+- Person (required)
 - Date of birth
 - Date joined (required)
 - DBS checked (required) — default `false`
 - FA Level 1 (required) — default `false`
 - FA Level 2 (required) — default `false`
-- Phone
-- Email
 - Biography
 - Philosophy
 - Notes

@@ -1,10 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
+import { createPerson, updatePerson } from "@/lib/data/people";
+import {
+  PERSON_EMBED,
+  withPersonFields,
+  type PersonFields,
+} from "@/lib/people/person";
 import type {
   Coach,
+  Person,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
+import type { CoachFormFields } from "@/lib/coaches/parse";
 
+export type CoachWithPerson = Coach & PersonFields;
 export type { Coach };
 
 export type CoachTeamMembership = {
@@ -14,9 +23,15 @@ export type CoachTeamMembership = {
   role: string | null;
 };
 
-export type CoachWithTeams = Coach & {
+export type CoachWithTeams = CoachWithPerson & {
   teams: CoachTeamMembership[];
 };
+
+function mapCoach(
+  row: Coach & { person: Person | Person[] | null },
+): CoachWithPerson {
+  return withPersonFields(row);
+}
 
 /** Club-level directory of coaching staff the user can see (RLS-filtered). */
 export async function listCoaches(): Promise<{
@@ -26,14 +41,15 @@ export async function listCoaches(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coaches")
-    .select("*, team_coaches(id, team_id, role, team:teams(name))")
-    .order("second_name", { ascending: true })
-    .order("first_name", { ascending: true });
+    .select(
+      `*, ${PERSON_EMBED}, team_coaches(id, team_id, role, team:teams(name))`,
+    );
 
   if (error) return { data: [], error: error.message };
 
   const rows: CoachWithTeams[] = (data ?? []).map((row) => {
     const { team_coaches, ...coach } = row as Coach & {
+      person: Person | Person[] | null;
       team_coaches: Array<{
         id: string;
         team_id: string;
@@ -50,24 +66,34 @@ export async function listCoaches(): Promise<{
         role: tc.role,
       };
     });
-    return { ...(coach as Coach), teams };
+    return { ...mapCoach(coach), teams };
   });
+
+  rows.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
 
   return { data: rows, error: null };
 }
 
 export async function getCoach(
   id: string,
-): Promise<{ data: Coach | null; error: string | null }> {
+): Promise<{ data: CoachWithPerson | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coaches")
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .eq("id", id)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  if (!data) return { data: null, error: null };
+  return {
+    data: mapCoach(data as Coach & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function getCoachTeams(
@@ -95,33 +121,85 @@ export async function getCoachTeams(
 }
 
 export async function createCoach(
-  input: TablesInsert<"coaches">,
-): Promise<{ data: Coach | null; error: string | null }> {
+  input: CoachFormFields & { club_id: string; person_id?: string },
+): Promise<{ data: CoachWithPerson | null; error: string | null }> {
+  let personId = input.person_id;
+  if (!personId) {
+    const { data: person, error: personError } = await createPerson({
+      first_name: input.first_name,
+      last_name: input.second_name,
+      phone: input.phone,
+      email: input.email,
+      account_status: "none",
+    });
+    if (personError) return { data: null, error: personError };
+    if (!person) return { data: null, error: "Could not create person." };
+    personId = person.id;
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coaches")
-    .insert(input)
-    .select("*")
+    .insert({
+      club_id: input.club_id,
+      person_id: personId,
+      joined_date: input.joined_date,
+      date_of_birth: input.date_of_birth,
+      dbs_checked: input.dbs_checked,
+      fa_level_1: input.fa_level_1,
+      fa_level_2: input.fa_level_2,
+      notes: input.notes,
+      biography: input.biography,
+      philosophy: input.philosophy,
+    } satisfies TablesInsert<"coaches">)
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapCoach(data as Coach & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function updateCoach(
   id: string,
-  input: TablesUpdate<"coaches">,
-): Promise<{ data: Coach | null; error: string | null }> {
+  input: CoachFormFields,
+): Promise<{ data: CoachWithPerson | null; error: string | null }> {
+  const existing = await getCoach(id);
+  if (existing.error) return { data: null, error: existing.error };
+  if (!existing.data) return { data: null, error: "Coach not found." };
+
+  const { error: personError } = await updatePerson(existing.data.person_id, {
+    first_name: input.first_name,
+    last_name: input.second_name,
+    phone: input.phone,
+    email: input.email,
+  });
+  if (personError) return { data: null, error: personError };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("coaches")
-    .update(input)
+    .update({
+      joined_date: input.joined_date,
+      date_of_birth: input.date_of_birth,
+      dbs_checked: input.dbs_checked,
+      fa_level_1: input.fa_level_1,
+      fa_level_2: input.fa_level_2,
+      notes: input.notes,
+      biography: input.biography,
+      philosophy: input.philosophy,
+    } satisfies TablesUpdate<"coaches">)
     .eq("id", id)
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapCoach(data as Coach & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function deleteCoach(
@@ -145,17 +223,25 @@ export async function listTeamCoaches(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("team_coaches")
-    .select("id, coach_id, role, coach:coaches(first_name, second_name)")
+    .select(
+      `id, coach_id, role, coach:coaches(person:people!person_id(first_name, last_name))`,
+    )
     .eq("team_id", teamId);
 
   if (error) return { data: [], error: error.message };
 
   const rows: TeamCoachEntry[] = (data ?? []).map((tc) => {
     const coach = Array.isArray(tc.coach) ? tc.coach[0] : tc.coach;
+    const personRaw = coach?.person as
+      | { first_name: string; last_name: string }
+      | { first_name: string; last_name: string }[]
+      | null
+      | undefined;
+    const person = Array.isArray(personRaw) ? personRaw[0] : personRaw;
     return {
       team_coach_id: tc.id,
       coach_id: tc.coach_id,
-      name: coach ? `${coach.first_name} ${coach.second_name}` : "",
+      name: person ? `${person.first_name} ${person.last_name}` : "",
       role: tc.role,
     };
   });
@@ -244,17 +330,13 @@ export async function setTeamHeadCoach(
 export async function listCoachesNotOnTeam(
   clubId: string,
   teamId: string,
-): Promise<{ data: Coach[]; error: string | null }> {
+): Promise<{ data: CoachWithPerson[]; error: string | null }> {
   const supabase = await createClient();
   const [
     { data: coaches, error: coachesError },
     { data: assigned, error: assignedError },
   ] = await Promise.all([
-    supabase
-      .from("coaches")
-      .select("*")
-      .eq("club_id", clubId)
-      .order("second_name", { ascending: true }),
+    supabase.from("coaches").select(`*, ${PERSON_EMBED}`).eq("club_id", clubId),
     supabase.from("team_coaches").select("coach_id").eq("team_id", teamId),
   ]);
 
@@ -262,8 +344,13 @@ export async function listCoachesNotOnTeam(
   if (assignedError) return { data: [], error: assignedError.message };
 
   const onTeam = new Set((assigned ?? []).map((r) => r.coach_id));
-  return {
-    data: (coaches ?? []).filter((c) => !onTeam.has(c.id)),
-    error: null,
-  };
+  const mapped = (coaches ?? [])
+    .filter((c) => !onTeam.has(c.id))
+    .map((c) => mapCoach(c as Coach & { person: Person | Person[] | null }));
+  mapped.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
+  return { data: mapped, error: null };
 }

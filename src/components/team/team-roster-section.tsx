@@ -8,7 +8,7 @@ import {
   removePlayerFromTeamAction,
 } from "@/lib/players/actions";
 import { playerDisplayName } from "@/lib/format";
-import type { Player } from "@/lib/supabase/database.types";
+import type { PlayerWithPerson } from "@/lib/data/players";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ export function TeamRosterSection({
 }: {
   teamId: string;
   roster: RosterPlayer[];
-  candidates: Player[];
+  candidates: PlayerWithPerson[];
   canEdit: boolean;
 }) {
   return (
@@ -92,7 +92,7 @@ function AddRosterPlayerForm({
   candidates,
 }: {
   teamId: string;
-  candidates: Player[];
+  candidates: PlayerWithPerson[];
 }) {
   const bound = addRosterPlayerAction.bind(null, teamId);
   const [state, formAction, pending] = useActionState(

@@ -6,7 +6,7 @@ import {
   createGuardianAction,
   updateGuardianAction,
 } from "@/lib/guardians/actions";
-import type { Guardian } from "@/lib/supabase/database.types";
+import type { GuardianWithPerson } from "@/lib/data/guardians";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ export function GuardianForm({
   guardian,
   mode,
 }: {
-  guardian?: Guardian;
+  guardian?: GuardianWithPerson;
   mode: "create" | "edit";
 }) {
   const action =

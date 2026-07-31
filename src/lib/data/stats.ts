@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
 import { resultLetter, scoreFromGoals } from "@/lib/format";
+import {
+  mapPlayerNameEmbed,
+  PLAYER_NAME_EMBED,
+} from "@/lib/people/named-player";
 
 export type TopScorer = {
   player: {
@@ -38,7 +42,7 @@ export async function getTopScorers(
     supabase
       .from("goals")
       .select(
-        "player_id, player:players!goals_player_id_fkey(id, first_name, last_name), match:matches!inner(team_id, status)",
+        `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status)`,
       )
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
@@ -57,7 +61,10 @@ export async function getTopScorers(
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
-    const player = Array.isArray(row.player) ? row.player[0] : row.player;
+    const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
     if (!player) continue;
     const existing = counts.get(player.id);
     if (existing) {

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { createCoachAction, updateCoachAction } from "@/lib/coaches/actions";
-import type { Coach } from "@/lib/supabase/database.types";
+import type { CoachWithPerson } from "@/lib/data/coaches";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ export function CoachForm({
   coach,
   mode,
 }: {
-  coach?: Coach;
+  coach?: CoachWithPerson;
   mode: "create" | "edit";
 }) {
   const action =

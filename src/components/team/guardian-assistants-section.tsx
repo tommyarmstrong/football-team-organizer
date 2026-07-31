@@ -7,7 +7,7 @@ import {
   addGuardianAssistantAction,
   removeGuardianAssistantAction,
 } from "@/lib/members/actions";
-import type { Guardian } from "@/lib/supabase/database.types";
+import type { GuardianWithPerson } from "@/lib/data/guardians";
 import type { GuardianAssistantEntry } from "@/lib/data/members";
 import { guardianDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export function GuardianAssistantsSection({
 }: {
   teamId: string;
   assistants: GuardianAssistantEntry[];
-  candidates: Guardian[];
+  candidates: GuardianWithPerson[];
   canEdit: boolean;
 }) {
   return (
@@ -89,7 +89,7 @@ function AddAssistantForm({
   candidates,
 }: {
   teamId: string;
-  candidates: Guardian[];
+  candidates: GuardianWithPerson[];
 }) {
   const bound = addGuardianAssistantAction.bind(null, teamId);
   const [state, formAction, pending] = useActionState(

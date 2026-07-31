@@ -1,13 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
+import { createPerson, updatePerson } from "@/lib/data/people";
+import {
+  PERSON_EMBED,
+  withPersonFields,
+  type PersonFields,
+} from "@/lib/people/person";
 import type {
   Goal,
+  Person,
   Player,
   PlayerContact,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
+export type PlayerWithPerson = Player & PersonFields;
 export type { Player, PlayerContact };
 
 /** A player as they appear on a team roster (identity + per-team squad info). */
@@ -29,9 +37,15 @@ export type PlayerTeamMembership = {
   active: boolean;
 };
 
-export type PlayerWithTeams = Player & {
+export type PlayerWithTeams = PlayerWithPerson & {
   teams: PlayerTeamMembership[];
 };
+
+function mapPlayer(
+  row: Player & { person: Person | Person[] | null },
+): PlayerWithPerson {
+  return withPersonFields(row);
+}
 
 /** Club-level directory of all players the user can see (RLS-filtered). */
 export async function listPlayers(): Promise<{
@@ -42,15 +56,14 @@ export async function listPlayers(): Promise<{
   const { data, error } = await supabase
     .from("players")
     .select(
-      "*, team_players(id, team_id, shirt_number, active, team:teams(name))",
-    )
-    .order("last_name", { ascending: true })
-    .order("first_name", { ascending: true });
+      `*, ${PERSON_EMBED}, team_players(id, team_id, shirt_number, active, team:teams(name))`,
+    );
 
   if (error) return { data: [], error: error.message };
 
   const rows: PlayerWithTeams[] = (data ?? []).map((row) => {
     const { team_players, ...player } = row as Player & {
+      person: Person | Person[] | null;
       team_players: Array<{
         id: string;
         team_id: string;
@@ -69,8 +82,14 @@ export async function listPlayers(): Promise<{
         active: tp.active,
       };
     });
-    return { ...(player as Player), teams };
+    return { ...mapPlayer(player), teams };
   });
+
+  rows.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
 
   return { data: rows, error: null };
 }
@@ -83,7 +102,7 @@ export async function listRosterForTeam(
   const supabase = await createClient();
   let query = supabase
     .from("team_players")
-    .select("id, shirt_number, active, player:players(*)")
+    .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
     .eq("team_id", teamId);
 
   if (!options?.includeInactive) {
@@ -95,10 +114,11 @@ export async function listRosterForTeam(
 
   const rows: RosterPlayer[] = (data ?? [])
     .map((row) => {
-      const player = (
+      const playerRaw = (
         Array.isArray(row.player) ? row.player[0] : row.player
-      ) as Player | undefined;
-      if (!player) return null;
+      ) as (Player & { person: Person | Person[] | null }) | undefined;
+      if (!playerRaw) return null;
+      const player = mapPlayer(playerRaw);
       return {
         id: player.id,
         team_player_id: row.id,
@@ -123,16 +143,20 @@ export async function listRosterForTeam(
 
 export async function getPlayer(
   id: string,
-): Promise<{ data: Player | null; error: string | null }> {
+): Promise<{ data: PlayerWithPerson | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("players")
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .eq("id", id)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  if (!data) return { data: null, error: null };
+  return {
+    data: mapPlayer(data as Player & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function getPlayerTeams(
@@ -213,34 +237,84 @@ export async function getPlayerGoals(playerId: string): Promise<{
   return { data: rows, error: null };
 }
 
-export async function createPlayer(
-  input: TablesInsert<"players">,
-): Promise<{ data: Player | null; error: string | null }> {
+export async function createPlayer(input: {
+  club_id: string;
+  first_name: string;
+  last_name: string;
+  position?: string | null;
+  school?: string | null;
+  date_of_birth?: string | null;
+  person_id?: string;
+}): Promise<{ data: PlayerWithPerson | null; error: string | null }> {
+  let personId = input.person_id;
+  if (!personId) {
+    const { data: person, error: personError } = await createPerson({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      account_status: "none",
+    });
+    if (personError) return { data: null, error: personError };
+    if (!person) return { data: null, error: "Could not create person." };
+    personId = person.id;
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("players")
-    .insert(input)
-    .select("*")
+    .insert({
+      club_id: input.club_id,
+      person_id: personId,
+      position: input.position ?? null,
+      school: input.school ?? null,
+      date_of_birth: input.date_of_birth ?? null,
+    } satisfies TablesInsert<"players">)
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapPlayer(data as Player & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function updatePlayer(
   id: string,
-  input: TablesUpdate<"players">,
-): Promise<{ data: Player | null; error: string | null }> {
+  input: {
+    first_name: string;
+    last_name: string;
+    position?: string | null;
+    school?: string | null;
+    date_of_birth?: string | null;
+  },
+): Promise<{ data: PlayerWithPerson | null; error: string | null }> {
+  const existing = await getPlayer(id);
+  if (existing.error) return { data: null, error: existing.error };
+  if (!existing.data) return { data: null, error: "Player not found." };
+
+  const { error: personError } = await updatePerson(existing.data.person_id, {
+    first_name: input.first_name,
+    last_name: input.last_name,
+  });
+  if (personError) return { data: null, error: personError };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("players")
-    .update(input)
+    .update({
+      position: input.position ?? null,
+      school: input.school ?? null,
+      date_of_birth: input.date_of_birth ?? null,
+    } satisfies TablesUpdate<"players">)
     .eq("id", id)
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapPlayer(data as Player & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function deletePlayer(
@@ -305,17 +379,13 @@ export async function removePlayerFromTeam(
 export async function listPlayersNotOnTeam(
   clubId: string,
   teamId: string,
-): Promise<{ data: Player[]; error: string | null }> {
+): Promise<{ data: PlayerWithPerson[]; error: string | null }> {
   const supabase = await createClient();
   const [
     { data: players, error: playersError },
     { data: roster, error: rosterError },
   ] = await Promise.all([
-    supabase
-      .from("players")
-      .select("*")
-      .eq("club_id", clubId)
-      .order("last_name", { ascending: true }),
+    supabase.from("players").select(`*, ${PERSON_EMBED}`).eq("club_id", clubId),
     supabase.from("team_players").select("player_id").eq("team_id", teamId),
   ]);
 
@@ -323,10 +393,15 @@ export async function listPlayersNotOnTeam(
   if (rosterError) return { data: [], error: rosterError.message };
 
   const onTeam = new Set((roster ?? []).map((r) => r.player_id));
-  return {
-    data: (players ?? []).filter((p) => !onTeam.has(p.id)),
-    error: null,
-  };
+  const mapped = (players ?? [])
+    .filter((p) => !onTeam.has(p.id))
+    .map((p) => mapPlayer(p as Player & { person: Person | Person[] | null }));
+  mapped.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
+  return { data: mapped, error: null };
 }
 
 /** Convenience: active roster for the active team. */

@@ -61,18 +61,41 @@ export const getViewerContext = cache(
 
     if (!user) return null;
 
+    const { data: selfPerson } = await supabase
+      .from("people")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    const personId = selfPerson?.id ?? null;
+
     const [managers, teamMembers, guardianLinks, selfPlayers, teams] =
       await Promise.all([
-        supabase.from("managers").select("club_id").eq("user_id", user.id),
+        personId
+          ? supabase
+              .from("managers")
+              .select("club_id")
+              .eq("person_id", personId)
+          : Promise.resolve({ data: [] as { club_id: string }[], error: null }),
         supabase
           .from("team_members")
           .select("team_id, role")
           .eq("user_id", user.id),
-        supabase
-          .from("guardians")
-          .select("id, player_guardians(player_id)")
-          .eq("user_id", user.id),
-        supabase.from("players").select("id").eq("user_id", user.id),
+        personId
+          ? supabase
+              .from("guardians")
+              .select("id, player_guardians(player_id)")
+              .eq("person_id", personId)
+          : Promise.resolve({
+              data: [] as {
+                id: string;
+                player_guardians: { player_id: string }[] | null;
+              }[],
+              error: null,
+            }),
+        personId
+          ? supabase.from("players").select("id").eq("person_id", personId)
+          : Promise.resolve({ data: [] as { id: string }[], error: null }),
         supabase.from("teams").select("*").order("name", { ascending: true }),
       ]);
 

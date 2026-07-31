@@ -21,7 +21,10 @@ const BASE_NAV_ITEMS = [
 ] as const;
 
 const STAFF_NAV_ITEM = { href: "/coaches", label: "Coaches" } as const;
-const MANAGEMENT_NAV_ITEMS = [{ href: "/club", label: "Club" }] as const;
+const MANAGEMENT_NAV_ITEMS = [
+  { href: "/club", label: "Club" },
+  { href: "/people", label: "People" },
+] as const;
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);

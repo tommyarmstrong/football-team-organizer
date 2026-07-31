@@ -1,14 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  mapPlayerNameEmbed,
+  PLAYER_NAME_EMBED,
+  type NamedPlayer,
+} from "@/lib/people/named-player";
 import type {
   MatchPeriod,
   MatchPeriodStarter,
-  Player,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
 export type MatchPeriodWithStarters = MatchPeriod & {
-  starters: Pick<Player, "id" | "first_name" | "last_name">[];
+  starters: NamedPlayer[];
   starter_player_ids: string[];
 };
 
@@ -17,21 +21,21 @@ type PeriodRow = MatchPeriod & {
     | {
         id: string;
         player_id: string;
-        player:
-          | Pick<Player, "id" | "first_name" | "last_name">
-          | Pick<Player, "id" | "first_name" | "last_name">[]
-          | null;
+        player: unknown;
       }[]
     | null;
 };
 
 function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
   const starterRows = Array.isArray(row.starters) ? row.starters : [];
-  const starters: Pick<Player, "id" | "first_name" | "last_name">[] = [];
+  const starters: NamedPlayer[] = [];
   const starter_player_ids: string[] = [];
 
   for (const s of starterRows) {
-    const player = Array.isArray(s.player) ? s.player[0] : s.player;
+    const playerRaw = Array.isArray(s.player) ? s.player[0] : s.player;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
     if (!player) continue;
     starters.push(player);
     starter_player_ids.push(player.id);
@@ -49,8 +53,7 @@ function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
   };
 }
 
-const PERIOD_SELECT =
-  "*, starters:match_period_starters(id, player_id, player:players(id, first_name, last_name))";
+const PERIOD_SELECT = `*, starters:match_period_starters(id, player_id, player:players(${PLAYER_NAME_EMBED}))`;
 
 export async function listPeriodsForMatch(
   matchId: string,

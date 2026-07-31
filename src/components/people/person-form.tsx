@@ -2,26 +2,24 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { PLAYER_POSITIONS } from "@/lib/constants";
-import { createPlayerAction, updatePlayerAction } from "@/lib/players/actions";
-import type { PlayerWithPerson } from "@/lib/data/players";
+import { createPersonAction, updatePersonAction } from "@/lib/people/actions";
+import type { Person } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-export function PlayerForm({
-  player,
+export function PersonForm({
+  person,
   mode,
 }: {
-  player?: PlayerWithPerson;
+  person?: Person;
   mode: "create" | "edit";
 }) {
   const action =
     mode === "create"
-      ? createPlayerAction
-      : updatePlayerAction.bind(null, player!.id);
+      ? createPersonAction
+      : updatePersonAction.bind(null, person!.id);
 
   const [state, formAction, pending] = useActionState(
     action,
@@ -40,7 +38,7 @@ export function PlayerForm({
             name="first_name"
             required
             aria-required="true"
-            defaultValue={player?.first_name}
+            defaultValue={person?.first_name}
             disabled={pending}
           />
         </div>
@@ -53,42 +51,27 @@ export function PlayerForm({
             name="last_name"
             required
             aria-required="true"
-            defaultValue={player?.last_name}
+            defaultValue={person?.last_name}
             disabled={pending}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="position">Position</Label>
-          <NativeSelect
-            id="position"
-            name="position"
-            defaultValue={player?.position ?? ""}
-            disabled={pending}
-          >
-            <option value="">Optional</option>
-            {PLAYER_POSITIONS.map((pos) => (
-              <option key={pos} value={pos}>
-                {pos}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="school">School</Label>
+          <Label htmlFor="email">Email</Label>
           <Input
-            id="school"
-            name="school"
-            defaultValue={player?.school ?? ""}
+            id="email"
+            name="email"
+            type="email"
+            defaultValue={person?.email ?? ""}
             disabled={pending}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date_of_birth">Date of birth</Label>
+          <Label htmlFor="phone">Phone</Label>
           <Input
-            id="date_of_birth"
-            name="date_of_birth"
-            type="date"
-            defaultValue={player?.date_of_birth ?? ""}
+            id="phone"
+            name="phone"
+            type="tel"
+            defaultValue={person?.phone ?? ""}
             disabled={pending}
           />
         </div>
@@ -102,7 +85,11 @@ export function PlayerForm({
       ) : null}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : mode === "create" ? "Add player" : "Save player"}
+        {pending
+          ? "Saving…"
+          : mode === "create"
+            ? "Create person"
+            : "Save person"}
       </Button>
     </form>
   );
