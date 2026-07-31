@@ -573,24 +573,48 @@ export type Database = {
       };
       competitions: {
         Row: {
+          age_group: string | null;
           created_at: string;
+          gender: Database["public"]["Enums"]["competition_gender"] | null;
           id: string;
           kind: Database["public"]["Enums"]["competition_kind"] | null;
+          knockout: boolean;
+          minutes_per_period: number | null;
           name: string;
+          notes: string | null;
+          periods: Database["public"]["Enums"]["competition_periods"];
+          players_per_team: number | null;
+          season: string | null;
           team_id: string;
         };
         Insert: {
+          age_group?: string | null;
           created_at?: string;
+          gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
+          knockout?: boolean;
+          minutes_per_period?: number | null;
           name: string;
+          notes?: string | null;
+          periods?: Database["public"]["Enums"]["competition_periods"];
+          players_per_team?: number | null;
+          season?: string | null;
           team_id: string;
         };
         Update: {
+          age_group?: string | null;
           created_at?: string;
+          gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
+          knockout?: boolean;
+          minutes_per_period?: number | null;
           name?: string;
+          notes?: string | null;
+          periods?: Database["public"]["Enums"]["competition_periods"];
+          players_per_team?: number | null;
+          season?: string | null;
           team_id?: string;
         };
         Relationships: [
@@ -1058,6 +1082,8 @@ export type Database = {
       guardian_relationship:
         "parent" | "guardian" | "football_contact" | "other";
       competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
+      competition_gender: "female" | "male" | "mixed";
+      competition_periods: "1" | "2" | "4" | "other";
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";
@@ -1125,6 +1151,8 @@ export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
 export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
+export type CompetitionGender = Enums<"competition_gender">;
+export type CompetitionPeriods = Enums<"competition_periods">;
 export type MatchHomeAway = Enums<"match_home_away">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;

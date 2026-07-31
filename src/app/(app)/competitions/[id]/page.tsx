@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
@@ -7,7 +6,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CompetitionForm } from "@/components/team/competition-form";
 import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -51,20 +49,14 @@ export default async function CompetitionDetailPage({
       <PageHeader
         title={competition.name}
         description={labelCompetitionKind(competition.kind)}
-        actions={
-          <Link
-            href="/team"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to team
-          </Link>
-        }
       />
 
       <Card>
         <CardHeader>
           <CardTitle>Edit competition</CardTitle>
-          <CardDescription>Update the name and kind.</CardDescription>
+          <CardDescription>
+            Update competition details. Use Back to team to save and return.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <CompetitionForm competition={competition} />

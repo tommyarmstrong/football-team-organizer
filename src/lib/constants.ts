@@ -2,7 +2,9 @@ import type {
   CardType,
   CoachObjectiveStatus,
   CoachObjectiveType,
+  CompetitionGender,
   CompetitionKind,
+  CompetitionPeriods,
   MatchHomeAway,
   MatchStatus,
   PlayerObjectiveStatus,
@@ -82,6 +84,35 @@ export const COMPETITION_KINDS: CompetitionKind[] = [
   "tournament",
   "other",
 ];
+
+export const COMPETITION_GENDERS: CompetitionGender[] = [
+  "female",
+  "male",
+  "mixed",
+];
+
+export const COMPETITION_GENDER_LABELS: Record<CompetitionGender, string> = {
+  female: "Female",
+  male: "Male",
+  mixed: "Mixed",
+};
+
+/** Period count options; `2` is halves (default). */
+export const COMPETITION_PERIODS: CompetitionPeriods[] = [
+  "1",
+  "2",
+  "4",
+  "other",
+];
+
+export const COMPETITION_PERIOD_LABELS: Record<CompetitionPeriods, string> = {
+  "1": "1",
+  "2": "2 (Halves)",
+  "4": "4",
+  other: "Other",
+};
+
+export const DEFAULT_COMPETITION_PERIODS: CompetitionPeriods = "2";
 
 export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
 
