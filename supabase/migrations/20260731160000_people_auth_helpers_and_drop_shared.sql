@@ -122,8 +122,9 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 
 -- Replace prior helper that took players.user_id as the third argument.
-drop function if exists public.can_read_player_row(uuid, uuid, uuid);
-
+-- Same (uuid, uuid, uuid) signature — use CREATE OR REPLACE so the existing
+-- players_select policy dependency is not broken mid-migration. That policy
+-- is rewritten below to pass players.person_id.
 create or replace function public.can_read_player_row(
   p_player_id uuid,
   p_club_id uuid,
