@@ -24,6 +24,7 @@ function mapGoalRow(row: {
   is_freekick: boolean;
   from_setpiece: boolean;
   is_opposition: boolean;
+  is_own_goal: boolean;
   created_at: string;
   scorer:
     | Pick<Player, "id" | "first_name" | "last_name">
@@ -52,6 +53,7 @@ function mapGoalRow(row: {
     is_freekick: row.is_freekick,
     from_setpiece: row.from_setpiece,
     is_opposition: row.is_opposition,
+    is_own_goal: row.is_own_goal,
     created_at: row.created_at,
     scorer,
     assist,
@@ -154,8 +156,14 @@ function friendlyGoalError(message: string): string {
   if (message.includes("goals_assist_not_scorer")) {
     return "Assist player must be different from the scorer.";
   }
-  if (message.includes("goals_opposition_scorer_consistency")) {
-    return "Opposition goals cannot have a scorer or assist from our team.";
+  if (
+    message.includes("goals_opposition_scorer_consistency") ||
+    message.includes("goals_scorer_consistency")
+  ) {
+    return "Goal scorer details are inconsistent.";
+  }
+  if (message.includes("goals_kind_mutually_exclusive")) {
+    return "A goal can only be one of Penalty, Direct Free Kick, or Set Piece.";
   }
   return message;
 }

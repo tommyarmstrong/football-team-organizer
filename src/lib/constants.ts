@@ -237,6 +237,30 @@ export const OPPOSITION_SCORER_VALUE = "__opposition__";
 
 export const OPPOSITION_GOAL_LABEL = "Opponent Goal";
 
+/** Form value for an opposition own goal credited to our team. */
+export const OWN_GOAL_SCORER_VALUE = "__own_goal__";
+
+export const OWN_GOAL_LABEL = "Own Goal";
+
+/** Mutually exclusive goal type flags (penalty / free kick / set piece). */
+export const GOAL_KIND_VALUES = [
+  "none",
+  "penalty",
+  "freekick",
+  "setpiece",
+] as const;
+
+export type GoalKindValue = (typeof GOAL_KIND_VALUES)[number];
+
+export const GOAL_KIND_LABELS: Record<
+  Exclude<GoalKindValue, "none">,
+  string
+> = {
+  penalty: "Penalty",
+  freekick: "Direct Free Kick",
+  setpiece: "Set Piece",
+};
+
 export const COACH_OBJECTIVE_TYPES: CoachObjectiveType[] = [
   "coaching",
   "communications",
