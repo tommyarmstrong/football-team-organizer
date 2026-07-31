@@ -7,12 +7,25 @@ import {
   formatMatchVersusTitle,
   formatScore,
   formatShortDate,
+  formatVenueAddress,
+  formatVenueFoodAndDrink,
   goalKindLabel,
   goalScorerLabel,
+  guardianDisplayName,
+  labelCardType,
+  labelCoachObjectiveStatus,
+  labelCoachObjectiveType,
+  labelCompetitionGender,
   labelCompetitionKind,
+  labelCompetitionPeriods,
   labelGender,
   labelHomeAway,
   labelMatchStatus,
+  labelPlayerObjectiveStatus,
+  labelPlayerObjectiveType,
+  labelVenueFoodAndDrink,
+  labelVenueSurface,
+  managerDisplayName,
   playerDisplayName,
   resultLetter,
   scoreFromGoals,
@@ -77,6 +90,17 @@ describe("coachDisplayName", () => {
     expect(coachDisplayName({ first_name: "Alex", second_name: "Coach" })).toBe(
       "Alex Coach",
     );
+  });
+});
+
+describe("guardianDisplayName / managerDisplayName", () => {
+  it("joins first and second name", () => {
+    expect(
+      guardianDisplayName({ first_name: "Pat", second_name: "Guardian" }),
+    ).toBe("Pat Guardian");
+    expect(
+      managerDisplayName({ first_name: "Sam", second_name: "Manager" }),
+    ).toBe("Sam Manager");
   });
 });
 
@@ -199,6 +223,73 @@ describe("label helpers", () => {
 
   it("returns an em dash for null competition kind", () => {
     expect(labelCompetitionKind(null)).toBe("—");
+  });
+
+  it("labels competition gender and periods", () => {
+    expect(labelCompetitionGender("female")).toBe("Female");
+    expect(labelCompetitionGender(null)).toBe("—");
+    expect(labelCompetitionPeriods("2")).toBe("2 (Halves)");
+    expect(labelCompetitionPeriods("other")).toBe("Other");
+    expect(labelCompetitionPeriods(null)).toBe("—");
+  });
+
+  it("labels venue, card, and objective enums", () => {
+    expect(labelVenueSurface("astro")).toBe("Astro");
+    expect(labelVenueFoodAndDrink("tuck_shop")).toBe("Tuck shop");
+    expect(labelCardType("yellow_1st")).toBe("Yellow card (1st)");
+    expect(labelCoachObjectiveType("time_management")).toBe("Time Management");
+    expect(labelCoachObjectiveStatus("ready_for_review")).toBe(
+      "Ready for Review",
+    );
+    expect(labelPlayerObjectiveType("team_work")).toBe("Team work");
+    expect(labelPlayerObjectiveStatus("exceeding")).toBe("Exceeding");
+  });
+});
+
+describe("formatVenueFoodAndDrink", () => {
+  it("returns null for empty input", () => {
+    expect(formatVenueFoodAndDrink(null)).toBeNull();
+    expect(formatVenueFoodAndDrink(undefined)).toBeNull();
+    expect(formatVenueFoodAndDrink([])).toBeNull();
+  });
+
+  it("formats a single value or joined list", () => {
+    expect(formatVenueFoodAndDrink("cafe")).toBe("Cafe");
+    expect(formatVenueFoodAndDrink(["bbq", "ice_cream_van"])).toBe(
+      "BBQ, Ice cream van",
+    );
+  });
+});
+
+describe("formatVenueAddress", () => {
+  it("joins non-empty address parts", () => {
+    expect(
+      formatVenueAddress({
+        address_line1: "1 Windmill Road",
+        address_line2: "Edmonton",
+        town_city: "London",
+        postcode: "N18 1NB",
+      }),
+    ).toBe("1 Windmill Road, Edmonton, London, N18 1NB");
+  });
+
+  it("skips blank parts and returns null when empty", () => {
+    expect(
+      formatVenueAddress({
+        address_line1: "  ",
+        address_line2: null,
+        town_city: "London",
+        postcode: "",
+      }),
+    ).toBe("London");
+    expect(
+      formatVenueAddress({
+        address_line1: null,
+        address_line2: null,
+        town_city: null,
+        postcode: null,
+      }),
+    ).toBeNull();
   });
 });
 
