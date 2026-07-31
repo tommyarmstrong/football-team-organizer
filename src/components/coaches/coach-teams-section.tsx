@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { COACH_TEAM_ROLES } from "@/lib/constants";
 import {
   addCoachToTeamAction,
   removeCoachFromTeamAction,
 } from "@/lib/coaches/actions";
+import { setActiveTeamAction } from "@/lib/team/actions";
 import type { Team } from "@/lib/supabase/database.types";
 import type { CoachTeamMembership } from "@/lib/data/coaches";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,12 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function CoachTeamsSection({
   coachId,
@@ -26,58 +34,8 @@ export function CoachTeamsSection({
   availableTeams: Pick<Team, "id" | "name">[];
   canEdit: boolean;
 }) {
-  const bound = addCoachToTeamAction.bind(null, coachId);
-  const [state, formAction, pending] = useActionState(
-    bound,
-    INITIAL_ACTION_STATE,
-  );
-
   return (
-    <div className="space-y-6">
-      {canEdit && availableTeams.length > 0 ? (
-        <form
-          key={state.success ?? "idle"}
-          action={formAction}
-          className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_10rem_auto] sm:items-end"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="coach-team">Assign to team</Label>
-            <NativeSelect
-              id="coach-team"
-              name="team_id"
-              required
-              disabled={pending}
-            >
-              <option value="">Select a team</option>
-              {availableTeams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="coach-team-role">Role</Label>
-            <NativeSelect id="coach-team-role" name="role" disabled={pending}>
-              <option value="">Select role</option>
-              {COACH_TEAM_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Assigning…" : "Assign"}
-          </Button>
-          {state.error ? (
-            <div className="sm:col-span-3">
-              <ErrorBanner message={state.error} />
-            </div>
-          ) : null}
-        </form>
-      ) : null}
-
+    <div className="space-y-4">
       {memberships.length === 0 ? (
         <EmptyState
           title="Not assigned to a team"
@@ -88,50 +46,122 @@ export function CoachTeamsSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {memberships.map((membership) => (
-            <li
-              key={membership.team_coach_id}
-              className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-            >
-              <span className="font-medium">{membership.team_name}</span>
-              <span className="flex items-center gap-3">
-                <span className="text-muted-foreground">
-                  {membership.role ?? "Coach"}
-                </span>
-                {canEdit ? (
-                  <RemoveButton
-                    teamCoachId={membership.team_coach_id}
-                    coachId={coachId}
+            <li key={membership.team_coach_id} className="flex items-stretch">
+              <OpenTeamRow membership={membership} />
+              {canEdit ? (
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Remove from ${membership.team_name}`}
+                    unlinkAction={() =>
+                      removeCoachFromTeamAction(
+                        membership.team_coach_id,
+                        coachId,
+                      )
+                    }
                   />
-                ) : null}
-              </span>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
+
+      {canEdit ? (
+        <AssignTeamForm coachId={coachId} availableTeams={availableTeams} />
+      ) : null}
     </div>
   );
 }
 
-function RemoveButton({
-  teamCoachId,
+function OpenTeamRow({ membership }: { membership: CoachTeamMembership }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => {
+        startTransition(async () => {
+          await setActiveTeamAction(membership.team_id);
+          router.push("/team");
+        });
+      }}
+      className={objectListRowClassName("w-full text-left disabled:opacity-60")}
+    >
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {membership.team_name}
+      </span>
+      <span className="text-muted-foreground shrink-0">
+        {membership.role ?? "Coach"}
+      </span>
+    </button>
+  );
+}
+
+function AssignTeamForm({
   coachId,
+  availableTeams,
 }: {
-  teamCoachId: string;
   coachId: string;
+  availableTeams: Pick<Team, "id" | "name">[];
 }) {
+  const bound = addCoachToTeamAction.bind(null, coachId);
   const [state, formAction, pending] = useActionState(
-    async () => removeCoachFromTeamAction(teamCoachId, coachId),
+    bound,
     INITIAL_ACTION_STATE,
   );
 
+  if (availableTeams.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        This coach is already assigned to all teams you can manage.
+      </p>
+    );
+  }
+
   return (
-    <form action={formAction}>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "…" : "Remove"}
+    <form
+      key={state.success ?? "idle"}
+      action={formAction}
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <Label htmlFor="coach-team">Assign to team</Label>
+        <SearchableSelect
+          id="coach-team"
+          name="team_id"
+          required
+          disabled={pending}
+          placeholder="Search teams by name…"
+          emptyMessage="No teams match that name."
+          options={availableTeams.map((team) => ({
+            value: team.id,
+            label: team.name,
+          }))}
+        />
+      </div>
+      <div className="space-y-2 sm:w-40">
+        <Label htmlFor="coach-team-role">Role</Label>
+        <NativeSelect id="coach-team-role" name="role" disabled={pending}>
+          <option value="">Select role</option>
+          {COACH_TEAM_ROLES.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Adding…" : "Add"}
       </Button>
+      {state.error ? (
+        <div className="w-full sm:basis-full">
+          <ErrorBanner message={state.error} />
+        </div>
+      ) : null}
     </form>
   );
 }

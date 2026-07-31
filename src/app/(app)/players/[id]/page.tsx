@@ -211,20 +211,22 @@ export default async function PlayerDetailPage({
           {!goalsError && goals.length > 0 ? (
             <ul className="divide-border border-border divide-y rounded-xl border">
               {goals.map((goal) => (
-                <li
-                  key={goal.id}
-                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-                >
-                  <div>
-                    <p className="font-medium">vs {goal.opponent_name}</p>
-                    <p className="text-muted-foreground">
-                      {goal.match_date
-                        ? formatMatchDate(goal.match_date)
-                        : formatShortDate(goal.created_at.slice(0, 10))}
-                      {goal.minute != null ? ` · ${goal.minute}'` : ""}
-                      {goal.is_penalty ? " · Pen" : ""}
-                    </p>
-                  </div>
+                <li key={goal.id}>
+                  <Link
+                    href={`/matches/${goal.match_id}/goals/${goal.id}`}
+                    className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <div>
+                      <p className="font-medium">vs {goal.opponent_name}</p>
+                      <p className="text-muted-foreground">
+                        {goal.match_date
+                          ? formatMatchDate(goal.match_date)
+                          : formatShortDate(goal.created_at.slice(0, 10))}
+                        {goal.minute != null ? ` · ${goal.minute}'` : ""}
+                        {goal.is_penalty ? " · Pen" : ""}
+                      </p>
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -3,6 +3,10 @@ import { GUARDIAN_RELATIONSHIP_LABELS } from "@/lib/constants";
 import type { PlayerGuardianLink } from "@/lib/data/guardians";
 import { guardianDisplayName } from "@/lib/format";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 
 export function PlayerGuardiansSection({
   links,
@@ -19,14 +23,14 @@ export function PlayerGuardiansSection({
   }
 
   return (
-    <ul className="divide-border border-border divide-y rounded-xl border">
+    <ul className={objectListClassName}>
       {links.map((link) => (
         <li key={link.player_guardian_id}>
           <Link
             href={`/guardians/${link.guardian_id}`}
-            className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className={objectListRowClassName()}
           >
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="font-medium">{guardianDisplayName(link)}</p>
               <p className="text-muted-foreground truncate text-sm">
                 {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}

@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   linkGuardianToPlayerAction,
   unlinkGuardianFromPlayerAction,
-  updateGuardianPlayerLinkAction,
 } from "@/lib/guardians/actions";
 import {
   GUARDIAN_RELATIONSHIPS,
@@ -18,6 +18,11 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 type PlayerOption = {
@@ -37,71 +42,8 @@ export function GuardianPlayersSection({
   availablePlayers: PlayerOption[];
   canEdit: boolean;
 }) {
-  const bound = linkGuardianToPlayerAction.bind(null, guardianId);
-  const [state, formAction, pending] = useActionState(
-    bound,
-    INITIAL_ACTION_STATE,
-  );
-
   return (
-    <div className="space-y-6">
-      {canEdit && availablePlayers.length > 0 ? (
-        <form
-          key={state.success ?? "idle"}
-          action={formAction}
-          className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_10rem_auto_auto] sm:items-end"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="guardian-player">Player</Label>
-            <SearchableSelect
-              id="guardian-player"
-              name="player_id"
-              required
-              disabled={pending}
-              placeholder="Search players by name…"
-              emptyMessage="No players match that name."
-              options={availablePlayers.map((player) => ({
-                value: player.id,
-                label: playerDisplayName(player),
-              }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="guardian-relationship">Relationship</Label>
-            <NativeSelect
-              id="guardian-relationship"
-              name="relationship"
-              required
-              disabled={pending}
-              defaultValue="guardian"
-            >
-              {GUARDIAN_RELATIONSHIPS.map((value) => (
-                <option key={value} value={value}>
-                  {GUARDIAN_RELATIONSHIP_LABELS[value]}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
-          <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
-            <input
-              type="checkbox"
-              name="legal_guardian"
-              disabled={pending}
-              className="border-input size-4 rounded"
-            />
-            Legal guardian
-          </label>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Linking…" : "Link"}
-          </Button>
-          {state.error ? (
-            <div className="sm:col-span-4">
-              <ErrorBanner message={state.error} />
-            </div>
-          ) : null}
-        </form>
-      ) : null}
-
+    <div className="space-y-4">
       {links.length === 0 ? (
         <EmptyState
           title="No players linked"
@@ -112,139 +54,123 @@ export function GuardianPlayersSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border space-y-3">
+        <ul className={objectListClassName}>
           {links.map((link) => (
-            <li key={link.player_guardian_id}>
+            <li key={link.player_guardian_id} className="flex items-stretch">
+              <Link
+                href={`/players/${link.player_id}`}
+                className={objectListRowClassName()}
+              >
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {playerDisplayName({
+                    first_name: link.player_first_name,
+                    last_name: link.player_last_name,
+                  })}
+                </span>
+                <span className="text-muted-foreground shrink-0">
+                  {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
+                  {link.legal_guardian ? " · Legal guardian" : ""}
+                </span>
+              </Link>
               {canEdit ? (
-                <EditLinkForm guardianId={guardianId} link={link} />
-              ) : (
-                <div className="border-border flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm">
-                  <span className="font-medium">
-                    {playerDisplayName({
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Unlink ${playerDisplayName({
                       first_name: link.player_first_name,
                       last_name: link.player_last_name,
-                    })}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
-                    {link.legal_guardian ? " · Legal guardian" : ""}
-                  </span>
+                    })}`}
+                    unlinkAction={() =>
+                      unlinkGuardianFromPlayerAction(
+                        link.player_guardian_id,
+                        guardianId,
+                        link.player_id,
+                      )
+                    }
+                  />
                 </div>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>
       )}
+
+      {canEdit && availablePlayers.length > 0 ? (
+        <LinkPlayerForm
+          guardianId={guardianId}
+          availablePlayers={availablePlayers}
+        />
+      ) : null}
     </div>
   );
 }
 
-function EditLinkForm({
+function LinkPlayerForm({
   guardianId,
-  link,
+  availablePlayers,
 }: {
   guardianId: string;
-  link: GuardianPlayerLink;
+  availablePlayers: PlayerOption[];
 }) {
-  const updateBound = updateGuardianPlayerLinkAction.bind(
-    null,
-    link.player_guardian_id,
-    guardianId,
-    link.player_id,
-  );
+  const bound = linkGuardianToPlayerAction.bind(null, guardianId);
   const [state, formAction, pending] = useActionState(
-    updateBound,
+    bound,
     INITIAL_ACTION_STATE,
   );
 
   return (
-    <div className="border-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-end">
-      <form
-        action={formAction}
-        className="grid flex-1 gap-3 sm:grid-cols-[1fr_10rem_auto_auto] sm:items-end"
-      >
-        <div className="space-y-1">
-          <p className="text-sm font-medium">
-            {playerDisplayName({
-              first_name: link.player_first_name,
-              last_name: link.player_last_name,
-            })}
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`relationship-${link.player_guardian_id}`}>
-            Relationship
-          </Label>
-          <NativeSelect
-            id={`relationship-${link.player_guardian_id}`}
-            name="relationship"
-            required
-            disabled={pending}
-            defaultValue={link.relationship}
-          >
-            {GUARDIAN_RELATIONSHIPS.map((value) => (
-              <option key={value} value={value}>
-                {GUARDIAN_RELATIONSHIP_LABELS[value]}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-        <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
-          <input
-            type="checkbox"
-            name="legal_guardian"
-            defaultChecked={link.legal_guardian}
-            disabled={pending}
-            className="border-input size-4 rounded"
-          />
-          Legal guardian
-        </label>
-        <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "…" : "Save"}
-        </Button>
-        {state.error ? (
-          <div className="sm:col-span-4">
-            <ErrorBanner message={state.error} />
-          </div>
-        ) : null}
-        {state.success ? (
-          <p
-            className="text-muted-foreground text-xs sm:col-span-4"
-            role="status"
-          >
-            {state.success}
-          </p>
-        ) : null}
-      </form>
-      <UnlinkButton
-        linkId={link.player_guardian_id}
-        guardianId={guardianId}
-        playerId={link.player_id}
-      />
-    </div>
-  );
-}
-
-function UnlinkButton({
-  linkId,
-  guardianId,
-  playerId,
-}: {
-  linkId: string;
-  guardianId: string;
-  playerId: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    async () => unlinkGuardianFromPlayerAction(linkId, guardianId, playerId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form action={formAction}>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "…" : "Unlink"}
+    <form
+      key={state.success ?? "idle"}
+      action={formAction}
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <Label htmlFor="guardian-player">Player</Label>
+        <SearchableSelect
+          id="guardian-player"
+          name="player_id"
+          required
+          disabled={pending}
+          placeholder="Search players by name…"
+          emptyMessage="No players match that name."
+          options={availablePlayers.map((player) => ({
+            value: player.id,
+            label: playerDisplayName(player),
+          }))}
+        />
+      </div>
+      <div className="space-y-2 sm:w-40">
+        <Label htmlFor="guardian-relationship">Relationship</Label>
+        <NativeSelect
+          id="guardian-relationship"
+          name="relationship"
+          required
+          disabled={pending}
+          defaultValue="guardian"
+        >
+          {GUARDIAN_RELATIONSHIPS.map((value) => (
+            <option key={value} value={value}>
+              {GUARDIAN_RELATIONSHIP_LABELS[value]}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="legal_guardian"
+          disabled={pending}
+          className="border-input size-4 rounded"
+        />
+        Legal guardian
+      </label>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Linking…" : "Add"}
       </Button>
+      {state.error ? (
+        <div className="w-full sm:basis-full">
+          <ErrorBanner message={state.error} />
+        </div>
+      ) : null}
     </form>
   );
 }

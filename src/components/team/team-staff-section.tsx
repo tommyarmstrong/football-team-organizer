@@ -12,9 +12,15 @@ import type { Coach } from "@/lib/supabase/database.types";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import { coachDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamStaffSection({
@@ -40,24 +46,33 @@ export function TeamStaffSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {assigned.map((entry) => (
-            <li
-              key={entry.team_coach_id}
-              className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-            >
+            <li key={entry.team_coach_id} className="flex items-stretch">
               <Link
                 href={`/coaches/${entry.coach_id}`}
-                className="font-medium hover:underline"
+                className={objectListRowClassName()}
               >
-                {entry.name}
-              </Link>
-              <span className="flex items-center gap-3">
-                <span className="text-muted-foreground">
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {entry.name}
+                </span>
+                <span className="text-muted-foreground shrink-0">
                   {entry.role ?? "Coach"}
                 </span>
-                {canEdit ? <RemoveCoachButton entry={entry} /> : null}
-              </span>
+              </Link>
+              {canEdit ? (
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Remove ${entry.name} from coaching staff`}
+                    unlinkAction={() =>
+                      removeCoachFromTeamAction(
+                        entry.team_coach_id,
+                        entry.coach_id,
+                      )
+                    }
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -101,34 +116,37 @@ function AssignCoachForm({
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <input type="hidden" name="team_id" value={teamId} />
-      <SearchableSelect
-        id="assign-coach"
-        name="coach_id"
-        required
-        disabled={pending}
-        aria-label="Select coach"
-        className="min-w-0 flex-1"
-        placeholder="Search coaches by name…"
-        emptyMessage="No coaches match that name."
-        options={candidates.map((coach) => ({
-          value: coach.id,
-          label: coachDisplayName(coach),
-        }))}
-      />
-      <NativeSelect
-        id="assign-role"
-        name="role"
-        disabled={pending}
-        aria-label="Role"
-        className="sm:w-40"
-      >
-        <option value="">Select role</option>
-        {COACH_TEAM_ROLES.map((role) => (
-          <option key={role} value={role}>
-            {role}
-          </option>
-        ))}
-      </NativeSelect>
+      <div className="min-w-0 flex-1 space-y-2">
+        <Label htmlFor="assign-coach">Select coach</Label>
+        <SearchableSelect
+          id="assign-coach"
+          name="coach_id"
+          required
+          disabled={pending}
+          placeholder="Search coaches by name…"
+          emptyMessage="No coaches match that name."
+          options={candidates.map((coach) => ({
+            value: coach.id,
+            label: coachDisplayName(coach),
+          }))}
+        />
+      </div>
+      <div className="space-y-2 sm:w-40">
+        <Label htmlFor="assign-role">Role</Label>
+        <NativeSelect
+          id="assign-role"
+          name="role"
+          disabled={pending}
+          aria-label="Role"
+        >
+          <option value="">Select role</option>
+          {COACH_TEAM_ROLES.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add"}
       </Button>
@@ -137,22 +155,6 @@ function AssignCoachForm({
           <ErrorBanner message={state.error} />
         </div>
       ) : null}
-    </form>
-  );
-}
-
-function RemoveCoachButton({ entry }: { entry: TeamCoachEntry }) {
-  const [state, formAction, pending] = useActionState(
-    async () => removeCoachFromTeamAction(entry.team_coach_id, entry.coach_id),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form action={formAction}>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "…" : "Remove"}
-      </Button>
     </form>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
@@ -19,6 +20,11 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function MatchPeriodEditSection({
   matchId,
@@ -213,15 +219,19 @@ function PeriodStarters({
         {selectedPlayers.length === 0 ? (
           <p className="text-muted-foreground text-sm">None selected.</p>
         ) : (
-          <ul className="flex flex-wrap gap-2">
+          <ul className={objectListClassName}>
             {selectedPlayers.map((player) => (
-              <li
-                key={player.id}
-                className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1.5 text-sm font-medium"
-              >
-                {playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                })}
+              <li key={player.id} className="flex items-stretch">
+                <Link
+                  href={`/players/${player.id}`}
+                  className={objectListRowClassName()}
+                >
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {playerDisplayName(player, {
+                      shirtNumber: player.shirt_number,
+                    })}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -288,75 +298,96 @@ function StartersForm({
     });
   }
 
-  function removePlayer(playerId: string) {
-    persist(selectedIds.filter((id) => id !== playerId));
-  }
-
   function addPlayer(playerId: string) {
     if (!playerId || selected.has(playerId)) return;
     persist([...selectedIds, playerId]);
   }
 
+  function removePlayer(playerId: string) {
+    persist(selectedIds.filter((id) => id !== playerId));
+  }
+
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium">Starting players</h3>
-      <p className="text-muted-foreground text-xs">
-        Players who start this period are assumed to complete it. Remove a
-        player to deselect them, or add them back below.
-      </p>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">Starting players</h3>
+        <p className="text-muted-foreground text-xs">
+          Players who start this period are assumed to complete it. Remove a
+          player to deselect them, or add them back below.
+        </p>
+      </div>
 
       {selectedPlayers.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No starting players selected.
         </p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className={objectListClassName}>
           {selectedPlayers.map((player) => (
-            <li
-              key={player.id}
-              className="border-border bg-background inline-flex items-center gap-1 rounded-lg border py-1 pr-1 pl-2.5 text-sm font-medium"
-            >
-              <span>
-                {playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                })}
-              </span>
-              <button
-                type="button"
-                onClick={() => removePlayer(player.id)}
-                disabled={isPending}
-                aria-label={`Remove ${playerDisplayName(player)} from starting players`}
-                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+            <li key={player.id} className="flex items-stretch">
+              <Link
+                href={`/players/${player.id}`}
+                className={objectListRowClassName()}
               >
-                <XIcon className="size-3.5" />
-              </button>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {playerDisplayName(player, {
+                    shirtNumber: player.shirt_number,
+                  })}
+                </span>
+              </Link>
+              <div className="flex items-center pr-2">
+                <button
+                  type="button"
+                  onClick={() => removePlayer(player.id)}
+                  disabled={isPending}
+                  aria-label={`Remove ${playerDisplayName(player)} from starting players`}
+                  title={`Remove ${playerDisplayName(player)} from starting players`}
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-9 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <XIcon className="size-4" aria-hidden="true" />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
-        <NativeSelect
-          id={`add_period_starter_${periodId}`}
-          value=""
-          disabled={isPending || availablePlayers.length === 0}
-          onChange={(e) => addPlayer(e.target.value)}
+      {availablePlayers.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          All available players selected.
+        </p>
+      ) : (
+        <form
+          key={selectedIds.slice().sort().join(",")}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            addPlayer(String(formData.get("player_id") ?? "").trim());
+          }}
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
         >
-          <option value="">
-            {availablePlayers.length === 0
-              ? "All available players selected"
-              : "Select a player to add…"}
-          </option>
-          {availablePlayers.map((player) => (
-            <option key={player.id} value={player.id}>
-              {playerDisplayName(player, {
-                shirtNumber: player.shirt_number,
-              })}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+          <div className="min-w-0 flex-1 space-y-2">
+            <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
+            <SearchableSelect
+              id={`add_period_starter_${periodId}`}
+              name="player_id"
+              required
+              disabled={isPending}
+              placeholder="Search players by name…"
+              emptyMessage="No players match that name."
+              options={availablePlayers.map((player) => ({
+                value: player.id,
+                label: playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                }),
+              }))}
+            />
+          </div>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Adding…" : "Add"}
+          </Button>
+        </form>
+      )}
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
       {state.success ? (

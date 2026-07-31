@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { setActiveTeamAction } from "@/lib/team/actions";
 import { labelGender } from "@/lib/format";
 import type { Team } from "@/lib/supabase/database.types";
+import { objectListRowClassName } from "@/components/shared/object-list";
 
 export function ClubTeamLink({ team }: { team: Team }) {
   const router = useRouter();
@@ -20,17 +21,15 @@ export function ClubTeamLink({ team }: { team: Team }) {
           router.push("/team");
         });
       }}
-      className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
+      className={objectListRowClassName("w-full text-left disabled:opacity-60")}
     >
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="font-medium">{team.name}</p>
         <p className="text-muted-foreground text-sm">
           {labelGender(team.gender)} · {team.age_group} · {team.season_label}
+          {pending ? " · Opening…" : ""}
         </p>
       </div>
-      <span className="text-muted-foreground text-xs">
-        {pending ? "Opening…" : "Edit"}
-      </span>
     </button>
   );
 }
