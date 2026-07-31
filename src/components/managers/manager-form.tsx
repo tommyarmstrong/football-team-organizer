@@ -6,7 +6,7 @@ import {
   createManagerAction,
   updateManagerAction,
 } from "@/lib/managers/actions";
-import type { Manager } from "@/lib/supabase/database.types";
+import type { ManagerWithPerson } from "@/lib/data/managers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ export function ManagerForm({
   manager,
   mode,
 }: {
-  manager?: Manager;
+  manager?: ManagerWithPerson;
   mode: "create" | "edit";
 }) {
   const action =

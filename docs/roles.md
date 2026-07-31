@@ -19,12 +19,16 @@ still evolving; do not assume every rule is fully applied in RLS/UI yet.
 ## How roles are stored
 
 - Auth identity: Supabase `auth.users` (the login)
-- Domain people: `managers`, `coaches`, `guardians`, `players` — roster /
-  profile records for each role. These are the same kind of people data; only
-  permissions differ.
-- Linking a login to a people record (`user_id` on managers, guardians,
-  players) associates that role with the login. Coaches currently attach via
-  `team_members.role = coach` (team-scoped) rather than `coaches.user_id`.
+- Central person: `people` — shared first/last name, email, phone, optional
+  `auth_user_id`, and account status (`none` | `invited` | `active` |
+  `disabled`)
+- Domain roles: `managers`, `coaches`, `guardians`, `players` — each links to
+  `people` via `person_id` and keeps only role-specific attributes. A person may
+  hold multiple roles.
+- Invitations: `person_invitations` — secure, expiring, single-use invite tokens
+  (hashed) for invite-only onboarding
+- Linking a login to a person (`people.auth_user_id`) associates every linked
+  role with that login. Coaches may also appear in `team_members.role = coach`.
 - Team roles: `team_members` — one row per `(team, user, role)`; multiple rows
   per user on the same team are allowed
 - Team role values: `management` | `coach` | `guardian` | `guardian_assistant` | `player`

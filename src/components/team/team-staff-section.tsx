@@ -8,7 +8,7 @@ import {
   addCoachToTeamAction,
   removeCoachFromTeamAction,
 } from "@/lib/coaches/actions";
-import type { Coach } from "@/lib/supabase/database.types";
+import type { CoachWithPerson } from "@/lib/data/coaches";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import { coachDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export function TeamStaffSection({
 }: {
   teamId: string;
   assigned: TeamCoachEntry[];
-  candidates: Coach[];
+  candidates: CoachWithPerson[];
   canEdit: boolean;
 }) {
   return (
@@ -90,7 +90,7 @@ function AssignCoachForm({
   candidates,
 }: {
   teamId: string;
-  candidates: Coach[];
+  candidates: CoachWithPerson[];
 }) {
   const [state, formAction, pending] = useActionState(
     async (_prev: typeof INITIAL_ACTION_STATE, formData: FormData) => {

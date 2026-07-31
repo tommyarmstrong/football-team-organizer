@@ -9,7 +9,8 @@ import {
   TRAINING_DAY_LABELS,
 } from "@/lib/constants";
 import { updateTeamAction } from "@/lib/team/actions";
-import type { Coach, Team, Venue } from "@/lib/supabase/database.types";
+import type { CoachWithPerson } from "@/lib/data/coaches";
+import type { Team, Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export function TeamProfileForm({
   headCoachId,
 }: {
   team: Team;
-  coaches: Coach[];
+  coaches: CoachWithPerson[];
   venues: Venue[];
   headCoachId: string | null;
 }) {

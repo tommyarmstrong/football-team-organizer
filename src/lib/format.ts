@@ -98,23 +98,29 @@ export function formatGoalMinute(
 
 export function coachDisplayName(coach: {
   first_name: string;
-  second_name: string;
+  second_name?: string;
+  last_name?: string;
 }): string {
-  return `${coach.first_name} ${coach.second_name}`.trim();
+  const last = coach.second_name ?? coach.last_name ?? "";
+  return `${coach.first_name} ${last}`.trim();
 }
 
 export function guardianDisplayName(guardian: {
   first_name: string;
-  second_name: string;
+  second_name?: string;
+  last_name?: string;
 }): string {
-  return `${guardian.first_name} ${guardian.second_name}`.trim();
+  const last = guardian.second_name ?? guardian.last_name ?? "";
+  return `${guardian.first_name} ${last}`.trim();
 }
 
 export function managerDisplayName(manager: {
   first_name: string;
-  second_name: string;
+  second_name?: string;
+  last_name?: string;
 }): string {
-  return `${manager.first_name} ${manager.second_name}`.trim();
+  const last = manager.second_name ?? manager.last_name ?? "";
+  return `${manager.first_name} ${last}`.trim();
 }
 
 export function scoreFromGoals(goals: Array<{ is_opposition: boolean }>): {

@@ -1,11 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
+import { createPerson, updatePerson } from "@/lib/data/people";
+import {
+  PERSON_EMBED,
+  unwrapPerson,
+  unwrapPersonName,
+  withPersonFields,
+  type PersonFields,
+} from "@/lib/people/person";
 import type {
   Guardian,
   GuardianRelationship,
+  Person,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
+import type { GuardianFormFields } from "@/lib/guardians/parse";
 
+export type GuardianWithPerson = Guardian & PersonFields;
 export type { Guardian };
 
 export type GuardianPlayerLink = {
@@ -17,9 +28,15 @@ export type GuardianPlayerLink = {
   legal_guardian: boolean;
 };
 
-export type GuardianWithPlayers = Guardian & {
+export type GuardianWithPlayers = GuardianWithPerson & {
   players: GuardianPlayerLink[];
 };
+
+function mapGuardian(
+  row: Guardian & { person: Person | Person[] | null },
+): GuardianWithPerson {
+  return withPersonFields(row);
+}
 
 export async function listGuardians(): Promise<{
   data: GuardianWithPlayers[];
@@ -29,55 +46,75 @@ export async function listGuardians(): Promise<{
   const { data, error } = await supabase
     .from("guardians")
     .select(
-      "*, player_guardians(id, player_id, relationship, legal_guardian, player:players(first_name, last_name))",
-    )
-    .order("second_name", { ascending: true })
-    .order("first_name", { ascending: true });
+      `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, player:players(person:people!person_id(first_name, last_name)))`,
+    );
 
   if (error) return { data: [], error: error.message };
 
   const rows: GuardianWithPlayers[] = (data ?? []).map((row) => {
     const { player_guardians, ...guardian } = row as Guardian & {
+      person: Person | Person[] | null;
       player_guardians: Array<{
         id: string;
         player_id: string;
         relationship: GuardianRelationship;
         legal_guardian: boolean;
         player:
-          | { first_name: string; last_name: string }
-          | { first_name: string; last_name: string }[]
+          | {
+              person:
+                | { first_name: string; last_name: string }
+                | { first_name: string; last_name: string }[]
+                | null;
+            }
+          | {
+              person:
+                | { first_name: string; last_name: string }
+                | { first_name: string; last_name: string }[]
+                | null;
+            }[]
           | null;
       }>;
     };
     const players: GuardianPlayerLink[] = (player_guardians ?? []).map((pg) => {
       const player = Array.isArray(pg.player) ? pg.player[0] : pg.player;
+      const person = unwrapPersonName(player?.person ?? null);
       return {
         player_guardian_id: pg.id,
         player_id: pg.player_id,
-        player_first_name: player?.first_name ?? "",
-        player_last_name: player?.last_name ?? "",
+        player_first_name: person?.first_name ?? "",
+        player_last_name: person?.last_name ?? "",
         relationship: pg.relationship,
         legal_guardian: pg.legal_guardian,
       };
     });
-    return { ...(guardian as Guardian), players };
+    return { ...mapGuardian(guardian), players };
   });
+
+  rows.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
 
   return { data: rows, error: null };
 }
 
 export async function getGuardian(
   id: string,
-): Promise<{ data: Guardian | null; error: string | null }> {
+): Promise<{ data: GuardianWithPerson | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("guardians")
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .eq("id", id)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  if (!data) return { data: null, error: null };
+  return {
+    data: mapGuardian(data as Guardian & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function getGuardianPlayers(
@@ -87,7 +124,7 @@ export async function getGuardianPlayers(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      "id, player_id, relationship, legal_guardian, player:players(first_name, last_name)",
+      "id, player_id, relationship, legal_guardian, player:players(person:people!person_id(first_name, last_name))",
     )
     .eq("guardian_id", guardianId);
 
@@ -95,11 +132,21 @@ export async function getGuardianPlayers(
 
   const rows: GuardianPlayerLink[] = (data ?? []).map((pg) => {
     const player = Array.isArray(pg.player) ? pg.player[0] : pg.player;
+    const person = unwrapPersonName(
+      (
+        player as {
+          person?:
+            | { first_name: string; last_name: string }
+            | { first_name: string; last_name: string }[]
+            | null;
+        } | null
+      )?.person ?? null,
+    );
     return {
       player_guardian_id: pg.id,
       player_id: pg.player_id,
-      player_first_name: player?.first_name ?? "",
-      player_last_name: player?.last_name ?? "",
+      player_first_name: person?.first_name ?? "",
+      player_last_name: person?.last_name ?? "",
       relationship: pg.relationship as GuardianRelationship,
       legal_guardian: pg.legal_guardian,
     };
@@ -125,7 +172,7 @@ export async function getPlayerGuardians(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      "id, guardian_id, relationship, legal_guardian, guardian:guardians(first_name, second_name, phone)",
+      `id, guardian_id, relationship, legal_guardian, guardian:guardians(${PERSON_EMBED})`,
     )
     .eq("player_id", playerId);
 
@@ -133,12 +180,16 @@ export async function getPlayerGuardians(
 
   const rows: PlayerGuardianLink[] = (data ?? []).map((pg) => {
     const guardian = Array.isArray(pg.guardian) ? pg.guardian[0] : pg.guardian;
+    const person = unwrapPerson(
+      (guardian as { person?: Person | Person[] | null } | null)?.person ??
+        null,
+    );
     return {
       player_guardian_id: pg.id,
       guardian_id: pg.guardian_id,
-      first_name: guardian?.first_name ?? "",
-      second_name: guardian?.second_name ?? "",
-      phone: guardian?.phone ?? null,
+      first_name: person?.first_name ?? "",
+      second_name: person?.last_name ?? "",
+      phone: person?.phone ?? null,
       relationship: pg.relationship as GuardianRelationship,
       legal_guardian: pg.legal_guardian,
     };
@@ -148,33 +199,69 @@ export async function getPlayerGuardians(
 }
 
 export async function createGuardian(
-  input: TablesInsert<"guardians">,
-): Promise<{ data: Guardian | null; error: string | null }> {
+  input: GuardianFormFields & { club_id: string; person_id?: string },
+): Promise<{ data: GuardianWithPerson | null; error: string | null }> {
+  let personId = input.person_id;
+  if (!personId) {
+    const { data: person, error: personError } = await createPerson({
+      first_name: input.first_name,
+      last_name: input.second_name,
+      phone: input.phone,
+      email: input.email,
+      account_status: "none",
+    });
+    if (personError) return { data: null, error: personError };
+    if (!person) return { data: null, error: "Could not create person." };
+    personId = person.id;
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("guardians")
-    .insert(input)
-    .select("*")
+    .insert({
+      club_id: input.club_id,
+      person_id: personId,
+      notes: input.notes,
+    } satisfies TablesInsert<"guardians">)
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapGuardian(data as Guardian & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function updateGuardian(
   id: string,
-  input: TablesUpdate<"guardians">,
-): Promise<{ data: Guardian | null; error: string | null }> {
+  input: GuardianFormFields,
+): Promise<{ data: GuardianWithPerson | null; error: string | null }> {
+  const existing = await getGuardian(id);
+  if (existing.error) return { data: null, error: existing.error };
+  if (!existing.data) return { data: null, error: "Guardian not found." };
+
+  const { error: personError } = await updatePerson(existing.data.person_id, {
+    first_name: input.first_name,
+    last_name: input.second_name,
+    phone: input.phone,
+    email: input.email,
+  });
+  if (personError) return { data: null, error: personError };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("guardians")
-    .update(input)
+    .update({ notes: input.notes } satisfies TablesUpdate<"guardians">)
     .eq("id", id)
-    .select("*")
+    .select(`*, ${PERSON_EMBED}`)
     .single();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return {
+    data: mapGuardian(data as Guardian & { person: Person | Person[] | null }),
+    error: null,
+  };
 }
 
 export async function deleteGuardian(

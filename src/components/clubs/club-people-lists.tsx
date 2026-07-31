@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { Coach, Manager, Player } from "@/lib/supabase/database.types";
+import type { CoachWithPerson } from "@/lib/data/coaches";
+import type { ManagerWithPerson } from "@/lib/data/managers";
+import type { PlayerWithPerson } from "@/lib/data/players";
 import type { GuardianWithPlayers } from "@/lib/data/guardians";
 import {
   coachDisplayName,
@@ -14,7 +16,7 @@ import { GUARDIAN_RELATIONSHIP_LABELS } from "@/lib/constants";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
 
-export function ClubPlayersList({ players }: { players: Player[] }) {
+export function ClubPlayersList({ players }: { players: PlayerWithPerson[] }) {
   return (
     <FilterablePaginatedList
       items={players}
@@ -84,7 +86,7 @@ export function ClubGuardiansList({
   );
 }
 
-export function ClubCoachesList({ coaches }: { coaches: Coach[] }) {
+export function ClubCoachesList({ coaches }: { coaches: CoachWithPerson[] }) {
   return (
     <FilterablePaginatedList
       items={coaches}
@@ -110,7 +112,11 @@ export function ClubCoachesList({ coaches }: { coaches: Coach[] }) {
   );
 }
 
-export function ClubManagersList({ managers }: { managers: Manager[] }) {
+export function ClubManagersList({
+  managers,
+}: {
+  managers: ManagerWithPerson[];
+}) {
   return (
     <FilterablePaginatedList
       items={managers}

@@ -49,11 +49,7 @@ export type Database = {
         Row: {
           id: string;
           club_id: string;
-          user_id: string | null;
-          first_name: string;
-          second_name: string;
-          phone: string | null;
-          email: string | null;
+          person_id: string;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -61,11 +57,7 @@ export type Database = {
         Insert: {
           id?: string;
           club_id: string;
-          user_id?: string | null;
-          first_name: string;
-          second_name: string;
-          phone?: string | null;
-          email?: string | null;
+          person_id: string;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -73,11 +65,7 @@ export type Database = {
         Update: {
           id?: string;
           club_id?: string;
-          user_id?: string | null;
-          first_name?: string;
-          second_name?: string;
-          phone?: string | null;
-          email?: string | null;
+          person_id?: string;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -90,7 +78,124 @@ export type Database = {
             referencedRelation: "clubs";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "managers_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
         ];
+      };
+      people: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string | null;
+          phone: string | null;
+          auth_user_id: string | null;
+          account_status: Database["public"]["Enums"]["person_account_status"];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email?: string | null;
+          phone?: string | null;
+          auth_user_id?: string | null;
+          account_status?: Database["public"]["Enums"]["person_account_status"];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string | null;
+          phone?: string | null;
+          auth_user_id?: string | null;
+          account_status?: Database["public"]["Enums"]["person_account_status"];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      person_invitations: {
+        Row: {
+          id: string;
+          person_id: string;
+          email: string;
+          token_hash: string;
+          expires_at: string;
+          accepted_at: string | null;
+          revoked_at: string | null;
+          invited_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          person_id: string;
+          email: string;
+          token_hash: string;
+          expires_at: string;
+          accepted_at?: string | null;
+          revoked_at?: string | null;
+          invited_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          person_id?: string;
+          email?: string;
+          token_hash?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          revoked_at?: string | null;
+          invited_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "person_invitations_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      people_migration_conflicts: {
+        Row: {
+          id: string;
+          source_table: string;
+          source_id: string;
+          conflict_type: string;
+          details: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          source_table: string;
+          source_id: string;
+          conflict_type: string;
+          details?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          source_table?: string;
+          source_id?: string;
+          conflict_type?: string;
+          details?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       venues: {
         Row: {
@@ -242,9 +347,7 @@ export type Database = {
         Row: {
           id: string;
           club_id: string;
-          user_id: string | null;
-          first_name: string;
-          last_name: string;
+          person_id: string;
           position: string | null;
           school: string | null;
           date_of_birth: string | null;
@@ -254,9 +357,7 @@ export type Database = {
         Insert: {
           id?: string;
           club_id: string;
-          user_id?: string | null;
-          first_name: string;
-          last_name: string;
+          person_id: string;
           position?: string | null;
           school?: string | null;
           date_of_birth?: string | null;
@@ -266,9 +367,7 @@ export type Database = {
         Update: {
           id?: string;
           club_id?: string;
-          user_id?: string | null;
-          first_name?: string;
-          last_name?: string;
+          person_id?: string;
           position?: string | null;
           school?: string | null;
           date_of_birth?: string | null;
@@ -281,6 +380,13 @@ export type Database = {
             columns: ["club_id"];
             isOneToOne: false;
             referencedRelation: "clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "players_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
             referencedColumns: ["id"];
           },
         ];
@@ -379,11 +485,7 @@ export type Database = {
         Row: {
           id: string;
           club_id: string;
-          user_id: string | null;
-          first_name: string;
-          second_name: string;
-          phone: string | null;
-          email: string | null;
+          person_id: string;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -391,11 +493,7 @@ export type Database = {
         Insert: {
           id?: string;
           club_id: string;
-          user_id?: string | null;
-          first_name: string;
-          second_name: string;
-          phone?: string | null;
-          email?: string | null;
+          person_id: string;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -403,11 +501,7 @@ export type Database = {
         Update: {
           id?: string;
           club_id?: string;
-          user_id?: string | null;
-          first_name?: string;
-          second_name?: string;
-          phone?: string | null;
-          email?: string | null;
+          person_id?: string;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -418,6 +512,13 @@ export type Database = {
             columns: ["club_id"];
             isOneToOne: false;
             referencedRelation: "clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guardians_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
             referencedColumns: ["id"];
           },
         ];
@@ -471,15 +572,12 @@ export type Database = {
         Row: {
           id: string;
           club_id: string;
-          first_name: string;
-          second_name: string;
+          person_id: string;
           joined_date: string;
           date_of_birth: string | null;
           dbs_checked: boolean;
           fa_level_1: boolean;
           fa_level_2: boolean;
-          phone: string | null;
-          email: string | null;
           notes: string | null;
           biography: string | null;
           philosophy: string | null;
@@ -489,15 +587,12 @@ export type Database = {
         Insert: {
           id?: string;
           club_id: string;
-          first_name: string;
-          second_name: string;
+          person_id: string;
           joined_date: string;
           date_of_birth?: string | null;
           dbs_checked?: boolean;
           fa_level_1?: boolean;
           fa_level_2?: boolean;
-          phone?: string | null;
-          email?: string | null;
           notes?: string | null;
           biography?: string | null;
           philosophy?: string | null;
@@ -507,15 +602,12 @@ export type Database = {
         Update: {
           id?: string;
           club_id?: string;
-          first_name?: string;
-          second_name?: string;
+          person_id?: string;
           joined_date?: string;
           date_of_birth?: string | null;
           dbs_checked?: boolean;
           fa_level_1?: boolean;
           fa_level_2?: boolean;
-          phone?: string | null;
-          email?: string | null;
           notes?: string | null;
           biography?: string | null;
           philosophy?: string | null;
@@ -528,6 +620,13 @@ export type Database = {
             columns: ["club_id"];
             isOneToOne: false;
             referencedRelation: "clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "coaches_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
             referencedColumns: ["id"];
           },
         ];
@@ -1071,12 +1170,20 @@ export type Database = {
         Returns: boolean;
       };
       has_app_access: { Args: Record<string, never>; Returns: boolean };
+      person_auth_user_id: { Args: { p_person_id: string }; Returns: string };
+      player_auth_user_id: { Args: { p_player_id: string }; Returns: string };
+      guardian_auth_user_id: {
+        Args: { p_guardian_id: string };
+        Returns: string;
+      };
+      can_manage_any_club: { Args: Record<string, never>; Returns: boolean };
       create_club_with_management: {
         Args: { p_name: string };
         Returns: Database["public"]["Tables"]["clubs"]["Row"];
       };
     };
     Enums: {
+      person_account_status: "none" | "invited" | "active" | "disabled";
       team_role:
         "management" | "coach" | "guardian" | "guardian_assistant" | "player";
       guardian_relationship:
@@ -1125,6 +1232,8 @@ export type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
 export type Club = Tables<"clubs">;
+export type Person = Tables<"people">;
+export type PersonInvitation = Tables<"person_invitations">;
 export type Manager = Tables<"managers">;
 export type Venue = Tables<"venues">;
 export type Team = Tables<"teams">;
@@ -1146,6 +1255,8 @@ export type Card = Tables<"cards">;
 export type CoachDevelopmentObjective = Tables<"coach_development_objectives">;
 export type PlayerDevelopmentObjective =
   Tables<"player_development_objectives">;
+
+export type PersonAccountStatus = Enums<"person_account_status">;
 
 export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;

@@ -162,6 +162,12 @@ export default async function ClubPage() {
           {!managersError && managers.length > 0 ? (
             <ClubManagersList managers={managers} />
           ) : null}
+          <Link
+            href="/people"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Manage people & invitations
+          </Link>
           <Link href="/managers/new" className={buttonVariants()}>
             Add manager
           </Link>

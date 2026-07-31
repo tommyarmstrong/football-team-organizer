@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  PERSON_EMBED,
+  unwrapPerson,
+  withPersonFields,
+  type PersonFields,
+} from "@/lib/people/person";
 import type {
   Guardian,
+  Person,
   TeamMember,
   TablesInsert,
 } from "@/lib/supabase/database.types";
@@ -13,6 +20,8 @@ export type GuardianAssistantEntry = {
   guardian_id: string;
   name: string;
 };
+
+export type GuardianWithPerson = Guardian & PersonFields;
 
 export async function listTeamMembers(
   teamId: string,
@@ -44,19 +53,20 @@ export async function listGuardianAssistants(
       .eq("role", "guardian_assistant"),
     supabase
       .from("guardians")
-      .select("id, user_id, first_name, second_name")
-      .eq("club_id", clubId)
-      .not("user_id", "is", null),
+      .select(`id, ${PERSON_EMBED}`)
+      .eq("club_id", clubId),
   ]);
 
   if (membersError) return { data: [], error: membersError.message };
   if (guardiansError) return { data: [], error: guardiansError.message };
 
-  const byUser = new Map(
-    (guardians ?? [])
-      .filter((g): g is typeof g & { user_id: string } => Boolean(g.user_id))
-      .map((g) => [g.user_id, g]),
-  );
+  const byUser = new Map<string, GuardianWithPerson>();
+  for (const g of guardians ?? []) {
+    const mapped = withPersonFields(
+      g as Guardian & { person: Person | Person[] | null },
+    );
+    if (mapped.user_id) byUser.set(mapped.user_id, mapped);
+  }
 
   const rows: GuardianAssistantEntry[] = [];
   for (const member of members ?? []) {
@@ -66,7 +76,7 @@ export async function listGuardianAssistants(
       team_member_id: member.id,
       user_id: member.user_id,
       guardian_id: guardian.id,
-      name: `${guardian.first_name} ${guardian.second_name}`.trim(),
+      name: `${guardian.first_name} ${guardian.last_name}`.trim(),
     });
   }
   return { data: rows, error: null };
@@ -75,7 +85,7 @@ export async function listGuardianAssistants(
 export async function listGuardianAssistantCandidates(
   teamId: string,
   clubId: string,
-): Promise<{ data: Guardian[]; error: string | null }> {
+): Promise<{ data: GuardianWithPerson[]; error: string | null }> {
   const supabase = await createClient();
   const [
     { data: guardians, error: guardiansError },
@@ -83,10 +93,8 @@ export async function listGuardianAssistantCandidates(
   ] = await Promise.all([
     supabase
       .from("guardians")
-      .select("*")
-      .eq("club_id", clubId)
-      .not("user_id", "is", null)
-      .order("second_name", { ascending: true }),
+      .select(`*, ${PERSON_EMBED}`)
+      .eq("club_id", clubId),
     supabase
       .from("team_members")
       .select("user_id")
@@ -98,12 +106,17 @@ export async function listGuardianAssistantCandidates(
   if (assistantsError) return { data: [], error: assistantsError.message };
 
   const assigned = new Set((assistants ?? []).map((r) => r.user_id));
-  return {
-    data: (guardians ?? []).filter(
-      (g) => g.user_id && !assigned.has(g.user_id),
-    ),
-    error: null,
-  };
+  const mapped = (guardians ?? [])
+    .map((g) =>
+      withPersonFields(g as Guardian & { person: Person | Person[] | null }),
+    )
+    .filter((g) => g.user_id && !assigned.has(g.user_id));
+  mapped.sort(
+    (a, b) =>
+      a.last_name.localeCompare(b.last_name) ||
+      a.first_name.localeCompare(b.first_name),
+  );
+  return { data: mapped, error: null };
 }
 
 export async function addTeamMember(
@@ -124,3 +137,6 @@ export async function removeTeamMember(
   const { error } = await supabase.from("team_members").delete().eq("id", id);
   return { error: error?.message ?? null };
 }
+
+// Keep unwrapPerson available for callers that import members helpers.
+export { unwrapPerson };

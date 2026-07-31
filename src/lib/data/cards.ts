@@ -1,19 +1,108 @@
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
+import { unwrapPerson } from "@/lib/people/person";
 import type {
   Card,
-  Coach,
-  Guardian,
-  Player,
+  Person,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
-export type CardWithPerson = Card & {
-  player: Pick<Player, "id" | "first_name" | "last_name"> | null;
-  coach: Pick<Coach, "id" | "first_name" | "second_name"> | null;
-  guardian: Pick<Guardian, "id" | "first_name" | "second_name"> | null;
+type NamedPerson = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  second_name?: string;
 };
+
+export type CardWithPerson = Card & {
+  player: NamedPerson | null;
+  coach: NamedPerson | null;
+  guardian: NamedPerson | null;
+};
+
+const CARD_PERSON_SELECT =
+  "*, player:players!cards_player_id_fkey(id, person:people!person_id(first_name, last_name)), coach:coaches!cards_coach_id_fkey(id, person:people!person_id(first_name, last_name)), guardian:guardians!cards_guardian_id_fkey(id, person:people!person_id(first_name, last_name))";
+
+function mapNamedRole(
+  row:
+    | {
+        id: string;
+        person?:
+          | Person
+          | Person[]
+          | { first_name: string; last_name: string }
+          | { first_name: string; last_name: string }[]
+          | null;
+      }
+    | null
+    | undefined,
+  useSecondName: boolean,
+): NamedPerson | null {
+  if (!row) return null;
+  const person = unwrapPerson(row.person as Person | Person[] | null);
+  if (!person)
+    return { id: row.id, first_name: "", last_name: "", second_name: "" };
+  return {
+    id: row.id,
+    first_name: person.first_name,
+    last_name: person.last_name,
+    second_name: useSecondName ? person.last_name : undefined,
+  };
+}
+
+function mapCardRow(row: {
+  id: string;
+  match_id: string;
+  player_id: string | null;
+  coach_id: string | null;
+  guardian_id: string | null;
+  type: Card["type"];
+  coach_notes: string | null;
+  referee_notes: string | null;
+  club_notes: string | null;
+  created_at: string;
+  player: unknown;
+  coach: unknown;
+  guardian: unknown;
+}): CardWithPerson {
+  const player = Array.isArray(row.player) ? row.player[0] : row.player;
+  const coach = Array.isArray(row.coach) ? row.coach[0] : row.coach;
+  const guardian = Array.isArray(row.guardian) ? row.guardian[0] : row.guardian;
+  return {
+    id: row.id,
+    match_id: row.match_id,
+    player_id: row.player_id,
+    coach_id: row.coach_id,
+    guardian_id: row.guardian_id,
+    type: row.type,
+    coach_notes: row.coach_notes,
+    referee_notes: row.referee_notes,
+    club_notes: row.club_notes,
+    created_at: row.created_at,
+    player: mapNamedRole(
+      player as {
+        id: string;
+        person?: Person | Person[] | null;
+      } | null,
+      false,
+    ),
+    coach: mapNamedRole(
+      coach as {
+        id: string;
+        person?: Person | Person[] | null;
+      } | null,
+      true,
+    ),
+    guardian: mapNamedRole(
+      guardian as {
+        id: string;
+        person?: Person | Person[] | null;
+      } | null,
+      true,
+    ),
+  };
+}
 
 export async function listCardsForMatch(
   matchId: string,
@@ -22,38 +111,18 @@ export async function listCardsForMatch(
 
   const { data, error } = await supabase
     .from("cards")
-    .select(
-      "*, player:players!cards_player_id_fkey(id, first_name, last_name), coach:coaches!cards_coach_id_fkey(id, first_name, second_name), guardian:guardians!cards_guardian_id_fkey(id, first_name, second_name)",
-    )
+    .select(CARD_PERSON_SELECT)
     .eq("match_id", matchId)
     .order("created_at", { ascending: true });
 
   if (error) return { data: [], error: error.message };
 
-  const rows = (data ?? []).map((row) => {
-    const player = Array.isArray(row.player) ? row.player[0] : row.player;
-    const coach = Array.isArray(row.coach) ? row.coach[0] : row.coach;
-    const guardian = Array.isArray(row.guardian)
-      ? row.guardian[0]
-      : row.guardian;
-    return {
-      id: row.id,
-      match_id: row.match_id,
-      player_id: row.player_id,
-      coach_id: row.coach_id,
-      guardian_id: row.guardian_id,
-      type: row.type,
-      coach_notes: row.coach_notes,
-      referee_notes: row.referee_notes,
-      club_notes: row.club_notes,
-      created_at: row.created_at,
-      player: player ?? null,
-      coach: coach ?? null,
-      guardian: guardian ?? null,
-    };
-  });
-
-  return { data: rows, error: null };
+  return {
+    data: (data ?? []).map((row) =>
+      mapCardRow(row as Parameters<typeof mapCardRow>[0]),
+    ),
+    error: null,
+  };
 }
 
 export async function getCard(
@@ -63,37 +132,15 @@ export async function getCard(
 
   const { data, error } = await supabase
     .from("cards")
-    .select(
-      "*, player:players!cards_player_id_fkey(id, first_name, last_name), coach:coaches!cards_coach_id_fkey(id, first_name, second_name), guardian:guardians!cards_guardian_id_fkey(id, first_name, second_name)",
-    )
+    .select(CARD_PERSON_SELECT)
     .eq("id", cardId)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: null };
 
-  const player = Array.isArray(data.player) ? data.player[0] : data.player;
-  const coach = Array.isArray(data.coach) ? data.coach[0] : data.coach;
-  const guardian = Array.isArray(data.guardian)
-    ? data.guardian[0]
-    : data.guardian;
-
   return {
-    data: {
-      id: data.id,
-      match_id: data.match_id,
-      player_id: data.player_id,
-      coach_id: data.coach_id,
-      guardian_id: data.guardian_id,
-      type: data.type,
-      coach_notes: data.coach_notes,
-      referee_notes: data.referee_notes,
-      club_notes: data.club_notes,
-      created_at: data.created_at,
-      player: player ?? null,
-      coach: coach ?? null,
-      guardian: guardian ?? null,
-    },
+    data: mapCardRow(data as Parameters<typeof mapCardRow>[0]),
     error: null,
   };
 }

@@ -2,15 +2,33 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/database.types";
 
-const PUBLIC_PATHS = new Set(["/login"]);
-const MEMBERSHIP_EXEMPT_PATHS = new Set(["/login", "/no-access"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/onboarding/accept",
+  "/auth/callback",
+]);
+const MEMBERSHIP_EXEMPT_PATHS = new Set([
+  "/login",
+  "/no-access",
+  "/onboarding/accept",
+  "/onboarding/complete",
+  "/auth/callback",
+]);
 
 function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.has(pathname);
+  return (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/onboarding/accept") ||
+    pathname.startsWith("/auth/callback")
+  );
 }
 
 function isMembershipExemptPath(pathname: string) {
-  return MEMBERSHIP_EXEMPT_PATHS.has(pathname);
+  return (
+    MEMBERSHIP_EXEMPT_PATHS.has(pathname) ||
+    pathname.startsWith("/onboarding/") ||
+    pathname.startsWith("/auth/callback")
+  );
 }
 
 async function userHasAppAccess(

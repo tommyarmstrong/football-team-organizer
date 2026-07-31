@@ -131,22 +131,31 @@ upserted_team as (
 )
 select 1 from upserted_club, upserted_venues, upserted_team;
 
--- Manager may already exist from the club_members → managers migration (random id).
--- Remove either the fixed seed id or the club+user pair, then insert cleanly.
+-- Seed manager person + manager role (Auth UUID on people.auth_user_id).
+-- Replace the Auth UUID below with your local Supabase Auth user id.
 delete from public.managers
 where id = '22222222-2222-2222-2222-222222222222'
-   or (
-     club_id = '11111111-1111-1111-1111-111111111111'
-     and user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'
-   );
+   or person_id = 'p0000000-0000-4000-8000-000000000001';
 
-insert into public.managers (id, club_id, user_id, first_name, second_name)
+delete from public.people
+where id = 'p0000000-0000-4000-8000-000000000001'
+   or auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b';
+
+insert into public.people (
+  id, first_name, last_name, auth_user_id, account_status
+) values (
+  'p0000000-0000-4000-8000-000000000001',
+  'Club',
+  'Manager',
+  '05b5a111-bd09-440a-8613-8225e7b9397b', -- <-- replace with your Auth user UUID
+  'active'
+);
+
+insert into public.managers (id, club_id, person_id)
 values (
   '22222222-2222-2222-2222-222222222222',
   '11111111-1111-1111-1111-111111111111',
-  '05b5a111-bd09-440a-8613-8225e7b9397b', -- <-- replace with your Auth user UUID
-  'Club',
-  'Manager'
+  'p0000000-0000-4000-8000-000000000001'
 );
 
 -- Team-scoped auth roles (additive: same user may hold several roles on one team).
@@ -208,12 +217,41 @@ on conflict (id) do update set
   training_days = excluded.training_days,
   season_label = excluded.season_label;
 
--- Club coaching staff.
+-- Club coaching staff (people + role attributes).
+insert into public.people (id, first_name, last_name, account_status)
+values
+  (
+    'e0000001-0000-4000-8000-000000000001',
+    'Kevin',
+    'Keegan',
+    'none'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000002',
+    'Bobby',
+    'Robson',
+    'none'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000003',
+    'Eddie',
+    'Howe',
+    'none'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000004',
+    'Alf',
+    'Ramsey',
+    'none'
+  )
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
 insert into public.coaches (
   id,
   club_id,
-  first_name,
-  second_name,
+  person_id,
   joined_date,
   dbs_checked,
   fa_level_1,
@@ -224,8 +262,7 @@ values
   (
     'c0000001-0000-4000-8000-000000000001',
     '11111111-1111-1111-1111-111111111111',
-    'Kevin',
-    'Keegan',
+    'e0000001-0000-4000-8000-000000000001',
     '2022-09-01',
     true,
     true,
@@ -235,8 +272,7 @@ values
   (
     'c0000001-0000-4000-8000-000000000002',
     '11111111-1111-1111-1111-111111111111',
-    'Bobby',
-    'Robson',
+    'e0000001-0000-4000-8000-000000000002',
     '2022-09-01',
     true,
     true,
@@ -246,8 +282,7 @@ values
   (
     'c0000001-0000-4000-8000-000000000003',
     '11111111-1111-1111-1111-111111111111',
-    'Eddie',
-    'Howe',
+    'e0000001-0000-4000-8000-000000000003',
     '2022-09-01',
     true,
     true,
@@ -257,8 +292,7 @@ values
   (
     'c0000001-0000-4000-8000-000000000004',
     '11111111-1111-1111-1111-111111111111',
-    'Alf',
-    'Ramsey',
+    'e0000001-0000-4000-8000-000000000004',
     '1963-02-27',
     true,
     true,
@@ -267,8 +301,7 @@ values
   )
 on conflict (id) do update set
   club_id = excluded.club_id,
-  first_name = excluded.first_name,
-  second_name = excluded.second_name,
+  person_id = excluded.person_id,
   joined_date = excluded.joined_date,
   dbs_checked = excluded.dbs_checked,
   fa_level_1 = excluded.fa_level_1,
@@ -302,11 +335,83 @@ on conflict (team_id, coach_id) do update set
   role = excluded.role;
 
 -- England 1966 World Cup squad.
+-- Players always get a people row; no login by default.
+insert into public.people (id, first_name, last_name, account_status)
+values
+  (
+    'p0000001-0000-4000-8000-000000000001',
+    'Gordon',
+    'Banks',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000002',
+    'George',
+    'Cohen',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000003',
+    'Ray',
+    'Wilson',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000004',
+    'Nobby',
+    'Stiles',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000005',
+    'Jack',
+    'Charlton',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000006',
+    'Bobby',
+    'Moore',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000007',
+    'Alan',
+    'Ball',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000008',
+    'Bobby',
+    'Charlton',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000009',
+    'Geoff',
+    'Hurst',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000010',
+    'Martin',
+    'Peters',
+    'none'
+  ),
+  (
+    'p0000001-0000-4000-8000-000000000011',
+    'Roger',
+    'Hunt',
+    'none'
+  )
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
 insert into public.players (
   id,
   club_id,
-  first_name,
-  last_name,
+  person_id,
   position,
   date_of_birth
 )
@@ -314,95 +419,83 @@ values
   (
     'a0000001-0000-4000-8000-000000000001',
     '11111111-1111-1111-1111-111111111111',
-    'Gordon',
-    'Banks',
+    'p0000001-0000-4000-8000-000000000001',
     'GK',
     '1937-12-30'
   ),
   (
     'a0000001-0000-4000-8000-000000000002',
     '11111111-1111-1111-1111-111111111111',
-    'George',
-    'Cohen',
+    'p0000001-0000-4000-8000-000000000002',
     'DEF',
     '1939-10-22'
   ),
   (
     'a0000001-0000-4000-8000-000000000003',
     '11111111-1111-1111-1111-111111111111',
-    'Ray',
-    'Wilson',
+    'p0000001-0000-4000-8000-000000000003',
     'DEF',
     '1934-12-17'
   ),
   (
     'a0000001-0000-4000-8000-000000000004',
     '11111111-1111-1111-1111-111111111111',
-    'Nobby',
-    'Stiles',
+    'p0000001-0000-4000-8000-000000000004',
     'MID',
     '1942-05-18'
   ),
   (
     'a0000001-0000-4000-8000-000000000005',
     '11111111-1111-1111-1111-111111111111',
-    'Jack',
-    'Charlton',
+    'p0000001-0000-4000-8000-000000000005',
     'DEF',
     '1935-05-08'
   ),
   (
     'a0000001-0000-4000-8000-000000000006',
     '11111111-1111-1111-1111-111111111111',
-    'Bobby',
-    'Moore',
+    'p0000001-0000-4000-8000-000000000006',
     'DEF',
     '1941-04-12'
   ),
   (
     'a0000001-0000-4000-8000-000000000007',
     '11111111-1111-1111-1111-111111111111',
-    'Alan',
-    'Ball',
+    'p0000001-0000-4000-8000-000000000007',
     'MID',
     '1945-05-12'
   ),
   (
     'a0000001-0000-4000-8000-000000000008',
     '11111111-1111-1111-1111-111111111111',
-    'Bobby',
-    'Charlton',
+    'p0000001-0000-4000-8000-000000000008',
     'MID',
     '1937-10-11'
   ),
   (
     'a0000001-0000-4000-8000-000000000009',
     '11111111-1111-1111-1111-111111111111',
-    'Geoff',
-    'Hurst',
+    'p0000001-0000-4000-8000-000000000009',
     'FWD',
     '1941-12-08'
   ),
   (
     'a0000001-0000-4000-8000-000000000010',
     '11111111-1111-1111-1111-111111111111',
-    'Martin',
-    'Peters',
+    'p0000001-0000-4000-8000-000000000010',
     'MID',
     '1943-11-08'
   ),
   (
     'a0000001-0000-4000-8000-000000000011',
     '11111111-1111-1111-1111-111111111111',
-    'Roger',
-    'Hunt',
+    'p0000001-0000-4000-8000-000000000011',
     'FWD',
     '1938-07-20'
   )
 on conflict (id) do update set
   club_id = excluded.club_id,
-  first_name = excluded.first_name,
-  last_name = excluded.last_name,
+  person_id = excluded.person_id,
   position = excluded.position,
   date_of_birth = excluded.date_of_birth;
 

@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginFormWithGoogle as LoginForm } from "@/components/auth/login-form";
 import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>{APP_NAME}</CardTitle>
           <CardDescription>
-            Sign in with your coach or admin email and password.
+            Sign in with email and password, or Google.
           </CardDescription>
         </CardHeader>
         <CardContent>

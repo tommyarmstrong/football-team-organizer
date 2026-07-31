@@ -7,8 +7,130 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { createClient } from "@/lib/supabase/client";
+import { acceptInvitationWithPassword } from "@/lib/people/onboarding-actions";
 
-export function LoginForm() {
+export function AcceptInvitationForm({
+  token,
+  email,
+  firstName,
+}: {
+  token: string;
+  email: string;
+  firstName: string;
+}) {
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onPasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setPending(true);
+    const result = await acceptInvitationWithPassword({
+      token,
+      password,
+    });
+    setPending(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    router.replace("/onboarding/complete");
+    router.refresh();
+  }
+
+  async function onGoogle() {
+    setError(null);
+    setPending(true);
+    const supabase = createClient();
+    const origin = window.location.origin;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/auth/callback?invite_token=${encodeURIComponent(token)}&next=${encodeURIComponent("/onboarding/complete")}`,
+      },
+    });
+    setPending(false);
+    if (oauthError) setError(oauthError.message);
+  }
+
+  return (
+    <div className="space-y-6">
+      <p className="text-muted-foreground text-sm">
+        Welcome{firstName ? `, ${firstName}` : ""}. Create a password for{" "}
+        <span className="text-foreground font-medium">{email}</span>, or
+        continue with Google using the same email.
+      </p>
+
+      <form onSubmit={onPasswordSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirm">Confirm password</Label>
+          <Input
+            id="confirm"
+            name="confirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+
+        {error ? <ErrorBanner message={error} /> : null}
+
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "Creating account…" : "Create account"}
+        </Button>
+      </form>
+
+      <div className="relative py-2 text-center text-sm">
+        <span className="text-muted-foreground bg-background relative z-10 px-2">
+          or
+        </span>
+        <div className="border-border absolute inset-x-0 top-1/2 border-t" />
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={pending}
+        onClick={onGoogle}
+      >
+        Continue with Google
+      </Button>
+    </div>
+  );
+}
+
+export function LoginFormWithGoogle() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/dashboard";
@@ -40,43 +162,78 @@ export function LoginForm() {
     router.refresh();
   }
 
+  async function onGoogle() {
+    setError(null);
+    setPending(true);
+    const supabase = createClient();
+    const origin = window.location.origin;
+    const next = nextPath.startsWith("/") ? nextPath : "/dashboard";
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
+    });
+    setPending(false);
+    if (oauthError) setError(oauthError.message);
+  }
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          aria-required="true"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={pending}
-        />
+    <div className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            aria-required="true"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            aria-required="true"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={pending}
+          />
+        </div>
+
+        {error ? <ErrorBanner message={error} /> : null}
+
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+
+      <div className="relative py-2 text-center text-sm">
+        <span className="text-muted-foreground bg-background relative z-10 px-2">
+          or
+        </span>
+        <div className="border-border absolute inset-x-0 top-1/2 border-t" />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          aria-required="true"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={pending}
-        />
-      </div>
-
-      {error ? <ErrorBanner message={error} /> : null}
-
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={pending}
+        onClick={onGoogle}
+      >
+        Sign in with Google
       </Button>
-    </form>
+    </div>
   );
 }
