@@ -122,17 +122,18 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 
 -- Replace prior helper that took players.user_id as the third argument.
-drop function if exists public.can_read_player_row(uuid, uuid, uuid);
-
+-- Keep the parameter name p_user_id so CREATE OR REPLACE is allowed (Postgres
+-- rejects renaming args). Callers now pass players.person_id; the body resolves
+-- auth via people. Auth semantics change; the arg name is historical.
 create or replace function public.can_read_player_row(
   p_player_id uuid,
   p_club_id uuid,
-  p_person_id uuid
+  p_user_id uuid
 )
 returns boolean language sql stable security definer set search_path = public as $$
   select
     public.is_club_staff(p_club_id)
-    or public.person_auth_user_id(p_person_id) = auth.uid()
+    or public.person_auth_user_id(p_user_id) = auth.uid()
     or exists (
       select 1
       from public.player_guardians pg
