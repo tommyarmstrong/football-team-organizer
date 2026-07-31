@@ -48,7 +48,10 @@ export function CompetitionsSection({
                   <ListDeleteButton
                     label={`Delete ${competition.name}`}
                     confirmMessage={`Delete “${competition.name}”? Matches keep their fixture data; the competition link is cleared.`}
-                    deleteAction={() => deleteCompetitionAction(competition.id)}
+                    deleteAction={deleteCompetitionAction.bind(
+                      null,
+                      competition.id,
+                    )}
                   />
                 </div>
               ) : null}
