@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  clubIconExtension,
   clubIconSrc,
   isValidClubColour,
   parseClubColour,
@@ -49,5 +50,20 @@ describe("clubIconSrc", () => {
     expect(clubIconSrc("https://example.com/icon.png")).toBe(
       "https://example.com/icon.png",
     );
+  });
+});
+
+describe("clubIconExtension", () => {
+  it("maps supported MIME types to file extensions", () => {
+    expect(clubIconExtension("image/png")).toBe("png");
+    expect(clubIconExtension("image/jpeg")).toBe("jpg");
+    expect(clubIconExtension("image/webp")).toBe("webp");
+    expect(clubIconExtension("image/gif")).toBe("gif");
+    expect(clubIconExtension("image/svg+xml")).toBe("svg");
+  });
+
+  it("returns null for unsupported MIME types", () => {
+    expect(clubIconExtension("image/avif")).toBeNull();
+    expect(clubIconExtension("application/pdf")).toBeNull();
   });
 });
