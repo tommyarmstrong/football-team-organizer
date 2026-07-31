@@ -1,21 +1,26 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addPlayerToTeamAction,
   removePlayerFromTeamAction,
-  updateRosterEntryAction,
 } from "@/lib/players/actions";
+import { setActiveTeamAction } from "@/lib/team/actions";
 import type { Team } from "@/lib/supabase/database.types";
 import type { PlayerTeamMembership } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function PlayerTeamsSection({
   playerId,
@@ -29,11 +34,7 @@ export function PlayerTeamsSection({
   canEdit: boolean;
 }) {
   return (
-    <div className="space-y-6">
-      {canEdit ? (
-        <AddToTeamForm playerId={playerId} availableTeams={availableTeams} />
-      ) : null}
-
+    <div className="space-y-4">
       {memberships.length === 0 ? (
         <EmptyState
           title="Not on any team"
@@ -44,34 +45,62 @@ export function PlayerTeamsSection({
           }
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className={objectListClassName}>
           {memberships.map((membership) => (
-            <li
-              key={membership.team_player_id}
-              className="border-border rounded-xl border p-4"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <Link href="/team" className="font-medium hover:underline">
-                  {membership.team_name}
-                </Link>
-                <span className="text-muted-foreground text-sm">
-                  {membership.shirt_number != null
-                    ? `#${membership.shirt_number}`
-                    : "No shirt"}
-                  {membership.active ? "" : " · Inactive"}
-                </span>
-              </div>
+            <li key={membership.team_player_id} className="flex items-stretch">
+              <OpenTeamRow membership={membership} />
               {canEdit ? (
-                <MembershipControls
-                  playerId={playerId}
-                  membership={membership}
-                />
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Remove from ${membership.team_name}`}
+                    confirmMessage="Remove this player from the team?"
+                    unlinkAction={() =>
+                      removePlayerFromTeamAction(
+                        membership.team_player_id,
+                        playerId,
+                      )
+                    }
+                  />
+                </div>
               ) : null}
             </li>
           ))}
         </ul>
       )}
+
+      {canEdit ? (
+        <AddToTeamForm playerId={playerId} availableTeams={availableTeams} />
+      ) : null}
     </div>
+  );
+}
+
+function OpenTeamRow({ membership }: { membership: PlayerTeamMembership }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => {
+        startTransition(async () => {
+          await setActiveTeamAction(membership.team_id);
+          router.push("/team");
+        });
+      }}
+      className={objectListRowClassName("w-full text-left disabled:opacity-60")}
+    >
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {membership.team_name}
+      </span>
+      <span className="text-muted-foreground shrink-0">
+        {membership.shirt_number != null
+          ? `#${membership.shirt_number}`
+          : "No shirt"}
+        {membership.active ? "" : " · Inactive"}
+      </span>
+    </button>
   );
 }
 
@@ -100,20 +129,24 @@ function AddToTeamForm({
     <form
       key={state.success ?? "idle"}
       action={formAction}
-      className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
-      <div className="space-y-2">
+      <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="add-team">Add to team</Label>
-        <NativeSelect id="add-team" name="team_id" required disabled={pending}>
-          <option value="">Select a team</option>
-          {availableTeams.map((team) => (
-            <option key={team.id} value={team.id}>
-              {team.name}
-            </option>
-          ))}
-        </NativeSelect>
+        <SearchableSelect
+          id="add-team"
+          name="team_id"
+          required
+          disabled={pending}
+          placeholder="Search teams by name…"
+          emptyMessage="No teams match that name."
+          options={availableTeams.map((team) => ({
+            value: team.id,
+            label: team.name,
+          }))}
+        />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 sm:w-28">
         <Label htmlFor="add-shirt">Shirt</Label>
         <Input
           id="add-shirt"
@@ -127,96 +160,10 @@ function AddToTeamForm({
         {pending ? "Adding…" : "Add"}
       </Button>
       {state.error ? (
-        <div className="sm:col-span-3">
+        <div className="w-full sm:basis-full">
           <ErrorBanner message={state.error} />
         </div>
       ) : null}
     </form>
-  );
-}
-
-function MembershipControls({
-  playerId,
-  membership,
-}: {
-  playerId: string;
-  membership: PlayerTeamMembership;
-}) {
-  const boundUpdate = updateRosterEntryAction.bind(
-    null,
-    membership.team_player_id,
-    playerId,
-  );
-  const [state, formAction, pending] = useActionState(
-    boundUpdate,
-    INITIAL_ACTION_STATE,
-  );
-  const [removeState, removeAction, removePending] = useActionState(
-    async () => removePlayerFromTeamAction(membership.team_player_id, playerId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <div className="mt-3 space-y-3">
-      <form
-        action={formAction}
-        className="grid gap-3 sm:grid-cols-[8rem_10rem_auto] sm:items-end"
-      >
-        <div className="space-y-2">
-          <Label htmlFor={`m-shirt-${membership.team_player_id}`}>Shirt</Label>
-          <Input
-            id={`m-shirt-${membership.team_player_id}`}
-            name="shirt_number"
-            type="number"
-            min={1}
-            defaultValue={membership.shirt_number ?? ""}
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`m-active-${membership.team_player_id}`}>
-            Status
-          </Label>
-          <NativeSelect
-            id={`m-active-${membership.team_player_id}`}
-            name="active"
-            defaultValue={membership.active ? "true" : "false"}
-            disabled={pending}
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </NativeSelect>
-        </div>
-        <Button type="submit" variant="outline" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </Button>
-      </form>
-
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
-
-      <form
-        action={removeAction}
-        onSubmit={(event) => {
-          if (!window.confirm("Remove this player from the team?")) {
-            event.preventDefault();
-          }
-        }}
-      >
-        {removeState.error ? <ErrorBanner message={removeState.error} /> : null}
-        <Button
-          type="submit"
-          variant="destructive"
-          size="sm"
-          disabled={removePending}
-        >
-          {removePending ? "Removing…" : "Remove from team"}
-        </Button>
-      </form>
-    </div>
   );
 }

@@ -13,10 +13,14 @@ import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import { GoalScorerChip } from "@/components/matches/match-goals-section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function MatchPeriodsSection({
   matchId,
@@ -46,14 +50,14 @@ export function MatchPeriodsSection({
           description="Add a period below, then set starting players and goals on the period page."
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {periods.map((period) => {
             const periodGoals = goals.filter((g) => g.period_id === period.id);
             return (
               <li key={period.id} className="flex items-stretch">
                 <Link
                   href={`/matches/${matchId}/periods/${period.id}`}
-                  className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className={objectListRowClassName("flex-wrap gap-y-2")}
                 >
                   <span className="min-w-0 shrink-0 font-medium">
                     {period.name}
@@ -105,27 +109,24 @@ function AddPeriodForm({ matchId }: { matchId: string }) {
 
   return (
     <form
+      key={state.success ?? "idle"}
       action={formAction}
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="add-period-name">Add period</Label>
-        <NativeSelect
+        <SearchableSelect
           id="add-period-name"
           name="name"
           required
           disabled={pending}
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Select period
-          </option>
-          {MATCH_PERIOD_NAMES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </NativeSelect>
+          placeholder="Search period names…"
+          emptyMessage="No period names match."
+          options={MATCH_PERIOD_NAMES.map((name) => ({
+            value: name,
+            label: name,
+          }))}
+        />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add"}

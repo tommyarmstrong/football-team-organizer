@@ -8,6 +8,10 @@ import {
 import type { CoachDevelopmentObjective } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { buttonVariants } from "@/components/ui/button";
 
 export function CoachObjectivesSection({
@@ -21,17 +25,6 @@ export function CoachObjectivesSection({
 }) {
   return (
     <div className="space-y-4">
-      {canEdit ? (
-        <div className="flex justify-end">
-          <Link
-            href={`/coaches/${coachId}/objectives/new`}
-            className={buttonVariants({ size: "sm" })}
-          >
-            Add
-          </Link>
-        </div>
-      ) : null}
-
       {objectives.length === 0 ? (
         <EmptyState
           title="No development objectives"
@@ -40,24 +33,16 @@ export function CoachObjectivesSection({
               ? "Add zero or more objectives for this coach."
               : "Development objectives will appear here when added."
           }
-          action={
-            canEdit ? (
-              <Link
-                href={`/coaches/${coachId}/objectives/new`}
-                className={buttonVariants()}
-              >
-                Add
-              </Link>
-            ) : undefined
-          }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {objectives.map((objective) => (
             <li key={objective.id} className="flex items-stretch">
               <Link
                 href={`/coaches/${coachId}/objectives/${objective.id}`}
-                className="hover:bg-muted/50 flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                className={objectListRowClassName(
+                  "flex-col items-stretch gap-1 sm:flex-row sm:items-center sm:justify-between",
+                )}
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{objective.body}</p>
@@ -89,6 +74,17 @@ export function CoachObjectivesSection({
           ))}
         </ul>
       )}
+
+      {canEdit ? (
+        <div>
+          <Link
+            href={`/coaches/${coachId}/objectives/new`}
+            className={buttonVariants()}
+          >
+            Add
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

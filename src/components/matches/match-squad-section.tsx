@@ -1,15 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { XIcon } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { saveMatchSquadAction } from "@/lib/match-players/actions";
 import { playerDisplayName } from "@/lib/format";
 import type { RosterPlayer } from "@/lib/data/players";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function MatchSquadSection({
   matchId,
@@ -32,13 +38,22 @@ export function MatchSquadSection({
         description="Available players for this match have not been selected yet."
       />
     ) : (
-      <ul className="flex flex-wrap gap-2">
+      <ul className={objectListClassName}>
         {selectedPlayers.map((player) => (
-          <li
-            key={player.id}
-            className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1.5 text-sm font-medium"
-          >
-            {playerDisplayName(player, { shirtNumber: player.shirt_number })}
+          <li key={player.id}>
+            <Link
+              href={`/players/${player.id}`}
+              className={objectListRowClassName()}
+            >
+              <span className="min-w-0 flex-1 truncate font-medium">
+                {playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                })}
+              </span>
+              {!player.active ? (
+                <span className="text-muted-foreground shrink-0">Inactive</span>
+              ) : null}
+            </Link>
           </li>
         ))}
       </ul>
@@ -80,6 +95,7 @@ function SquadForm({
   );
   const [pending, startTransition] = useTransition();
   const [selectedIds, setSelectedIds] = useState(selectedPlayerIds);
+  const [addKey, setAddKey] = useState(0);
 
   const selected = new Set(selectedIds);
   const selectedPlayers = roster.filter((p) => selected.has(p.id));
@@ -101,9 +117,11 @@ function SquadForm({
     persist(selectedIds.filter((id) => id !== playerId));
   }
 
-  function addPlayer(playerId: string) {
+  function addPlayer(formData: FormData) {
+    const playerId = String(formData.get("player_id") ?? "");
     if (!playerId || selected.has(playerId)) return;
     persist([...selectedIds, playerId]);
+    setAddKey((key) => key + 1);
   }
 
   return (
@@ -119,60 +137,73 @@ function SquadForm({
           No players selected for this match.
         </p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className={objectListClassName}>
           {selectedPlayers.map((player) => (
-            <li
-              key={player.id}
-              className="border-border bg-background inline-flex items-center gap-1 rounded-lg border py-1 pr-1 pl-2.5 text-sm font-medium"
-            >
-              <span>
-                {playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                })}
+            <li key={player.id} className="flex items-stretch">
+              <Link
+                href={`/players/${player.id}`}
+                className={objectListRowClassName()}
+              >
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {playerDisplayName(player, {
+                    shirtNumber: player.shirt_number,
+                  })}
+                </span>
                 {!player.active ? (
-                  <span className="text-muted-foreground font-normal">
-                    {" "}
-                    (inactive)
+                  <span className="text-muted-foreground shrink-0">
+                    Inactive
                   </span>
                 ) : null}
-              </span>
-              <button
-                type="button"
-                onClick={() => removePlayer(player.id)}
-                disabled={isPending}
-                aria-label={`Remove ${playerDisplayName(player)} from match-day squad`}
-                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
-              >
-                <XIcon className="size-3.5" />
-              </button>
+              </Link>
+              <div className="flex items-center pr-2">
+                <button
+                  type="button"
+                  onClick={() => removePlayer(player.id)}
+                  disabled={isPending}
+                  aria-label={`Remove ${playerDisplayName(player)} from match-day squad`}
+                  title={`Remove ${playerDisplayName(player)} from match-day squad`}
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-9 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <XIcon className="size-4" aria-hidden="true" />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="add_match_squad_player">Add player</Label>
-        <NativeSelect
-          id="add_match_squad_player"
-          value=""
-          disabled={isPending || availablePlayers.length === 0}
-          onChange={(e) => addPlayer(e.target.value)}
+      {availablePlayers.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          All squad players are selected for this match.
+        </p>
+      ) : (
+        <form
+          key={addKey}
+          action={addPlayer}
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
         >
-          <option value="">
-            {availablePlayers.length === 0
-              ? "All squad players selected"
-              : "Select a player to add…"}
-          </option>
-          {availablePlayers.map((player) => (
-            <option key={player.id} value={player.id}>
-              {playerDisplayName(player, {
-                shirtNumber: player.shirt_number,
-              })}
-              {!player.active ? " (inactive)" : ""}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+          <div className="min-w-0 flex-1 space-y-2">
+            <Label htmlFor="add_match_squad_player">Add player</Label>
+            <SearchableSelect
+              id="add_match_squad_player"
+              name="player_id"
+              required
+              disabled={isPending}
+              placeholder="Search players by name…"
+              emptyMessage="No players match that name."
+              options={availablePlayers.map((player) => ({
+                value: player.id,
+                label: `${playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                })}${!player.active ? " (inactive)" : ""}`,
+              }))}
+            />
+          </div>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Adding…" : "Add"}
+          </Button>
+        </form>
+      )}
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
       {state.success ? (

@@ -12,9 +12,7 @@ import {
 } from "@/lib/format";
 import { GUARDIAN_RELATIONSHIP_LABELS } from "@/lib/constants";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
-
-const rowLinkClassName =
-  "hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none";
+import { objectListRowClassName } from "@/components/shared/object-list";
 
 export function ClubPlayersList({ players }: { players: Player[] }) {
   return (
@@ -26,14 +24,16 @@ export function ClubPlayersList({ players }: { players: Player[] }) {
       emptyFilterTitle="No players match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(player) => (
-        <Link href={`/players/${player.id}`} className={rowLinkClassName}>
-          <div>
+        <Link
+          href={`/players/${player.id}`}
+          className={objectListRowClassName()}
+        >
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{playerDisplayName(player)}</p>
             <p className="text-muted-foreground text-sm">
               {player.position ?? "No position"}
             </p>
           </div>
-          <span className="text-muted-foreground text-xs">Edit</span>
         </Link>
       )}
     />
@@ -54,18 +54,19 @@ export function ClubGuardiansList({
       emptyFilterTitle="No guardians match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(guardian) => (
-        <Link href={`/guardians/${guardian.id}`} className={rowLinkClassName}>
-          <div className="min-w-0">
+        <Link
+          href={`/guardians/${guardian.id}`}
+          className={objectListRowClassName()}
+        >
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{guardianDisplayName(guardian)}</p>
             <p className="text-muted-foreground truncate text-sm">
               {guardian.email ?? guardian.phone ?? "No contact details"}
             </p>
           </div>
-          <div className="flex flex-wrap justify-end gap-1">
-            {guardian.players.length === 0 ? (
-              <span className="text-muted-foreground text-xs">Edit</span>
-            ) : (
-              guardian.players.map((link) => (
+          {guardian.players.length > 0 ? (
+            <div className="flex flex-wrap justify-end gap-1">
+              {guardian.players.map((link) => (
                 <span
                   key={link.player_guardian_id}
                   className="border-border text-muted-foreground rounded-md border px-2 py-0.5 text-xs"
@@ -74,9 +75,9 @@ export function ClubGuardiansList({
                   {" · "}
                   {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
                 </span>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : null}
         </Link>
       )}
     />
@@ -93,14 +94,16 @@ export function ClubCoachesList({ coaches }: { coaches: Coach[] }) {
       emptyFilterTitle="No coaches match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(coach) => (
-        <Link href={`/coaches/${coach.id}`} className={rowLinkClassName}>
-          <div>
+        <Link
+          href={`/coaches/${coach.id}`}
+          className={objectListRowClassName()}
+        >
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{coachDisplayName(coach)}</p>
             <p className="text-muted-foreground text-sm">
               Joined {formatShortDate(coach.joined_date)}
             </p>
           </div>
-          <span className="text-muted-foreground text-xs">Edit</span>
         </Link>
       )}
     />
@@ -117,14 +120,16 @@ export function ClubManagersList({ managers }: { managers: Manager[] }) {
       emptyFilterTitle="No managers match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(manager) => (
-        <Link href={`/managers/${manager.id}`} className={rowLinkClassName}>
-          <div className="min-w-0">
+        <Link
+          href={`/managers/${manager.id}`}
+          className={objectListRowClassName()}
+        >
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{managerDisplayName(manager)}</p>
             <p className="text-muted-foreground truncate text-sm">
               {manager.email ?? manager.phone ?? "No contact details"}
             </p>
           </div>
-          <span className="text-muted-foreground text-xs">Edit</span>
         </Link>
       )}
     />

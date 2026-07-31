@@ -21,10 +21,14 @@ import type { RosterPlayer } from "@/lib/data/players";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function goalChipClassName(
   isOpposition: boolean,
@@ -111,7 +115,7 @@ export function MatchGoalsSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {goals.map((goal) => {
             const kind = goalKindLabel(goal);
             const minuteLabel = formatGoalMinute(goal.minute);
@@ -119,7 +123,7 @@ export function MatchGoalsSection({
               <li key={goal.id} className="flex items-stretch">
                 <Link
                   href={`/matches/${matchId}/goals/${goal.id}`}
-                  className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 items-center gap-x-3 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className={objectListRowClassName()}
                 >
                   <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
                     <GoalScorerChip goal={goal} />
@@ -195,6 +199,7 @@ function AddGoalForm({
 
   return (
     <form
+      key={state.success ?? "idle"}
       action={formAction}
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
@@ -205,33 +210,30 @@ function AddGoalForm({
         <Label htmlFor={`add-goal-player-${periodId ?? "match"}`}>
           Add goal
         </Label>
-        <NativeSelect
+        <SearchableSelect
           id={`add-goal-player-${periodId ?? "match"}`}
           name="player_id"
           required
           disabled={pending}
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Select scorer
-          </option>
-          <optgroup label={teamName}>
-            {playerOptions.map((player) => (
-              <option key={player.id} value={player.id}>
-                {playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                })}
-                {!player.active ? " (inactive)" : ""}
-              </option>
-            ))}
-            <option value={OWN_GOAL_SCORER_VALUE}>{OWN_GOAL_LABEL}</option>
-          </optgroup>
-          <optgroup label={opponentName || "Opposition"}>
-            <option value={OPPOSITION_SCORER_VALUE}>
-              {OPPOSITION_GOAL_LABEL}
-            </option>
-          </optgroup>
-        </NativeSelect>
+          placeholder="Search scorers by name…"
+          emptyMessage="No scorers match that name."
+          options={[
+            ...playerOptions.map((player) => ({
+              value: player.id,
+              label: `${playerDisplayName(player, {
+                shirtNumber: player.shirt_number,
+              })}${!player.active ? " (inactive)" : ""}`,
+            })),
+            {
+              value: OWN_GOAL_SCORER_VALUE,
+              label: `${teamName}: ${OWN_GOAL_LABEL}`,
+            },
+            {
+              value: OPPOSITION_SCORER_VALUE,
+              label: `${opponentName || "Opposition"}: ${OPPOSITION_GOAL_LABEL}`,
+            },
+          ]}
+        />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add"}

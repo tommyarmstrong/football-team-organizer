@@ -14,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function GuardianAssistantsSection({
@@ -28,11 +33,7 @@ export function GuardianAssistantsSection({
   canEdit: boolean;
 }) {
   return (
-    <div className="space-y-6">
-      {canEdit && candidates.length > 0 ? (
-        <AddAssistantForm teamId={teamId} candidates={candidates} />
-      ) : null}
-
+    <div className="space-y-4">
       {assistants.length === 0 ? (
         <EmptyState
           title="No guardian assistants"
@@ -43,31 +44,41 @@ export function GuardianAssistantsSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {assistants.map((entry) => (
-            <li
-              key={entry.team_member_id}
-              className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-            >
+            <li key={entry.team_member_id} className="flex items-stretch">
               <Link
                 href={`/guardians/${entry.guardian_id}`}
-                className="font-medium hover:underline"
+                className={objectListRowClassName()}
               >
-                {entry.name}
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {entry.name}
+                </span>
               </Link>
               {canEdit ? (
-                <RemoveAssistantButton teamMemberId={entry.team_member_id} />
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Remove ${entry.name} as guardian assistant`}
+                    unlinkAction={() =>
+                      removeGuardianAssistantAction(entry.team_member_id)
+                    }
+                  />
+                </div>
               ) : null}
             </li>
           ))}
         </ul>
       )}
 
-      {canEdit && candidates.length === 0 && assistants.length > 0 ? (
-        <p className="text-muted-foreground text-sm">
-          All linked guardians are already assistants, or no other guardians
-          have a login yet.
-        </p>
+      {canEdit ? (
+        candidates.length > 0 ? (
+          <AddAssistantForm teamId={teamId} candidates={candidates} />
+        ) : assistants.length > 0 ? (
+          <p className="text-muted-foreground text-sm">
+            All linked guardians are already assistants, or no other guardians
+            have a login yet.
+          </p>
+        ) : null
       ) : null}
     </div>
   );
@@ -90,9 +101,9 @@ function AddAssistantForm({
     <form
       key={state.success ?? "idle"}
       action={formAction}
-      className="border-border grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_auto] sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
-      <div className="space-y-2">
+      <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="assistant-guardian">Add guardian assistant</Label>
         <SearchableSelect
           id="assistant-guardian"
@@ -111,26 +122,10 @@ function AddAssistantForm({
         {pending ? "Adding…" : "Add"}
       </Button>
       {state.error ? (
-        <div className="sm:col-span-2">
+        <div className="w-full sm:basis-full">
           <ErrorBanner message={state.error} />
         </div>
       ) : null}
-    </form>
-  );
-}
-
-function RemoveAssistantButton({ teamMemberId }: { teamMemberId: string }) {
-  const [state, formAction, pending] = useActionState(
-    async () => removeGuardianAssistantAction(teamMemberId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form action={formAction}>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? "…" : "Remove"}
-      </Button>
     </form>
   );
 }

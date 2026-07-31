@@ -22,6 +22,11 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 
 function cardPersonLabel(card: CardWithPerson): string {
   if (card.player) return playerDisplayName(card.player);
@@ -58,12 +63,12 @@ export function MatchCardsSection({
           description="Add a player and card type below. Open a card to edit notes."
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {cards.map((card) => (
             <li key={card.id} className="flex items-stretch">
               <Link
                 href={`/matches/${matchId}/cards/${card.id}`}
-                className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className={objectListRowClassName()}
               >
                 <span className="border-border bg-background inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-medium">
                   <span aria-hidden="true">{CARD_TYPE_EMOJIS[card.type]}</span>
@@ -116,30 +121,26 @@ function AddCardForm({
 
   return (
     <form
+      key={state.success ?? "idle"}
       action={formAction}
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="add-card-player">Add card</Label>
-        <NativeSelect
+        <SearchableSelect
           id="add-card-player"
           name="player_id"
           required
           disabled={pending}
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Select player
-          </option>
-          {playerOptions.map((player) => (
-            <option key={player.id} value={player.id}>
-              {playerDisplayName(player, {
-                shirtNumber: player.shirt_number,
-              })}
-              {!player.active ? " (inactive)" : ""}
-            </option>
-          ))}
-        </NativeSelect>
+          placeholder="Search players by name…"
+          emptyMessage="No players match that name."
+          options={playerOptions.map((player) => ({
+            value: player.id,
+            label: `${playerDisplayName(player, {
+              shirtNumber: player.shirt_number,
+            })}${!player.active ? " (inactive)" : ""}`,
+          }))}
+        />
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="add-card-type">Type</Label>

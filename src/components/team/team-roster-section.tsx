@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { addRosterPlayerAction } from "@/lib/players/actions";
+import {
+  addRosterPlayerAction,
+  removePlayerFromTeamAction,
+} from "@/lib/players/actions";
 import { playerDisplayName } from "@/lib/format";
 import type { Player } from "@/lib/supabase/database.types";
 import type { RosterPlayer } from "@/lib/data/players";
@@ -11,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamRosterSection({
@@ -36,12 +44,12 @@ export function TeamRosterSection({
           }
         />
       ) : (
-        <ul className="divide-border border-border divide-y rounded-xl border">
+        <ul className={objectListClassName}>
           {roster.map((entry) => (
-            <li key={entry.team_player_id}>
+            <li key={entry.team_player_id} className="flex items-stretch">
               <Link
                 href={`/players/${entry.id}`}
-                className="hover:bg-muted/50 focus-visible:ring-ring flex min-h-12 items-center gap-3 px-4 py-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className={objectListRowClassName()}
               >
                 <span className="text-muted-foreground w-[2ch] shrink-0 text-right tabular-nums">
                   {entry.shirt_number ?? "—"}
@@ -56,6 +64,17 @@ export function TeamRosterSection({
                   {entry.active ? "Active" : "Inactive"}
                 </span>
               </Link>
+              {canEdit ? (
+                <div className="flex items-center pr-2">
+                  <ListUnlinkButton
+                    label={`Remove ${playerDisplayName(entry)} from squad`}
+                    confirmMessage={`Remove ${playerDisplayName(entry)} from this squad?`}
+                    unlinkAction={() =>
+                      removePlayerFromTeamAction(entry.team_player_id, entry.id)
+                    }
+                  />
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
