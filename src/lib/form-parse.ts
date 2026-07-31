@@ -72,3 +72,14 @@ export function parseOptionalMinute(
   }
   return n;
 }
+
+export function parseYesNo(
+  formData: FormData,
+  key: string,
+  defaultValue = false,
+): boolean {
+  const raw = str(formData, key).toLowerCase();
+  if (raw === "yes" || raw === "true") return true;
+  if (raw === "no" || raw === "false") return false;
+  return defaultValue;
+}

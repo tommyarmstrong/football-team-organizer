@@ -18,13 +18,20 @@ import {
 } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
+import { parseOptionalInt, parseYesNo, str as formStr } from "@/lib/form-parse";
 import type {
+  CompetitionGender,
   CompetitionKind,
+  CompetitionPeriods,
+  TablesUpdate,
   TeamGender,
 } from "@/lib/supabase/database.types";
 import {
   AGE_GROUPS,
+  COMPETITION_GENDERS,
   COMPETITION_KINDS,
+  COMPETITION_PERIODS,
+  DEFAULT_COMPETITION_PERIODS,
   TEAM_GENDERS,
   TRAINING_DAYS,
   type AgeGroup,
@@ -209,27 +216,112 @@ export async function createCompetitionAction(
   return { success: "Competition added." };
 }
 
-export async function updateCompetitionAction(
-  id: string,
-  _prev: ActionState,
+function parseCompetitionUpdate(
   formData: FormData,
-): Promise<ActionState> {
+): TablesUpdate<"competitions"> | { error: string } {
   const name = str(formData, "name");
+  if (!name) return { error: "Competition name is required." };
+
   const kindRaw = str(formData, "kind");
   const kind =
     kindRaw && COMPETITION_KINDS.includes(kindRaw as CompetitionKind)
       ? (kindRaw as CompetitionKind)
       : "league";
 
-  if (!name) return { error: "Competition name is required." };
+  const season = str(formData, "season") || null;
+  const knockout = parseYesNo(formData, "knockout", false);
 
-  const { error } = await updateCompetition(id, { name, kind });
-  if (error) return { error };
+  const ageGroupRaw = str(formData, "age_group");
+  let age_group: string | null = null;
+  if (ageGroupRaw) {
+    if (!(AGE_GROUPS as readonly string[]).includes(ageGroupRaw)) {
+      return { error: "Invalid age group." };
+    }
+    age_group = ageGroupRaw;
+  }
 
+  const genderRaw = str(formData, "gender");
+  let gender: CompetitionGender | null = null;
+  if (genderRaw) {
+    if (!COMPETITION_GENDERS.includes(genderRaw as CompetitionGender)) {
+      return { error: "Invalid gender." };
+    }
+    gender = genderRaw as CompetitionGender;
+  }
+
+  const playersPerTeam = parseOptionalInt(
+    formStr(formData, "players_per_team"),
+    "Players per team",
+  );
+  if (typeof playersPerTeam === "object" && playersPerTeam !== null) {
+    return playersPerTeam;
+  }
+
+  const periodsRaw = str(formData, "periods");
+  const periods: CompetitionPeriods =
+    periodsRaw && COMPETITION_PERIODS.includes(periodsRaw as CompetitionPeriods)
+      ? (periodsRaw as CompetitionPeriods)
+      : DEFAULT_COMPETITION_PERIODS;
+
+  const minutesPerPeriod = parseOptionalInt(
+    formStr(formData, "minutes_per_period"),
+    "Minutes per period",
+  );
+  if (typeof minutesPerPeriod === "object" && minutesPerPeriod !== null) {
+    return minutesPerPeriod;
+  }
+
+  const notes = str(formData, "notes") || null;
+
+  return {
+    name,
+    kind,
+    season,
+    knockout,
+    age_group,
+    gender,
+    players_per_team: playersPerTeam,
+    periods,
+    minutes_per_period: minutesPerPeriod,
+    notes,
+  };
+}
+
+function revalidateCompetitionPaths(id: string) {
   revalidatePath("/team");
   revalidatePath("/matches");
   revalidatePath(`/competitions/${id}`);
+}
+
+export async function updateCompetitionAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parseCompetitionUpdate(formData);
+  if ("error" in parsed) return parsed;
+
+  const { error } = await updateCompetition(id, parsed);
+  if (error) return { error };
+
+  revalidateCompetitionPaths(id);
   return { success: "Competition updated." };
+}
+
+/** Saves competition fields and returns to the team page. */
+export async function saveCompetitionAndReturnToTeamAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parseCompetitionUpdate(formData);
+  if ("error" in parsed) return parsed;
+
+  const { error } = await updateCompetition(id, parsed);
+  if (error) return { error };
+
+  revalidateCompetitionPaths(id);
+  redirect("/team");
 }
 
 export async function deleteCompetitionAction(
