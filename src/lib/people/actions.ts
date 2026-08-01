@@ -127,10 +127,25 @@ export async function sendInvitationAction(
     if (!result.ok) return { error: result.error };
 
     revalidatePeople(personId);
+    if (result.emailSent) {
+      return { success: "Invitation sent." };
+    }
+
+    const link = result.acceptUrl
+      ? ` Share this accept link: ${result.acceptUrl}`
+      : "";
+
+    if (result.alreadyRegistered) {
+      return {
+        success: `Invitation created. An Auth account already exists for this email, so Supabase cannot send another invite email.${link}`,
+      };
+    }
+
+    const reason = result.emailError
+      ? ` Supabase reported: ${result.emailError}`
+      : " Email delivery via Supabase may need configuration.";
     return {
-      success: result.emailSent
-        ? "Invitation sent."
-        : "Invitation created. Email delivery via Supabase may need configuration; the accept link is ready for the invitee.",
+      success: `Invitation created, but the email was not sent.${reason}${link}`,
     };
   } catch (err) {
     return {
