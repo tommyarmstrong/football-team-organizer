@@ -9,7 +9,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Person, PersonInvitation } from "@/lib/supabase/database.types";
 
 export type SendInvitationResult =
-  | { ok: true; invitationId: string; emailSent: boolean }
+  | {
+      ok: true;
+      invitationId: string;
+      emailSent: boolean;
+      /** Auth user already exists — Supabase will not send inviteUserByEmail. */
+      alreadyRegistered?: boolean;
+      /** Present when Supabase could not send the invite email. */
+      emailError?: string;
+      /** Manual accept URL — returned when email was not sent. */
+      acceptUrl?: string;
+    }
   | { ok: false; error: string };
 
 function appOrigin(): string {
@@ -18,6 +28,37 @@ function appOrigin(): string {
   const vercel = process.env.VERCEL_URL?.replace(/\/$/, "");
   if (vercel) return `https://${vercel}`;
   return "http://localhost:3000";
+}
+
+function isAlreadyRegisteredError(message: string) {
+  return /already (been )?registered/i.test(message);
+}
+
+/** Find an Auth user id by email (paginated admin list). Club-scale OK. */
+export async function findAuthUserIdByEmail(
+  email: string,
+): Promise<{ id: string | null; error: string | null }> {
+  const admin = createAdminClient();
+  const normalized = normalizeEmail(email);
+  let page = 1;
+
+  for (;;) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: 200,
+    });
+    if (error) return { id: null, error: error.message };
+
+    const match = data.users.find(
+      (user) => user.email && normalizeEmail(user.email) === normalized,
+    );
+    if (match) return { id: match.id, error: null };
+
+    if (!data.nextPage || data.users.length === 0) {
+      return { id: null, error: null };
+    }
+    page = data.nextPage;
+  }
 }
 
 export async function sendPersonInvitation(input: {
@@ -84,13 +125,19 @@ export async function sendPersonInvitation(input: {
     },
   );
 
+  const acceptUrl = `${appOrigin()}/onboarding/accept?token=${encodeURIComponent(token)}`;
+
   if (inviteError) {
     // Invitation row still usable via our accept page with the raw token.
-    // Surface the admin email error but keep the invite record.
+    // Keep the invite record and return the accept URL so admins can share it.
+    const alreadyRegistered = isAlreadyRegisteredError(inviteError.message);
     return {
       ok: true,
       invitationId: invitation.id,
       emailSent: false,
+      alreadyRegistered,
+      emailError: alreadyRegistered ? undefined : inviteError.message,
+      acceptUrl,
     };
   }
 
