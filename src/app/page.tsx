@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Root is handled by middleware; this is a safe fallback. */
+/** Root is handled by proxy; this is a safe fallback. */
 export default function HomePage() {
   redirect("/dashboard");
 }
