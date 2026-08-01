@@ -10,17 +10,17 @@
 --   - 1 competition (World Cup 1966)
 --   - 6 England matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
 --
--- BEFORE RUNNING:
+-- AFTER SEEDING (initial admin):
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
--- 2. Copy that user's UUID from the Auth users table.
--- 3. Replace the placeholder Auth UUID below with that UUID.
+-- 2. In Table Editor -> people, set John Hall's auth_user_id to that Auth user UUID
+--    and account_status to 'active'. That person is already a club manager.
 --
 -- Apply via Supabase SQL Editor (Dashboard -> SQL), or:
 --   npx supabase db query --linked -f supabase/seed.sql
 --
--- Idempotent for the fixed ids below. Re-running updates seed rows and upserts
--- England team membership for the configured Auth user. Manually added people /
--- roles are left alone (seed only upserts its fixed ids).
+-- Idempotent for the fixed ids below. Re-running updates seed domain rows only.
+-- Manually added people/roles are left alone. people.auth_user_id is never set or
+-- cleared by this file (manual Auth links survive reseed).
 --
 -- Seed person/role ids use UUID hex only (0-9a-f). Do not use letters outside that
 -- range (e.g. p000… is invalid and will fail to insert).
@@ -138,33 +138,20 @@ upserted_team as (
 )
 select 1 from upserted_club, upserted_venues, upserted_team;
 
--- Auth UUID for local/dev login (John Hall + England team_members).
--- Replace with your local Supabase Auth user id.
-
 -- Club manager: John Hall (people + managers role).
--- Auth UUID is attached only when free (never stolen from a manually linked person).
+-- Do not set auth_user_id here; link the first Auth user manually after seed.
+-- On conflict, preserve auth_user_id and account_status.
 insert into public.people (
-  id, first_name, last_name, auth_user_id, account_status
-)
-select
+  id, first_name, last_name, account_status
+) values (
   'b0000000-0000-4000-8000-000000000001',
   'John',
   'Hall',
-  case
-    when exists (
-      select 1
-      from public.people p
-      where p.auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid -- <-- replace with your Auth user UUID
-        and p.id is distinct from 'b0000000-0000-4000-8000-000000000001'::uuid
-    ) then null
-    else '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid
-  end,
-  'active'
+  'none'
+)
 on conflict (id) do update set
   first_name = excluded.first_name,
-  last_name = excluded.last_name,
-  account_status = excluded.account_status,
-  auth_user_id = coalesce(people.auth_user_id, excluded.auth_user_id);
+  last_name = excluded.last_name;
 
 insert into public.managers (id, club_id, person_id)
 values (
@@ -175,21 +162,6 @@ values (
 on conflict (id) do update set
   club_id = excluded.club_id,
   person_id = excluded.person_id;
-
--- Team-scoped auth roles on England (additive).
-insert into public.team_members (team_id, user_id, role)
-values
-  (
-    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid, -- <-- replace with your Auth user UUID
-    'management'::public.team_role
-  ),
-  (
-    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
-    'coach'::public.team_role
-  )
-on conflict (team_id, user_id, role) do nothing;
 
 -- Club coaching staff (people + role attributes).
 insert into public.people (id, first_name, last_name, account_status)
