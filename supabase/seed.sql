@@ -1,29 +1,31 @@
--- Local / dev seed: club, venues, teams, managers, coaches, and players.
+-- Local / dev seed: FA club, England 1966 World Cup setup.
+--
+-- Seeded domain data:
+--   - 1 club (The Football Association)
+--   - 4 venues
+--   - 1 team (England)
+--   - 1 club manager (John Hall) + people row
+--   - 4 coaches (Keegan, Robson, Howe, Ramsey) + their people rows
+--   - 11 England players + their people rows
+--   - 1 competition (World Cup 1966)
+--   - 6 England matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
 --
 -- BEFORE RUNNING:
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
 -- 2. Copy that user's UUID from the Auth users table.
--- 3. Replace the placeholder UUID below with that UUID.
+-- 3. Replace the placeholder Auth UUID below with that UUID.
 --
 -- Apply via Supabase SQL Editor (Dashboard -> SQL), or:
 --   npx supabase db query --linked -f supabase/seed.sql
 --
--- Idempotent for the fixed ids below. Re-running updates the club/venue/team/coach/player
--- rows and upserts team membership for the configured Auth user. Club manager profiles
--- are not seeded (create them in the app); if a people row already has the Auth UUID,
--- it is linked as club manager without renaming.
+-- Idempotent for the fixed ids below. Re-running updates seed rows and upserts
+-- England team membership for the configured Auth user. Manually added people /
+-- roles are left alone (seed only upserts its fixed ids).
 --
 -- Seed person/role ids use UUID hex only (0-9a-f). Do not use letters outside that
 -- range (e.g. p000… is invalid and will fail to insert).
 
 begin;
-
--- Drop placeholder venue ids from earlier seed versions (if present).
-delete from public.venues
-where id in (
-  'a0000005-0000-4000-8000-000000000005',
-  'a0000006-0000-4000-8000-000000000006'
-);
 
 -- Fixed ids so re-seeding is predictable in local/dev.
 with upserted_club as (
@@ -113,15 +115,15 @@ upserted_team as (
     season_label
   )
   values (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     '11111111-1111-1111-1111-111111111111',
-    'U11 Blues',
-    'U11',
-    'mixed',
-    'a0000001-0000-4000-8000-000000000001',
-    'a0000002-0000-4000-8000-000000000002',
-    array['tue', 'thu'],
-    '2025/26'
+    'England',
+    'Adults',
+    'boys',
+    'a0000003-0000-4000-8000-000000000003',
+    'a0000004-0000-4000-8000-000000000004',
+    array['mon', 'wed', 'fri'],
+    '1966'
   )
   on conflict (id) do update set
     club_id = excluded.club_id,
@@ -136,55 +138,51 @@ upserted_team as (
 )
 select 1 from upserted_club, upserted_venues, upserted_team;
 
--- Auth UUID for local/dev team_members (and optional manager link).
+-- Auth UUID for local/dev login (John Hall + England team_members).
 -- Replace with your local Supabase Auth user id.
--- Do not seed placeholder people names (e.g. "Club Manager").
 
--- Drop legacy seeded manager person if it is still the old placeholder.
-delete from public.managers
-where person_id in (
-  select id
-  from public.people
-  where id = 'b0000000-0000-4000-8000-000000000001'
-    and first_name = 'Club'
-    and last_name = 'Manager'
-);
-
-delete from public.people
-where id = 'b0000000-0000-4000-8000-000000000001'
-  and first_name = 'Club'
-  and last_name = 'Manager';
-
--- If a people row already has the Auth UUID, link it as club manager (no rename).
-insert into public.managers (id, club_id, person_id)
+-- Club manager: John Hall (people + managers role).
+-- Auth UUID is attached only when free (never stolen from a manually linked person).
+insert into public.people (
+  id, first_name, last_name, auth_user_id, account_status
+)
 select
+  'b0000000-0000-4000-8000-000000000001',
+  'John',
+  'Hall',
+  case
+    when exists (
+      select 1
+      from public.people p
+      where p.auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid -- <-- replace with your Auth user UUID
+        and p.id is distinct from 'b0000000-0000-4000-8000-000000000001'::uuid
+    ) then null
+    else '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid
+  end,
+  'active'
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name,
+  account_status = excluded.account_status,
+  auth_user_id = coalesce(people.auth_user_id, excluded.auth_user_id);
+
+insert into public.managers (id, club_id, person_id)
+values (
   '22222222-2222-2222-2222-222222222222',
   '11111111-1111-1111-1111-111111111111',
-  p.id
-from public.people p
-where p.auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid -- <-- replace with your Auth user UUID
+  'b0000000-0000-4000-8000-000000000001'
+)
 on conflict (id) do update set
   club_id = excluded.club_id,
   person_id = excluded.person_id;
 
--- Team-scoped auth roles (additive: same user may hold several roles on one team).
--- Example: management + coach + player on U11 Blues; coach only on England.
+-- Team-scoped auth roles on England (additive).
 insert into public.team_members (team_id, user_id, role)
 values
   (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid, -- <-- replace with your Auth user UUID
     'management'::public.team_role
-  ),
-  (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
-    'coach'::public.team_role
-  ),
-  (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
-    'player'::public.team_role
   ),
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -192,39 +190,6 @@ values
     'coach'::public.team_role
   )
 on conflict (team_id, user_id, role) do nothing;
-
--- England 1966 World Cup team.
-insert into public.teams (
-  id,
-  club_id,
-  name,
-  age_group,
-  gender,
-  home_venue_id,
-  training_venue_id,
-  training_days,
-  season_label
-)
-values (
-  'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-  '11111111-1111-1111-1111-111111111111',
-  'England',
-  'Adults',
-  'boys',
-  'a0000003-0000-4000-8000-000000000003',
-  'a0000004-0000-4000-8000-000000000004',
-  array['mon', 'wed', 'fri'],
-  '1966'
-)
-on conflict (id) do update set
-  club_id = excluded.club_id,
-  name = excluded.name,
-  age_group = excluded.age_group,
-  gender = excluded.gender,
-  home_venue_id = excluded.home_venue_id,
-  training_venue_id = excluded.training_venue_id,
-  training_days = excluded.training_days,
-  season_label = excluded.season_label;
 
 -- Club coaching staff (people + role attributes).
 insert into public.people (id, first_name, last_name, account_status)
@@ -317,23 +282,23 @@ on conflict (id) do update set
   fa_level_2 = excluded.fa_level_2,
   biography = excluded.biography;
 
--- Assign coaches to teams.
+-- Assign all four coaches to England.
 insert into public.team_coaches (team_id, coach_id, role)
 values
   (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000001',
     'Assistant Coach'
   ),
   (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000002',
     'Assistant Coach'
   ),
   (
-    'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
     'c0000001-0000-4000-8000-000000000003',
-    'Head Coach'
+    'Assistant Coach'
   ),
   (
     'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
@@ -507,57 +472,6 @@ on conflict (id) do update set
   person_id = excluded.person_id,
   position = excluded.position,
   date_of_birth = excluded.date_of_birth;
-
--- Drop unlinked people left behind when role rows were re-pointed at seed person
--- ids (people-migration backfill + reseed). Keep anyone with a role or invitation.
-delete from public.people p
-where p.id not in (
-  'e0000001-0000-4000-8000-000000000001',
-  'e0000001-0000-4000-8000-000000000002',
-  'e0000001-0000-4000-8000-000000000003',
-  'e0000001-0000-4000-8000-000000000004',
-  'b0000001-0000-4000-8000-000000000001',
-  'b0000001-0000-4000-8000-000000000002',
-  'b0000001-0000-4000-8000-000000000003',
-  'b0000001-0000-4000-8000-000000000004',
-  'b0000001-0000-4000-8000-000000000005',
-  'b0000001-0000-4000-8000-000000000006',
-  'b0000001-0000-4000-8000-000000000007',
-  'b0000001-0000-4000-8000-000000000008',
-  'b0000001-0000-4000-8000-000000000009',
-  'b0000001-0000-4000-8000-000000000010',
-  'b0000001-0000-4000-8000-000000000011'
-)
-and exists (
-  select 1
-  from public.people seed
-  where seed.id in (
-    'e0000001-0000-4000-8000-000000000001',
-    'e0000001-0000-4000-8000-000000000002',
-    'e0000001-0000-4000-8000-000000000003',
-    'e0000001-0000-4000-8000-000000000004',
-    'b0000001-0000-4000-8000-000000000001',
-    'b0000001-0000-4000-8000-000000000002',
-    'b0000001-0000-4000-8000-000000000003',
-    'b0000001-0000-4000-8000-000000000004',
-    'b0000001-0000-4000-8000-000000000005',
-    'b0000001-0000-4000-8000-000000000006',
-    'b0000001-0000-4000-8000-000000000007',
-    'b0000001-0000-4000-8000-000000000008',
-    'b0000001-0000-4000-8000-000000000009',
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011'
-  )
-    and seed.first_name = p.first_name
-    and seed.last_name = p.last_name
-)
-and not exists (select 1 from public.managers m where m.person_id = p.id)
-and not exists (select 1 from public.coaches c where c.person_id = p.id)
-and not exists (select 1 from public.guardians g where g.person_id = p.id)
-and not exists (select 1 from public.players pl where pl.person_id = p.id)
-and not exists (
-  select 1 from public.person_invitations i where i.person_id = p.id
-);
 
 -- Assign squad to England (1966 World Cup squad numbers).
 insert into public.team_players (team_id, player_id, shirt_number, active)
