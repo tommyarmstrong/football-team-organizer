@@ -9,7 +9,9 @@
 --   npx supabase db query --linked -f supabase/seed.sql
 --
 -- Idempotent for the fixed ids below. Re-running updates the club/venue/team/coach/player
--- rows and upserts the manager membership for the configured user.
+-- rows and upserts team membership for the configured Auth user. Club manager profiles
+-- are not seeded (create them in the app); if a people row already has the Auth UUID,
+-- it is linked as club manager without renaming.
 --
 -- Seed person/role ids use UUID hex only (0-9a-f). Do not use letters outside that
 -- range (e.g. p000… is invalid and will fail to insert).
@@ -134,32 +136,36 @@ upserted_team as (
 )
 select 1 from upserted_club, upserted_venues, upserted_team;
 
--- Seed manager person + manager role (Auth UUID on people.auth_user_id).
--- Replace the Auth UUID below with your local Supabase Auth user id.
+-- Auth UUID for local/dev team_members (and optional manager link).
+-- Replace with your local Supabase Auth user id.
+-- Do not seed placeholder people names (e.g. "Club Manager").
+
+-- Drop legacy seeded manager person if it is still the old placeholder.
 delete from public.managers
-where id = '22222222-2222-2222-2222-222222222222'
-   or person_id = 'b0000000-0000-4000-8000-000000000001';
+where person_id in (
+  select id
+  from public.people
+  where id = 'b0000000-0000-4000-8000-000000000001'
+    and first_name = 'Club'
+    and last_name = 'Manager'
+);
 
 delete from public.people
 where id = 'b0000000-0000-4000-8000-000000000001'
-   or auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b';
+  and first_name = 'Club'
+  and last_name = 'Manager';
 
-insert into public.people (
-  id, first_name, last_name, auth_user_id, account_status
-) values (
-  'b0000000-0000-4000-8000-000000000001',
-  'Club',
-  'Manager',
-  '05b5a111-bd09-440a-8613-8225e7b9397b', -- <-- replace with your Auth user UUID
-  'active'
-);
-
+-- If a people row already has the Auth UUID, link it as club manager (no rename).
 insert into public.managers (id, club_id, person_id)
-values (
+select
   '22222222-2222-2222-2222-222222222222',
   '11111111-1111-1111-1111-111111111111',
-  'b0000000-0000-4000-8000-000000000001'
-);
+  p.id
+from public.people p
+where p.auth_user_id = '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid -- <-- replace with your Auth user UUID
+on conflict (id) do update set
+  club_id = excluded.club_id,
+  person_id = excluded.person_id;
 
 -- Team-scoped auth roles (additive: same user may hold several roles on one team).
 -- Example: management + coach + player on U11 Blues; coach only on England.
@@ -167,7 +173,7 @@ insert into public.team_members (team_id, user_id, role)
 values
   (
     'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid,
+    '05b5a111-bd09-440a-8613-8225e7b9397b'::uuid, -- <-- replace with your Auth user UUID
     'management'::public.team_role
   ),
   (
@@ -506,7 +512,6 @@ on conflict (id) do update set
 -- ids (people-migration backfill + reseed). Keep anyone with a role or invitation.
 delete from public.people p
 where p.id not in (
-  'b0000000-0000-4000-8000-000000000001',
   'e0000001-0000-4000-8000-000000000001',
   'e0000001-0000-4000-8000-000000000002',
   'e0000001-0000-4000-8000-000000000003',
@@ -527,7 +532,6 @@ and exists (
   select 1
   from public.people seed
   where seed.id in (
-    'b0000000-0000-4000-8000-000000000001',
     'e0000001-0000-4000-8000-000000000001',
     'e0000001-0000-4000-8000-000000000002',
     'e0000001-0000-4000-8000-000000000003',
