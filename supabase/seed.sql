@@ -10,6 +10,9 @@
 --
 -- Idempotent for the fixed ids below. Re-running updates the club/venue/team/coach/player
 -- rows and upserts the manager membership for the configured user.
+--
+-- Seed person/role ids use UUID hex only (0-9a-f). Do not use letters outside that
+-- range (e.g. p000… is invalid and will fail to insert).
 
 begin;
 
@@ -498,6 +501,59 @@ on conflict (id) do update set
   person_id = excluded.person_id,
   position = excluded.position,
   date_of_birth = excluded.date_of_birth;
+
+-- Drop unlinked people left behind when role rows were re-pointed at seed person
+-- ids (people-migration backfill + reseed). Keep anyone with a role or invitation.
+delete from public.people p
+where p.id not in (
+  'b0000000-0000-4000-8000-000000000001',
+  'e0000001-0000-4000-8000-000000000001',
+  'e0000001-0000-4000-8000-000000000002',
+  'e0000001-0000-4000-8000-000000000003',
+  'e0000001-0000-4000-8000-000000000004',
+  'b0000001-0000-4000-8000-000000000001',
+  'b0000001-0000-4000-8000-000000000002',
+  'b0000001-0000-4000-8000-000000000003',
+  'b0000001-0000-4000-8000-000000000004',
+  'b0000001-0000-4000-8000-000000000005',
+  'b0000001-0000-4000-8000-000000000006',
+  'b0000001-0000-4000-8000-000000000007',
+  'b0000001-0000-4000-8000-000000000008',
+  'b0000001-0000-4000-8000-000000000009',
+  'b0000001-0000-4000-8000-000000000010',
+  'b0000001-0000-4000-8000-000000000011'
+)
+and exists (
+  select 1
+  from public.people seed
+  where seed.id in (
+    'b0000000-0000-4000-8000-000000000001',
+    'e0000001-0000-4000-8000-000000000001',
+    'e0000001-0000-4000-8000-000000000002',
+    'e0000001-0000-4000-8000-000000000003',
+    'e0000001-0000-4000-8000-000000000004',
+    'b0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000002',
+    'b0000001-0000-4000-8000-000000000003',
+    'b0000001-0000-4000-8000-000000000004',
+    'b0000001-0000-4000-8000-000000000005',
+    'b0000001-0000-4000-8000-000000000006',
+    'b0000001-0000-4000-8000-000000000007',
+    'b0000001-0000-4000-8000-000000000008',
+    'b0000001-0000-4000-8000-000000000009',
+    'b0000001-0000-4000-8000-000000000010',
+    'b0000001-0000-4000-8000-000000000011'
+  )
+    and seed.first_name = p.first_name
+    and seed.last_name = p.last_name
+)
+and not exists (select 1 from public.managers m where m.person_id = p.id)
+and not exists (select 1 from public.coaches c where c.person_id = p.id)
+and not exists (select 1 from public.guardians g where g.person_id = p.id)
+and not exists (select 1 from public.players pl where pl.person_id = p.id)
+and not exists (
+  select 1 from public.person_invitations i where i.person_id = p.id
+);
 
 -- Assign squad to England (1966 World Cup squad numbers).
 insert into public.team_players (team_id, player_id, shirt_number, active)
