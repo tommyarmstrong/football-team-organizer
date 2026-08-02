@@ -166,7 +166,7 @@ players.
 For each linked player:
 
 - Player (required)
-- Relationship (required) — `Parent` | `Guardian` | `Football contact` | `Other`
+- Relationship (required) — `Parent` | `Guardian` | `Responsible adult` | `Other`
 - Legal guardian — checkbox (default off)
 
 ---

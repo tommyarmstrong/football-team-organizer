@@ -195,7 +195,7 @@ export const GUARDIAN_RELATIONSHIP_LABELS: Record<
 > = {
   parent: "Parent",
   guardian: "Guardian",
-  football_contact: "Football contact",
+  football_contact: "Responsible adult",
   other: "Other",
 };
 
