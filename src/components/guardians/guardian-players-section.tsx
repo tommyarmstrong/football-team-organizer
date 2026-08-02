@@ -131,9 +131,15 @@ function GuardianPlayerLinkRow({
         <span className="min-w-0 flex-1 truncate font-medium">
           {playerName}
         </span>
-        <span className="text-muted-foreground shrink-0">
-          {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
-          {link.legal_guardian ? " · Legal guardian" : ""}
+        <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+            {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
+          </span>
+          {link.legal_guardian ? (
+            <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+              Legal guardian
+            </span>
+          ) : null}
         </span>
       </Link>
       {canEdit ? (

@@ -90,8 +90,7 @@ export default async function GuardianDetailPage({
         <CardHeader>
           <CardTitle>Player relationships</CardTitle>
           <CardDescription>
-            Link zero or more players. Each link has a relationship and optional
-            legal guardian flag.
+            Relationships between this guardian and players at the club.
           </CardDescription>
         </CardHeader>
         <CardContent>
