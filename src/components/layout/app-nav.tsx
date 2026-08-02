@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AccountDetails, SignOutLink } from "@/components/layout/user-menu";
-import { TeamPickerList } from "@/components/layout/team-switcher";
+import { TeamSwitcher } from "@/components/layout/team-switcher";
 import type { Team } from "@/lib/supabase/database.types";
 
 const BASE_NAV_ITEMS = [
@@ -44,15 +44,22 @@ function getNavItems(showStaff: boolean, showManagement: boolean) {
 export function AppNav({
   showStaff = false,
   showManagement = false,
+  teams = [],
+  activeTeamId = null,
 }: {
   showStaff?: boolean;
   showManagement?: boolean;
+  teams?: Pick<Team, "id" | "name">[];
+  activeTeamId?: string | null;
 }) {
   const pathname = usePathname();
   const items = getNavItems(showStaff, showManagement);
 
   return (
-    <nav aria-label="Main" className="flex flex-wrap gap-1 text-sm">
+    <nav
+      aria-label="Main"
+      className="flex flex-wrap items-center gap-1 text-sm"
+    >
       {items.map((item) => {
         const active = isActivePath(pathname, item.href);
         return (
@@ -71,6 +78,7 @@ export function AppNav({
           </Link>
         );
       })}
+      <TeamSwitcher teams={teams} activeTeamId={activeTeamId} />
     </nav>
   );
 }
@@ -80,20 +88,15 @@ export function MobileNavMenu({
   showManagement = false,
   name,
   email,
-  teams,
-  activeTeamId,
 }: {
   showStaff?: boolean;
   showManagement?: boolean;
   name: string | null;
   email: string | null;
-  teams: Pick<Team, "id" | "name">[];
-  activeTeamId: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const items = getNavItems(showStaff, showManagement);
-  const canSwitchTeams = teams.length > 1;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -139,19 +142,6 @@ export function MobileNavMenu({
             );
           })}
         </nav>
-
-        {canSwitchTeams ? (
-          <div className="border-border border-t pt-1.5">
-            <p className="text-muted-foreground px-2.5 pt-1 pb-1 text-xs font-medium">
-              Switch team
-            </p>
-            <TeamPickerList
-              teams={teams}
-              activeTeamId={activeTeamId}
-              onSelected={() => setOpen(false)}
-            />
-          </div>
-        ) : null}
 
         <div className="border-border border-t px-1.5 pt-1.5">
           <SignOutLink className="h-9 w-full justify-start px-2.5" />

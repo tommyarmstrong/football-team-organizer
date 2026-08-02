@@ -33,6 +33,7 @@ export async function AppHeader() {
   const showManagement = Boolean(ctx?.isManagement);
   const accountName = ctx ? viewerFullName(ctx) : null;
   const accountEmail = ctx?.email ?? null;
+  const activeTeamId = activeTeam?.id ?? null;
 
   const brandName = club?.name?.trim() || APP_NAME;
 
@@ -40,18 +41,35 @@ export async function AppHeader() {
     <header className="border-border club-themed-header bg-background/80 border-b backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-3">
         <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/dashboard"
-            className="focus-visible:ring-ring flex min-w-0 items-center gap-2.5 text-base font-semibold tracking-tight focus-visible:ring-2 focus-visible:outline-none sm:text-lg"
-          >
-            <ClubIcon
-              iconUrl={club?.icon_url}
-              alt={club ? `${club.name} icon` : "Club icon"}
-              size={32}
-              className="size-8 shrink-0"
-            />
-            <span className="truncate">{brandName}</span>
-          </Link>
+          <div className="flex min-w-0 items-start gap-2.5">
+            <Link
+              href="/dashboard"
+              className="focus-visible:ring-ring mt-0.5 shrink-0 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <ClubIcon
+                iconUrl={club?.icon_url}
+                alt={club ? `${club.name} icon` : "Club icon"}
+                size={32}
+                className="size-8 shrink-0"
+              />
+            </Link>
+            <div className="flex min-w-0 flex-col">
+              <Link
+                href="/dashboard"
+                className="focus-visible:ring-ring truncate text-base font-semibold tracking-tight focus-visible:ring-2 focus-visible:outline-none sm:text-lg"
+              >
+                {brandName}
+              </Link>
+              <div className="md:hidden">
+                <TeamSwitcher
+                  teams={teams}
+                  activeTeamId={activeTeamId}
+                  variant="label"
+                  align="start"
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <div className="md:hidden">
@@ -60,15 +78,9 @@ export async function AppHeader() {
                 showManagement={showManagement}
                 name={accountName}
                 email={accountEmail}
-                teams={teams}
-                activeTeamId={activeTeam?.id ?? null}
               />
             </div>
             <div className="hidden items-center gap-2 md:flex">
-              <TeamSwitcher
-                teams={teams}
-                activeTeamId={activeTeam?.id ?? null}
-              />
               {ctx ? (
                 <UserMenu name={accountName} email={accountEmail} />
               ) : null}
@@ -77,7 +89,12 @@ export async function AppHeader() {
         </div>
 
         <div className="hidden md:block">
-          <AppNav showStaff={showStaff} showManagement={showManagement} />
+          <AppNav
+            showStaff={showStaff}
+            showManagement={showManagement}
+            teams={teams}
+            activeTeamId={activeTeamId}
+          />
         </div>
       </div>
     </header>
