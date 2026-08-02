@@ -73,9 +73,11 @@ export function MatchHeaderMeta({
   cards: CardWithPerson[];
 }) {
   const kickoff = formatKickoffTime(kickoffTime);
-  const dateTimeLine = kickoff
+  const dateTime = kickoff
     ? `${formatMatchDate(date)} · ${kickoff}`
     : formatMatchDate(date);
+  const venue = venueName ?? "Unknown";
+  const dateTimeVenueLine = `${dateTime} . ${venue}`;
 
   const showResult = status === "played";
   const showCancelledOrPostponed =
@@ -106,9 +108,10 @@ export function MatchHeaderMeta({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        <p>{dateTimeLine}</p>
-        <p>{venueName ?? "Unknown"}</p>
-        {competitionName ? <p>{competitionName}</p> : null}
+        {competitionName ? (
+          <p className="font-bold">{competitionName}</p>
+        ) : null}
+        <p>{dateTimeVenueLine}</p>
         {statusLine}
         {showMatchExtras ? <p>Match day squad: {matchDaySquadCount}</p> : null}
       </div>
