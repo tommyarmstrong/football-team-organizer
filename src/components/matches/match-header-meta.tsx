@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { CARD_TYPE_EMOJIS } from "@/lib/constants";
 import type { CardWithPerson } from "@/lib/data/cards";
 import type { GoalWithPlayers } from "@/lib/data/goals";
@@ -10,7 +9,6 @@ import {
   guardianDisplayName,
   labelMatchStatus,
   playerDisplayName,
-  resultLetter,
 } from "@/lib/format";
 import type { CardType, MatchStatus } from "@/lib/supabase/database.types";
 
@@ -55,8 +53,6 @@ export function MatchHeaderMeta({
   venueName,
   competitionName,
   status,
-  goalsFor,
-  goalsAgainst,
   matchDaySquadCount,
   goals,
   cards,
@@ -66,8 +62,6 @@ export function MatchHeaderMeta({
   venueName: string | null;
   competitionName?: string | null;
   status: MatchStatus;
-  goalsFor: number;
-  goalsAgainst: number;
   matchDaySquadCount: number;
   goals: GoalWithPlayers[];
   cards: CardWithPerson[];
@@ -79,26 +73,9 @@ export function MatchHeaderMeta({
   const venue = venueName ?? "Unknown";
   const dateTimeVenueLine = `${dateTime} . ${venue}`;
 
-  const showResult = status === "played";
   const showCancelledOrPostponed =
     status === "cancelled" || status === "postponed";
   const showMatchExtras = !showCancelledOrPostponed;
-
-  let statusLine: ReactNode = null;
-  if (showResult) {
-    const letter = resultLetter(goalsFor, goalsAgainst);
-    statusLine = letter ? (
-      <p>
-        <span className="text-foreground font-medium" aria-label={letter}>
-          {letter}
-        </span>
-      </p>
-    ) : null;
-  } else if (showCancelledOrPostponed) {
-    statusLine = (
-      <p className="text-destructive font-medium">{labelMatchStatus(status)}</p>
-    );
-  }
 
   const ourGoals = showMatchExtras
     ? goals.filter((goal) => !goal.is_opposition)
@@ -112,7 +89,11 @@ export function MatchHeaderMeta({
           <p className="font-bold">{competitionName}</p>
         ) : null}
         <p>{dateTimeVenueLine}</p>
-        {statusLine}
+        {showCancelledOrPostponed ? (
+          <p className="text-destructive font-medium">
+            {labelMatchStatus(status)}
+          </p>
+        ) : null}
         {showMatchExtras ? <p>Match day squad: {matchDaySquadCount}</p> : null}
       </div>
 

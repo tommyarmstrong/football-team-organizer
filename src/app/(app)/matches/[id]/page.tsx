@@ -113,8 +113,6 @@ export default async function MatchDetailPage({
             venueName={match.venue?.name ?? null}
             competitionName={match.competition?.name ?? null}
             status={match.status}
-            goalsFor={goalsFor}
-            goalsAgainst={goalsAgainst}
             matchDaySquadCount={matchSquadIds.size}
             goals={goals}
             cards={cards}
