@@ -43,7 +43,8 @@ export async function listCoaches(): Promise<{
     .from("coaches")
     .select(
       `*, ${PERSON_EMBED}, team_coaches(id, team_id, role, team:teams(name))`,
-    );
+    )
+    .eq("active_role", true);
 
   if (error) return { data: [], error: error.message };
 
@@ -202,12 +203,23 @@ export async function updateCoach(
   };
 }
 
+export async function setCoachActiveRole(
+  id: string,
+  activeRole: boolean,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("coaches")
+    .update({ active_role: activeRole })
+    .eq("id", id);
+  return { error: error?.message ?? null };
+}
+
+/** Soft-deactivate so historic team and objective links stay intact. */
 export async function deleteCoach(
   id: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("coaches").delete().eq("id", id);
-  return { error: error?.message ?? null };
+  return setCoachActiveRole(id, false);
 }
 
 export type TeamCoachEntry = {

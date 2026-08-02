@@ -48,7 +48,8 @@ export async function listGuardians(): Promise<{
     .from("guardians")
     .select(
       `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, emergency_contact, player:players(person:people!person_id(first_name, last_name)))`,
-    );
+    )
+    .eq("active_role", true);
 
   if (error) return { data: [], error: error.message };
 
@@ -270,12 +271,22 @@ export async function updateGuardian(
   };
 }
 
+export async function setGuardianActiveRole(
+  id: string,
+  activeRole: boolean,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("guardians")
+    .update({ active_role: activeRole })
+    .eq("id", id);
+  return { error: error?.message ?? null };
+}
+
 export async function deleteGuardian(
   id: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("guardians").delete().eq("id", id);
-  return { error: error?.message ?? null };
+  return setGuardianActiveRole(id, false);
 }
 
 export async function linkGuardianToPlayer(input: {

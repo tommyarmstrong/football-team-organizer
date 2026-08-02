@@ -45,10 +45,12 @@ export default async function EditPersonPage({
 
   const player =
     club != null
-      ? (person.players.find((row) => row.club_id === club.id) ??
-        person.players[0] ??
+      ? (person.players.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.players.find((row) => row.active_role) ??
         null)
-      : (person.players[0] ?? null);
+      : (person.players.find((row) => row.active_role) ?? null);
 
   return (
     <div className="space-y-6">
@@ -83,8 +85,9 @@ export default async function EditPersonPage({
           <CardHeader>
             <CardTitle>Club roles</CardTitle>
             <CardDescription>
-              Add or remove player, coach, guardian, and manager roles for this
-              person at {club.name}.
+              Add or deactivate player, coach, guardian, and manager roles for
+              this person at {club.name}. Deactivating keeps historic records
+              linked.
             </CardDescription>
           </CardHeader>
           <CardContent>

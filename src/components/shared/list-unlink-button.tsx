@@ -35,7 +35,7 @@ export function ListUnlinkButton({
       }
     >
       {state.error ? (
-        <div className="sr-only" role="alert">
+        <div className="mb-1" role="alert">
           <ErrorBanner message={state.error} />
         </div>
       ) : null}

@@ -9,7 +9,11 @@ import { normalizeEmail } from "@/lib/people/person";
 
 export type { Person, PersonInvitation };
 
-export type PersonRoleRef = { id: string; club_id: string };
+export type PersonRoleRef = {
+  id: string;
+  club_id: string;
+  active_role: boolean;
+};
 
 export type PersonPlayerRef = PersonRoleRef & {
   position: string | null;
@@ -41,7 +45,9 @@ export async function listPeople(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("people")
-    .select("*, managers(id), coaches(id), guardians(id), players(id)")
+    .select(
+      "*, managers(id, active_role), coaches(id, active_role), guardians(id, active_role), players(id, active_role)",
+    )
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -49,19 +55,19 @@ export async function listPeople(): Promise<{
 
   const rows: PersonDirectoryItem[] = (data ?? []).map((row) => {
     const person = row as Person & {
-      managers: { id: string }[] | null;
-      coaches: { id: string }[] | null;
-      guardians: { id: string }[] | null;
-      players: { id: string }[] | null;
+      managers: { id: string; active_role: boolean }[] | null;
+      coaches: { id: string; active_role: boolean }[] | null;
+      guardians: { id: string; active_role: boolean }[] | null;
+      players: { id: string; active_role: boolean }[] | null;
     };
     const { managers, coaches, guardians, players, ...rest } = person;
     return {
       ...rest,
       roles: {
-        player: (players?.length ?? 0) > 0,
-        guardian: (guardians?.length ?? 0) > 0,
-        coach: (coaches?.length ?? 0) > 0,
-        manager: (managers?.length ?? 0) > 0,
+        player: (players ?? []).some((r) => r.active_role),
+        guardian: (guardians ?? []).some((r) => r.active_role),
+        coach: (coaches ?? []).some((r) => r.active_role),
+        manager: (managers ?? []).some((r) => r.active_role),
       },
     };
   });
@@ -76,7 +82,7 @@ export async function getPerson(
   const { data, error } = await supabase
     .from("people")
     .select(
-      "*, managers(id, club_id), coaches(id, club_id), guardians(id, club_id), players(id, club_id, position, school, date_of_birth)",
+      "*, managers(id, club_id, active_role), coaches(id, club_id, active_role), guardians(id, club_id, active_role), players(id, club_id, active_role, position, school, date_of_birth)",
     )
     .eq("id", id)
     .maybeSingle();

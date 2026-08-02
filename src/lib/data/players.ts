@@ -57,7 +57,8 @@ export async function listPlayers(): Promise<{
     .from("players")
     .select(
       `*, ${PERSON_EMBED}, team_players(id, team_id, shirt_number, active, team:teams(name))`,
-    );
+    )
+    .eq("active_role", true);
 
   if (error) return { data: [], error: error.message };
 
@@ -317,12 +318,23 @@ export async function updatePlayer(
   };
 }
 
+export async function setPlayerActiveRole(
+  id: string,
+  activeRole: boolean,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("players")
+    .update({ active_role: activeRole })
+    .eq("id", id);
+  return { error: error?.message ?? null };
+}
+
+/** Soft-deactivate so historic goals and match data stay linked. */
 export async function deletePlayer(
   id: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("players").delete().eq("id", id);
-  return { error: error?.message ?? null };
+  return setPlayerActiveRole(id, false);
 }
 
 export async function upsertPlayerContact(

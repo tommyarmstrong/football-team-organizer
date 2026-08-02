@@ -29,6 +29,7 @@ export async function listManagers(
   let query = supabase
     .from("managers")
     .select(`*, ${PERSON_EMBED}`)
+    .eq("active_role", true)
     .order("created_at", { ascending: true });
 
   if (clubId) query = query.eq("club_id", clubId);
@@ -143,10 +144,20 @@ export async function updateManager(
   };
 }
 
+export async function setManagerActiveRole(
+  id: string,
+  activeRole: boolean,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("managers")
+    .update({ active_role: activeRole })
+    .eq("id", id);
+  return { error: error?.message ?? null };
+}
+
 export async function deleteManager(
   id: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("managers").delete().eq("id", id);
-  return { error: error?.message ?? null };
+  return setManagerActiveRole(id, false);
 }

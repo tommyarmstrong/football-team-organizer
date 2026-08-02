@@ -33,7 +33,6 @@ import { PlayerObjectivesSection } from "@/components/players/player-objectives-
 import { CoachObjectivesSection } from "@/components/coaches/coach-objectives-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
-import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -71,28 +70,34 @@ export default async function PersonDetailPage({
 
   const player =
     club != null
-      ? (person.players.find((row) => row.club_id === club.id) ??
-        person.players[0] ??
+      ? (person.players.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.players.find((row) => row.active_role) ??
         null)
-      : (person.players[0] ?? null);
+      : (person.players.find((row) => row.active_role) ?? null);
   const coach =
     club != null
-      ? (person.coaches.find((row) => row.club_id === club.id) ??
-        person.coaches[0] ??
+      ? (person.coaches.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.coaches.find((row) => row.active_role) ??
         null)
-      : (person.coaches[0] ?? null);
+      : (person.coaches.find((row) => row.active_role) ?? null);
   const guardian =
     club != null
-      ? (person.guardians.find((row) => row.club_id === club.id) ??
-        person.guardians[0] ??
+      ? (person.guardians.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.guardians.find((row) => row.active_role) ??
         null)
-      : (person.guardians[0] ?? null);
+      : (person.guardians.find((row) => row.active_role) ?? null);
 
   const roles = {
-    player: person.players.length > 0,
-    guardian: person.guardians.length > 0,
-    coach: person.coaches.length > 0,
-    manager: person.managers.length > 0,
+    player: person.players.some((row) => row.active_role),
+    guardian: person.guardians.some((row) => row.active_role),
+    coach: person.coaches.some((row) => row.active_role),
+    manager: person.managers.some((row) => row.active_role),
   };
 
   const [
@@ -231,9 +236,6 @@ export default async function PersonDetailPage({
               >
                 Edit
               </Link>
-            ) : null}
-            {canEdit && player ? (
-              <DeletePlayerButton playerId={player.id} />
             ) : null}
             <Link
               href="/people"
@@ -398,8 +400,9 @@ export default async function PersonDetailPage({
           <CardHeader>
             <CardTitle>Club Roles</CardTitle>
             <CardDescription>
-              Add or remove player, coach, guardian, and manager roles for this
-              person at {club.name}.
+              Add or deactivate player, coach, guardian, and manager roles for
+              this person at {club.name}. Deactivating keeps historic records
+              linked.
             </CardDescription>
           </CardHeader>
           <CardContent>

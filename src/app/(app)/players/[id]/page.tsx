@@ -10,7 +10,6 @@ import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import { getPlayerGuardians } from "@/lib/data/guardians";
 import {
   canEditPlayer,
-  canManageClub,
   canViewPlayerContact,
   getViewerContext,
 } from "@/lib/authz/context";
@@ -27,7 +26,6 @@ import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { PlayerContactForm } from "@/components/players/player-contact-form";
 import { PlayerObjectivesSection } from "@/components/players/player-objectives-section";
-import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -75,7 +73,6 @@ export default async function PlayerDetailPage({
 
   const playerTeamIds = teams.map((team) => team.team_id);
   const canEdit = canEditPlayer(ctx, player.club_id, playerTeamIds);
-  const canManage = canManageClub(ctx, player.club_id);
   const canViewContact = canViewPlayerContact(
     ctx,
     player.id,
@@ -119,7 +116,6 @@ export default async function PlayerDetailPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <PlayerForm mode="edit" player={player} />
-            {canManage ? <DeletePlayerButton playerId={player.id} /> : null}
           </CardContent>
         </Card>
       ) : null}
