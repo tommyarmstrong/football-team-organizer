@@ -17,11 +17,7 @@ import {
 } from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
-import {
-  getPlayerContact,
-  getPlayerTeams,
-  listPlayers,
-} from "@/lib/data/players";
+import { getPlayerTeams, listPlayers } from "@/lib/data/players";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
@@ -34,7 +30,6 @@ import { PlayerObjectivesSection } from "@/components/players/player-objectives-
 import { CoachObjectivesSection } from "@/components/coaches/coach-objectives-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
-import { DeletePlayerButton } from "@/components/players/delete-player-button";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -105,7 +100,6 @@ export default async function PersonDetailPage({
   const [
     playerTeamsResult,
     playerGuardiansResult,
-    playerContactResult,
     playerObjectivesResult,
     coachRecordResult,
     coachTeamsResult,
@@ -116,7 +110,6 @@ export default async function PersonDetailPage({
   ] = await Promise.all([
     player ? getPlayerTeams(player.id) : Promise.resolve({ data: [] }),
     player ? getPlayerGuardians(player.id) : Promise.resolve({ data: [] }),
-    player ? getPlayerContact(player.id) : Promise.resolve({ data: null }),
     player
       ? listPlayerObjectives(player.id)
       : Promise.resolve({ data: [], error: null }),
@@ -140,7 +133,6 @@ export default async function PersonDetailPage({
 
   const playerTeams = playerTeamsResult.data;
   const playerGuardians = playerGuardiansResult.data;
-  const playerContact = playerContactResult.data;
   const playerObjectives = playerObjectivesResult.data;
   const playerObjectivesError =
     "error" in playerObjectivesResult ? playerObjectivesResult.error : null;
@@ -151,11 +143,8 @@ export default async function PersonDetailPage({
   const allPlayers = allPlayersResult.data;
   const allGuardians = allGuardiansResult.data;
 
-  const emergencyGuardian = playerContact?.emergency_guardian_id
-    ? playerGuardians.find(
-        (link) => link.guardian_id === playerContact.emergency_guardian_id,
-      )
-    : null;
+  const emergencyGuardian =
+    playerGuardians.find((link) => link.emergency_contact) ?? null;
 
   const canViewContact =
     player != null &&
@@ -245,9 +234,6 @@ export default async function PersonDetailPage({
                 Edit
               </Link>
             ) : null}
-            {canEdit && player ? (
-              <DeletePlayerButton playerId={player.id} />
-            ) : null}
             <Link
               href="/people"
               className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -296,23 +282,6 @@ export default async function PersonDetailPage({
         </Card>
       ) : null}
 
-      {player ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Player Teams</CardTitle>
-            <CardDescription>This player&apos;s teams</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PlayerTeamsSection
-              playerId={player.id}
-              memberships={playerTeams}
-              availableTeams={availablePlayerTeams}
-              canEdit={canEditPlayerRole}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
-
       {coach ? (
         <Card>
           <CardHeader>
@@ -325,6 +294,42 @@ export default async function PersonDetailPage({
               memberships={coachTeams}
               availableTeams={availableCoachTeams}
               canEdit={canEditCoachRole}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {coach ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching Development</CardTitle>
+            <CardDescription>
+              Optional goals for this coach&apos;s development.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CoachObjectivesSection
+              personId={person.id}
+              coachId={coach.id}
+              objectives={coachObjectives}
+              canEdit={canEditCoachRole}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {player ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Player Teams</CardTitle>
+            <CardDescription>This player&apos;s teams</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlayerTeamsSection
+              playerId={player.id}
+              memberships={playerTeams}
+              availableTeams={availablePlayerTeams}
+              canEdit={canEditPlayerRole}
             />
           </CardContent>
         </Card>
@@ -351,25 +356,6 @@ export default async function PersonDetailPage({
                 canEdit={canEditPlayerRole}
               />
             )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Coaching Development</CardTitle>
-            <CardDescription>
-              Optional goals for this coach&apos;s development.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CoachObjectivesSection
-              personId={person.id}
-              coachId={coach.id}
-              objectives={coachObjectives}
-              canEdit={canEditCoachRole}
-            />
           </CardContent>
         </Card>
       ) : null}

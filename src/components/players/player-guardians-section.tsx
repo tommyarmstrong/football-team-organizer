@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
 import { PhoneIcon } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
+import {
+  linkPlayerToGuardianAction,
+  unlinkGuardianFromPlayerAction,
+  updateGuardianPlayerLinkAction,
+} from "@/lib/guardians/actions";
 import {
   GUARDIAN_RELATIONSHIPS,
   GUARDIAN_RELATIONSHIP_LABELS,
 } from "@/lib/constants";
-import {
-  linkPlayerToGuardianAction,
-  unlinkGuardianFromPlayerAction,
-} from "@/lib/guardians/actions";
 import type { PlayerGuardianLink } from "@/lib/data/guardians";
 import { guardianDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,12 @@ import {
 } from "@/components/shared/object-list";
 import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+
+function guardianHref(link: PlayerGuardianLink): string {
+  return link.guardian_person_id
+    ? `/people/${link.guardian_person_id}`
+    : `/guardians/${link.guardian_id}`;
+}
 
 type GuardianOption = {
   id: string;
@@ -57,63 +64,213 @@ export function PlayerGuardiansSection({
         />
       ) : (
         <ul className={objectListClassName}>
-          {links.map((link) => (
-            <li key={link.player_guardian_id} className="flex items-stretch">
-              <Link
-                href={
-                  link.guardian_person_id
-                    ? `/people/${link.guardian_person_id}`
-                    : `/guardians/${link.guardian_id}`
-                }
-                className={objectListRowClassName()}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{guardianDisplayName(link)}</p>
-                </div>
-                <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                  <RoleChip>
-                    {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
-                  </RoleChip>
-                  {link.legal_guardian ? (
-                    <RoleChip>Legal guardian</RoleChip>
-                  ) : null}
-                  {link.phone ? (
-                    <RoleChip>
-                      <PhoneIcon
-                        className="size-3 shrink-0"
-                        aria-hidden="true"
-                      />
-                      {link.phone}
-                    </RoleChip>
-                  ) : null}
-                </span>
-              </Link>
-              {canEdit ? (
-                <div className="flex items-center pr-2">
-                  <ListUnlinkButton
-                    label={`Unlink ${guardianDisplayName(link)}`}
-                    unlinkAction={() =>
-                      unlinkGuardianFromPlayerAction(
-                        link.player_guardian_id,
-                        link.guardian_id,
-                        playerId,
-                      )
-                    }
-                  />
-                </div>
-              ) : null}
-            </li>
-          ))}
+          {links.map((link) =>
+            canEdit && playerId ? (
+              <PlayerGuardianLinkRow
+                key={link.player_guardian_id}
+                playerId={playerId}
+                link={link}
+              />
+            ) : (
+              <li key={link.player_guardian_id}>
+                <Link
+                  href={guardianHref(link)}
+                  className={objectListRowClassName()}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{guardianDisplayName(link)}</p>
+                  </div>
+                  <LinkChips link={link} />
+                </Link>
+              </li>
+            ),
+          )}
         </ul>
       )}
 
-      {canEdit && availableGuardians.length > 0 ? (
+      {canEdit && playerId && availableGuardians.length > 0 ? (
         <LinkGuardianForm
           playerId={playerId}
           availableGuardians={availableGuardians}
         />
       ) : null}
     </div>
+  );
+}
+
+function LinkChips({ link }: { link: PlayerGuardianLink }) {
+  return (
+    <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+      <RoleChip>{GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}</RoleChip>
+      {link.legal_guardian ? <RoleChip>Legal guardian</RoleChip> : null}
+      {link.emergency_contact ? <RoleChip>Emergency contact</RoleChip> : null}
+      {link.phone ? (
+        <RoleChip>
+          <PhoneIcon className="size-3 shrink-0" aria-hidden="true" />
+          {link.phone}
+        </RoleChip>
+      ) : null}
+    </span>
+  );
+}
+
+function PlayerGuardianLinkRow({
+  playerId,
+  link,
+}: {
+  playerId: string;
+  link: PlayerGuardianLink;
+}) {
+  const [editing, setEditing] = useState(false);
+  const name = guardianDisplayName(link);
+
+  if (editing) {
+    return (
+      <li className="space-y-3 px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={guardianHref(link)}
+            className="min-w-0 truncate text-sm font-medium hover:underline"
+          >
+            {name}
+          </Link>
+          <ListUnlinkButton
+            label={`Unlink ${name}`}
+            unlinkAction={() =>
+              unlinkGuardianFromPlayerAction(
+                link.player_guardian_id,
+                link.guardian_id,
+                playerId,
+              )
+            }
+          />
+        </div>
+        <EditLinkForm
+          playerId={playerId}
+          link={link}
+          onCancel={() => setEditing(false)}
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-stretch">
+      <Link href={guardianHref(link)} className={objectListRowClassName()}>
+        <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+        <LinkChips link={link} />
+      </Link>
+      <div className="flex items-center gap-1 pr-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() => setEditing(true)}
+        >
+          Edit
+        </Button>
+        <ListUnlinkButton
+          label={`Unlink ${name}`}
+          unlinkAction={() =>
+            unlinkGuardianFromPlayerAction(
+              link.player_guardian_id,
+              link.guardian_id,
+              playerId,
+            )
+          }
+        />
+      </div>
+    </li>
+  );
+}
+
+function EditLinkForm({
+  playerId,
+  link,
+  onCancel,
+}: {
+  playerId: string;
+  link: PlayerGuardianLink;
+  onCancel: () => void;
+}) {
+  const bound = updateGuardianPlayerLinkAction.bind(
+    null,
+    link.player_guardian_id,
+    link.guardian_id,
+    playerId,
+  );
+  const [state, formAction, pending] = useActionState(
+    bound,
+    INITIAL_ACTION_STATE,
+  );
+
+  useEffect(() => {
+    if (state.success) onCancel();
+  }, [state.success, onCancel]);
+
+  return (
+    <form
+      action={formAction}
+      className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+    >
+      <div className="space-y-2 sm:w-44">
+        <Label htmlFor={`edit-relationship-${link.player_guardian_id}`}>
+          Relationship
+        </Label>
+        <NativeSelect
+          id={`edit-relationship-${link.player_guardian_id}`}
+          name="relationship"
+          required
+          disabled={pending}
+          defaultValue={link.relationship}
+        >
+          {GUARDIAN_RELATIONSHIPS.map((value) => (
+            <option key={value} value={value}>
+              {GUARDIAN_RELATIONSHIP_LABELS[value]}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="legal_guardian"
+          disabled={pending}
+          defaultChecked={link.legal_guardian}
+          className="border-input size-4 rounded"
+        />
+        Legal guardian
+      </label>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="emergency_contact"
+          disabled={pending}
+          defaultChecked={link.emergency_contact}
+          className="border-input size-4 rounded"
+        />
+        Emergency contact
+      </label>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+      {state.error ? (
+        <div className="w-full sm:basis-full">
+          <ErrorBanner message={state.error} />
+        </div>
+      ) : null}
+    </form>
   );
 }
 
@@ -134,7 +291,7 @@ function LinkGuardianForm({
     <form
       key={state.success ?? "idle"}
       action={formAction}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
     >
       <div className="min-w-0 flex-1 space-y-2">
         <Label htmlFor="player-guardian">Guardian</Label>
@@ -147,7 +304,10 @@ function LinkGuardianForm({
           emptyMessage="No guardians match that name."
           options={availableGuardians.map((guardian) => ({
             value: guardian.id,
-            label: `${guardian.first_name} ${guardian.last_name}`.trim(),
+            label: guardianDisplayName({
+              first_name: guardian.first_name,
+              last_name: guardian.last_name,
+            }),
           }))}
         />
       </div>
@@ -175,6 +335,15 @@ function LinkGuardianForm({
           className="border-input size-4 rounded"
         />
         Legal guardian
+      </label>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="emergency_contact"
+          disabled={pending}
+          className="border-input size-4 rounded"
+        />
+        Emergency contact
       </label>
       <Button type="submit" disabled={pending}>
         {pending ? "Linking…" : "Add"}

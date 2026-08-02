@@ -13,6 +13,7 @@ import {
   updateRosterEntry,
   upsertPlayerContact,
 } from "@/lib/data/players";
+import { syncEmergencyContactFlagFromGuardianId } from "@/lib/data/guardians";
 import {
   createPlayerObjective,
   deletePlayerObjective,
@@ -115,15 +116,23 @@ export async function savePlayerContactAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const emergency_guardian_id = str(formData, "emergency_guardian_id") || null;
+
   const { error } = await upsertPlayerContact(playerId, {
     phone: str(formData, "phone") || null,
     email: str(formData, "email") || null,
     address: str(formData, "address") || null,
-    emergency_guardian_id: str(formData, "emergency_guardian_id") || null,
+    emergency_guardian_id,
     medical_notes: str(formData, "medical_notes") || null,
   });
 
   if (error) return { error };
+
+  const sync = await syncEmergencyContactFlagFromGuardianId(
+    playerId,
+    emergency_guardian_id,
+  );
+  if (sync.error) return { error: sync.error };
 
   await revalidatePersonForPlayer(playerId);
   return { success: "Contact details saved." };

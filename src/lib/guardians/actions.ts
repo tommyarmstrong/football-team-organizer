@@ -6,24 +6,39 @@ import type { ActionState } from "@/lib/action-state";
 import {
   createGuardian,
   deleteGuardian,
+  getGuardian,
   linkGuardianToPlayer,
   unlinkGuardianFromPlayer,
   updateGuardian,
   updateGuardianPlayerLink,
 } from "@/lib/data/guardians";
+import { getPlayer } from "@/lib/data/players";
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
 import {
+  parseEmergencyContact,
   parseGuardianForm,
   parseGuardianRelationship,
   parseLegalGuardian,
 } from "@/lib/guardians/parse";
 import { str } from "@/lib/form-parse";
 
-function revalidateGuardian(guardianId: string, _playerId?: string) {
+async function revalidateGuardian(guardianId: string, playerId?: string) {
   revalidatePath("/club");
   revalidatePath(`/guardians/${guardianId}`);
   revalidatePath("/people");
+
+  const guardian = await getGuardian(guardianId);
+  if (guardian.data?.person_id) {
+    revalidatePath(`/people/${guardian.data.person_id}`);
+  }
+
+  if (playerId) {
+    const player = await getPlayer(playerId);
+    if (player.data?.person_id) {
+      revalidatePath(`/people/${player.data.person_id}`);
+    }
+  }
 }
 
 export async function createGuardianAction(
@@ -59,7 +74,7 @@ export async function updateGuardianAction(
   const { error } = await updateGuardian(id, parsed);
   if (error) return { error };
 
-  revalidateGuardian(id);
+  await revalidateGuardian(id);
   return { success: "Guardian saved." };
 }
 
@@ -87,10 +102,11 @@ export async function linkGuardianToPlayerAction(
     player_id: playerId,
     relationship,
     legal_guardian: parseLegalGuardian(formData),
+    emergency_contact: parseEmergencyContact(formData),
   });
   if (error) return { error };
 
-  revalidateGuardian(guardianId, playerId);
+  await revalidateGuardian(guardianId, playerId);
   return { success: "Player linked." };
 }
 
@@ -110,10 +126,11 @@ export async function linkPlayerToGuardianAction(
     player_id: playerId,
     relationship,
     legal_guardian: parseLegalGuardian(formData),
+    emergency_contact: parseEmergencyContact(formData),
   });
   if (error) return { error };
 
-  revalidateGuardian(guardianId, playerId);
+  await revalidateGuardian(guardianId, playerId);
   return { success: "Guardian linked." };
 }
 
@@ -130,10 +147,11 @@ export async function updateGuardianPlayerLinkAction(
   const { error } = await updateGuardianPlayerLink(linkId, {
     relationship,
     legal_guardian: parseLegalGuardian(formData),
+    emergency_contact: parseEmergencyContact(formData),
   });
   if (error) return { error };
 
-  revalidateGuardian(guardianId, playerId);
+  await revalidateGuardian(guardianId, playerId);
   return { success: "Link updated." };
 }
 
@@ -145,6 +163,6 @@ export async function unlinkGuardianFromPlayerAction(
   const { error } = await unlinkGuardianFromPlayer(linkId);
   if (error) return { error };
 
-  revalidateGuardian(guardianId, playerId);
+  await revalidateGuardian(guardianId, playerId);
   return { success: "Player unlinked." };
 }

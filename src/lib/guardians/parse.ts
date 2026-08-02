@@ -39,3 +39,7 @@ export function parseGuardianRelationship(
 export function parseLegalGuardian(formData: FormData): boolean {
   return boolFromCheckbox(formData, "legal_guardian");
 }
+
+export function parseEmergencyContact(formData: FormData): boolean {
+  return boolFromCheckbox(formData, "emergency_contact");
+}
