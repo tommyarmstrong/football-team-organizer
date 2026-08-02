@@ -21,6 +21,7 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function CoachTeamsSection({
@@ -94,8 +95,8 @@ function OpenTeamRow({ membership }: { membership: CoachTeamMembership }) {
       <span className="min-w-0 flex-1 truncate font-medium">
         {membership.team_name}
       </span>
-      <span className="text-muted-foreground shrink-0">
-        {membership.role ?? "Coach"}
+      <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        <RoleChip>{membership.role ?? "Coach"}</RoleChip>
       </span>
     </button>
   );

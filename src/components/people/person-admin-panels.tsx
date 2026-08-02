@@ -3,21 +3,71 @@
 import { useActionState, useState, useTransition } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
-  linkRoleToPersonAction,
+  addClubRoleToPersonAction,
+  removeClubRoleFromPersonAction,
   sendInvitationAction,
 } from "@/lib/people/actions";
 import type { PersonWithRoles } from "@/lib/data/people";
+import {
+  PERSON_ROLE_ORDER,
+  type PersonRoleKind,
+} from "@/components/shared/role-chip";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 
 const ACCOUNT_STATUS_LABELS: Record<string, string> = {
-  none: "No account",
+  none: "No login account",
   invited: "Invited",
   active: "Active",
   disabled: "Disabled",
 };
+
+const ROLE_LABELS: Record<PersonRoleKind, string> = {
+  player: "Player",
+  guardian: "Guardian",
+  coach: "Coach",
+  manager: "Manager",
+};
+
+type ClubRoleRow = {
+  kind: PersonRoleKind;
+  id: string;
+};
+
+function clubRolesForPerson(
+  person: PersonWithRoles,
+  clubId: string,
+): ClubRoleRow[] {
+  const rows: ClubRoleRow[] = [];
+  for (const player of person.players) {
+    if (player.club_id === clubId) rows.push({ kind: "player", id: player.id });
+  }
+  for (const guardian of person.guardians) {
+    if (guardian.club_id === clubId) {
+      rows.push({ kind: "guardian", id: guardian.id });
+    }
+  }
+  for (const coach of person.coaches) {
+    if (coach.club_id === clubId) rows.push({ kind: "coach", id: coach.id });
+  }
+  for (const manager of person.managers) {
+    if (manager.club_id === clubId) {
+      rows.push({ kind: "manager", id: manager.id });
+    }
+  }
+  return rows.sort(
+    (a, b) =>
+      PERSON_ROLE_ORDER.indexOf(a.kind) - PERSON_ROLE_ORDER.indexOf(b.kind),
+  );
+}
 
 export function PersonInvitationPanel({ person }: { person: PersonWithRoles }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -87,76 +137,113 @@ export function PersonInvitationPanel({ person }: { person: PersonWithRoles }) {
   );
 }
 
-export function PersonRoleLinkForm({
-  personId,
-  managers,
-  coaches,
-  guardians,
-  players,
+export function PersonClubRolesSection({
+  person,
+  clubId,
 }: {
-  personId: string;
-  managers: { id: string; label: string }[];
-  coaches: { id: string; label: string }[];
-  guardians: { id: string; label: string }[];
-  players: { id: string; label: string }[];
+  person: PersonWithRoles;
+  clubId: string;
 }) {
-  const action = linkRoleToPersonAction.bind(null, personId);
-  const [state, formAction, pending] = useActionState(
-    action,
-    INITIAL_ACTION_STATE,
-  );
-  const [role, setRole] = useState("guardian");
-
-  const options =
-    role === "manager"
-      ? managers
-      : role === "coach"
-        ? coaches
-        : role === "player"
-          ? players
-          : guardians;
+  const roles = clubRolesForPerson(person, clubId);
+  const present = new Set(roles.map((role) => role.kind));
+  const addable = PERSON_ROLE_ORDER.filter((role) => !present.has(role));
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="role">Role type</Label>
-          <NativeSelect
-            id="role"
-            name="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            disabled={pending}
-          >
-            <option value="manager">Manager</option>
-            <option value="coach">Coach</option>
-            <option value="guardian">Guardian</option>
-            <option value="player">Player</option>
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="role_id">Existing role record</Label>
-          <NativeSelect id="role_id" name="role_id" required disabled={pending}>
-            <option value="">Select…</option>
-            {options.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-      </div>
+    <div className="space-y-4">
+      {roles.length === 0 ? (
+        <EmptyState
+          title="No club roles"
+          description="Add a player, coach, guardian, or manager role for this person."
+        />
+      ) : (
+        <ul className={objectListClassName}>
+          {roles.map((role) => (
+            <li key={`${role.kind}-${role.id}`} className="flex items-stretch">
+              <div className={objectListRowClassName()}>
+                <span className="min-w-0 flex-1 font-medium">
+                  {ROLE_LABELS[role.kind]}
+                </span>
+              </div>
+              <div className="flex items-center pr-2">
+                <ListUnlinkButton
+                  label={`Remove ${ROLE_LABELS[role.kind]} role`}
+                  confirmMessage={`Remove the ${ROLE_LABELS[role.kind].toLowerCase()} role from this person?`}
+                  unlinkAction={() =>
+                    removeClubRoleFromPersonAction(
+                      person.id,
+                      role.kind,
+                      role.id,
+                    )
+                  }
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
-      {state.error ? <ErrorBanner message={state.error} /> : null}
+      {addable.length > 0 ? (
+        <AddClubRoleForm personId={person.id} addable={addable} />
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          This person already has every club role.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AddClubRoleForm({
+  personId,
+  addable,
+}: {
+  personId: string;
+  addable: PersonRoleKind[];
+}) {
+  const bound = addClubRoleToPersonAction.bind(null, personId);
+  const [state, formAction, pending] = useActionState(
+    bound,
+    INITIAL_ACTION_STATE,
+  );
+
+  return (
+    <form
+      key={state.success ?? "idle"}
+      action={formAction}
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <Label htmlFor="club-role">Add role</Label>
+        <NativeSelect
+          id="club-role"
+          name="role"
+          required
+          disabled={pending}
+          defaultValue={addable[0]}
+        >
+          {addable.map((role) => (
+            <option key={role} value={role}>
+              {ROLE_LABELS[role]}
+            </option>
+          ))}
+        </NativeSelect>
+      </div>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Adding…" : "Add"}
+      </Button>
+      {state.error ? (
+        <div className="w-full sm:basis-full">
+          <ErrorBanner message={state.error} />
+        </div>
+      ) : null}
       {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
+        <p
+          className="text-muted-foreground w-full text-sm sm:basis-full"
+          role="status"
+        >
           {state.success}
         </p>
       ) : null}
-
-      <Button type="submit" disabled={pending || options.length === 0}>
-        {pending ? "Linking…" : "Link role"}
-      </Button>
     </form>
   );
 }

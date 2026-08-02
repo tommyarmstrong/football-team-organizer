@@ -7,6 +7,7 @@ import {
   addPlayerToTeam,
   createPlayer,
   deletePlayer,
+  getPlayer,
   removePlayerFromTeam,
   updatePlayer,
   updateRosterEntry,
@@ -86,10 +87,17 @@ export async function updatePlayerAction(
 }
 
 export async function deletePlayerAction(id: string): Promise<ActionState> {
+  const existing = await getPlayer(id);
+  const personId = existing.data?.person_id ?? null;
   const { error } = await deletePlayer(id);
   if (error) return { error };
 
   revalidatePath("/club");
+  revalidatePath("/people");
+  if (personId) {
+    revalidatePath(`/people/${personId}`);
+    redirect(`/people/${personId}`);
+  }
   redirect("/club");
 }
 
@@ -132,7 +140,12 @@ export async function addPlayerToTeamAction(
   );
   if (error) return { error };
 
+  const player = await getPlayer(playerId);
   revalidatePath(`/players/${playerId}`);
+  if (player.data?.person_id) {
+    revalidatePath(`/people/${player.data.person_id}`);
+  }
+  revalidatePath("/people");
   revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Player added to team." };

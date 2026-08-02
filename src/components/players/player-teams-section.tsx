@@ -11,7 +11,6 @@ import { setActiveTeamAction } from "@/lib/team/actions";
 import type { Team } from "@/lib/supabase/database.types";
 import type { PlayerTeamMembership } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -20,6 +19,7 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function PlayerTeamsSection({
@@ -94,11 +94,11 @@ function OpenTeamRow({ membership }: { membership: PlayerTeamMembership }) {
       <span className="min-w-0 flex-1 truncate font-medium">
         {membership.team_name}
       </span>
-      <span className="text-muted-foreground shrink-0">
-        {membership.shirt_number != null
-          ? `#${membership.shirt_number}`
-          : "No shirt"}
-        {membership.active ? "" : " · Inactive"}
+      <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        {membership.shirt_number != null ? (
+          <RoleChip>#{membership.shirt_number}</RoleChip>
+        ) : null}
+        {!membership.active ? <RoleChip>Inactive</RoleChip> : null}
       </span>
     </button>
   );
@@ -144,16 +144,6 @@ function AddToTeamForm({
             value: team.id,
             label: team.name,
           }))}
-        />
-      </div>
-      <div className="space-y-2 sm:w-28">
-        <Label htmlFor="add-shirt">Shirt</Label>
-        <Input
-          id="add-shirt"
-          name="shirt_number"
-          type="number"
-          min={1}
-          disabled={pending}
         />
       </div>
       <Button type="submit" disabled={pending}>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PhoneIcon } from "lucide-react";
 import { GUARDIAN_RELATIONSHIP_LABELS } from "@/lib/constants";
 import type { PlayerGuardianLink } from "@/lib/data/guardians";
 import { guardianDisplayName } from "@/lib/format";
@@ -7,6 +8,7 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { RoleChip } from "@/components/shared/role-chip";
 
 export function PlayerGuardiansSection({
   links,
@@ -32,12 +34,19 @@ export function PlayerGuardiansSection({
           >
             <div className="min-w-0 flex-1">
               <p className="font-medium">{guardianDisplayName(link)}</p>
-              <p className="text-muted-foreground truncate text-sm">
-                {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
-                {link.legal_guardian ? " · Legal guardian" : ""}
-                {link.phone ? ` · ${link.phone}` : ""}
-              </p>
             </div>
+            <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              <RoleChip>
+                {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
+              </RoleChip>
+              {link.legal_guardian ? <RoleChip>Legal guardian</RoleChip> : null}
+              {link.phone ? (
+                <RoleChip>
+                  <PhoneIcon className="size-3 shrink-0" aria-hidden="true" />
+                  {link.phone}
+                </RoleChip>
+              ) : null}
+            </span>
           </Link>
         </li>
       ))}
