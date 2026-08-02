@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckIcon, UsersIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, UsersIcon } from "lucide-react";
 import { setActiveTeamAction } from "@/lib/team/actions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -77,13 +77,17 @@ export function TeamPickerList({
   );
 }
 
-/** Icon control matching header buttons. Only renders when the user can switch teams. */
+/** Icon or label control that opens the team picker. Only renders when the user can switch teams. */
 export function TeamSwitcher({
   teams,
   activeTeamId,
+  variant = "icon",
+  align = "end",
 }: {
   teams: TeamOption[];
   activeTeamId: string | null;
+  variant?: "icon" | "label";
+  align?: "start" | "center" | "end";
 }) {
   if (teams.length < 2) return null;
 
@@ -94,25 +98,40 @@ export function TeamSwitcher({
     <Popover>
       <PopoverTrigger
         render={
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label={`Active team: ${activeName}`}
-            title={activeName}
-          />
+          variant === "label" ? (
+            <button
+              type="button"
+              aria-label={`Active team: ${activeName}. Switch team`}
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-1 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            />
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Active team: ${activeName}. Switch team`}
+              title={activeName}
+            />
+          )
         }
       >
-        <UsersIcon />
+        {variant === "label" ? (
+          <>
+            <span className="truncate">{activeName}</span>
+            <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" />
+          </>
+        ) : (
+          <UsersIcon />
+        )}
       </PopoverTrigger>
       <PopoverContent
-        align="end"
+        align={align}
         sideOffset={6}
         className="w-56 max-w-[calc(100vw-2rem)] p-1.5"
       >
         <PopoverHeader className="px-2.5 pt-1.5 pb-1">
-          <PopoverTitle className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            Team
+          <PopoverTitle className="text-muted-foreground text-xs font-medium">
+            Switch team
           </PopoverTitle>
         </PopoverHeader>
         <TeamPickerList teams={teams} activeTeamId={activeTeamId} />
