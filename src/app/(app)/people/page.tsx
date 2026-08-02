@@ -39,7 +39,6 @@ export default async function PeoplePage() {
     <div className="space-y-8">
       <PageHeader
         title="People"
-        description="Shared identity records for invitations and multi-role accounts."
         actions={
           <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
             Add person
@@ -51,7 +50,7 @@ export default async function PeoplePage() {
         <CardHeader>
           <CardTitle>Directory</CardTitle>
           <CardDescription>
-            Create a person, link role records, then send an invite-only login.
+            All players, coaches, guardians, and managers at {club.name}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

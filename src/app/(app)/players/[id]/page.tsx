@@ -177,7 +177,9 @@ export default async function PlayerDetailPage({
         <CardHeader>
           <CardTitle>Development objectives</CardTitle>
           <CardDescription>
-            Optional goals for this player&apos;s development.
+            For younger children it is usually recommended that objectives are
+            limited to no more than one or two items, which they can focus on,
+            rather than being overwhelmed by information.
           </CardDescription>
         </CardHeader>
         <CardContent>

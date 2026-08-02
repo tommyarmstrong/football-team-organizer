@@ -9,27 +9,64 @@ import { normalizeEmail } from "@/lib/people/person";
 
 export type { Person, PersonInvitation };
 
+export type PersonRoleRef = { id: string; club_id: string };
+
+export type PersonPlayerRef = PersonRoleRef & {
+  position: string | null;
+  school: string | null;
+  date_of_birth: string | null;
+};
+
 export type PersonWithRoles = Person & {
-  managers: { id: string; club_id: string }[];
-  coaches: { id: string; club_id: string }[];
-  guardians: { id: string; club_id: string }[];
-  players: { id: string; club_id: string }[];
+  managers: PersonRoleRef[];
+  coaches: PersonRoleRef[];
+  guardians: PersonRoleRef[];
+  players: PersonPlayerRef[];
   outstanding_invitation: PersonInvitation | null;
 };
 
+export type PersonDirectoryItem = Person & {
+  roles: {
+    player: boolean;
+    guardian: boolean;
+    coach: boolean;
+    manager: boolean;
+  };
+};
+
 export async function listPeople(): Promise<{
-  data: Person[];
+  data: PersonDirectoryItem[];
   error: string | null;
 }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("people")
-    .select("*")
+    .select("*, managers(id), coaches(id), guardians(id), players(id)")
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
   if (error) return { data: [], error: error.message };
-  return { data: data ?? [], error: null };
+
+  const rows: PersonDirectoryItem[] = (data ?? []).map((row) => {
+    const person = row as Person & {
+      managers: { id: string }[] | null;
+      coaches: { id: string }[] | null;
+      guardians: { id: string }[] | null;
+      players: { id: string }[] | null;
+    };
+    const { managers, coaches, guardians, players, ...rest } = person;
+    return {
+      ...rest,
+      roles: {
+        player: (players?.length ?? 0) > 0,
+        guardian: (guardians?.length ?? 0) > 0,
+        coach: (coaches?.length ?? 0) > 0,
+        manager: (managers?.length ?? 0) > 0,
+      },
+    };
+  });
+
+  return { data: rows, error: null };
 }
 
 export async function getPerson(
@@ -39,7 +76,7 @@ export async function getPerson(
   const { data, error } = await supabase
     .from("people")
     .select(
-      "*, managers(id, club_id), coaches(id, club_id), guardians(id, club_id), players(id, club_id)",
+      "*, managers(id, club_id), coaches(id, club_id), guardians(id, club_id), players(id, club_id, position, school, date_of_birth)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -57,10 +94,10 @@ export async function getPerson(
     .limit(1);
 
   const row = data as Person & {
-    managers: { id: string; club_id: string }[];
-    coaches: { id: string; club_id: string }[];
-    guardians: { id: string; club_id: string }[];
-    players: { id: string; club_id: string }[];
+    managers: PersonRoleRef[];
+    coaches: PersonRoleRef[];
+    guardians: PersonRoleRef[];
+    players: PersonPlayerRef[];
   };
 
   return {

@@ -24,12 +24,6 @@ export function PlayerObjectivesSection({
 }) {
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
-        For younger children it is usually recommended that objectives are
-        limited to no more than one or two items, which they can focus on,
-        rather than being overwhelmed by information.
-      </p>
-
       {objectives.length === 0 ? (
         <EmptyState
           title="No development objectives"
