@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import type { Venue } from "@/lib/data/venues";
-import {
-  formatVenueAddress,
-  formatVenueFoodAndDrink,
-  labelVenueSurface,
-} from "@/lib/format";
+import { formatVenueAddress } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
+import {
+  VenueAmenityChips,
+  VenueSurfaceChips,
+} from "@/components/venues/venue-chips";
 
 export function VenuesDirectoryList({ venues }: { venues: Venue[] }) {
   return (
@@ -26,30 +26,21 @@ export function VenuesDirectoryList({ venues }: { venues: Venue[] }) {
       emptyFilterDescription="Try a different name or address."
       renderItem={(venue) => {
         const address = formatVenueAddress(venue);
-        const foodAndDrinkLabel = formatVenueFoodAndDrink(venue.food_and_drink);
-        const surfaceLabel = labelVenueSurface(venue.surface);
         return (
           <Link
             href={`/venues/${venue.id}`}
             className={objectListRowClassName()}
           >
-            <div className="min-w-0 flex-1">
-              <p className="font-medium">{venue.name}</p>
-              <p className="text-muted-foreground text-sm">
-                {address ?? "No address"}
-              </p>
-              {foodAndDrinkLabel ? (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Food & Drink: {foodAndDrinkLabel}
+            <div className="min-w-0 flex-1 space-y-2">
+              <div>
+                <p className="font-medium">{venue.name}</p>
+                <p className="text-muted-foreground text-sm">
+                  {address ?? "No address"}
                 </p>
-              ) : null}
+              </div>
+              <VenueSurfaceChips surfaces={venue.surface} />
+              <VenueAmenityChips amenities={venue.food_and_drink} />
             </div>
-            <span
-              className="bg-foreground text-background shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold tracking-wide"
-              aria-label={`Surface: ${surfaceLabel}`}
-            >
-              {surfaceLabel}
-            </span>
           </Link>
         );
       }}

@@ -55,7 +55,7 @@ upserted_venues as (
       'Edmonton',
       'London',
       'N18 1NB',
-      'astro'::public.venue_surface,
+      array['astro']::public.venue_surface[],
       array['tuck_shop', 'local_outlets']::public.venue_food_and_drink[]
     ),
     (
@@ -66,7 +66,7 @@ upserted_venues as (
       'Wood Green',
       'London',
       'N22 5HN',
-      'astro'::public.venue_surface,
+      array['astro']::public.venue_surface[],
       '{}'::public.venue_food_and_drink[]
     ),
     (
@@ -77,7 +77,7 @@ upserted_venues as (
       'Wembley',
       'London',
       'HA9 0WS',
-      'grass'::public.venue_surface,
+      array['grass']::public.venue_surface[],
       array['cafe', 'ice_cream_van']::public.venue_food_and_drink[]
     ),
     (
@@ -88,7 +88,7 @@ upserted_venues as (
       'Near Newport',
       'Shropshire',
       'TF10 9AT',
-      'grass'::public.venue_surface,
+      array['grass']::public.venue_surface[],
       array['bbq']::public.venue_food_and_drink[]
     )
   on conflict (id) do update set

@@ -13,7 +13,6 @@ import type { Venue } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function VenueForm({
@@ -33,7 +32,10 @@ export function VenueForm({
     INITIAL_ACTION_STATE,
   );
 
-  const selectedFoodAndDrink = new Set(
+  const selectedSurfaces = new Set(
+    Array.isArray(venue?.surface) ? venue.surface : [],
+  );
+  const selectedAmenities = new Set(
     Array.isArray(venue?.food_and_drink) ? venue.food_and_drink : [],
   );
 
@@ -89,24 +91,29 @@ export function VenueForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="surface">Surface</Label>
-          <NativeSelect
-            id="surface"
-            name="surface"
-            required
-            defaultValue={venue?.surface ?? "unknown"}
-            disabled={pending}
-          >
-            {VENUE_SURFACES.map((surface) => (
-              <option key={surface} value={surface}>
-                {VENUE_SURFACE_LABELS[surface]}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
         <fieldset className="space-y-2 sm:col-span-2">
-          <legend className="text-sm font-medium">Food & Drink</legend>
+          <legend className="text-sm font-medium">Surface</legend>
+          <div className="flex flex-wrap gap-3">
+            {VENUE_SURFACES.map((option) => (
+              <label
+                key={option}
+                className="flex min-h-9 items-center gap-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  name="surface"
+                  value={option}
+                  defaultChecked={selectedSurfaces.has(option)}
+                  disabled={pending}
+                  className="border-input size-4 rounded"
+                />
+                {VENUE_SURFACE_LABELS[option]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset className="space-y-2 sm:col-span-2">
+          <legend className="text-sm font-medium">Amenities</legend>
           <div className="flex flex-wrap gap-3">
             {VENUE_FOOD_AND_DRINKS.map((option) => (
               <label
@@ -117,7 +124,7 @@ export function VenueForm({
                   type="checkbox"
                   name="food_and_drink"
                   value={option}
-                  defaultChecked={selectedFoodAndDrink.has(option)}
+                  defaultChecked={selectedAmenities.has(option)}
                   disabled={pending}
                   className="border-input size-4 rounded"
                 />

@@ -2,15 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVenue } from "@/lib/data/venues";
 import { getViewerContext } from "@/lib/authz/context";
-import {
-  formatVenueAddress,
-  formatVenueFoodAndDrink,
-  labelVenueSurface,
-} from "@/lib/format";
+import { formatVenueAddress } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { VenueMap } from "@/components/venues/venue-map";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
+import {
+  VenueAmenityChips,
+  VenueSurfaceChips,
+} from "@/components/venues/venue-chips";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function VenueDetailPage({
@@ -43,8 +43,6 @@ export default async function VenueDetailPage({
     );
 
   const address = formatVenueAddress(venue);
-  const surfaceLabel = labelVenueSurface(venue.surface);
-  const foodAndDrinkLabel = formatVenueFoodAndDrink(venue.food_and_drink);
 
   return (
     <div className="space-y-8">
@@ -53,22 +51,8 @@ export default async function VenueDetailPage({
         description={
           <div className="space-y-2">
             {address ? <p>{address}</p> : null}
-            <p className="flex flex-wrap gap-2">
-              <span
-                className="bg-foreground text-background inline-block rounded-md px-3 py-1.5 text-sm font-semibold tracking-wide"
-                aria-label={`Surface: ${surfaceLabel}`}
-              >
-                {surfaceLabel}
-              </span>
-              {foodAndDrinkLabel ? (
-                <span
-                  className="bg-foreground text-background inline-block rounded-md px-3 py-1.5 text-sm font-semibold tracking-wide"
-                  aria-label={`Food & Drink: ${foodAndDrinkLabel}`}
-                >
-                  {foodAndDrinkLabel}
-                </span>
-              ) : null}
-            </p>
+            <VenueSurfaceChips surfaces={venue.surface} />
+            <VenueAmenityChips amenities={venue.food_and_drink} />
           </div>
         }
         actions={

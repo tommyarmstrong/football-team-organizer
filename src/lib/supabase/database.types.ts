@@ -209,7 +209,7 @@ export type Database = {
           address_line2: string | null;
           town_city: string | null;
           postcode: string | null;
-          surface: Database["public"]["Enums"]["venue_surface"];
+          surface: Database["public"]["Enums"]["venue_surface"][];
           food_and_drink: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at: string;
           updated_at: string;
@@ -222,7 +222,7 @@ export type Database = {
           address_line2?: string | null;
           town_city?: string | null;
           postcode?: string | null;
-          surface?: Database["public"]["Enums"]["venue_surface"];
+          surface?: Database["public"]["Enums"]["venue_surface"][];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at?: string;
           updated_at?: string;
@@ -235,7 +235,7 @@ export type Database = {
           address_line2?: string | null;
           town_city?: string | null;
           postcode?: string | null;
-          surface?: Database["public"]["Enums"]["venue_surface"];
+          surface?: Database["public"]["Enums"]["venue_surface"][];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at?: string;
           updated_at?: string;
@@ -1211,9 +1211,17 @@ export type Database = {
       match_home_away: "home" | "away" | "neutral";
       team_gender: "boys" | "girls" | "mixed";
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
-      venue_surface: "astro" | "grass" | "indoor" | "varies" | "unknown";
+      venue_surface:
+        "astro" | "grass" | "hard_court" | "indoor" | "varies" | "unknown";
       venue_food_and_drink:
-        "bbq" | "cafe" | "tuck_shop" | "local_outlets" | "ice_cream_van";
+        | "bbq"
+        | "cafe"
+        | "tuck_shop"
+        | "local_outlets"
+        | "ice_cream_van"
+        | "bar"
+        | "toilets"
+        | "rain_shelter";
       coach_objective_type:
         "coaching" | "communications" | "time_management" | "admin" | "other";
       coach_objective_status:

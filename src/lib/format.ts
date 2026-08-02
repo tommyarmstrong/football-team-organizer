@@ -238,6 +238,14 @@ export function labelVenueSurface(surface: VenueSurface): string {
   return VENUE_SURFACE_LABELS[surface] ?? surface;
 }
 
+export function formatVenueSurface(
+  surface: VenueSurface[] | VenueSurface | null | undefined,
+): string | null {
+  const values = Array.isArray(surface) ? surface : surface ? [surface] : [];
+  if (values.length === 0) return null;
+  return values.map(labelVenueSurface).join(", ");
+}
+
 export function labelVenueFoodAndDrink(
   foodAndDrink: VenueFoodAndDrink,
 ): string {
