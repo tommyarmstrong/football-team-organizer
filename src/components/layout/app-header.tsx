@@ -64,7 +64,6 @@ export async function AppHeader() {
                 <TeamSwitcher
                   teams={teams}
                   activeTeamId={activeTeamId}
-                  variant="label"
                   align="start"
                 />
               </div>
