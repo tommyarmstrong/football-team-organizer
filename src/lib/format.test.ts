@@ -11,6 +11,7 @@ import {
   formatShortDate,
   formatVenueAddress,
   formatVenueFoodAndDrink,
+  formatVenueSurface,
   goalKindLabel,
   goalScorerLabel,
   guardianDisplayName,
@@ -249,7 +250,9 @@ describe("label helpers", () => {
 
   it("labels venue, card, and objective enums", () => {
     expect(labelVenueSurface("astro")).toBe("Astro");
+    expect(labelVenueSurface("hard_court")).toBe("Hard Court");
     expect(labelVenueFoodAndDrink("tuck_shop")).toBe("Tuck shop");
+    expect(labelVenueFoodAndDrink("rain_shelter")).toBe("Rain shelter");
     expect(labelCardType("yellow_1st")).toBe("Yellow card (1st)");
     expect(labelCoachObjectiveType("time_management")).toBe("Time Management");
     expect(labelCoachObjectiveStatus("ready_for_review")).toBe(
@@ -257,6 +260,21 @@ describe("label helpers", () => {
     );
     expect(labelPlayerObjectiveType("team_work")).toBe("Team work");
     expect(labelPlayerObjectiveStatus("exceeding")).toBe("Exceeding");
+  });
+});
+
+describe("formatVenueSurface", () => {
+  it("returns null for empty input", () => {
+    expect(formatVenueSurface(null)).toBeNull();
+    expect(formatVenueSurface(undefined)).toBeNull();
+    expect(formatVenueSurface([])).toBeNull();
+  });
+
+  it("formats a single value or joined list", () => {
+    expect(formatVenueSurface("grass")).toBe("Grass");
+    expect(formatVenueSurface(["astro", "hard_court"])).toBe(
+      "Astro, Hard Court",
+    );
   });
 });
 

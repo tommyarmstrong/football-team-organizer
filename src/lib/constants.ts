@@ -119,6 +119,7 @@ export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
 export const VENUE_SURFACES: VenueSurface[] = [
   "astro",
   "grass",
+  "hard_court",
   "indoor",
   "varies",
   "unknown",
@@ -127,6 +128,7 @@ export const VENUE_SURFACES: VenueSurface[] = [
 export const VENUE_SURFACE_LABELS: Record<VenueSurface, string> = {
   astro: "Astro",
   grass: "Grass",
+  hard_court: "Hard Court",
   indoor: "Indoor",
   varies: "Varies",
   unknown: "Unknown",
@@ -138,6 +140,9 @@ export const VENUE_FOOD_AND_DRINKS: VenueFoodAndDrink[] = [
   "tuck_shop",
   "local_outlets",
   "ice_cream_van",
+  "bar",
+  "toilets",
+  "rain_shelter",
 ];
 
 export const VENUE_FOOD_AND_DRINK_LABELS: Record<VenueFoodAndDrink, string> = {
@@ -146,6 +151,20 @@ export const VENUE_FOOD_AND_DRINK_LABELS: Record<VenueFoodAndDrink, string> = {
   tuck_shop: "Tuck shop",
   local_outlets: "Local outlets",
   ice_cream_van: "Ice cream van",
+  bar: "Bar",
+  toilets: "Toilets",
+  rain_shelter: "Rain shelter",
+};
+
+export const VENUE_FOOD_AND_DRINK_EMOJIS: Record<VenueFoodAndDrink, string> = {
+  bbq: "🍔",
+  cafe: "☕",
+  tuck_shop: "🍬",
+  local_outlets: "🛍️",
+  ice_cream_van: "🍦",
+  bar: "🍸",
+  toilets: "🚻",
+  rain_shelter: "☂️",
 };
 
 export const MATCH_STATUSES: MatchStatus[] = [
