@@ -2,10 +2,9 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckIcon, ChevronDownIcon, UsersIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { setActiveTeamAction } from "@/lib/team/actions";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -77,17 +76,17 @@ export function TeamPickerList({
   );
 }
 
-/** Icon or label control that opens the team picker. Only renders when the user can switch teams. */
+/** Active team name control that opens the team picker. Only renders when the user can switch teams. */
 export function TeamSwitcher({
   teams,
   activeTeamId,
-  variant = "icon",
   align = "end",
+  triggerClassName,
 }: {
   teams: TeamOption[];
   activeTeamId: string | null;
-  variant?: "icon" | "label";
   align?: "start" | "center" | "end";
+  triggerClassName?: string;
 }) {
   if (teams.length < 2) return null;
 
@@ -98,31 +97,18 @@ export function TeamSwitcher({
     <Popover>
       <PopoverTrigger
         render={
-          variant === "label" ? (
-            <button
-              type="button"
-              aria-label={`Active team: ${activeName}. Switch team`}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-1 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            />
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Active team: ${activeName}. Switch team`}
-              title={activeName}
-            />
-          )
+          <button
+            type="button"
+            aria-label={`Active team: ${activeName}. Switch team`}
+            className={cn(
+              "text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-1 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
+              triggerClassName,
+            )}
+          />
         }
       >
-        {variant === "label" ? (
-          <>
-            <span className="truncate">{activeName}</span>
-            <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" />
-          </>
-        ) : (
-          <UsersIcon />
-        )}
+        <span className="truncate">{activeName}</span>
+        <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" />
       </PopoverTrigger>
       <PopoverContent
         align={align}

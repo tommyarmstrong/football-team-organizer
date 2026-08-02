@@ -78,7 +78,11 @@ export function AppNav({
           </Link>
         );
       })}
-      <TeamSwitcher teams={teams} activeTeamId={activeTeamId} />
+      <TeamSwitcher
+        teams={teams}
+        activeTeamId={activeTeamId}
+        triggerClassName="min-h-9 rounded-md px-2.5 py-1.5"
+      />
     </nav>
   );
 }
