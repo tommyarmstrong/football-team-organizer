@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
-import {
-  objectListClassName,
-  objectListRowClassName,
-} from "@/components/shared/object-list";
+import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function GuardianAssistantsSection({
@@ -44,9 +42,18 @@ export function GuardianAssistantsSection({
           }
         />
       ) : (
-        <ul className={objectListClassName}>
-          {assistants.map((entry) => (
-            <li key={entry.team_member_id} className="flex items-stretch">
+        <FilterablePaginatedList
+          items={assistants}
+          getItemKey={(entry) => entry.team_member_id}
+          getSearchText={(entry) => entry.name}
+          filterPlaceholder="Filter guardians by name…"
+          singularLabel="guardian"
+          pluralLabel="guardians"
+          defaultPageSize={5}
+          emptyFilterTitle="No guardians match"
+          emptyFilterDescription="Try a different name, or clear the filter."
+          renderItem={(entry) => (
+            <div className="flex items-stretch">
               <Link
                 href={`/guardians/${entry.guardian_id}`}
                 className={objectListRowClassName()}
@@ -65,9 +72,9 @@ export function GuardianAssistantsSection({
                   />
                 </div>
               ) : null}
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       )}
 
       {canEdit ? (

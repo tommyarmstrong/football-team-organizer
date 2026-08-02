@@ -6,37 +6,81 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
+import { objectListClassName } from "@/components/shared/object-list";
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50, 100] as const;
 
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number] | "all";
+export type ListPageSize = (typeof PAGE_SIZE_OPTIONS)[number] | "all";
+
+/** Build a compact page button window, e.g. [1, 2, 3, 4, "ellipsis", 12]. */
+export function getVisiblePageNumbers(
+  currentPage: number,
+  totalPages: number,
+): Array<number | "ellipsis"> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(totalPages);
+  for (let p = currentPage - 1; p <= currentPage + 1; p++) {
+    if (p >= 1 && p <= totalPages) pages.add(p);
+  }
+  if (currentPage <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  }
+  if (currentPage >= totalPages - 2) {
+    pages.add(totalPages - 3);
+    pages.add(totalPages - 2);
+    pages.add(totalPages - 1);
+  }
+
+  const sorted = [...pages].sort((a, b) => a - b);
+  const result: Array<number | "ellipsis"> = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const page = sorted[i]!;
+    const prev = sorted[i - 1];
+    if (prev !== undefined && page - prev > 1) {
+      result.push("ellipsis");
+    }
+    result.push(page);
+  }
+  return result;
+}
 
 export function FilterablePaginatedList<T>({
   items,
   getSearchText,
   renderItem,
   filterPlaceholder = "Filter by name…",
-  filterLabel = "Filter",
   emptyFilterTitle = "No matches",
   emptyFilterDescription = "Try a different name.",
-  listClassName = "divide-border border-border divide-y rounded-xl border",
+  listClassName = objectListClassName,
   getItemKey,
+  defaultPageSize = 20,
+  singularLabel,
+  pluralLabel,
 }: {
   items: T[];
   getSearchText: (item: T) => string;
   renderItem: (item: T) => ReactNode;
   filterPlaceholder?: string;
-  filterLabel?: string;
   emptyFilterTitle?: string;
   emptyFilterDescription?: string;
   listClassName?: string;
   getItemKey: (item: T) => string;
+  defaultPageSize?: ListPageSize;
+  singularLabel: string;
+  pluralLabel: string;
 }) {
   const idPrefix = useId();
   const filterId = `${idPrefix}-filter`;
   const pageSizeId = `${idPrefix}-page-size`;
   const [filter, setFilter] = useState("");
-  const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [pageSize, setPageSize] = useState<ListPageSize>(defaultPageSize);
   const [page, setPage] = useState(1);
 
   const normalizedFilter = filter.trim().toLowerCase();
@@ -51,8 +95,12 @@ export function FilterablePaginatedList<T>({
   const totalPages = Math.max(1, Math.ceil(total / size));
   const currentPage = Math.min(page, totalPages);
   const startIndex = total === 0 ? 0 : (currentPage - 1) * size;
-  const endIndex = Math.min(startIndex + size, total);
-  const pageItems = filtered.slice(startIndex, endIndex);
+  const pageItems = filtered.slice(startIndex, startIndex + size);
+  const showPagination = pageSize !== "all" && totalPages > 1;
+  const pageNumbers = showPagination
+    ? getVisiblePageNumbers(currentPage, totalPages)
+    : [];
+  const totalNoun = total === 1 ? singularLabel : pluralLabel;
 
   function handleFilterChange(value: string) {
     setFilter(value);
@@ -60,39 +108,24 @@ export function FilterablePaginatedList<T>({
   }
 
   function handlePageSizeChange(value: string) {
-    setPageSize(value === "all" ? "all" : (Number(value) as PageSize));
+    setPageSize(value === "all" ? "all" : (Number(value) as ListPageSize));
     setPage(1);
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1 space-y-2">
-          <Label htmlFor={filterId}>{filterLabel}</Label>
-          <Input
-            id={filterId}
-            type="search"
-            value={filter}
-            onChange={(event) => handleFilterChange(event.target.value)}
-            placeholder={filterPlaceholder}
-            autoComplete="off"
-          />
-        </div>
-        <div className="space-y-2 sm:w-36">
-          <Label htmlFor={pageSizeId}>Page size</Label>
-          <NativeSelect
-            id={pageSizeId}
-            value={pageSize === "all" ? "all" : String(pageSize)}
-            onChange={(event) => handlePageSizeChange(event.target.value)}
-          >
-            {PAGE_SIZE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-            <option value="all">All</option>
-          </NativeSelect>
-        </div>
+      <div>
+        <Label htmlFor={filterId} className="sr-only">
+          {filterPlaceholder}
+        </Label>
+        <Input
+          id={filterId}
+          type="search"
+          value={filter}
+          onChange={(event) => handleFilterChange(event.target.value)}
+          placeholder={filterPlaceholder}
+          autoComplete="off"
+        />
       </div>
 
       {total === 0 ? (
@@ -108,13 +141,41 @@ export function FilterablePaginatedList<T>({
             ))}
           </ul>
 
-          <div className="text-muted-foreground flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              {startIndex + 1}–{endIndex} of {total}
-              {normalizedFilter ? ` (filtered from ${items.length})` : ""}
-            </p>
-            {pageSize !== "all" && totalPages > 1 ? (
-              <div className="flex items-center gap-2">
+          <div className="text-muted-foreground flex flex-col gap-3 text-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                {total} {totalNoun} in total
+                {normalizedFilter ? ` (filtered from ${items.length})` : ""}
+              </p>
+              <div className="flex items-center gap-2 sm:justify-end">
+                <Label
+                  htmlFor={pageSizeId}
+                  className="text-muted-foreground shrink-0 font-normal"
+                >
+                  Rows per page
+                </Label>
+                <NativeSelect
+                  id={pageSizeId}
+                  className="w-auto min-w-20"
+                  value={pageSize === "all" ? "all" : String(pageSize)}
+                  onChange={(event) => handlePageSizeChange(event.target.value)}
+                  aria-label="Rows per page"
+                >
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                  <option value="all">All</option>
+                </NativeSelect>
+              </div>
+            </div>
+
+            {showPagination ? (
+              <nav
+                className="flex flex-wrap items-center justify-center gap-1 sm:justify-end"
+                aria-label="Pagination"
+              >
                 <Button
                   type="button"
                   variant="outline"
@@ -124,9 +185,30 @@ export function FilterablePaginatedList<T>({
                 >
                   Previous
                 </Button>
-                <span className="tabular-nums">
-                  Page {currentPage} of {totalPages}
-                </span>
+                {pageNumbers.map((entry, index) =>
+                  entry === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${index}`}
+                      className="px-1.5 tabular-nums"
+                      aria-hidden
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <Button
+                      key={entry}
+                      type="button"
+                      variant={entry === currentPage ? "default" : "outline"}
+                      size="sm"
+                      aria-current={entry === currentPage ? "page" : undefined}
+                      aria-label={`Page ${entry}`}
+                      onClick={() => setPage(entry)}
+                      className="min-w-8 px-2 tabular-nums"
+                    >
+                      {entry}
+                    </Button>
+                  ),
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -136,7 +218,7 @@ export function FilterablePaginatedList<T>({
                 >
                   Next
                 </Button>
-              </div>
+              </nav>
             ) : null}
           </div>
         </>

@@ -2,18 +2,10 @@ import Link from "next/link";
 import { listVenues } from "@/lib/data/venues";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getViewerContext } from "@/lib/authz/context";
-import {
-  formatVenueAddress,
-  formatVenueFoodAndDrink,
-  labelVenueSurface,
-} from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import {
-  objectListClassName,
-  objectListRowClassName,
-} from "@/components/shared/object-list";
+import { VenuesDirectoryList } from "@/components/venues/venues-directory-list";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function VenuesPage() {
@@ -59,41 +51,7 @@ export default async function VenuesPage() {
           />
         ) : null}
         {!error && venues.length > 0 ? (
-          <ul className={objectListClassName}>
-            {venues.map((venue) => {
-              const address = formatVenueAddress(venue);
-              const foodAndDrinkLabel = formatVenueFoodAndDrink(
-                venue.food_and_drink,
-              );
-              const surfaceLabel = labelVenueSurface(venue.surface);
-              return (
-                <li key={venue.id}>
-                  <Link
-                    href={`/venues/${venue.id}`}
-                    className={objectListRowClassName()}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{venue.name}</p>
-                      <p className="text-muted-foreground text-sm">
-                        {address ?? "No address"}
-                      </p>
-                      {foodAndDrinkLabel ? (
-                        <p className="text-muted-foreground mt-1 text-sm">
-                          Food & Drink: {foodAndDrinkLabel}
-                        </p>
-                      ) : null}
-                    </div>
-                    <span
-                      className="bg-foreground text-background shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold tracking-wide"
-                      aria-label={`Surface: ${surfaceLabel}`}
-                    >
-                      {surfaceLabel}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <VenuesDirectoryList venues={venues} />
         ) : null}
         {canAdd ? (
           <Link href="/venues/new" className={buttonVariants()}>

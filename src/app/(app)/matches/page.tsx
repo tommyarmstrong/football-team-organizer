@@ -1,21 +1,12 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
-import { matchAllowsEvents } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
 import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
-import {
-  formatKickoffTime,
-  formatMatchDate,
-  formatScore,
-  labelHomeAway,
-  labelMatchStatus,
-} from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { MatchesDirectoryList } from "@/components/matches/matches-directory-list";
 import { buttonVariants } from "@/components/ui/button";
-import { deleteMatchAction } from "@/lib/matches/actions";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { value: MatchListFilter; label: string }[] = [
@@ -100,50 +91,7 @@ export default async function MatchesPage({
 
       {!error && matches.length > 0 ? (
         <div className="space-y-4">
-          <ul className="divide-border border-border divide-y rounded-xl border">
-            {matches.map((match) => (
-              <li key={match.id} className="flex items-stretch">
-                <Link
-                  href={`/matches/${match.id}`}
-                  className="hover:bg-muted/50 flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="font-medium">{match.opponent_name}</p>
-                    <p className="text-muted-foreground text-sm">
-                      {formatMatchDate(match.date)}
-                      {formatKickoffTime(match.kickoff_time)
-                        ? ` · ${formatKickoffTime(match.kickoff_time)}`
-                        : ""}
-                      {" · "}
-                      {labelHomeAway(match.home_away)}
-                      {match.venue ? ` · ${match.venue.name}` : ""}
-                      {match.competition ? ` · ${match.competition.name}` : ""}
-                    </p>
-                  </div>
-                  <div className="text-sm sm:text-right">
-                    {matchAllowsEvents(match.status) ? (
-                      <p className="font-medium">
-                        {formatScore(match.goals_for, match.goals_against)}
-                      </p>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        {labelMatchStatus(match.status)}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-                {canEdit ? (
-                  <div className="flex items-center pr-2">
-                    <ListDeleteButton
-                      label={`Delete match vs ${match.opponent_name}`}
-                      confirmMessage={`Delete the match against ${match.opponent_name}? This cannot be undone.`}
-                      deleteAction={deleteMatchAction.bind(null, match.id)}
-                    />
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <MatchesDirectoryList matches={matches} canEdit={canEdit} />
           {canEdit ? (
             <Link href="/matches/new" className={buttonVariants()}>
               New fixture

@@ -16,11 +16,9 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
-import {
-  objectListClassName,
-  objectListRowClassName,
-} from "@/components/shared/object-list";
+import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamStaffSection({
@@ -46,9 +44,18 @@ export function TeamStaffSection({
           }
         />
       ) : (
-        <ul className={objectListClassName}>
-          {assigned.map((entry) => (
-            <li key={entry.team_coach_id} className="flex items-stretch">
+        <FilterablePaginatedList
+          items={assigned}
+          getItemKey={(entry) => entry.team_coach_id}
+          getSearchText={(entry) => `${entry.name} ${entry.role ?? ""}`}
+          filterPlaceholder="Filter coaches by name…"
+          singularLabel="coach"
+          pluralLabel="coaches"
+          defaultPageSize={5}
+          emptyFilterTitle="No coaches match"
+          emptyFilterDescription="Try a different name, or clear the filter."
+          renderItem={(entry) => (
+            <div className="flex items-stretch">
               <Link
                 href={`/coaches/${entry.coach_id}`}
                 className={objectListRowClassName()}
@@ -73,9 +80,9 @@ export function TeamStaffSection({
                   />
                 </div>
               ) : null}
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       )}
 
       {canEdit ? (
