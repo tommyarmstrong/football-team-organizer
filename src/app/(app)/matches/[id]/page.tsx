@@ -1,40 +1,30 @@
-import { listVenues } from "@/lib/data/venues";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { matchAllowsEvents } from "@/lib/constants";
 import { listCardsForMatch } from "@/lib/data/cards";
-import { listCompetitions } from "@/lib/data/competitions";
 import { listGoalsForMatch } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
-  formatKickoffTime,
-  formatMatchDate,
-  formatMatchVersusTitle,
-  formatScore,
-  labelHomeAway,
-  labelMatchStatus,
+  formatMatchTitle,
   playerDisplayName,
   scoreFromGoals,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
-import { MatchForm } from "@/components/matches/match-form";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
+import {
+  LiveIndicator,
+  MatchHeaderMeta,
+} from "@/components/matches/match-header-meta";
 import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MatchDetailPage({
   params,
@@ -60,28 +50,25 @@ export default async function MatchDetailPage({
 
   const canEdit = canEditTeam(ctx, match.team_id);
   const allowsEvents = matchAllowsEvents(match.status);
+  const isCancelledOrPostponed =
+    match.status === "cancelled" || match.status === "postponed";
 
   const team = ctx.visibleTeams.find((t) => t.id === match.team_id);
-  const clubId = team?.club_id;
   const teamName = team?.name ?? "Our team";
   const opponentName = match.opponent_name;
 
   const [
-    { data: competitions, error: competitionsError },
     { data: goals, error: goalsError },
     { data: cards, error: cardsError },
     { data: players, error: playersError },
     { data: matchPlayerRows, error: matchPlayersError },
     { data: periods, error: periodsError },
-    { data: venues, error: venuesError },
   ] = await Promise.all([
-    listCompetitions(match.team_id),
     listGoalsForMatch(match.id),
     listCardsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
     listPeriodsForMatch(match.id),
-    listVenues(clubId),
   ]);
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
@@ -102,161 +89,105 @@ export default async function MatchDetailPage({
     ? players.find((p) => p.id === match.players_player_of_the_match_id)
     : null;
 
-  const loadErrors = [
-    competitionsError,
-    playersError,
-    matchPlayersError,
-    periodsError,
-    venuesError,
-  ]
+  const loadErrors = [playersError, matchPlayersError, periodsError]
     .filter(Boolean)
     .join(" ");
 
   const { goalsFor, goalsAgainst } = scoreFromGoals(goals);
-  const scoreLabel = allowsEvents ? formatScore(goalsFor, goalsAgainst) : null;
+  const titleText = formatMatchTitle(
+    teamName,
+    opponentName,
+    match.home_away,
+    match.status,
+    goalsFor,
+    goalsAgainst,
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={formatMatchVersusTitle(teamName, opponentName, match.home_away)}
-        description={[
-          formatMatchDate(match.date),
-          formatKickoffTime(match.kickoff_time),
-          labelHomeAway(match.home_away),
-          match.venue?.name ?? null,
-          labelMatchStatus(match.status),
-          scoreLabel,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
+        title={
+          match.status === "in_progress" ? (
+            <span className="inline-flex items-center gap-2.5">
+              <span>{titleText}</span>
+              <LiveIndicator />
+            </span>
+          ) : (
+            titleText
+          )
+        }
+        description={
+          <MatchHeaderMeta
+            date={match.date}
+            kickoffTime={match.kickoff_time}
+            venueName={match.venue?.name ?? null}
+            status={match.status}
+            goalsFor={goalsFor}
+            goalsAgainst={goalsAgainst}
+            matchDaySquadCount={matchSquadIds.size}
+            goals={goals}
+            cards={cards}
+          />
+        }
         actions={
-          <Link
-            href="/matches"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
+          <>
+            {canEdit ? (
+              <Link
+                href={`/matches/${match.id}/edit`}
+                className={buttonVariants({ size: "sm" })}
+              >
+                Edit
+              </Link>
+            ) : null}
+            <Link
+              href="/matches"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Back
+            </Link>
+          </>
         }
       />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
-      {canEdit ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Match details</CardTitle>
-            <CardDescription>
-              Set status to In progress or Played to record goals, cards, and
-              players of the match. Score comes from goals recorded below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MatchForm
-              mode="edit"
-              match={match}
-              competitions={competitions}
-              venues={venues}
-              players={eventPlayers}
-              matchDaySquadCount={matchSquadIds.size}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Match details</CardTitle>
-            <CardDescription>Read-only</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <ReadOnly label="Opponent" value={match.opponent_name} />
-              <ReadOnly label="Date" value={formatMatchDate(match.date)} />
-              <ReadOnly
-                label="Home / away"
-                value={labelHomeAway(match.home_away)}
-              />
-              <ReadOnly label="Venue" value={match.venue?.name ?? "Unknown"} />
-              <ReadOnly
-                label="Match-day squad"
-                value={String(matchSquadIds.size)}
-              />
-              <ReadOnly label="Status" value={labelMatchStatus(match.status)} />
-              {scoreLabel ? (
-                <ReadOnly label="Score" value={scoreLabel} />
-              ) : null}
-              {match.notes ? (
-                <ReadOnly label="Coach's notes" value={match.notes} />
-              ) : null}
-              {match.club_notes ? (
-                <ReadOnly label="Club notes" value={match.club_notes} />
-              ) : null}
-            </dl>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Match-day squad</CardTitle>
-          <CardDescription>
-            Players available for this match. Not every squad player plays every
-            game.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MatchSquadSection
-            matchId={match.id}
-            roster={players}
-            selectedPlayerIds={[...matchSquadIds]}
-            canEdit={canEdit}
-          />
-        </CardContent>
-      </Card>
-
       {allowsEvents ? (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Coach&apos;s player of the match</CardTitle>
+              <CardTitle>Players of the match</CardTitle>
             </CardHeader>
             <CardContent>
-              {coachMotm ? (
-                <p className="font-medium">
-                  {playerDisplayName(coachMotm, {
-                    shirtNumber: coachMotm.shirt_number,
-                  })}
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-sm">Not selected.</p>
-              )}
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">
+                    Coach&apos;s player of the match
+                  </dt>
+                  <dd className="font-medium">
+                    {coachMotm
+                      ? playerDisplayName(coachMotm, {
+                          shirtNumber: coachMotm.shirt_number,
+                        })
+                      : "Not selected"}
+                  </dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-muted-foreground">
+                    Player&apos;s player of the match
+                  </dt>
+                  <dd className="font-medium">
+                    {playersMotm
+                      ? playerDisplayName(playersMotm, {
+                          shirtNumber: playersMotm.shirt_number,
+                        })
+                      : "Not selected"}
+                  </dd>
+                </div>
+              </dl>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Player&apos;s player of the match</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {playersMotm ? (
-                <p className="font-medium">
-                  {playerDisplayName(playersMotm, {
-                    shirtNumber: playersMotm.shirt_number,
-                  })}
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-sm">Not selected.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Periods</CardTitle>
-              <CardDescription>
-                Quarters, halves, and other periods. Open a period to set
-                starting players and goals.
-              </CardDescription>
-            </CardHeader>
             <CardContent className="space-y-4">
               {periodsError ? <ErrorBanner message={periodsError} /> : null}
               <MatchPeriodsSection
@@ -271,10 +202,6 @@ export default async function MatchDetailPage({
           <Card>
             <CardHeader>
               <CardTitle>Goals</CardTitle>
-              <CardDescription>
-                Goals scored by our team or the opposition. Open a goal to set
-                assist, minute, period, and flags.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {goalsError ? <ErrorBanner message={goalsError} /> : null}
@@ -292,9 +219,6 @@ export default async function MatchDetailPage({
           <Card>
             <CardHeader>
               <CardTitle>Cards</CardTitle>
-              <CardDescription>
-                Yellow cards, red cards, timeouts, and other cards for a player.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {cardsError ? <ErrorBanner message={cardsError} /> : null}
@@ -310,19 +234,26 @@ export default async function MatchDetailPage({
       ) : (
         <p className="text-muted-foreground text-sm">
           {canEdit
-            ? "Set the match to In progress or Played to record periods, goals, cards, and players of the match."
+            ? "Edit the match and set status to In progress or Played to record periods, goals, cards, and players of the match."
             : "Periods, goals, cards, and players of the match appear once the match is in progress or played."}
         </p>
       )}
-    </div>
-  );
-}
 
-function ReadOnly({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium">{value}</dd>
+      {!isCancelledOrPostponed ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Match-day squad</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MatchSquadSection
+              matchId={match.id}
+              roster={players}
+              selectedPlayerIds={[...matchSquadIds]}
+              canEdit={canEdit}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

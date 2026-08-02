@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { personDisplayName } from "@/lib/people/person";
 import type { Team, TeamRole } from "@/lib/supabase/database.types";
 
 /**
@@ -14,7 +15,13 @@ import type { Team, TeamRole } from "@/lib/supabase/database.types";
 export type ViewerContext = {
   userId: string;
   email: string | null;
-  /** Display name from auth metadata, or email local-part when unavailable. */
+  /** Linked people.first_name when available. */
+  firstName: string | null;
+  /** Linked people.last_name when available. */
+  lastName: string | null;
+  /**
+   * Prefer people first + last name; else auth metadata; else email local-part.
+   */
   displayName: string | null;
   managementClubIds: string[];
   /** Teams where the user holds the team_members role `coach`. */
@@ -63,11 +70,17 @@ export const getViewerContext = cache(
 
     const { data: selfPerson } = await supabase
       .from("people")
-      .select("id")
+      .select("id, first_name, last_name")
       .eq("auth_user_id", user.id)
       .maybeSingle();
 
     const personId = selfPerson?.id ?? null;
+    const firstName = selfPerson?.first_name?.trim() || null;
+    const lastName = selfPerson?.last_name?.trim() || null;
+    const peopleDisplayName =
+      firstName && lastName
+        ? personDisplayName({ first_name: firstName, last_name: lastName })
+        : firstName || lastName || null;
 
     const [managers, teamMembers, guardianLinks, selfPlayers, teams] =
       await Promise.all([
@@ -135,7 +148,9 @@ export const getViewerContext = cache(
     return {
       userId: user.id,
       email: user.email ?? null,
-      displayName: resolveAuthDisplayName(user),
+      firstName,
+      lastName,
+      displayName: peopleDisplayName ?? resolveAuthDisplayName(user),
       managementClubIds,
       coachTeamIds,
       managementTeamIds,

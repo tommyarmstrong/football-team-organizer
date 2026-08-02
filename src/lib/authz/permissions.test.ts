@@ -31,7 +31,9 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
   return {
     userId: "user-1",
     email: "alex@example.com",
-    displayName: "Alex",
+    firstName: "Alex",
+    lastName: "Player",
+    displayName: "Alex Player",
     managementClubIds: [],
     coachTeamIds: [],
     managementTeamIds: [],
