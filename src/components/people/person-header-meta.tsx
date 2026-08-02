@@ -1,4 +1,4 @@
-import { formatShortDate } from "@/lib/format";
+import { formatAge, formatShortDate } from "@/lib/format";
 import type { PersonPlayerRef } from "@/lib/data/people";
 import {
   PersonRoleChips,
@@ -21,6 +21,9 @@ export function PersonHeaderMeta({
   emergencyPhone: string | null;
 }) {
   const showEmergency = Boolean(roles.player || roles.coach);
+  const telHref = emergencyPhone
+    ? `tel:${emergencyPhone.replace(/[^\d+]/g, "")}`
+    : null;
 
   return (
     <div className="space-y-2">
@@ -29,14 +32,31 @@ export function PersonHeaderMeta({
         {phone ? <p>{phone}</p> : null}
         {player?.position ? <p>{player.position}</p> : null}
         {player?.date_of_birth ? (
-          <p>{formatShortDate(player.date_of_birth)}</p>
+          <p>
+            DOB: {formatShortDate(player.date_of_birth)}
+            <span className="text-muted-foreground">
+              {" "}
+              ({formatAge(player.date_of_birth)})
+            </span>
+          </p>
         ) : null}
-        {player?.school ? <p>{player.school}</p> : null}
+        {player?.school ? <p>School: {player.school}</p> : null}
         {showEmergency && emergencyContactName ? (
-          <p className="font-bold">Emergency contact: {emergencyContactName}</p>
-        ) : null}
-        {showEmergency && emergencyPhone ? (
-          <p className="font-bold">Emergency phone: {emergencyPhone}</p>
+          <p className="font-bold">
+            Emergency Contact: {emergencyContactName}
+            {emergencyPhone ? (
+              <>
+                {" "}
+                {telHref ? (
+                  <a href={telHref} className="underline md:no-underline">
+                    {emergencyPhone}
+                  </a>
+                ) : (
+                  emergencyPhone
+                )}
+              </>
+            ) : null}
+          </p>
         ) : null}
       </div>
       <PersonRoleChips roles={roles} />

@@ -43,6 +43,15 @@ export default async function EditPersonPage({
   const canEdit = Boolean(club && canManageClub(ctx, club.id));
   if (!canEdit && !self) redirect("/dashboard");
 
+  const player =
+    club != null
+      ? (person.players.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.players.find((row) => row.active_role) ??
+        null)
+      : (person.players.find((row) => row.active_role) ?? null);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -61,10 +70,13 @@ export default async function EditPersonPage({
       <Card>
         <CardHeader>
           <CardTitle>Name and details</CardTitle>
-          <CardDescription>Shared person-level details.</CardDescription>
+          <CardDescription>
+            Shared person-level details
+            {player ? ", plus player DOB, position, and school." : "."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <PersonForm mode="edit" person={person} />
+          <PersonForm mode="edit" person={person} player={player} />
         </CardContent>
       </Card>
 

@@ -29,22 +29,27 @@ import {
   linkRoleToPerson,
   updatePerson,
   type PersonRoleRef,
+  type PersonWithRoles,
 } from "@/lib/data/people";
 import {
   createPlayer,
   deletePlayer,
   getPlayer,
   setPlayerActiveRole,
+  updatePlayer,
 } from "@/lib/data/players";
 import { sendPersonInvitation } from "@/lib/people/invitations";
-import { parsePersonForm } from "@/lib/people/parse";
+import { parsePersonForm, parsePersonPlayerForm } from "@/lib/people/parse";
 import { str } from "@/lib/form-parse";
 import type { PersonRoleKind } from "@/lib/people/roles";
 
 function revalidatePeople(personId?: string) {
   revalidatePath("/people");
   revalidatePath("/club");
-  if (personId) revalidatePath(`/people/${personId}`);
+  if (personId) {
+    revalidatePath(`/people/${personId}`);
+    revalidatePath(`/people/${personId}/edit`);
+  }
 }
 
 export async function createPersonAction(
@@ -98,6 +103,34 @@ export async function updatePersonAction(
   const { error } = await updatePerson(id, parsed);
   if (error) return { error };
 
+  const playerFields = parsePersonPlayerForm(formData);
+  if (playerFields && "error" in playerFields) {
+    return { error: playerFields.error };
+  }
+  if (playerFields) {
+    const belongsToPerson = existing.players.some(
+      (row) => row.id === playerFields.player_id,
+    );
+    if (!belongsToPerson) {
+      return { error: "Player role not found for this person." };
+    }
+
+    const player = await getPlayer(playerFields.player_id);
+    if (player.error) return { error: player.error };
+    if (!player.data || player.data.person_id !== id) {
+      return { error: "Player role not found for this person." };
+    }
+
+    const { error: playerError } = await updatePlayer(playerFields.player_id, {
+      first_name: parsed.first_name,
+      last_name: parsed.last_name,
+      date_of_birth: playerFields.date_of_birth,
+      position: playerFields.position,
+      school: playerFields.school,
+    });
+    if (playerError) return { error: playerError };
+  }
+
   revalidatePeople(id);
   return { success: "Person saved." };
 }
@@ -135,7 +168,7 @@ function todayIsoDate(): string {
 }
 
 function roleRowsFor(
-  person: NonNullable<Awaited<ReturnType<typeof getPerson>>["data"]>,
+  person: PersonWithRoles,
   role: PersonRoleKind,
 ): PersonRoleRef[] {
   if (role === "player") return person.players;
