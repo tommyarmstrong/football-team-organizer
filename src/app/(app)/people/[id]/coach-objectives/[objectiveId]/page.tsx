@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCoach } from "@/lib/data/coaches";
+import { getPerson } from "@/lib/data/people";
 import { getCoachObjective } from "@/lib/data/coach-objectives";
 import { getViewerContext, isClubStaff } from "@/lib/authz/context";
 import {
-  coachDisplayName,
   formatShortDate,
   labelCoachObjectiveStatus,
   labelCoachObjectiveType,
 } from "@/lib/format";
+import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CoachObjectiveForm } from "@/components/coaches/coach-objective-form";
@@ -29,22 +29,30 @@ export default async function CoachObjectiveEditPage({
   const { id, objectiveId } = await params;
   const ctx = await getViewerContext();
   const [
-    { data: coach, error: coachError },
+    { data: person, error: personError },
     { data: objective, error: objectiveError },
-  ] = await Promise.all([getCoach(id), getCoachObjective(objectiveId)]);
+  ] = await Promise.all([getPerson(id), getCoachObjective(objectiveId)]);
 
-  if (coachError || objectiveError) {
+  if (personError || objectiveError) {
     return (
       <div className="space-y-4">
         <PageHeader title="Objective" />
         <ErrorBanner
-          message={coachError ?? objectiveError ?? "Unknown error"}
+          message={personError ?? objectiveError ?? "Unknown error"}
         />
       </div>
     );
   }
 
-  if (!coach || !objective || !ctx || objective.coach_id !== coach.id) {
+  const coach = person?.coaches.find((c) => c.active_role) ?? null;
+
+  if (
+    !person ||
+    !coach ||
+    !objective ||
+    !ctx ||
+    objective.coach_id !== coach.id
+  ) {
     notFound();
   }
 
@@ -54,13 +62,13 @@ export default async function CoachObjectiveEditPage({
     <div className="space-y-6">
       <PageHeader
         title={objective.body}
-        description={`${coachDisplayName(coach)} · ${labelCoachObjectiveType(objective.objective_type)}`}
+        description={`${personDisplayName(person)} · ${labelCoachObjectiveType(objective.objective_type)}`}
         actions={
           <Link
-            href={`/coaches/${coach.id}`}
+            href={`/people/${person.id}`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Back to coach
+            Back to person
           </Link>
         }
       />

@@ -171,7 +171,7 @@ export function PersonClubRolesSection({
               <div className="flex items-center pr-2">
                 <ListUnlinkButton
                   label={`Deactivate ${ROLE_LABELS[role.kind]} role`}
-                  confirmMessage={`Deactivate the ${ROLE_LABELS[role.kind].toLowerCase()} role for this person? Historic records stay linked.`}
+                  confirmMessage={`Deactivate the ${ROLE_LABELS[role.kind].toLowerCase()} role for this person? Historic records stay linked and the role can be reactivated later.`}
                   unlinkAction={() =>
                     removeClubRoleFromPersonAction(
                       person.id,

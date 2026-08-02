@@ -225,6 +225,7 @@ export async function deleteCoach(
 export type TeamCoachEntry = {
   team_coach_id: string;
   coach_id: string;
+  person_id: string;
   name: string;
   role: string | null;
 };
@@ -236,27 +237,31 @@ export async function listTeamCoaches(
   const { data, error } = await supabase
     .from("team_coaches")
     .select(
-      `id, coach_id, role, coach:coaches(person:people!person_id(first_name, last_name))`,
+      `id, coach_id, role, coach:coaches(person_id, active_role, person:people!person_id(first_name, last_name))`,
     )
     .eq("team_id", teamId);
 
   if (error) return { data: [], error: error.message };
 
-  const rows: TeamCoachEntry[] = (data ?? []).map((tc) => {
-    const coach = Array.isArray(tc.coach) ? tc.coach[0] : tc.coach;
-    const personRaw = coach?.person as
-      | { first_name: string; last_name: string }
-      | { first_name: string; last_name: string }[]
-      | null
-      | undefined;
-    const person = Array.isArray(personRaw) ? personRaw[0] : personRaw;
-    return {
-      team_coach_id: tc.id,
-      coach_id: tc.coach_id,
-      name: person ? `${person.first_name} ${person.last_name}` : "",
-      role: tc.role,
-    };
-  });
+  const rows: TeamCoachEntry[] = (data ?? [])
+    .map((tc) => {
+      const coachRaw = Array.isArray(tc.coach) ? tc.coach[0] : tc.coach;
+      if (!coachRaw || !coachRaw.active_role) return null;
+      const personRaw = coachRaw.person as
+        | { first_name: string; last_name: string }
+        | { first_name: string; last_name: string }[]
+        | null
+        | undefined;
+      const person = Array.isArray(personRaw) ? personRaw[0] : personRaw;
+      return {
+        team_coach_id: tc.id,
+        coach_id: tc.coach_id,
+        person_id: coachRaw.person_id,
+        name: person ? `${person.first_name} ${person.last_name}` : "",
+        role: tc.role,
+      } satisfies TeamCoachEntry;
+    })
+    .filter((row): row is TeamCoachEntry => row !== null);
 
   return { data: rows, error: null };
 }
@@ -348,7 +353,11 @@ export async function listCoachesNotOnTeam(
     { data: coaches, error: coachesError },
     { data: assigned, error: assignedError },
   ] = await Promise.all([
-    supabase.from("coaches").select(`*, ${PERSON_EMBED}`).eq("club_id", clubId),
+    supabase
+      .from("coaches")
+      .select(`*, ${PERSON_EMBED}`)
+      .eq("club_id", clubId)
+      .eq("active_role", true),
     supabase.from("team_coaches").select("coach_id").eq("team_id", teamId),
   ]);
 

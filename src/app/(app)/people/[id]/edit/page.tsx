@@ -85,9 +85,9 @@ export default async function EditPersonPage({
           <CardHeader>
             <CardTitle>Club roles</CardTitle>
             <CardDescription>
-              Add or deactivate player, coach, guardian, and manager roles for
-              this person at {club.name}. Deactivating keeps historic records
-              linked.
+              Add or deactivate player, coach, guardian, and manager roles at{" "}
+              {club.name}. Deactivating keeps historic records linked to this
+              person.
             </CardDescription>
           </CardHeader>
           <CardContent>

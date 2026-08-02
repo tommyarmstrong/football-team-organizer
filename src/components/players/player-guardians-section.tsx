@@ -28,6 +28,12 @@ import {
 import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
+function guardianHref(link: PlayerGuardianLink): string {
+  return link.guardian_person_id
+    ? `/people/${link.guardian_person_id}`
+    : `/guardians/${link.guardian_id}`;
+}
+
 type GuardianOption = {
   id: string;
   first_name: string;
@@ -37,13 +43,13 @@ type GuardianOption = {
 export function PlayerGuardiansSection({
   playerId,
   links,
-  availableGuardians = [],
-  canEdit = false,
+  availableGuardians,
+  canEdit,
 }: {
-  playerId?: string;
+  playerId: string;
   links: PlayerGuardianLink[];
-  availableGuardians?: GuardianOption[];
-  canEdit?: boolean;
+  availableGuardians: GuardianOption[];
+  canEdit: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -52,7 +58,7 @@ export function PlayerGuardiansSection({
           title="No guardians linked"
           description={
             canEdit
-              ? "Link this player to one or more guardians."
+              ? "Link an existing guardian to this player."
               : "Guardians linked to this player will appear here."
           }
         />
@@ -68,7 +74,7 @@ export function PlayerGuardiansSection({
             ) : (
               <li key={link.player_guardian_id}>
                 <Link
-                  href={`/guardians/${link.guardian_id}`}
+                  href={guardianHref(link)}
                   className={objectListRowClassName()}
                 >
                   <div className="min-w-0 flex-1">
@@ -123,7 +129,7 @@ function PlayerGuardianLinkRow({
       <li className="space-y-3 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <Link
-            href={`/guardians/${link.guardian_id}`}
+            href={guardianHref(link)}
             className="min-w-0 truncate text-sm font-medium hover:underline"
           >
             {name}
@@ -150,10 +156,7 @@ function PlayerGuardianLinkRow({
 
   return (
     <li className="flex items-stretch">
-      <Link
-        href={`/guardians/${link.guardian_id}`}
-        className={objectListRowClassName()}
-      >
+      <Link href={guardianHref(link)} className={objectListRowClassName()}>
         <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
         <LinkChips link={link} />
       </Link>

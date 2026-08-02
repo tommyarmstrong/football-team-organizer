@@ -22,6 +22,7 @@ export type { Guardian };
 export type GuardianPlayerLink = {
   player_guardian_id: string;
   player_id: string;
+  player_person_id: string;
   player_first_name: string;
   player_last_name: string;
   relationship: GuardianRelationship;
@@ -47,7 +48,7 @@ export async function listGuardians(): Promise<{
   const { data, error } = await supabase
     .from("guardians")
     .select(
-      `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, emergency_contact, player:players(person:people!person_id(first_name, last_name)))`,
+      `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, emergency_contact, player:players(person_id, person:people!person_id(first_name, last_name)))`,
     )
     .eq("active_role", true);
 
@@ -64,12 +65,14 @@ export async function listGuardians(): Promise<{
         emergency_contact: boolean;
         player:
           | {
+              person_id: string;
               person:
                 | { first_name: string; last_name: string }
                 | { first_name: string; last_name: string }[]
                 | null;
             }
           | {
+              person_id: string;
               person:
                 | { first_name: string; last_name: string }
                 | { first_name: string; last_name: string }[]
@@ -84,6 +87,7 @@ export async function listGuardians(): Promise<{
       return {
         player_guardian_id: pg.id,
         player_id: pg.player_id,
+        player_person_id: player?.person_id ?? "",
         player_first_name: person?.first_name ?? "",
         player_last_name: person?.last_name ?? "",
         relationship: pg.relationship,
@@ -128,7 +132,7 @@ export async function getGuardianPlayers(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      "id, player_id, relationship, legal_guardian, emergency_contact, player:players(person:people!person_id(first_name, last_name))",
+      "id, player_id, relationship, legal_guardian, emergency_contact, player:players(person_id, person:people!person_id(first_name, last_name))",
     )
     .eq("guardian_id", guardianId);
 
@@ -149,6 +153,8 @@ export async function getGuardianPlayers(
     return {
       player_guardian_id: pg.id,
       player_id: pg.player_id,
+      player_person_id:
+        (player as { person_id?: string } | null)?.person_id ?? "",
       player_first_name: person?.first_name ?? "",
       player_last_name: person?.last_name ?? "",
       relationship: pg.relationship as GuardianRelationship,
@@ -163,6 +169,7 @@ export async function getGuardianPlayers(
 export type PlayerGuardianLink = {
   player_guardian_id: string;
   guardian_id: string;
+  guardian_person_id: string;
   first_name: string;
   second_name: string;
   phone: string | null;
@@ -178,7 +185,7 @@ export async function getPlayerGuardians(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      `id, guardian_id, relationship, legal_guardian, emergency_contact, guardian:guardians(${PERSON_EMBED})`,
+      `id, guardian_id, relationship, legal_guardian, emergency_contact, guardian:guardians(person_id, ${PERSON_EMBED})`,
     )
     .eq("player_id", playerId);
 
@@ -193,6 +200,10 @@ export async function getPlayerGuardians(
     return {
       player_guardian_id: pg.id,
       guardian_id: pg.guardian_id,
+      guardian_person_id:
+        (guardian as { person_id?: string } | null)?.person_id ??
+        person?.id ??
+        "",
       first_name: person?.first_name ?? "",
       second_name: person?.last_name ?? "",
       phone: person?.phone ?? null,

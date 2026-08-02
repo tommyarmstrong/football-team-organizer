@@ -23,10 +23,7 @@ import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
-import {
-  PersonClubRolesSection,
-  PersonInvitationPanel,
-} from "@/components/people/person-admin-panels";
+import { PersonInvitationPanel } from "@/components/people/person-admin-panels";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { CoachTeamsSection } from "@/components/coaches/coach-teams-section";
 import { PlayerObjectivesSection } from "@/components/players/player-objectives-section";
@@ -312,6 +309,7 @@ export default async function PersonDetailPage({
           </CardHeader>
           <CardContent>
             <CoachObjectivesSection
+              personId={person.id}
               coachId={coach.id}
               objectives={coachObjectives}
               canEdit={canEditCoachRole}
@@ -352,6 +350,7 @@ export default async function PersonDetailPage({
               <ErrorBanner message={playerObjectivesError} />
             ) : (
               <PlayerObjectivesSection
+                personId={person.id}
                 playerId={player.id}
                 objectives={playerObjectives}
                 canEdit={canEditPlayerRole}
@@ -391,22 +390,6 @@ export default async function PersonDetailPage({
               availablePlayers={availablePlayers}
               canEdit={canEditGuardianRole}
             />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {canEdit && club ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Club Roles</CardTitle>
-            <CardDescription>
-              Add or deactivate player, coach, guardian, and manager roles for
-              this person at {club.name}. Deactivating keeps historic records
-              linked.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PersonClubRolesSection person={person} clubId={club.id} />
           </CardContent>
         </Card>
       ) : null}

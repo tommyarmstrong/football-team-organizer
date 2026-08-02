@@ -9,6 +9,7 @@ import {
 export type TopScorer = {
   player: {
     id: string;
+    person_id: string;
     first_name: string;
     last_name: string;
     shirt_number: number | null;
@@ -73,6 +74,7 @@ export async function getTopScorers(
       counts.set(player.id, {
         player: {
           id: player.id,
+          person_id: player.person_id,
           first_name: player.first_name,
           last_name: player.last_name,
           shirt_number: shirtByPlayer.get(player.id) ?? null,

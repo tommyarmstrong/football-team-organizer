@@ -21,6 +21,7 @@ export type { Player, PlayerContact };
 /** A player as they appear on a team roster (identity + per-team squad info). */
 export type RosterPlayer = {
   id: string; // player id (used as goals.player_id)
+  person_id: string;
   team_player_id: string;
   first_name: string;
   last_name: string;
@@ -118,10 +119,11 @@ export async function listRosterForTeam(
       const playerRaw = (
         Array.isArray(row.player) ? row.player[0] : row.player
       ) as (Player & { person: Person | Person[] | null }) | undefined;
-      if (!playerRaw) return null;
+      if (!playerRaw || !playerRaw.active_role) return null;
       const player = mapPlayer(playerRaw);
       return {
         id: player.id,
+        person_id: player.person_id,
         team_player_id: row.id,
         first_name: player.first_name,
         last_name: player.last_name,
@@ -397,7 +399,11 @@ export async function listPlayersNotOnTeam(
     { data: players, error: playersError },
     { data: roster, error: rosterError },
   ] = await Promise.all([
-    supabase.from("players").select(`*, ${PERSON_EMBED}`).eq("club_id", clubId),
+    supabase
+      .from("players")
+      .select(`*, ${PERSON_EMBED}`)
+      .eq("club_id", clubId)
+      .eq("active_role", true),
     supabase.from("team_players").select("player_id").eq("team_id", teamId),
   ]);
 

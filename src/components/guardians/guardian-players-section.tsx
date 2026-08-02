@@ -97,7 +97,7 @@ function GuardianPlayerLinkRow({
       <li className="space-y-3 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <Link
-            href={`/players/${link.player_id}`}
+            href={`/people/${link.player_person_id}`}
             className="min-w-0 truncate text-sm font-medium hover:underline"
           >
             {playerName}
@@ -125,7 +125,7 @@ function GuardianPlayerLinkRow({
   return (
     <li className="flex items-stretch">
       <Link
-        href={`/players/${link.player_id}`}
+        href={`/people/${link.player_person_id}`}
         className={objectListRowClassName()}
       >
         <span className="min-w-0 flex-1 truncate font-medium">

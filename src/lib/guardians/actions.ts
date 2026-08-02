@@ -34,7 +34,6 @@ async function revalidateGuardian(guardianId: string, playerId?: string) {
   }
 
   if (playerId) {
-    revalidatePath(`/players/${playerId}`);
     const player = await getPlayer(playerId);
     if (player.data?.person_id) {
       revalidatePath(`/people/${player.data.person_id}`);

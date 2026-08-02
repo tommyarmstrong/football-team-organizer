@@ -24,6 +24,15 @@ import { getActiveTeam } from "@/lib/data/team";
 import { parsePlayerObjectiveForm } from "@/lib/objectives/parse";
 import { parseShirtNumber, str } from "@/lib/form-parse";
 
+async function revalidatePersonForPlayer(playerId: string) {
+  const player = await getPlayer(playerId);
+  const personId = player.data?.person_id ?? null;
+  revalidatePath("/people");
+  revalidatePath("/club");
+  if (personId) revalidatePath(`/people/${personId}`);
+  return personId;
+}
+
 export async function createPlayerAction(
   _prev: ActionState,
   formData: FormData,
@@ -55,7 +64,8 @@ export async function createPlayerAction(
   if (!data) return { error: "Could not create player." };
 
   revalidatePath("/club");
-  redirect(`/players/${data.id}`);
+  revalidatePath("/people");
+  redirect(`/people/${data.person_id}`);
 }
 
 export async function updatePlayerAction(
@@ -82,8 +92,7 @@ export async function updatePlayerAction(
   });
   if (error) return { error };
 
-  revalidatePath("/club");
-  revalidatePath(`/players/${id}`);
+  await revalidatePersonForPlayer(id);
   return { success: "Player saved." };
 }
 
@@ -125,11 +134,7 @@ export async function savePlayerContactAction(
   );
   if (sync.error) return { error: sync.error };
 
-  revalidatePath(`/players/${playerId}`);
-  const player = await getPlayer(playerId);
-  if (player.data?.person_id) {
-    revalidatePath(`/people/${player.data.person_id}`);
-  }
+  await revalidatePersonForPlayer(playerId);
   return { success: "Contact details saved." };
 }
 
@@ -153,13 +158,7 @@ export async function addPlayerToTeamAction(
   );
   if (error) return { error };
 
-  const player = await getPlayer(playerId);
-  revalidatePath(`/players/${playerId}`);
-  if (player.data?.person_id) {
-    revalidatePath(`/people/${player.data.person_id}`);
-  }
-  revalidatePath("/people");
-  revalidatePath("/club");
+  await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "Player added to team." };
 }
@@ -186,7 +185,7 @@ export async function addRosterPlayerAction(
 
   revalidatePath("/team");
   revalidatePath("/club");
-  revalidatePath(`/players/${playerId}`);
+  await revalidatePersonForPlayer(playerId);
   return { success: "Player added to squad." };
 }
 
@@ -231,7 +230,8 @@ export async function createRosterPlayerAction(
 
   revalidatePath("/team");
   revalidatePath("/club");
-  revalidatePath(`/players/${data.id}`);
+  revalidatePath("/people");
+  revalidatePath(`/people/${data.person_id}`);
   return { success: "Player added to squad." };
 }
 
@@ -253,8 +253,7 @@ export async function updateRosterEntryAction(
   });
   if (error) return { error };
 
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/club");
+  await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "Squad details saved." };
 }
@@ -266,8 +265,7 @@ export async function removePlayerFromTeamAction(
   const { error } = await removePlayerFromTeam(teamPlayerId);
   if (error) return { error };
 
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/club");
+  await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "Player removed from team." };
 }
@@ -288,8 +286,9 @@ export async function addPlayerObjectiveAction(
   if (error) return { error };
   if (!data) return { error: "Could not create objective." };
 
-  revalidatePath(`/players/${playerId}`);
-  redirect(`/players/${playerId}`);
+  const personId = await revalidatePersonForPlayer(playerId);
+  if (personId) redirect(`/people/${personId}`);
+  redirect("/people");
 }
 
 export async function updatePlayerObjectiveAction(
@@ -304,9 +303,12 @@ export async function updatePlayerObjectiveAction(
   const { error } = await updatePlayerObjective(objectiveId, parsed);
   if (error) return { error };
 
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath(`/players/${playerId}/objectives/${objectiveId}`);
-  redirect(`/players/${playerId}`);
+  const personId = await revalidatePersonForPlayer(playerId);
+  if (personId) {
+    revalidatePath(`/people/${personId}/player-objectives/${objectiveId}`);
+    redirect(`/people/${personId}`);
+  }
+  redirect("/people");
 }
 
 export async function deletePlayerObjectiveAction(
@@ -316,8 +318,10 @@ export async function deletePlayerObjectiveAction(
   const { error } = await deletePlayerObjective(objectiveId);
   if (error) return { error };
 
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath(`/players/${playerId}/objectives/${objectiveId}`);
+  const personId = await revalidatePersonForPlayer(playerId);
+  if (personId) {
+    revalidatePath(`/people/${personId}/player-objectives/${objectiveId}`);
+  }
   return { success: "Objective removed." };
 }
 
@@ -327,5 +331,7 @@ export async function deletePlayerObjectiveAndReturnAction(
 ): Promise<ActionState> {
   const result = await deletePlayerObjectiveAction(playerId, objectiveId);
   if (result.error) return result;
-  redirect(`/players/${playerId}`);
+  const personId = await revalidatePersonForPlayer(playerId);
+  if (personId) redirect(`/people/${personId}`);
+  redirect("/people");
 }

@@ -268,7 +268,6 @@ export async function addClubRoleToPersonAction(
 
   revalidatePeople(personId);
   revalidatePath("/club");
-  revalidatePath("/coaches");
   return { success: existing ? "Club role reactivated." : "Club role added." };
 }
 
@@ -326,7 +325,6 @@ export async function removeClubRoleFromPersonAction(
 
   revalidatePeople(personId);
   revalidatePath("/club");
-  revalidatePath("/coaches");
   return { success: "Club role deactivated." };
 }
 
