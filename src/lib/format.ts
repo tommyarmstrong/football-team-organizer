@@ -51,6 +51,31 @@ export function formatShortDate(date: string): string {
   return shortDateFormatter.format(parseDateOnly(date));
 }
 
+/** Age in completed years and months (rounded down), e.g. "10 years, 4 months". */
+export function formatAge(dateOfBirth: string, now: Date = new Date()): string {
+  const birth = parseDateOnly(dateOfBirth);
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+
+  if (now.getDate() < birth.getDate()) {
+    months -= 1;
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  if (years < 0) {
+    return "0 months";
+  }
+
+  const yearPart = years === 1 ? "1 year" : `${years} years`;
+  const monthPart = months === 1 ? "1 month" : `${months} months`;
+
+  if (years === 0) return monthPart;
+  if (months === 0) return yearPart;
+  return `${yearPart}, ${monthPart}`;
+}
+
 export function formatKickoffTime(time: string | null): string | null {
   if (!time) return null;
   // Postgres `time` may include seconds; show HH:MM

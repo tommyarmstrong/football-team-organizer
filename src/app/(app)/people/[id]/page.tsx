@@ -8,16 +8,16 @@ import {
   isClubStaff,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { getCoachTeams } from "@/lib/data/coaches";
+import { getCoach, getCoachTeams } from "@/lib/data/coaches";
 import { listCoachObjectives } from "@/lib/data/coach-objectives";
-import { getGuardianPlayers, getPlayerGuardians } from "@/lib/data/guardians";
+import {
+  getGuardianPlayers,
+  getPlayerGuardians,
+  listGuardians,
+} from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
-import {
-  getPlayerContact,
-  getPlayerTeams,
-  listPlayers,
-} from "@/lib/data/players";
+import { getPlayerTeams, listPlayers } from "@/lib/data/players";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
@@ -98,19 +98,20 @@ export default async function PersonDetailPage({
   const [
     playerTeamsResult,
     playerGuardiansResult,
-    playerContactResult,
     playerObjectivesResult,
+    coachRecordResult,
     coachTeamsResult,
     coachObjectivesResult,
     guardianPlayersResult,
     allPlayersResult,
+    allGuardiansResult,
   ] = await Promise.all([
     player ? getPlayerTeams(player.id) : Promise.resolve({ data: [] }),
     player ? getPlayerGuardians(player.id) : Promise.resolve({ data: [] }),
-    player ? getPlayerContact(player.id) : Promise.resolve({ data: null }),
     player
       ? listPlayerObjectives(player.id)
       : Promise.resolve({ data: [], error: null }),
+    coach ? getCoach(coach.id) : Promise.resolve({ data: null, error: null }),
     coach ? getCoachTeams(coach.id) : Promise.resolve({ data: [] }),
     coach
       ? listCoachObjectives(coach.id)
@@ -121,24 +122,27 @@ export default async function PersonDetailPage({
       : Promise.resolve({
           data: [] as Awaited<ReturnType<typeof listPlayers>>["data"],
         }),
+    player && canEdit
+      ? listGuardians()
+      : Promise.resolve({
+          data: [] as Awaited<ReturnType<typeof listGuardians>>["data"],
+        }),
   ]);
 
   const playerTeams = playerTeamsResult.data;
   const playerGuardians = playerGuardiansResult.data;
-  const playerContact = playerContactResult.data;
   const playerObjectives = playerObjectivesResult.data;
   const playerObjectivesError =
     "error" in playerObjectivesResult ? playerObjectivesResult.error : null;
+  const coachRecord = coachRecordResult.data;
   const coachTeams = coachTeamsResult.data;
   const coachObjectives = coachObjectivesResult.data;
   const guardianPlayerLinks = guardianPlayersResult.data;
   const allPlayers = allPlayersResult.data;
+  const allGuardians = allGuardiansResult.data;
 
-  const emergencyGuardian = playerContact?.emergency_guardian_id
-    ? playerGuardians.find(
-        (link) => link.guardian_id === playerContact.emergency_guardian_id,
-      )
-    : null;
+  const emergencyGuardian =
+    playerGuardians.find((link) => link.emergency_contact) ?? null;
 
   const canViewContact =
     player != null &&
@@ -188,6 +192,16 @@ export default async function PersonDetailPage({
       !linkedPlayerIds.has(row.id),
   );
 
+  const linkedGuardianIds = new Set(
+    playerGuardians.map((link) => link.guardian_id),
+  );
+  const availableGuardians = allGuardians.filter(
+    (row) =>
+      player != null &&
+      row.club_id === player.club_id &&
+      !linkedGuardianIds.has(row.id),
+  );
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -231,19 +245,40 @@ export default async function PersonDetailPage({
         }
       />
 
-      {player ? (
+      {coach ? (
         <Card>
           <CardHeader>
-            <CardTitle>Player Teams</CardTitle>
-            <CardDescription>This player&apos;s teams</CardDescription>
+            <CardTitle>Biography</CardTitle>
           </CardHeader>
           <CardContent>
-            <PlayerTeamsSection
-              playerId={player.id}
-              memberships={playerTeams}
-              availableTeams={availablePlayerTeams}
-              canEdit={canEditPlayerRole}
-            />
+            {coachRecord?.biography ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {coachRecord.biography}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No biography recorded.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {coach ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching Philosophy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {coachRecord?.philosophy ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {coachRecord.philosophy}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No philosophy recorded.
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : null}
@@ -260,6 +295,41 @@ export default async function PersonDetailPage({
               memberships={coachTeams}
               availableTeams={availableCoachTeams}
               canEdit={canEditCoachRole}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {coach ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching Development</CardTitle>
+            <CardDescription>
+              Optional goals for this coach&apos;s development.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CoachObjectivesSection
+              coachId={coach.id}
+              objectives={coachObjectives}
+              canEdit={canEditCoachRole}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {player ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Player Teams</CardTitle>
+            <CardDescription>This player&apos;s teams</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlayerTeamsSection
+              playerId={player.id}
+              memberships={playerTeams}
+              availableTeams={availablePlayerTeams}
+              canEdit={canEditPlayerRole}
             />
           </CardContent>
         </Card>
@@ -289,24 +359,6 @@ export default async function PersonDetailPage({
         </Card>
       ) : null}
 
-      {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Coaching Development</CardTitle>
-            <CardDescription>
-              Optional goals for this coach&apos;s development.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CoachObjectivesSection
-              coachId={coach.id}
-              objectives={coachObjectives}
-              canEdit={canEditCoachRole}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
-
       {player ? (
         <Card>
           <CardHeader>
@@ -314,7 +366,12 @@ export default async function PersonDetailPage({
             <CardDescription>This person&apos;s guardians</CardDescription>
           </CardHeader>
           <CardContent>
-            <PlayerGuardiansSection links={playerGuardians} />
+            <PlayerGuardiansSection
+              playerId={player.id}
+              links={playerGuardians}
+              availableGuardians={availableGuardians}
+              canEdit={canEditPlayerRole || canEdit}
+            />
           </CardContent>
         </Card>
       ) : null}

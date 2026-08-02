@@ -446,6 +446,7 @@ export type Database = {
           guardian_id: string;
           relationship: Database["public"]["Enums"]["guardian_relationship"];
           legal_guardian: boolean;
+          emergency_contact: boolean;
           created_at: string;
         };
         Insert: {
@@ -454,6 +455,7 @@ export type Database = {
           guardian_id: string;
           relationship: Database["public"]["Enums"]["guardian_relationship"];
           legal_guardian?: boolean;
+          emergency_contact?: boolean;
           created_at?: string;
         };
         Update: {
@@ -462,6 +464,7 @@ export type Database = {
           guardian_id?: string;
           relationship?: Database["public"]["Enums"]["guardian_relationship"];
           legal_guardian?: boolean;
+          emergency_contact?: boolean;
           created_at?: string;
         };
         Relationships: [

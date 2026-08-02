@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   coachDisplayName,
+  formatAge,
   formatGoalMinute,
   formatHomeFirstScore,
   formatKickoffTime,
@@ -47,6 +48,28 @@ describe("formatShortDate", () => {
     expect(formatted).toMatch(/24/);
     expect(formatted).toMatch(/Jul/);
     expect(formatted).not.toMatch(/Fri|Mon|Tue|Wed|Thu|Sat|Sun/);
+  });
+});
+
+describe("formatAge", () => {
+  it("formats completed years and months", () => {
+    expect(formatAge("2015-03-15", new Date(2025, 7, 15))).toBe(
+      "10 years, 5 months",
+    );
+  });
+
+  it("rounds down when the birthday day has not arrived this month", () => {
+    expect(formatAge("2015-03-20", new Date(2025, 7, 15))).toBe(
+      "10 years, 4 months",
+    );
+  });
+
+  it("handles month-only ages", () => {
+    expect(formatAge("2025-01-10", new Date(2025, 7, 15))).toBe("7 months");
+  });
+
+  it("omits months when exactly N years", () => {
+    expect(formatAge("2015-08-15", new Date(2025, 7, 15))).toBe("10 years");
   });
 });
 

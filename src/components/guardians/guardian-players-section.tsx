@@ -140,6 +140,11 @@ function GuardianPlayerLinkRow({
               Legal guardian
             </span>
           ) : null}
+          {link.emergency_contact ? (
+            <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+              Emergency contact
+            </span>
+          ) : null}
         </span>
       </Link>
       {canEdit ? (
@@ -226,6 +231,16 @@ function EditLinkForm({
         />
         Legal guardian
       </label>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="emergency_contact"
+          disabled={pending}
+          defaultChecked={link.emergency_contact}
+          className="border-input size-4 rounded"
+        />
+        Emergency contact
+      </label>
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
@@ -306,6 +321,15 @@ function LinkPlayerForm({
           className="border-input size-4 rounded"
         />
         Legal guardian
+      </label>
+      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
+        <input
+          type="checkbox"
+          name="emergency_contact"
+          disabled={pending}
+          className="border-input size-4 rounded"
+        />
+        Emergency contact
       </label>
       <Button type="submit" disabled={pending}>
         {pending ? "Linking…" : "Add"}

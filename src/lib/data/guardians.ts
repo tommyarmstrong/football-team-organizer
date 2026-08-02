@@ -26,6 +26,7 @@ export type GuardianPlayerLink = {
   player_last_name: string;
   relationship: GuardianRelationship;
   legal_guardian: boolean;
+  emergency_contact: boolean;
 };
 
 export type GuardianWithPlayers = GuardianWithPerson & {
@@ -46,7 +47,7 @@ export async function listGuardians(): Promise<{
   const { data, error } = await supabase
     .from("guardians")
     .select(
-      `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, player:players(person:people!person_id(first_name, last_name)))`,
+      `*, ${PERSON_EMBED}, player_guardians(id, player_id, relationship, legal_guardian, emergency_contact, player:players(person:people!person_id(first_name, last_name)))`,
     );
 
   if (error) return { data: [], error: error.message };
@@ -59,6 +60,7 @@ export async function listGuardians(): Promise<{
         player_id: string;
         relationship: GuardianRelationship;
         legal_guardian: boolean;
+        emergency_contact: boolean;
         player:
           | {
               person:
@@ -85,6 +87,7 @@ export async function listGuardians(): Promise<{
         player_last_name: person?.last_name ?? "",
         relationship: pg.relationship,
         legal_guardian: pg.legal_guardian,
+        emergency_contact: pg.emergency_contact,
       };
     });
     return { ...mapGuardian(guardian), players };
@@ -124,7 +127,7 @@ export async function getGuardianPlayers(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      "id, player_id, relationship, legal_guardian, player:players(person:people!person_id(first_name, last_name))",
+      "id, player_id, relationship, legal_guardian, emergency_contact, player:players(person:people!person_id(first_name, last_name))",
     )
     .eq("guardian_id", guardianId);
 
@@ -149,6 +152,7 @@ export async function getGuardianPlayers(
       player_last_name: person?.last_name ?? "",
       relationship: pg.relationship as GuardianRelationship,
       legal_guardian: pg.legal_guardian,
+      emergency_contact: pg.emergency_contact,
     };
   });
 
@@ -163,6 +167,7 @@ export type PlayerGuardianLink = {
   phone: string | null;
   relationship: GuardianRelationship;
   legal_guardian: boolean;
+  emergency_contact: boolean;
 };
 
 export async function getPlayerGuardians(
@@ -172,7 +177,7 @@ export async function getPlayerGuardians(
   const { data, error } = await supabase
     .from("player_guardians")
     .select(
-      `id, guardian_id, relationship, legal_guardian, guardian:guardians(${PERSON_EMBED})`,
+      `id, guardian_id, relationship, legal_guardian, emergency_contact, guardian:guardians(${PERSON_EMBED})`,
     )
     .eq("player_id", playerId);
 
@@ -192,6 +197,7 @@ export async function getPlayerGuardians(
       phone: person?.phone ?? null,
       relationship: pg.relationship as GuardianRelationship,
       legal_guardian: pg.legal_guardian,
+      emergency_contact: pg.emergency_contact,
     };
   });
 
@@ -277,13 +283,35 @@ export async function linkGuardianToPlayer(input: {
   player_id: string;
   relationship: GuardianRelationship;
   legal_guardian: boolean;
+  emergency_contact?: boolean;
 }): Promise<{ error: string | null }> {
   const supabase = await createClient();
-  const { error } = await supabase.from("player_guardians").insert(input);
+  const emergency_contact = Boolean(input.emergency_contact);
+
+  if (emergency_contact) {
+    const cleared = await clearPlayerEmergencyContact(input.player_id);
+    if (cleared.error) return cleared;
+  }
+
+  const { error } = await supabase.from("player_guardians").insert({
+    guardian_id: input.guardian_id,
+    player_id: input.player_id,
+    relationship: input.relationship,
+    legal_guardian: input.legal_guardian,
+    emergency_contact,
+  });
   if (error?.message.includes("player_guardians_unique")) {
     return { error: "That player is already linked to this guardian." };
   }
-  return { error: error?.message ?? null };
+  if (error) return { error: error.message };
+
+  if (emergency_contact) {
+    return syncPlayerContactsEmergencyGuardian(
+      input.player_id,
+      input.guardian_id,
+    );
+  }
+  return { error: null };
 }
 
 export async function updateGuardianPlayerLink(
@@ -291,23 +319,131 @@ export async function updateGuardianPlayerLink(
   input: {
     relationship?: GuardianRelationship;
     legal_guardian?: boolean;
+    emergency_contact?: boolean;
   },
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
+
+  const { data: existing, error: loadError } = await supabase
+    .from("player_guardians")
+    .select("id, player_id, guardian_id, emergency_contact")
+    .eq("id", id)
+    .maybeSingle();
+  if (loadError) return { error: loadError.message };
+  if (!existing) return { error: "Relationship not found." };
+
+  const nextEmergency = input.emergency_contact ?? existing.emergency_contact;
+
+  if (nextEmergency && !existing.emergency_contact) {
+    const cleared = await clearPlayerEmergencyContact(existing.player_id);
+    if (cleared.error) return cleared;
+  }
+
   const { error } = await supabase
     .from("player_guardians")
-    .update(input)
+    .update({
+      ...(input.relationship !== undefined
+        ? { relationship: input.relationship }
+        : {}),
+      ...(input.legal_guardian !== undefined
+        ? { legal_guardian: input.legal_guardian }
+        : {}),
+      ...(input.emergency_contact !== undefined
+        ? { emergency_contact: input.emergency_contact }
+        : {}),
+    })
     .eq("id", id);
-  return { error: error?.message ?? null };
+  if (error) return { error: error.message };
+
+  if (input.emergency_contact !== undefined) {
+    return syncPlayerContactsEmergencyGuardian(
+      existing.player_id,
+      nextEmergency ? existing.guardian_id : null,
+    );
+  }
+
+  return { error: null };
 }
 
 export async function unlinkGuardianFromPlayer(
   playerGuardianId: string,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("player_guardians")
+    .select("player_id, guardian_id, emergency_contact")
+    .eq("id", playerGuardianId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("player_guardians")
     .delete()
     .eq("id", playerGuardianId);
+  if (error) return { error: error.message };
+
+  if (existing?.emergency_contact) {
+    return syncPlayerContactsEmergencyGuardian(existing.player_id, null);
+  }
+  return { error: null };
+}
+
+/** Keep player_contacts.emergency_guardian_id aligned with the relationship flag. */
+export async function syncPlayerContactsEmergencyGuardian(
+  playerId: string,
+  guardianId: string | null,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { data: contact } = await supabase
+    .from("player_contacts")
+    .select("player_id")
+    .eq("player_id", playerId)
+    .maybeSingle();
+
+  if (contact) {
+    const { error } = await supabase
+      .from("player_contacts")
+      .update({ emergency_guardian_id: guardianId })
+      .eq("player_id", playerId);
+    return { error: error?.message ?? null };
+  }
+
+  if (!guardianId) return { error: null };
+
+  const { error } = await supabase.from("player_contacts").insert({
+    player_id: playerId,
+    emergency_guardian_id: guardianId,
+  });
+  return { error: error?.message ?? null };
+}
+
+/** Clear the emergency flag on all links for a player (before assigning a new one). */
+async function clearPlayerEmergencyContact(
+  playerId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("player_guardians")
+    .update({ emergency_contact: false })
+    .eq("player_id", playerId)
+    .eq("emergency_contact", true);
+  return { error: error?.message ?? null };
+}
+
+/** Align relationship flags from a player_contacts.emergency_guardian_id write. */
+export async function syncEmergencyContactFlagFromGuardianId(
+  playerId: string,
+  guardianId: string | null,
+): Promise<{ error: string | null }> {
+  const cleared = await clearPlayerEmergencyContact(playerId);
+  if (cleared.error) return cleared;
+  if (!guardianId) return { error: null };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("player_guardians")
+    .update({ emergency_contact: true })
+    .eq("player_id", playerId)
+    .eq("guardian_id", guardianId);
   return { error: error?.message ?? null };
 }
