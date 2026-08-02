@@ -23,6 +23,9 @@ export function PeopleDirectoryList({ people }: { people: Person[] }) {
       getItemKey={(person) => person.id}
       getSearchText={(person) => `${displayName(person)} ${person.email ?? ""}`}
       filterPlaceholder="Filter people by name or email…"
+      singularLabel="person"
+      pluralLabel="people"
+      defaultPageSize={20}
       emptyFilterTitle="No people match"
       emptyFilterDescription="Try a different name or email."
       renderItem={(person) => (

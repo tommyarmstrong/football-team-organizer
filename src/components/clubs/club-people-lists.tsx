@@ -23,6 +23,9 @@ export function ClubPlayersList({ players }: { players: PlayerWithPerson[] }) {
       getItemKey={(player) => player.id}
       getSearchText={(player) => playerDisplayName(player)}
       filterPlaceholder="Filter players by name…"
+      singularLabel="player"
+      pluralLabel="players"
+      defaultPageSize={5}
       emptyFilterTitle="No players match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(player) => (
@@ -53,6 +56,9 @@ export function ClubGuardiansList({
       getItemKey={(guardian) => guardian.id}
       getSearchText={(guardian) => guardianDisplayName(guardian)}
       filterPlaceholder="Filter guardians by name…"
+      singularLabel="guardian"
+      pluralLabel="guardians"
+      defaultPageSize={5}
       emptyFilterTitle="No guardians match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(guardian) => (
@@ -93,6 +99,9 @@ export function ClubCoachesList({ coaches }: { coaches: CoachWithPerson[] }) {
       getItemKey={(coach) => coach.id}
       getSearchText={(coach) => coachDisplayName(coach)}
       filterPlaceholder="Filter coaches by name…"
+      singularLabel="coach"
+      pluralLabel="coaches"
+      defaultPageSize={5}
       emptyFilterTitle="No coaches match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(coach) => (
@@ -123,6 +132,9 @@ export function ClubManagersList({
       getItemKey={(manager) => manager.id}
       getSearchText={(manager) => managerDisplayName(manager)}
       filterPlaceholder="Filter managers by name…"
+      singularLabel="manager"
+      pluralLabel="managers"
+      defaultPageSize={5}
       emptyFilterTitle="No managers match"
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(manager) => (

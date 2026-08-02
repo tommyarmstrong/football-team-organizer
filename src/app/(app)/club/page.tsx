@@ -11,13 +11,13 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ClubForm } from "@/components/clubs/club-form";
-import { ClubTeamLink } from "@/components/clubs/club-team-link";
 import {
   ClubCoachesList,
   ClubGuardiansList,
   ClubManagersList,
   ClubPlayersList,
 } from "@/components/clubs/club-people-lists";
+import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -104,13 +104,7 @@ export default async function ClubPage() {
             />
           ) : null}
           {!teamsError && teams.length > 0 ? (
-            <ul className="divide-border border-border divide-y rounded-xl border">
-              {teams.map((team) => (
-                <li key={team.id}>
-                  <ClubTeamLink team={team} />
-                </li>
-              ))}
-            </ul>
+            <ClubTeamsList teams={teams} />
           ) : null}
           <Link href="/teams/new" className={buttonVariants()}>
             Add team

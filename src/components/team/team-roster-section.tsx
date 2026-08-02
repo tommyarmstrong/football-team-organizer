@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
-import {
-  objectListClassName,
-  objectListRowClassName,
-} from "@/components/shared/object-list";
+import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamRosterSection({
@@ -44,9 +42,20 @@ export function TeamRosterSection({
           }
         />
       ) : (
-        <ul className={objectListClassName}>
-          {roster.map((entry) => (
-            <li key={entry.team_player_id} className="flex items-stretch">
+        <FilterablePaginatedList
+          items={roster}
+          getItemKey={(entry) => entry.team_player_id}
+          getSearchText={(entry) =>
+            `${playerDisplayName(entry)} ${entry.position ?? ""} ${entry.shirt_number ?? ""}`
+          }
+          filterPlaceholder="Filter squad by name…"
+          singularLabel="player"
+          pluralLabel="players"
+          defaultPageSize={20}
+          emptyFilterTitle="No players match"
+          emptyFilterDescription="Try a different name, or clear the filter."
+          renderItem={(entry) => (
+            <div className="flex items-stretch">
               <Link
                 href={`/players/${entry.id}`}
                 className={objectListRowClassName()}
@@ -75,9 +84,9 @@ export function TeamRosterSection({
                   />
                 </div>
               ) : null}
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       )}
 
       {canEdit ? (
