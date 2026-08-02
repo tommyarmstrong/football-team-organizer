@@ -8,7 +8,12 @@ import {
   MATCH_STATUSES,
   matchAllowsEvents,
 } from "@/lib/constants";
-import { createMatch, deleteMatch, updateMatch } from "@/lib/data/matches";
+import {
+  createMatch,
+  deleteMatch,
+  getMatch,
+  updateMatch,
+} from "@/lib/data/matches";
 import { getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
@@ -137,6 +142,41 @@ export async function updateMatchAction(
   revalidatePath("/stats");
   revalidatePath("/club");
   return { success: "Match saved." };
+}
+
+export async function updateMatchPlayersOfTheMatchAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const player_of_the_match_id =
+    str(formData, "player_of_the_match_id") || null;
+  const players_player_of_the_match_id =
+    str(formData, "players_player_of_the_match_id") || null;
+
+  const { data: match, error: loadError } = await getMatch(id);
+  if (loadError) return { error: loadError };
+  if (!match) return { error: "Match not found." };
+
+  if (!matchAllowsEvents(match.status)) {
+    return {
+      error:
+        "Players of the match can only be set when the match is in progress or played.",
+    };
+  }
+
+  const { error } = await updateMatch(id, {
+    player_of_the_match_id,
+    players_player_of_the_match_id,
+  });
+  if (error) return { error };
+
+  revalidatePath("/matches");
+  revalidatePath(`/matches/${id}`);
+  revalidatePath(`/matches/${id}/edit`);
+  revalidatePath("/dashboard");
+  revalidatePath("/stats");
+  return { success: "Players of the match saved." };
 }
 
 export async function deleteMatchAction(id: string): Promise<ActionState> {
