@@ -50,6 +50,7 @@ export type Database = {
           id: string;
           club_id: string;
           person_id: string;
+          active_role: boolean;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -58,6 +59,7 @@ export type Database = {
           id?: string;
           club_id: string;
           person_id: string;
+          active_role?: boolean;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -66,6 +68,7 @@ export type Database = {
           id?: string;
           club_id?: string;
           person_id?: string;
+          active_role?: boolean;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -351,6 +354,7 @@ export type Database = {
           position: string | null;
           school: string | null;
           date_of_birth: string | null;
+          active_role: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -361,6 +365,7 @@ export type Database = {
           position?: string | null;
           school?: string | null;
           date_of_birth?: string | null;
+          active_role?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -371,6 +376,7 @@ export type Database = {
           position?: string | null;
           school?: string | null;
           date_of_birth?: string | null;
+          active_role?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -489,6 +495,7 @@ export type Database = {
           id: string;
           club_id: string;
           person_id: string;
+          active_role: boolean;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -497,6 +504,7 @@ export type Database = {
           id?: string;
           club_id: string;
           person_id: string;
+          active_role?: boolean;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -505,6 +513,7 @@ export type Database = {
           id?: string;
           club_id?: string;
           person_id?: string;
+          active_role?: boolean;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -584,6 +593,7 @@ export type Database = {
           notes: string | null;
           biography: string | null;
           philosophy: string | null;
+          active_role: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -599,6 +609,7 @@ export type Database = {
           notes?: string | null;
           biography?: string | null;
           philosophy?: string | null;
+          active_role?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -614,6 +625,7 @@ export type Database = {
           notes?: string | null;
           biography?: string | null;
           philosophy?: string | null;
+          active_role?: boolean;
           created_at?: string;
           updated_at?: string;
         };
