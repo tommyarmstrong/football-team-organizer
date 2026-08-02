@@ -7,7 +7,7 @@ import {
 
 describe("isMatchPeriodName", () => {
   it("accepts known period names", () => {
-    expect(isMatchPeriodName("Half 1")).toBe(true);
+    expect(isMatchPeriodName("First half")).toBe(true);
     expect(isMatchPeriodName("Penalty Shootout")).toBe(true);
   });
 
@@ -20,7 +20,7 @@ describe("isMatchPeriodName", () => {
 describe("matchPeriodSortOrder", () => {
   it("returns the configured rank for known periods", () => {
     expect(matchPeriodSortOrder("Quarter 1")).toBe(10);
-    expect(matchPeriodSortOrder("Half 2")).toBe(60);
+    expect(matchPeriodSortOrder("Second half")).toBe(60);
     expect(matchPeriodSortOrder("Penalty Shootout")).toBe(100);
   });
 

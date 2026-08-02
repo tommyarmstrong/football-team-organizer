@@ -18,6 +18,7 @@ export function SearchableSelect({
   emptyMessage = "No matches",
   required = false,
   disabled = false,
+  defaultValue,
   className,
   "aria-label": ariaLabel,
 }: {
@@ -28,11 +29,16 @@ export function SearchableSelect({
   emptyMessage?: string;
   required?: boolean;
   disabled?: boolean;
+  defaultValue?: string;
   className?: string;
   "aria-label"?: string;
 }) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const defaultItem =
+    defaultValue != null && defaultValue !== ""
+      ? options.find((option) => option.value === defaultValue)
+      : undefined;
 
   return (
     <div className={cn("min-w-0", className)}>
@@ -41,6 +47,7 @@ export function SearchableSelect({
         name={name}
         required={required}
         disabled={disabled}
+        defaultValue={defaultItem}
         itemToStringLabel={(item) => item.label}
         itemToStringValue={(item) => item.value}
         isItemEqualToValue={(a, b) => a.value === b.value}

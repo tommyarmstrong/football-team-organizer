@@ -8,13 +8,10 @@ import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
-import {
-  formatMatchTitle,
-  playerDisplayName,
-  scoreFromGoals,
-} from "@/lib/format";
+import { formatMatchTitle, scoreFromGoals } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { CollapsibleCard } from "@/components/shared/collapsible-card";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import {
@@ -22,9 +19,9 @@ import {
   MatchHeaderMeta,
 } from "@/components/matches/match-header-meta";
 import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
+import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MatchDetailPage({
   params,
@@ -82,13 +79,6 @@ export default async function MatchDetailPage({
       )
     : players;
 
-  const coachMotm = match.player_of_the_match_id
-    ? players.find((p) => p.id === match.player_of_the_match_id)
-    : null;
-  const playersMotm = match.players_player_of_the_match_id
-    ? players.find((p) => p.id === match.players_player_of_the_match_id)
-    : null;
-
   const loadErrors = [playersError, matchPlayersError, periodsError]
     .filter(Boolean)
     .join(" ");
@@ -121,6 +111,7 @@ export default async function MatchDetailPage({
             date={match.date}
             kickoffTime={match.kickoff_time}
             venueName={match.venue?.name ?? null}
+            competitionName={match.competition?.name ?? null}
             status={match.status}
             goalsFor={goalsFor}
             goalsAgainst={goalsAgainst}
@@ -153,83 +144,47 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Players of the match</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                <div className="space-y-1">
-                  <dt className="text-muted-foreground">
-                    Coach&apos;s player of the match
-                  </dt>
-                  <dd className="font-medium">
-                    {coachMotm
-                      ? playerDisplayName(coachMotm, {
-                          shirtNumber: coachMotm.shirt_number,
-                        })
-                      : "Not selected"}
-                  </dd>
-                </div>
-                <div className="space-y-1">
-                  <dt className="text-muted-foreground">
-                    Player&apos;s player of the match
-                  </dt>
-                  <dd className="font-medium">
-                    {playersMotm
-                      ? playerDisplayName(playersMotm, {
-                          shirtNumber: playersMotm.shirt_number,
-                        })
-                      : "Not selected"}
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
+          <CollapsibleCard title="Players of the match">
+            <MatchPlayersOfTheMatchSection
+              matchId={match.id}
+              players={eventPlayers}
+              coachPlayerOfTheMatchId={match.player_of_the_match_id}
+              playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
 
-          <Card>
-            <CardContent className="space-y-4">
-              {periodsError ? <ErrorBanner message={periodsError} /> : null}
-              <MatchPeriodsSection
-                matchId={match.id}
-                periods={periods}
-                goals={goals}
-                canEdit={canEdit}
-              />
-            </CardContent>
-          </Card>
+          <CollapsibleCard title="Periods">
+            {periodsError ? <ErrorBanner message={periodsError} /> : null}
+            <MatchPeriodsSection
+              matchId={match.id}
+              periods={periods}
+              goals={goals}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Goals</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {goalsError ? <ErrorBanner message={goalsError} /> : null}
-              <MatchGoalsSection
-                matchId={match.id}
-                goals={goals}
-                players={eventPlayers}
-                teamName={teamName}
-                opponentName={opponentName}
-                canEdit={canEdit}
-              />
-            </CardContent>
-          </Card>
+          <CollapsibleCard title="Goals">
+            {goalsError ? <ErrorBanner message={goalsError} /> : null}
+            <MatchGoalsSection
+              matchId={match.id}
+              goals={goals}
+              players={eventPlayers}
+              teamName={teamName}
+              opponentName={opponentName}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Cards</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {cardsError ? <ErrorBanner message={cardsError} /> : null}
-              <MatchCardsSection
-                matchId={match.id}
-                cards={cards}
-                players={eventPlayers}
-                canEdit={canEdit}
-              />
-            </CardContent>
-          </Card>
+          <CollapsibleCard title="Cards">
+            {cardsError ? <ErrorBanner message={cardsError} /> : null}
+            <MatchCardsSection
+              matchId={match.id}
+              cards={cards}
+              players={eventPlayers}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
         </>
       ) : (
         <p className="text-muted-foreground text-sm">
@@ -240,19 +195,14 @@ export default async function MatchDetailPage({
       )}
 
       {!isCancelledOrPostponed ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Match-day squad</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MatchSquadSection
-              matchId={match.id}
-              roster={players}
-              selectedPlayerIds={[...matchSquadIds]}
-              canEdit={canEdit}
-            />
-          </CardContent>
-        </Card>
+        <CollapsibleCard title="Match-day squad">
+          <MatchSquadSection
+            matchId={match.id}
+            roster={players}
+            selectedPlayerIds={[...matchSquadIds]}
+            canEdit={canEdit}
+          />
+        </CollapsibleCard>
       ) : null}
     </div>
   );

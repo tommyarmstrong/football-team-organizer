@@ -17,12 +17,11 @@ import type { CardType, MatchStatus } from "@/lib/supabase/database.types";
 export function LiveIndicator() {
   return (
     <span
-      className="relative inline-flex size-2.5 shrink-0"
-      aria-label="In progress"
+      className="relative inline-flex shrink-0 animate-[live-throb_1.6s_ease-in-out_infinite] items-center rounded-full border border-red-500 px-2 py-0.5 text-xs font-semibold tracking-wide text-red-600 uppercase dark:border-red-400 dark:text-red-400"
+      aria-label="Live — in progress"
       title="In progress"
     >
-      <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75" />
-      <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
+      LIVE
     </span>
   );
 }
@@ -54,6 +53,7 @@ export function MatchHeaderMeta({
   date,
   kickoffTime,
   venueName,
+  competitionName,
   status,
   goalsFor,
   goalsAgainst,
@@ -64,6 +64,7 @@ export function MatchHeaderMeta({
   date: string;
   kickoffTime: string | null;
   venueName: string | null;
+  competitionName?: string | null;
   status: MatchStatus;
   goalsFor: number;
   goalsAgainst: number;
@@ -107,6 +108,7 @@ export function MatchHeaderMeta({
       <div className="space-y-1">
         <p>{dateTimeLine}</p>
         <p>{venueName ?? "Unknown"}</p>
+        {competitionName ? <p>{competitionName}</p> : null}
         {statusLine}
         {showMatchExtras ? <p>Match day squad: {matchDaySquadCount}</p> : null}
       </div>
