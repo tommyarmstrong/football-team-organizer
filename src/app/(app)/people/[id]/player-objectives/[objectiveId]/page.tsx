@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPlayer, getPlayerTeams } from "@/lib/data/players";
+import { getPerson } from "@/lib/data/people";
+import { getPlayerTeams } from "@/lib/data/players";
 import { getPlayerObjective } from "@/lib/data/player-objectives";
 import { canEditPlayer, getViewerContext } from "@/lib/authz/context";
 import {
   labelPlayerObjectiveStatus,
   labelPlayerObjectiveType,
-  playerDisplayName,
 } from "@/lib/format";
+import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerObjectiveForm } from "@/components/players/player-objective-form";
@@ -28,22 +29,30 @@ export default async function PlayerObjectiveEditPage({
   const { id, objectiveId } = await params;
   const ctx = await getViewerContext();
   const [
-    { data: player, error: playerError },
+    { data: person, error: personError },
     { data: objective, error: objectiveError },
-  ] = await Promise.all([getPlayer(id), getPlayerObjective(objectiveId)]);
+  ] = await Promise.all([getPerson(id), getPlayerObjective(objectiveId)]);
 
-  if (playerError || objectiveError) {
+  if (personError || objectiveError) {
     return (
       <div className="space-y-4">
         <PageHeader title="Objective" />
         <ErrorBanner
-          message={playerError ?? objectiveError ?? "Unknown error"}
+          message={personError ?? objectiveError ?? "Unknown error"}
         />
       </div>
     );
   }
 
-  if (!player || !objective || !ctx || objective.player_id !== player.id) {
+  const player = person?.players.find((p) => p.active_role) ?? null;
+
+  if (
+    !person ||
+    !player ||
+    !objective ||
+    !ctx ||
+    objective.player_id !== player.id
+  ) {
     notFound();
   }
 
@@ -58,13 +67,13 @@ export default async function PlayerObjectiveEditPage({
     <div className="space-y-6">
       <PageHeader
         title={objective.body}
-        description={`${playerDisplayName(player)} · ${labelPlayerObjectiveType(objective.objective_type)}`}
+        description={`${personDisplayName(person)} · ${labelPlayerObjectiveType(objective.objective_type)}`}
         actions={
           <Link
-            href={`/players/${player.id}`}
+            href={`/people/${person.id}`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Back to player
+            Back to person
           </Link>
         }
       />

@@ -7,6 +7,7 @@ import {
   addCoachToTeam,
   createCoach,
   deleteCoach,
+  getCoach,
   removeCoachFromTeam,
   updateCoach,
 } from "@/lib/data/coaches";
@@ -20,6 +21,15 @@ import { getActiveTeam } from "@/lib/data/team";
 import { parseCoachForm } from "@/lib/coaches/parse";
 import { parseCoachObjectiveForm } from "@/lib/objectives/parse";
 import { str } from "@/lib/form-parse";
+
+async function revalidatePersonForCoach(coachId: string) {
+  const coach = await getCoach(coachId);
+  const personId = coach.data?.person_id ?? null;
+  revalidatePath("/people");
+  revalidatePath("/club");
+  if (personId) revalidatePath(`/people/${personId}`);
+  return personId;
+}
 
 export async function createCoachAction(
   _prev: ActionState,
@@ -37,9 +47,9 @@ export async function createCoachAction(
   if (error) return { error };
   if (!data) return { error: "Could not create coach." };
 
-  revalidatePath("/coaches");
+  revalidatePath("/people");
   revalidatePath("/club");
-  redirect(`/coaches/${data.id}`);
+  redirect(`/people/${data.person_id}`);
 }
 
 export async function updateCoachAction(
@@ -53,18 +63,24 @@ export async function updateCoachAction(
   const { error } = await updateCoach(id, parsed);
   if (error) return { error };
 
-  revalidatePath("/coaches");
-  revalidatePath(`/coaches/${id}`);
-  revalidatePath(`/coaches/${id}/edit`);
-  redirect(`/coaches/${id}`);
+  const personId = await revalidatePersonForCoach(id);
+  if (personId) redirect(`/people/${personId}`);
+  redirect("/people");
 }
 
 export async function deleteCoachAction(id: string): Promise<ActionState> {
+  const existing = await getCoach(id);
+  const personId = existing.data?.person_id ?? null;
   const { error } = await deleteCoach(id);
   if (error) return { error };
 
-  revalidatePath("/coaches");
-  redirect("/coaches");
+  revalidatePath("/people");
+  revalidatePath("/club");
+  if (personId) {
+    revalidatePath(`/people/${personId}`);
+    redirect(`/people/${personId}`);
+  }
+  redirect("/people");
 }
 
 export async function addCoachToTeamAction(
@@ -79,8 +95,7 @@ export async function addCoachToTeamAction(
   const { error } = await addCoachToTeam(teamId, coachId, role);
   if (error) return { error };
 
-  revalidatePath(`/coaches/${coachId}`);
-  revalidatePath("/coaches");
+  await revalidatePersonForCoach(coachId);
   revalidatePath("/team");
   return { success: "Coach assigned to team." };
 }
@@ -110,8 +125,9 @@ export async function createTeamCoachAction(
   const { error: assignError } = await addCoachToTeam(teamId, data.id, role);
   if (assignError) return { error: assignError };
 
-  revalidatePath(`/coaches/${data.id}`);
-  revalidatePath("/coaches");
+  revalidatePath("/people");
+  revalidatePath(`/people/${data.person_id}`);
+  revalidatePath("/club");
   revalidatePath("/team");
   return { success: "Coach added to team." };
 }
@@ -123,8 +139,7 @@ export async function removeCoachFromTeamAction(
   const { error } = await removeCoachFromTeam(teamCoachId);
   if (error) return { error };
 
-  revalidatePath(`/coaches/${coachId}`);
-  revalidatePath("/coaches");
+  await revalidatePersonForCoach(coachId);
   revalidatePath("/team");
   return { success: "Coach removed from team." };
 }
@@ -145,8 +160,9 @@ export async function addCoachObjectiveAction(
   if (error) return { error };
   if (!data) return { error: "Could not create objective." };
 
-  revalidatePath(`/coaches/${coachId}`);
-  redirect(`/coaches/${coachId}`);
+  const personId = await revalidatePersonForCoach(coachId);
+  if (personId) redirect(`/people/${personId}`);
+  redirect("/people");
 }
 
 export async function updateCoachObjectiveAction(
@@ -161,9 +177,12 @@ export async function updateCoachObjectiveAction(
   const { error } = await updateCoachObjective(objectiveId, parsed);
   if (error) return { error };
 
-  revalidatePath(`/coaches/${coachId}`);
-  revalidatePath(`/coaches/${coachId}/objectives/${objectiveId}`);
-  redirect(`/coaches/${coachId}`);
+  const personId = await revalidatePersonForCoach(coachId);
+  if (personId) {
+    revalidatePath(`/people/${personId}/coach-objectives/${objectiveId}`);
+    redirect(`/people/${personId}`);
+  }
+  redirect("/people");
 }
 
 export async function deleteCoachObjectiveAction(
@@ -173,8 +192,10 @@ export async function deleteCoachObjectiveAction(
   const { error } = await deleteCoachObjective(objectiveId);
   if (error) return { error };
 
-  revalidatePath(`/coaches/${coachId}`);
-  revalidatePath(`/coaches/${coachId}/objectives/${objectiveId}`);
+  const personId = await revalidatePersonForCoach(coachId);
+  if (personId) {
+    revalidatePath(`/people/${personId}/coach-objectives/${objectiveId}`);
+  }
   return { success: "Objective removed." };
 }
 
@@ -184,5 +205,7 @@ export async function deleteCoachObjectiveAndReturnAction(
 ): Promise<ActionState> {
   const result = await deleteCoachObjectiveAction(coachId, objectiveId);
   if (result.error) return result;
-  redirect(`/coaches/${coachId}`);
+  const personId = await revalidatePersonForCoach(coachId);
+  if (personId) redirect(`/people/${personId}`);
+  redirect("/people");
 }

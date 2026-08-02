@@ -48,18 +48,22 @@ function clubRolesForPerson(
 ): ClubRoleRow[] {
   const rows: ClubRoleRow[] = [];
   for (const player of person.players) {
-    if (player.club_id === clubId) rows.push({ kind: "player", id: player.id });
+    if (player.club_id === clubId && player.active_role) {
+      rows.push({ kind: "player", id: player.id });
+    }
   }
   for (const guardian of person.guardians) {
-    if (guardian.club_id === clubId) {
+    if (guardian.club_id === clubId && guardian.active_role) {
       rows.push({ kind: "guardian", id: guardian.id });
     }
   }
   for (const coach of person.coaches) {
-    if (coach.club_id === clubId) rows.push({ kind: "coach", id: coach.id });
+    if (coach.club_id === clubId && coach.active_role) {
+      rows.push({ kind: "coach", id: coach.id });
+    }
   }
   for (const manager of person.managers) {
-    if (manager.club_id === clubId) {
+    if (manager.club_id === clubId && manager.active_role) {
       rows.push({ kind: "manager", id: manager.id });
     }
   }
@@ -166,8 +170,8 @@ export function PersonClubRolesSection({
               </div>
               <div className="flex items-center pr-2">
                 <ListUnlinkButton
-                  label={`Remove ${ROLE_LABELS[role.kind]} role`}
-                  confirmMessage={`Remove the ${ROLE_LABELS[role.kind].toLowerCase()} role from this person?`}
+                  label={`Deactivate ${ROLE_LABELS[role.kind]} role`}
+                  confirmMessage={`Deactivate the ${ROLE_LABELS[role.kind].toLowerCase()} role for this person? Historic records stay linked and the role can be reactivated later.`}
                   unlinkAction={() =>
                     removeClubRoleFromPersonAction(
                       person.id,

@@ -7,6 +7,7 @@ import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PersonForm } from "@/components/people/person-form";
+import { PersonClubRolesSection } from "@/components/people/person-admin-panels";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -66,6 +67,22 @@ export default async function EditPersonPage({
           <PersonForm mode="edit" person={person} />
         </CardContent>
       </Card>
+
+      {canEdit && club ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Club roles</CardTitle>
+            <CardDescription>
+              Add or deactivate player, coach, guardian, and manager roles at{" "}
+              {club.name}. Deactivating keeps historic records linked to this
+              person.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PersonClubRolesSection person={person} clubId={club.id} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

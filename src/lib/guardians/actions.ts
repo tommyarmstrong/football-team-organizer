@@ -20,10 +20,10 @@ import {
 } from "@/lib/guardians/parse";
 import { str } from "@/lib/form-parse";
 
-function revalidateGuardian(guardianId: string, playerId?: string) {
+function revalidateGuardian(guardianId: string, _playerId?: string) {
   revalidatePath("/club");
   revalidatePath(`/guardians/${guardianId}`);
-  if (playerId) revalidatePath(`/players/${playerId}`);
+  revalidatePath("/people");
 }
 
 export async function createGuardianAction(
@@ -92,6 +92,29 @@ export async function linkGuardianToPlayerAction(
 
   revalidateGuardian(guardianId, playerId);
   return { success: "Player linked." };
+}
+
+export async function linkPlayerToGuardianAction(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const guardianId = str(formData, "guardian_id");
+  if (!guardianId) return { error: "Select a guardian." };
+
+  const relationship = parseGuardianRelationship(formData);
+  if (typeof relationship === "object") return relationship;
+
+  const { error } = await linkGuardianToPlayer({
+    guardian_id: guardianId,
+    player_id: playerId,
+    relationship,
+    legal_guardian: parseLegalGuardian(formData),
+  });
+  if (error) return { error };
+
+  revalidateGuardian(guardianId, playerId);
+  return { success: "Guardian linked." };
 }
 
 export async function updateGuardianPlayerLinkAction(

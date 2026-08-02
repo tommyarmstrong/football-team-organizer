@@ -131,7 +131,7 @@ export default async function ClubPage() {
           {!coachesError && coaches.length > 0 ? (
             <ClubCoachesList coaches={coaches} />
           ) : null}
-          <Link href="/coaches/new" className={buttonVariants()}>
+          <Link href="/people/new" className={buttonVariants()}>
             Add coach
           </Link>
         </CardContent>
@@ -186,7 +186,7 @@ export default async function ClubPage() {
           {!playersError && players.length > 0 ? (
             <ClubPlayersList players={players} />
           ) : null}
-          <Link href="/players/new" className={buttonVariants()}>
+          <Link href="/people/new" className={buttonVariants()}>
             Add player
           </Link>
         </CardContent>

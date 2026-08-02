@@ -19,7 +19,7 @@ export function DeletePlayerButton({ playerId }: { playerId: string }) {
       onSubmit={(event) => {
         if (
           !window.confirm(
-            "Delete this player from the club? This removes them from all teams. Players with recorded goals cannot be deleted.",
+            "Delete this player's club role? The person record and historic data (such as goals) are kept. The role can be reactivated later.",
           )
         ) {
           event.preventDefault();
@@ -28,7 +28,7 @@ export function DeletePlayerButton({ playerId }: { playerId: string }) {
     >
       {state.error ? <ErrorBanner message={state.error} /> : null}
       <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        {pending ? "Deleting…" : "Delete player"}
+        {pending ? "Deactivating…" : "Deactivate player"}
       </Button>
     </form>
   );

@@ -8,9 +8,13 @@ import {
   isClubStaff,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { getCoachTeams } from "@/lib/data/coaches";
+import { getCoach, getCoachTeams } from "@/lib/data/coaches";
 import { listCoachObjectives } from "@/lib/data/coach-objectives";
-import { getGuardianPlayers, getPlayerGuardians } from "@/lib/data/guardians";
+import {
+  getGuardianPlayers,
+  getPlayerGuardians,
+  listGuardians,
+} from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import {
@@ -23,10 +27,7 @@ import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
-import {
-  PersonClubRolesSection,
-  PersonInvitationPanel,
-} from "@/components/people/person-admin-panels";
+import { PersonInvitationPanel } from "@/components/people/person-admin-panels";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { CoachTeamsSection } from "@/components/coaches/coach-teams-section";
 import { PlayerObjectivesSection } from "@/components/players/player-objectives-section";
@@ -71,28 +72,34 @@ export default async function PersonDetailPage({
 
   const player =
     club != null
-      ? (person.players.find((row) => row.club_id === club.id) ??
-        person.players[0] ??
+      ? (person.players.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.players.find((row) => row.active_role) ??
         null)
-      : (person.players[0] ?? null);
+      : (person.players.find((row) => row.active_role) ?? null);
   const coach =
     club != null
-      ? (person.coaches.find((row) => row.club_id === club.id) ??
-        person.coaches[0] ??
+      ? (person.coaches.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.coaches.find((row) => row.active_role) ??
         null)
-      : (person.coaches[0] ?? null);
+      : (person.coaches.find((row) => row.active_role) ?? null);
   const guardian =
     club != null
-      ? (person.guardians.find((row) => row.club_id === club.id) ??
-        person.guardians[0] ??
+      ? (person.guardians.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.guardians.find((row) => row.active_role) ??
         null)
-      : (person.guardians[0] ?? null);
+      : (person.guardians.find((row) => row.active_role) ?? null);
 
   const roles = {
-    player: person.players.length > 0,
-    guardian: person.guardians.length > 0,
-    coach: person.coaches.length > 0,
-    manager: person.managers.length > 0,
+    player: person.players.some((row) => row.active_role),
+    guardian: person.guardians.some((row) => row.active_role),
+    coach: person.coaches.some((row) => row.active_role),
+    manager: person.managers.some((row) => row.active_role),
   };
 
   const [
@@ -100,10 +107,12 @@ export default async function PersonDetailPage({
     playerGuardiansResult,
     playerContactResult,
     playerObjectivesResult,
+    coachRecordResult,
     coachTeamsResult,
     coachObjectivesResult,
     guardianPlayersResult,
     allPlayersResult,
+    allGuardiansResult,
   ] = await Promise.all([
     player ? getPlayerTeams(player.id) : Promise.resolve({ data: [] }),
     player ? getPlayerGuardians(player.id) : Promise.resolve({ data: [] }),
@@ -111,6 +120,7 @@ export default async function PersonDetailPage({
     player
       ? listPlayerObjectives(player.id)
       : Promise.resolve({ data: [], error: null }),
+    coach ? getCoach(coach.id) : Promise.resolve({ data: null, error: null }),
     coach ? getCoachTeams(coach.id) : Promise.resolve({ data: [] }),
     coach
       ? listCoachObjectives(coach.id)
@@ -121,6 +131,11 @@ export default async function PersonDetailPage({
       : Promise.resolve({
           data: [] as Awaited<ReturnType<typeof listPlayers>>["data"],
         }),
+    player && canEdit
+      ? listGuardians()
+      : Promise.resolve({
+          data: [] as Awaited<ReturnType<typeof listGuardians>>["data"],
+        }),
   ]);
 
   const playerTeams = playerTeamsResult.data;
@@ -129,10 +144,12 @@ export default async function PersonDetailPage({
   const playerObjectives = playerObjectivesResult.data;
   const playerObjectivesError =
     "error" in playerObjectivesResult ? playerObjectivesResult.error : null;
+  const coachRecord = coachRecordResult.data;
   const coachTeams = coachTeamsResult.data;
   const coachObjectives = coachObjectivesResult.data;
   const guardianPlayerLinks = guardianPlayersResult.data;
   const allPlayers = allPlayersResult.data;
+  const allGuardians = allGuardiansResult.data;
 
   const emergencyGuardian = playerContact?.emergency_guardian_id
     ? playerGuardians.find(
@@ -188,6 +205,16 @@ export default async function PersonDetailPage({
       !linkedPlayerIds.has(row.id),
   );
 
+  const linkedGuardianIds = new Set(
+    playerGuardians.map((link) => link.guardian_id),
+  );
+  const availableGuardians = allGuardians.filter(
+    (row) =>
+      player != null &&
+      row.club_id === player.club_id &&
+      !linkedGuardianIds.has(row.id),
+  );
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -230,6 +257,44 @@ export default async function PersonDetailPage({
           </>
         }
       />
+
+      {coach ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Biography</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {coachRecord?.biography ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {coachRecord.biography}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No biography recorded.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {coach ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching Philosophy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {coachRecord?.philosophy ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {coachRecord.philosophy}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No philosophy recorded.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {player ? (
         <Card>
@@ -280,6 +345,7 @@ export default async function PersonDetailPage({
               <ErrorBanner message={playerObjectivesError} />
             ) : (
               <PlayerObjectivesSection
+                personId={person.id}
                 playerId={player.id}
                 objectives={playerObjectives}
                 canEdit={canEditPlayerRole}
@@ -299,6 +365,7 @@ export default async function PersonDetailPage({
           </CardHeader>
           <CardContent>
             <CoachObjectivesSection
+              personId={person.id}
               coachId={coach.id}
               objectives={coachObjectives}
               canEdit={canEditCoachRole}
@@ -314,7 +381,12 @@ export default async function PersonDetailPage({
             <CardDescription>This person&apos;s guardians</CardDescription>
           </CardHeader>
           <CardContent>
-            <PlayerGuardiansSection links={playerGuardians} />
+            <PlayerGuardiansSection
+              playerId={player.id}
+              links={playerGuardians}
+              availableGuardians={availableGuardians}
+              canEdit={canEditPlayerRole || canEdit}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -332,21 +404,6 @@ export default async function PersonDetailPage({
               availablePlayers={availablePlayers}
               canEdit={canEditGuardianRole}
             />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {canEdit && club ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Club Roles</CardTitle>
-            <CardDescription>
-              Add or remove player, coach, guardian, and manager roles for this
-              person at {club.name}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PersonClubRolesSection person={person} clubId={club.id} />
           </CardContent>
         </Card>
       ) : null}

@@ -133,7 +133,7 @@ export async function updateTeamAction(
   revalidatePath("/team");
   revalidatePath("/team/edit");
   revalidatePath("/dashboard");
-  revalidatePath("/coaches");
+  revalidatePath("/people");
   revalidatePath("/venues");
   redirect("/team");
 }

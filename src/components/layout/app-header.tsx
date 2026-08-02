@@ -27,9 +27,6 @@ export async function AppHeader() {
     getPrimaryClub(),
   ]);
 
-  const showStaff = Boolean(
-    ctx?.isManagement || (ctx && ctx.coachTeamIds.length > 0),
-  );
   const showManagement = Boolean(ctx?.isManagement);
   const accountName = ctx ? viewerFullName(ctx) : null;
   const accountEmail = ctx?.email ?? null;
@@ -73,7 +70,6 @@ export async function AppHeader() {
           <div className="flex shrink-0 items-center gap-2">
             <div className="md:hidden">
               <MobileNavMenu
-                showStaff={showStaff}
                 showManagement={showManagement}
                 name={accountName}
                 email={accountEmail}
@@ -89,7 +85,6 @@ export async function AppHeader() {
 
         <div className="hidden md:block">
           <AppNav
-            showStaff={showStaff}
             showManagement={showManagement}
             teams={teams}
             activeTeamId={activeTeamId}

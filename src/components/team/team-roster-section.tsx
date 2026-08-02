@@ -57,7 +57,7 @@ export function TeamRosterSection({
           renderItem={(entry) => (
             <div className="flex items-stretch">
               <Link
-                href={`/players/${entry.id}`}
+                href={`/people/${entry.person_id}`}
                 className={objectListRowClassName()}
               >
                 <span className="text-muted-foreground w-[2ch] shrink-0 text-right tabular-nums">

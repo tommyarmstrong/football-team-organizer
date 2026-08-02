@@ -30,7 +30,7 @@ export function ClubPlayersList({ players }: { players: PlayerWithPerson[] }) {
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(player) => (
         <Link
-          href={`/players/${player.id}`}
+          href={`/people/${player.person_id}`}
           className={objectListRowClassName()}
         >
           <div className="min-w-0 flex-1">
@@ -106,7 +106,7 @@ export function ClubCoachesList({ coaches }: { coaches: CoachWithPerson[] }) {
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(coach) => (
         <Link
-          href={`/coaches/${coach.id}`}
+          href={`/people/${coach.person_id}`}
           className={objectListRowClassName()}
         >
           <div className="min-w-0 flex-1">

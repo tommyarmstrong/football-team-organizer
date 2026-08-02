@@ -57,7 +57,7 @@ export function TeamStaffSection({
           renderItem={(entry) => (
             <div className="flex items-stretch">
               <Link
-                href={`/coaches/${entry.coach_id}`}
+                href={`/people/${entry.person_id}`}
                 className={objectListRowClassName()}
               >
                 <span className="min-w-0 flex-1 truncate font-medium">
