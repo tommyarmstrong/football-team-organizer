@@ -71,9 +71,24 @@ export default async function GuardianDetailPage({
         }
       />
 
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Guardian details</CardTitle>
+            <CardDescription>
+              Update name, contact details, and notes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <GuardianForm mode="edit" guardian={guardian} />
+            <DeleteGuardianButton guardianId={guardian.id} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
-          <CardTitle>Players</CardTitle>
+          <CardTitle>Player relationships</CardTitle>
           <CardDescription>
             Link zero or more players. Each link has a relationship and optional
             legal guardian flag.
@@ -88,21 +103,6 @@ export default async function GuardianDetailPage({
           />
         </CardContent>
       </Card>
-
-      {canEdit ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Edit guardian</CardTitle>
-            <CardDescription>
-              Update name, contact details, and notes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <GuardianForm mode="edit" guardian={guardian} />
-            <DeleteGuardianButton guardianId={guardian.id} />
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
