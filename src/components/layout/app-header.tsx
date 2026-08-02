@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
-import { getViewerContext, viewerRoleLabel } from "@/lib/authz/context";
+import { getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getActiveTeam, listVisibleTeams } from "@/lib/data/team";
 import { ClubIcon } from "@/components/clubs/club-icon";
 import { AppNav, MobileNavMenu } from "@/components/layout/app-nav";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
 import { UserMenu } from "@/components/layout/user-menu";
+
+function viewerFullName(ctx: {
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+}) {
+  if (ctx.firstName && ctx.lastName) {
+    return `${ctx.firstName} ${ctx.lastName}`;
+  }
+  return ctx.firstName || ctx.lastName || ctx.displayName;
+}
 
 export async function AppHeader() {
   const ctx = await getViewerContext();
@@ -20,6 +31,8 @@ export async function AppHeader() {
     ctx?.isManagement || (ctx && ctx.coachTeamIds.length > 0),
   );
   const showManagement = Boolean(ctx?.isManagement);
+  const accountName = ctx ? viewerFullName(ctx) : null;
+  const accountEmail = ctx?.email ?? null;
 
   const brandName = club?.name?.trim() || APP_NAME;
 
@@ -45,26 +58,26 @@ export async function AppHeader() {
               <MobileNavMenu
                 showStaff={showStaff}
                 showManagement={showManagement}
+                name={accountName}
+                email={accountEmail}
+                teams={teams}
+                activeTeamId={activeTeam?.id ?? null}
               />
             </div>
-            {ctx ? (
-              <UserMenu
-                name={ctx.displayName}
-                email={ctx.email}
-                roleLabel={viewerRoleLabel(ctx)}
+            <div className="hidden items-center gap-2 md:flex">
+              <TeamSwitcher
+                teams={teams}
+                activeTeamId={activeTeam?.id ?? null}
               />
-            ) : null}
+              {ctx ? (
+                <UserMenu name={accountName} email={accountEmail} />
+              ) : null}
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="hidden min-w-0 flex-1 md:block">
-            <AppNav showStaff={showStaff} showManagement={showManagement} />
-          </div>
-
-          <div className="flex shrink-0 items-center justify-end md:ml-auto">
-            <TeamSwitcher teams={teams} activeTeamId={activeTeam?.id ?? null} />
-          </div>
+        <div className="hidden md:block">
+          <AppNav showStaff={showStaff} showManagement={showManagement} />
         </div>
       </div>
     </header>

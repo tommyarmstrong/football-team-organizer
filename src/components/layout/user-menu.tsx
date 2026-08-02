@@ -12,14 +12,42 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function UserMenu({
+export function AccountDetails({
   name,
   email,
-  roleLabel,
 }: {
   name: string | null;
   email: string | null;
-  roleLabel: string;
+}) {
+  const title = name ?? email ?? "Account";
+  const showEmailUnderName = Boolean(name && email);
+
+  return (
+    <div className="flex flex-col gap-0.5 px-0.5">
+      <p className="truncate text-sm font-medium">{title}</p>
+      {showEmailUnderName ? (
+        <p className="text-muted-foreground truncate text-sm">{email}</p>
+      ) : null}
+    </div>
+  );
+}
+
+export function SignOutLink({ className }: { className?: string }) {
+  return (
+    <form action={signOut}>
+      <Button type="submit" variant="link" size="sm" className={className}>
+        Sign out
+      </Button>
+    </form>
+  );
+}
+
+export function UserMenu({
+  name,
+  email,
+}: {
+  name: string | null;
+  email: string | null;
 }) {
   const title = name ?? email ?? "Account";
   const showEmailUnderName = Boolean(name && email);
@@ -51,12 +79,7 @@ export function UserMenu({
             </PopoverDescription>
           ) : null}
         </PopoverHeader>
-        <p className="text-muted-foreground px-0.5 text-xs">{roleLabel}</p>
-        <form action={signOut} className="pt-0.5">
-          <Button type="submit" variant="outline" size="sm" className="w-full">
-            Sign out
-          </Button>
-        </form>
+        <SignOutLink className="h-auto justify-start px-0.5 py-1" />
       </PopoverContent>
     </Popover>
   );
