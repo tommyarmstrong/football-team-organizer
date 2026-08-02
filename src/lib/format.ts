@@ -144,6 +144,18 @@ export function formatScore(
   return `${goalsFor}–${goalsAgainst}`;
 }
 
+/** Score with the home side first (away fixtures swap our for/against). */
+export function formatHomeFirstScore(
+  goalsFor: number | null,
+  goalsAgainst: number | null,
+  homeAway: MatchHomeAway | null | undefined,
+): string {
+  if (homeAway === "away") {
+    return formatScore(goalsAgainst, goalsFor);
+  }
+  return formatScore(goalsFor, goalsAgainst);
+}
+
 export function resultLetter(
   goalsFor: number | null,
   goalsAgainst: number | null,
@@ -172,6 +184,29 @@ export function formatMatchVersusTitle(
     return `${opponentName} vs ${teamName}`;
   }
   return `${teamName} vs ${opponentName}`;
+}
+
+/**
+ * Played / in progress: "Home 4 - 2 Away".
+ * Otherwise the versus title (e.g. "Home vs Away").
+ */
+export function formatMatchTitle(
+  teamName: string,
+  opponentName: string,
+  homeAway: MatchHomeAway | null | undefined,
+  status: MatchStatus,
+  goalsFor: number,
+  goalsAgainst: number,
+): string {
+  if (status !== "played" && status !== "in_progress") {
+    return formatMatchVersusTitle(teamName, opponentName, homeAway);
+  }
+
+  const homeGoals = homeAway === "away" ? goalsAgainst : goalsFor;
+  const awayGoals = homeAway === "away" ? goalsFor : goalsAgainst;
+  const homeName = homeAway === "away" ? opponentName : teamName;
+  const awayName = homeAway === "away" ? teamName : opponentName;
+  return `${homeName} ${homeGoals} - ${awayGoals} ${awayName}`;
 }
 
 export function labelVenueSurface(surface: VenueSurface): string {

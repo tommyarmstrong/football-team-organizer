@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   coachDisplayName,
   formatGoalMinute,
+  formatHomeFirstScore,
   formatKickoffTime,
   formatMatchDate,
+  formatMatchTitle,
   formatMatchVersusTitle,
   formatScore,
   formatShortDate,
@@ -199,6 +201,18 @@ describe("formatScore", () => {
   });
 });
 
+describe("formatHomeFirstScore", () => {
+  it("keeps our score first for home and neutral", () => {
+    expect(formatHomeFirstScore(4, 2, "home")).toBe("4–2");
+    expect(formatHomeFirstScore(4, 2, "neutral")).toBe("4–2");
+    expect(formatHomeFirstScore(4, 2, null)).toBe("4–2");
+  });
+
+  it("puts the opposition (home) score first when we are away", () => {
+    expect(formatHomeFirstScore(4, 2, "away")).toBe("2–4");
+  });
+});
+
 describe("resultLetter", () => {
   it("returns null when score is incomplete", () => {
     expect(resultLetter(null, 0)).toBeNull();
@@ -310,5 +324,31 @@ describe("formatMatchVersusTitle", () => {
     expect(formatMatchVersusTitle("U12 Blues", "Rivals FC", "away")).toBe(
       "Rivals FC vs U12 Blues",
     );
+  });
+});
+
+describe("formatMatchTitle", () => {
+  it("uses versus form when not played or in progress", () => {
+    expect(
+      formatMatchTitle("England", "West Germany", "home", "scheduled", 0, 0),
+    ).toBe("England vs West Germany");
+    expect(
+      formatMatchTitle("England", "West Germany", "home", "cancelled", 0, 0),
+    ).toBe("England vs West Germany");
+    expect(
+      formatMatchTitle("England", "West Germany", "away", "postponed", 0, 0),
+    ).toBe("West Germany vs England");
+  });
+
+  it("embeds the home-first score when played or in progress", () => {
+    expect(
+      formatMatchTitle("England", "West Germany", "home", "played", 4, 2),
+    ).toBe("England 4 - 2 West Germany");
+    expect(
+      formatMatchTitle("England", "West Germany", "away", "in_progress", 4, 2),
+    ).toBe("West Germany 2 - 4 England");
+    expect(
+      formatMatchTitle("England", "West Germany", "neutral", "played", 1, 1),
+    ).toBe("England 1 - 1 West Germany");
   });
 });

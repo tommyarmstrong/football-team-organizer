@@ -132,6 +132,7 @@ export async function updateMatchAction(
 
   revalidatePath("/matches");
   revalidatePath(`/matches/${id}`);
+  revalidatePath(`/matches/${id}/edit`);
   revalidatePath("/dashboard");
   revalidatePath("/stats");
   revalidatePath("/club");

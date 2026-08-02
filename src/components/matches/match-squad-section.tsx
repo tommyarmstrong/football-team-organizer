@@ -126,12 +126,6 @@ function SquadForm({
 
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
-        Players in the match-day squad are available for periods, goals, cards,
-        and players of the match. Remove a player to deselect them, or add them
-        back below.
-      </p>
-
       {selectedPlayers.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No players selected for this match.
