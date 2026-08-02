@@ -175,7 +175,7 @@ export default async function DashboardPage() {
               {scorers.data.map((row, index) => (
                 <li key={row.player.id}>
                   <Link
-                    href={`/players/${row.player.id}`}
+                    href={`/people/${row.player.person_id}`}
                     className="hover:bg-muted/50 flex items-center justify-between gap-3 px-4 py-3 transition-colors"
                   >
                     <span className="flex items-center gap-3">

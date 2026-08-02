@@ -15,10 +15,12 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 
 export function CoachObjectivesSection({
+  personId,
   coachId,
   objectives,
   canEdit,
 }: {
+  personId: string;
   coachId: string;
   objectives: CoachDevelopmentObjective[];
   canEdit: boolean;
@@ -39,7 +41,7 @@ export function CoachObjectivesSection({
           {objectives.map((objective) => (
             <li key={objective.id} className="flex items-stretch">
               <Link
-                href={`/coaches/${coachId}/objectives/${objective.id}`}
+                href={`/people/${personId}/coach-objectives/${objective.id}`}
                 className={objectListRowClassName(
                   "flex-col items-stretch gap-1 sm:flex-row sm:items-center sm:justify-between",
                 )}
@@ -78,7 +80,7 @@ export function CoachObjectivesSection({
       {canEdit ? (
         <div>
           <Link
-            href={`/coaches/${coachId}/objectives/new`}
+            href={`/people/${personId}/coach-objectives/new`}
             className={buttonVariants()}
           >
             Add

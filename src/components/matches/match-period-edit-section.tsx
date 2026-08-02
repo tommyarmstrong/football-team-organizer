@@ -223,7 +223,7 @@ function PeriodStarters({
             {selectedPlayers.map((player) => (
               <li key={player.id} className="flex items-stretch">
                 <Link
-                  href={`/players/${player.id}`}
+                  href={`/people/${player.person_id}`}
                   className={objectListRowClassName()}
                 >
                   <span className="min-w-0 flex-1 truncate font-medium">
@@ -326,7 +326,7 @@ function StartersForm({
           {selectedPlayers.map((player) => (
             <li key={player.id} className="flex items-stretch">
               <Link
-                href={`/players/${player.id}`}
+                href={`/people/${player.person_id}`}
                 className={objectListRowClassName()}
               >
                 <span className="min-w-0 flex-1 truncate font-medium">

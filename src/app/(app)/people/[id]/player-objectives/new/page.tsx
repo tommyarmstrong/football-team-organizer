@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCoach } from "@/lib/data/coaches";
-import { getViewerContext, isClubStaff } from "@/lib/authz/context";
-import { coachDisplayName } from "@/lib/format";
+import { getPerson } from "@/lib/data/people";
+import { getPlayerTeams } from "@/lib/data/players";
+import { canEditPlayer, getViewerContext } from "@/lib/authz/context";
+import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { CoachObjectiveForm } from "@/components/coaches/coach-objective-form";
+import { PlayerObjectiveForm } from "@/components/players/player-objective-form";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -16,14 +17,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function NewCoachObjectivePage({
+export default async function NewPlayerObjectivePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const ctx = await getViewerContext();
-  const { data: coach, error } = await getCoach(id);
+  const { data: person, error } = await getPerson(id);
 
   if (error) {
     return (
@@ -34,11 +35,18 @@ export default async function NewCoachObjectivePage({
     );
   }
 
-  if (!coach || !ctx) {
+  const player = person?.players.find((p) => p.active_role) ?? null;
+
+  if (!person || !player || !ctx) {
     notFound();
   }
 
-  const canEdit = isClubStaff(ctx, coach.club_id);
+  const { data: teams } = await getPlayerTeams(player.id);
+  const canEdit = canEditPlayer(
+    ctx,
+    player.club_id,
+    teams.map((team) => team.team_id),
+  );
 
   if (!canEdit) {
     return (
@@ -46,13 +54,13 @@ export default async function NewCoachObjectivePage({
         <PageHeader title="New objective" />
         <EmptyState
           title="Read-only access"
-          description="Only club staff can add development objectives."
+          description="Only coaches and club management can add player development objectives."
           action={
             <Link
-              href={`/coaches/${coach.id}`}
+              href={`/people/${person.id}`}
               className={buttonVariants({ variant: "outline" })}
             >
-              Back to coach
+              Back to person
             </Link>
           }
         />
@@ -64,26 +72,32 @@ export default async function NewCoachObjectivePage({
     <div className="space-y-6">
       <PageHeader
         title="New objective"
-        description={`Development objective for ${coachDisplayName(coach)}`}
+        description={`Development objective for ${personDisplayName(person)}`}
         actions={
           <Link
-            href={`/coaches/${coach.id}`}
+            href={`/people/${person.id}`}
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Back to coach
+            Back to person
           </Link>
         }
       />
+
+      <p className="text-muted-foreground text-sm">
+        For younger children it is usually recommended that objectives are
+        limited to no more than one or two items, which they can focus on,
+        rather than being overwhelmed by information.
+      </p>
 
       <Card>
         <CardHeader>
           <CardTitle>Add development objective</CardTitle>
           <CardDescription>
-            Set the objective text, type, status, and optional target date.
+            Set the objective text, type, and status.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CoachObjectiveForm coachId={coach.id} mode="create" />
+          <PlayerObjectiveForm playerId={player.id} mode="create" />
         </CardContent>
       </Card>
     </div>

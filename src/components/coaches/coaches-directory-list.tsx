@@ -38,7 +38,7 @@ export function CoachesDirectoryList({
       emptyFilterDescription="Try a different name, or clear the filter."
       renderItem={(coach) => (
         <Link
-          href={`/coaches/${coach.id}`}
+          href={`/people/${coach.person_id}`}
           className={objectListRowClassName("justify-between")}
         >
           <div className="min-w-0">

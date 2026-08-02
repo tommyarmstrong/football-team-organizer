@@ -54,7 +54,8 @@ export async function listGuardianAssistants(
     supabase
       .from("guardians")
       .select(`id, ${PERSON_EMBED}`)
-      .eq("club_id", clubId),
+      .eq("club_id", clubId)
+      .eq("active_role", true),
   ]);
 
   if (membersError) return { data: [], error: membersError.message };

@@ -5,20 +5,37 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { createCoach, deleteCoach, getCoach } from "@/lib/data/coaches";
+import {
+  createCoach,
+  deleteCoach,
+  getCoach,
+  setCoachActiveRole,
+} from "@/lib/data/coaches";
 import {
   createGuardian,
   deleteGuardian,
   getGuardian,
+  setGuardianActiveRole,
 } from "@/lib/data/guardians";
-import { createManager, deleteManager, getManager } from "@/lib/data/managers";
+import {
+  createManager,
+  deleteManager,
+  getManager,
+  setManagerActiveRole,
+} from "@/lib/data/managers";
 import {
   createPerson,
   getPerson,
   linkRoleToPerson,
   updatePerson,
+  type PersonRoleRef,
 } from "@/lib/data/people";
-import { createPlayer, deletePlayer, getPlayer } from "@/lib/data/players";
+import {
+  createPlayer,
+  deletePlayer,
+  getPlayer,
+  setPlayerActiveRole,
+} from "@/lib/data/players";
 import { sendPersonInvitation } from "@/lib/people/invitations";
 import { parsePersonForm } from "@/lib/people/parse";
 import { str } from "@/lib/form-parse";
@@ -117,6 +134,16 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function roleRowsFor(
+  person: NonNullable<Awaited<ReturnType<typeof getPerson>>["data"]>,
+  role: PersonRoleKind,
+): PersonRoleRef[] {
+  if (role === "player") return person.players;
+  if (role === "coach") return person.coaches;
+  if (role === "guardian") return person.guardians;
+  return person.managers;
+}
+
 export async function addClubRoleToPersonAction(
   personId: string,
   _prev: ActionState,
@@ -139,20 +166,24 @@ export async function addClubRoleToPersonAction(
   if (loadError) return { error: loadError };
   if (!person) return { error: "Person not found." };
 
-  const alreadyHasRole =
-    role === "player"
-      ? person.players.some((row) => row.club_id === club.id)
-      : role === "coach"
-        ? person.coaches.some((row) => row.club_id === club.id)
-        : role === "guardian"
-          ? person.guardians.some((row) => row.club_id === club.id)
-          : person.managers.some((row) => row.club_id === club.id);
-
-  if (alreadyHasRole) {
+  const existing = roleRowsFor(person, role).find(
+    (row) => row.club_id === club.id,
+  );
+  if (existing?.active_role) {
     return { error: `This person already has a ${role} role at this club.` };
   }
 
-  if (role === "player") {
+  if (existing && !existing.active_role) {
+    const { error } =
+      role === "player"
+        ? await setPlayerActiveRole(existing.id, true)
+        : role === "coach"
+          ? await setCoachActiveRole(existing.id, true)
+          : role === "guardian"
+            ? await setGuardianActiveRole(existing.id, true)
+            : await setManagerActiveRole(existing.id, true);
+    if (error) return { error };
+  } else if (role === "player") {
     const { error } = await createPlayer({
       club_id: club.id,
       person_id: person.id,
@@ -204,8 +235,7 @@ export async function addClubRoleToPersonAction(
 
   revalidatePeople(personId);
   revalidatePath("/club");
-  revalidatePath("/coaches");
-  return { success: "Club role added." };
+  return { success: existing ? "Club role reactivated." : "Club role added." };
 }
 
 export async function removeClubRoleFromPersonAction(
@@ -262,8 +292,7 @@ export async function removeClubRoleFromPersonAction(
 
   revalidatePeople(personId);
   revalidatePath("/club");
-  revalidatePath("/coaches");
-  return { success: "Club role removed." };
+  return { success: "Club role deactivated." };
 }
 
 export async function sendInvitationAction(
