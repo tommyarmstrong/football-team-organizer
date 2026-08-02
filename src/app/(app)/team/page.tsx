@@ -81,7 +81,7 @@ export default async function TeamPage() {
               <CardTitle>Create your first team</CardTitle>
               <CardDescription>
                 Add a team to {club?.name}. You can create more later (e.g. U10
-                Boys, U11 Girls A).
+                Male, U11 Female A).
               </CardDescription>
             </CardHeader>
             <CardContent>

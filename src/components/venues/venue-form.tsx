@@ -5,6 +5,8 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   VENUE_FOOD_AND_DRINKS,
   VENUE_FOOD_AND_DRINK_LABELS,
+  VENUE_PARKINGS,
+  VENUE_PARKING_LABELS,
   VENUE_SURFACES,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
@@ -38,6 +40,7 @@ export function VenueForm({
   const selectedAmenities = new Set(
     Array.isArray(venue?.food_and_drink) ? venue.food_and_drink : [],
   );
+  const selectedParking = venue?.parking ?? "unknown";
 
   return (
     <form action={formAction} className="space-y-4">
@@ -108,6 +111,27 @@ export function VenueForm({
                   className="border-input size-4 rounded"
                 />
                 {VENUE_SURFACE_LABELS[option]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset className="space-y-2 sm:col-span-2">
+          <legend className="text-sm font-medium">Parking</legend>
+          <div className="flex flex-wrap gap-3">
+            {VENUE_PARKINGS.map((option) => (
+              <label
+                key={option}
+                className="flex min-h-9 items-center gap-2 text-sm"
+              >
+                <input
+                  type="radio"
+                  name="parking"
+                  value={option}
+                  defaultChecked={selectedParking === option}
+                  disabled={pending}
+                  className="border-input size-4"
+                />
+                {VENUE_PARKING_LABELS[option]}
               </label>
             ))}
           </div>

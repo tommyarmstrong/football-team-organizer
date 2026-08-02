@@ -12,7 +12,7 @@ import {
   parseClubColour,
 } from "@/lib/clubs/branding";
 import { CLUB_ICONS_BUCKET } from "@/lib/constants";
-import { str } from "@/lib/form-parse";
+import { parseOptionalInt, str } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 
 export async function createClubAction(
@@ -74,6 +74,7 @@ export async function updateClubAction(
   const website = str(formData, "website") || null;
   const email = str(formData, "email") || null;
   const phone = str(formData, "phone") || null;
+  const about = str(formData, "about") || null;
   const clearIcon = str(formData, "clear_icon") === "true";
   const clearColour = str(formData, "clear_colour") === "true";
 
@@ -82,6 +83,26 @@ export async function updateClubAction(
   if (!canManageClub(ctx, id)) {
     return { error: "Only club management can edit the club." };
   }
+
+  const establishedRaw = str(formData, "established");
+  const establishedParsed = parseOptionalInt(
+    establishedRaw,
+    "Established year",
+  );
+  if (
+    establishedParsed &&
+    typeof establishedParsed === "object" &&
+    "error" in establishedParsed
+  ) {
+    return { error: establishedParsed.error };
+  }
+  if (
+    establishedParsed != null &&
+    (establishedParsed < 1800 || establishedParsed > 2100)
+  ) {
+    return { error: "Established year must be between 1800 and 2100." };
+  }
+  const established = establishedParsed;
 
   const { data: existing, error: loadError } = await getClub(id);
   if (loadError) return { error: loadError };
@@ -117,10 +138,13 @@ export async function updateClubAction(
     phone,
     icon_url: iconUrl,
     colour,
+    established,
+    about,
   });
   if (error) return { error };
 
   revalidatePath("/club");
+  revalidatePath("/club/edit");
   revalidatePath("/", "layout");
   return { success: "Club saved." };
 }

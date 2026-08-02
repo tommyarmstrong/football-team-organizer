@@ -7,6 +7,7 @@ import { FilterablePaginatedList } from "@/components/shared/filterable-paginate
 import { objectListRowClassName } from "@/components/shared/object-list";
 import {
   VenueAmenityChips,
+  VenueParkingChip,
   VenueSurfaceChips,
 } from "@/components/venues/venue-chips";
 
@@ -39,6 +40,7 @@ export function VenuesDirectoryList({ venues }: { venues: Venue[] }) {
                 </p>
               </div>
               <VenueSurfaceChips surfaces={venue.surface} />
+              <VenueParkingChip parking={venue.parking} />
               <VenueAmenityChips amenities={venue.food_and_drink} />
             </div>
           </Link>

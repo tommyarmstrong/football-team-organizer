@@ -8,6 +8,7 @@ import type { Club } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 const DEFAULT_PICKER_COLOUR = "#1B4D3E";
@@ -47,6 +48,22 @@ export function ClubForm({ club }: { club: Club }) {
           autoComplete="organization"
           data-1p-ignore
           data-lpignore="true"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="club-established">Established</Label>
+        <Input
+          id="club-established"
+          name="established"
+          type="number"
+          inputMode="numeric"
+          min={1800}
+          max={2100}
+          placeholder="e.g. 2022"
+          defaultValue={club.established ?? ""}
+          disabled={pending}
+          className="sm:max-w-36"
         />
       </div>
 
@@ -199,6 +216,18 @@ export function ClubForm({ club }: { club: Club }) {
             data-lpignore="true"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="club-about">About / philosophy</Label>
+        <Textarea
+          id="club-about"
+          name="about"
+          rows={6}
+          defaultValue={club.about ?? ""}
+          disabled={pending}
+          placeholder="Describe the club's philosophy and approach…"
+        />
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}

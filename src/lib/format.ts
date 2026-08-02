@@ -10,6 +10,7 @@ import {
   OWN_GOAL_LABEL,
   PLAYER_OBJECTIVE_STATUS_LABELS,
   PLAYER_OBJECTIVE_TYPE_LABELS,
+  TEAM_GENDER_LABELS,
   VENUE_FOOD_AND_DRINK_LABELS,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
@@ -192,7 +193,7 @@ export function resultLetter(
 }
 
 export function labelGender(gender: TeamGender): string {
-  return gender.charAt(0).toUpperCase() + gender.slice(1);
+  return TEAM_GENDER_LABELS[gender];
 }
 
 export function labelHomeAway(homeAway: MatchHomeAway): string {
