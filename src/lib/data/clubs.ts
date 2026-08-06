@@ -118,6 +118,8 @@ export async function updateClub(
     phone?: string | null;
     icon_url?: string | null;
     colour?: string | null;
+    established?: number | null;
+    about?: string | null;
   },
 ): Promise<{ data: Club | null; error: string | null }> {
   const supabase = await createClient();

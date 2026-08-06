@@ -1,10 +1,13 @@
 import {
   VENUE_FOOD_AND_DRINK_EMOJIS,
   VENUE_FOOD_AND_DRINK_LABELS,
+  VENUE_PARKING_EMOJI,
+  VENUE_PARKING_LABELS,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
 import type {
   VenueFoodAndDrink,
+  VenueParking,
   VenueSurface,
 } from "@/lib/supabase/database.types";
 import { RoleChip } from "@/components/shared/role-chip";
@@ -26,6 +29,25 @@ export function VenueSurfaceChips({
           </RoleChip>
         </li>
       ))}
+    </ul>
+  );
+}
+
+export function VenueParkingChip({
+  parking,
+}: {
+  parking: VenueParking | null | undefined;
+}) {
+  if (!parking) return null;
+
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label="Parking">
+      <li>
+        <RoleChip>
+          <span aria-hidden="true">{VENUE_PARKING_EMOJI}</span>
+          <span>{VENUE_PARKING_LABELS[parking]}</span>
+        </RoleChip>
+      </li>
     </ul>
   );
 }

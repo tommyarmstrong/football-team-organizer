@@ -9,6 +9,7 @@ import { VenueMap } from "@/components/venues/venue-map";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
 import {
   VenueAmenityChips,
+  VenueParkingChip,
   VenueSurfaceChips,
 } from "@/components/venues/venue-chips";
 import { buttonVariants } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export default async function VenueDetailPage({
           <div className="space-y-2">
             {address ? <p>{address}</p> : null}
             <VenueSurfaceChips surfaces={venue.surface} />
+            <VenueParkingChip parking={venue.parking} />
             <VenueAmenityChips amenities={venue.food_and_drink} />
           </div>
         }

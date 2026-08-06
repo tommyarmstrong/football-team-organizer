@@ -252,7 +252,9 @@ describe("resultLetter", () => {
 
 describe("label helpers", () => {
   it("capitalizes enum-like values", () => {
-    expect(labelGender("boys")).toBe("Boys");
+    expect(labelGender("boys")).toBe("Male");
+    expect(labelGender("girls")).toBe("Female");
+    expect(labelGender("mixed")).toBe("Mixed");
     expect(labelHomeAway("home")).toBe("Home");
     expect(labelMatchStatus("scheduled")).toBe("Scheduled");
     expect(labelMatchStatus("in_progress")).toBe("In progress");

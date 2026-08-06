@@ -1,7 +1,12 @@
 import { str } from "@/lib/form-parse";
-import { VENUE_FOOD_AND_DRINKS, VENUE_SURFACES } from "@/lib/constants";
+import {
+  VENUE_FOOD_AND_DRINKS,
+  VENUE_PARKINGS,
+  VENUE_SURFACES,
+} from "@/lib/constants";
 import type {
   VenueFoodAndDrink,
+  VenueParking,
   VenueSurface,
 } from "@/lib/supabase/database.types";
 
@@ -12,6 +17,7 @@ export type VenueFormFields = {
   town_city: string | null;
   postcode: string | null;
   surface: VenueSurface[];
+  parking: VenueParking;
   food_and_drink: VenueFoodAndDrink[];
 };
 
@@ -48,10 +54,16 @@ export function parseVenueForm(formData: FormData): VenueFormParseResult {
   const address_line2 = str(formData, "address_line2") || null;
   const town_city = str(formData, "town_city") || null;
   const postcode = str(formData, "postcode") || null;
+  const parkingRaw = str(formData, "parking") || "unknown";
 
   if (!name) {
     return { error: "Name is required." };
   }
+
+  if (!(VENUE_PARKINGS as readonly string[]).includes(parkingRaw)) {
+    return { error: "Select a valid parking option." };
+  }
+  const parking = parkingRaw as VenueParking;
 
   const surface = parseEnumMultiSelect(
     formData,
@@ -80,6 +92,7 @@ export function parseVenueForm(formData: FormData): VenueFormParseResult {
     town_city,
     postcode,
     surface,
+    parking,
     food_and_drink,
   };
 }

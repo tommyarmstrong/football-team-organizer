@@ -13,6 +13,7 @@ import type {
   TeamRole,
   GuardianRelationship,
   VenueFoodAndDrink,
+  VenueParking,
   VenueSurface,
 } from "@/lib/supabase/database.types";
 
@@ -26,7 +27,14 @@ export const DEFAULT_CLUB_ICON_SRC = "/football-icon.svg";
 
 export const CLUB_ICONS_BUCKET = "club-icons";
 
-export const TEAM_GENDERS: TeamGender[] = ["boys", "girls", "mixed"];
+export const TEAM_GENDERS: TeamGender[] = ["girls", "boys", "mixed"];
+
+/** Display labels: DB keeps boys/girls/mixed; UI shows Female/Male/Mixed. */
+export const TEAM_GENDER_LABELS: Record<TeamGender, string> = {
+  girls: "Female",
+  boys: "Male",
+  mixed: "Mixed",
+};
 
 export const AGE_GROUPS = [
   "U7",
@@ -133,6 +141,24 @@ export const VENUE_SURFACE_LABELS: Record<VenueSurface, string> = {
   varies: "Varies",
   unknown: "Unknown",
 };
+
+export const VENUE_PARKINGS: VenueParking[] = [
+  "usually_fine",
+  "weekend_parking",
+  "paid_parking",
+  "no_parking",
+  "unknown",
+];
+
+export const VENUE_PARKING_LABELS: Record<VenueParking, string> = {
+  usually_fine: "Usually fine",
+  weekend_parking: "Weekend parking",
+  paid_parking: "Paid parking",
+  no_parking: "No Parking",
+  unknown: "Unknown",
+};
+
+export const VENUE_PARKING_EMOJI = "🚗";
 
 export const VENUE_FOOD_AND_DRINKS: VenueFoodAndDrink[] = [
   "bbq",

@@ -31,6 +31,7 @@ describe("parseVenueForm", () => {
       town_city: null,
       postcode: null,
       surface: [],
+      parking: "unknown",
       food_and_drink: [],
     });
   });
@@ -45,6 +46,7 @@ describe("parseVenueForm", () => {
             address_line2: "  ",
             town_city: "London",
             postcode: "N18 1NB",
+            parking: "usually_fine",
           },
           { surface: ["astro"] },
         ),
@@ -56,6 +58,7 @@ describe("parseVenueForm", () => {
       town_city: "London",
       postcode: "N18 1NB",
       surface: ["astro"],
+      parking: "usually_fine",
       food_and_drink: [],
     });
   });
@@ -63,10 +66,13 @@ describe("parseVenueForm", () => {
   it("collects unique surface and amenity options", () => {
     expect(
       parseVenueForm(
-        venueFormData(validFields, {
-          surface: ["grass", "astro", "grass", "hard_court"],
-          foodAndDrink: ["cafe", "bbq", "cafe", "tuck_shop", "bar"],
-        }),
+        venueFormData(
+          { ...validFields, parking: "paid_parking" },
+          {
+            surface: ["grass", "astro", "grass", "hard_court"],
+            foodAndDrink: ["cafe", "bbq", "cafe", "tuck_shop", "bar"],
+          },
+        ),
       ),
     ).toEqual({
       name: "Aylward Academy",
@@ -75,6 +81,7 @@ describe("parseVenueForm", () => {
       town_city: null,
       postcode: null,
       surface: ["grass", "astro", "hard_court"],
+      parking: "paid_parking",
       food_and_drink: ["cafe", "bbq", "tuck_shop", "bar"],
     });
   });
@@ -100,6 +107,14 @@ describe("parseVenueForm", () => {
       ),
     ).toEqual({
       error: "Select a valid amenity.",
+    });
+  });
+
+  it("rejects an invalid parking option", () => {
+    expect(
+      parseVenueForm(venueFormData({ name: "Pitch", parking: "free" })),
+    ).toEqual({
+      error: "Select a valid parking option.",
     });
   });
 });

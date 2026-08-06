@@ -18,6 +18,8 @@ export type Database = {
           phone: string | null;
           icon_url: string | null;
           colour: string | null;
+          established: number | null;
+          about: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +31,8 @@ export type Database = {
           phone?: string | null;
           icon_url?: string | null;
           colour?: string | null;
+          established?: number | null;
+          about?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +44,8 @@ export type Database = {
           phone?: string | null;
           icon_url?: string | null;
           colour?: string | null;
+          established?: number | null;
+          about?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -210,6 +216,7 @@ export type Database = {
           town_city: string | null;
           postcode: string | null;
           surface: Database["public"]["Enums"]["venue_surface"][];
+          parking: Database["public"]["Enums"]["venue_parking"];
           food_and_drink: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at: string;
           updated_at: string;
@@ -223,6 +230,7 @@ export type Database = {
           town_city?: string | null;
           postcode?: string | null;
           surface?: Database["public"]["Enums"]["venue_surface"][];
+          parking?: Database["public"]["Enums"]["venue_parking"];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at?: string;
           updated_at?: string;
@@ -236,6 +244,7 @@ export type Database = {
           town_city?: string | null;
           postcode?: string | null;
           surface?: Database["public"]["Enums"]["venue_surface"][];
+          parking?: Database["public"]["Enums"]["venue_parking"];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
           created_at?: string;
           updated_at?: string;
@@ -1213,6 +1222,12 @@ export type Database = {
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
       venue_surface:
         "astro" | "grass" | "hard_court" | "indoor" | "varies" | "unknown";
+      venue_parking:
+        | "usually_fine"
+        | "weekend_parking"
+        | "paid_parking"
+        | "no_parking"
+        | "unknown";
       venue_food_and_drink:
         | "bbq"
         | "cafe"
@@ -1291,6 +1306,7 @@ export type MatchHomeAway = Enums<"match_home_away">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;
 export type VenueSurface = Enums<"venue_surface">;
+export type VenueParking = Enums<"venue_parking">;
 export type VenueFoodAndDrink = Enums<"venue_food_and_drink">;
 export type CoachObjectiveType = Enums<"coach_objective_type">;
 export type CoachObjectiveStatus = Enums<"coach_objective_status">;

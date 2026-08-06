@@ -2,21 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewerContext, canManageClub } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { listPlayers } from "@/lib/data/players";
-import { listCoaches } from "@/lib/data/coaches";
-import { listGuardians } from "@/lib/data/guardians";
-import { listManagers } from "@/lib/data/managers";
 import { listVisibleTeams } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ClubForm } from "@/components/clubs/club-form";
-import {
-  ClubCoachesList,
-  ClubGuardiansList,
-  ClubManagersList,
-  ClubPlayersList,
-} from "@/components/clubs/club-people-lists";
+import { ClubHeaderMeta } from "@/components/clubs/club-header-meta";
 import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -47,44 +37,38 @@ export default async function ClubPage() {
     );
   }
 
-  const [
-    { data: allPlayers, error: playersError },
-    { data: allCoaches, error: coachesError },
-    { data: allGuardians, error: guardiansError },
-    { data: managers, error: managersError },
-    { data: allTeams, error: teamsError },
-  ] = await Promise.all([
-    listPlayers(),
-    listCoaches(),
-    listGuardians(),
-    listManagers(club.id),
-    listVisibleTeams(),
-  ]);
-
-  const players = allPlayers.filter((p) => p.club_id === club.id);
-  const coaches = allCoaches.filter((c) => c.club_id === club.id);
-  const guardians = allGuardians.filter((g) => g.club_id === club.id);
+  const { data: allTeams, error: teamsError } = await listVisibleTeams();
   const teams = allTeams.filter((t) => t.club_id === club.id);
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Club"
-        description={`${club.name} — manage club details and people.`}
+        title={club.name}
+        description={<ClubHeaderMeta club={club} teams={teams} />}
+        actions={
+          <Link href="/club/edit" className={buttonVariants({ size: "sm" })}>
+            Edit club details
+          </Link>
+        }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>About {club.name}</CardTitle>
           <CardDescription>
-            Edit the club name, icon, colours, and contact details.
+            Club philosophy and what the club stands for.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ClubForm
-            key={`${club.updated_at}-${club.icon_url ?? ""}-${club.colour ?? ""}`}
-            club={club}
-          />
+          {club.about ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {club.about}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No club philosophy yet. Add one when you edit club details.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -108,111 +92,6 @@ export default async function ClubPage() {
           ) : null}
           <Link href="/teams/new" className={buttonVariants()}>
             Add team
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Coaches</CardTitle>
-          <CardDescription>
-            Coaching staff for {club.name}. Assign coaches to teams from a
-            coach&apos;s page or a team&apos;s staff card.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {coachesError ? <ErrorBanner message={coachesError} /> : null}
-          {!coachesError && coaches.length === 0 ? (
-            <EmptyState
-              title="No coaches yet"
-              description="Add your first coach to keep contact and qualification details in one place."
-            />
-          ) : null}
-          {!coachesError && coaches.length > 0 ? (
-            <ClubCoachesList coaches={coaches} />
-          ) : null}
-          <Link href="/people/new" className={buttonVariants()}>
-            Add coach
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Management</CardTitle>
-          <CardDescription>
-            Club managers for {club.name}. Same kind of people record as coaches
-            and guardians, with broader permissions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {managersError ? <ErrorBanner message={managersError} /> : null}
-          {!managersError && managers.length === 0 ? (
-            <EmptyState
-              title="No managers yet"
-              description="Add a manager with name and contact details."
-            />
-          ) : null}
-          {!managersError && managers.length > 0 ? (
-            <ClubManagersList managers={managers} />
-          ) : null}
-          <Link
-            href="/people"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Manage people & invitations
-          </Link>
-          <Link href="/managers/new" className={buttonVariants()}>
-            Add manager
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Players</CardTitle>
-          <CardDescription>
-            Players belong to the club and can be assigned to one or more teams.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {playersError ? <ErrorBanner message={playersError} /> : null}
-          {!playersError && players.length === 0 ? (
-            <EmptyState
-              title="No players yet"
-              description="Add your first player to the club."
-            />
-          ) : null}
-          {!playersError && players.length > 0 ? (
-            <ClubPlayersList players={players} />
-          ) : null}
-          <Link href="/people/new" className={buttonVariants()}>
-            Add player
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Guardians</CardTitle>
-          <CardDescription>
-            Record contact details, then link players from a guardian&apos;s
-            page.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {guardiansError ? <ErrorBanner message={guardiansError} /> : null}
-          {!guardiansError && guardians.length === 0 ? (
-            <EmptyState
-              title="No guardians yet"
-              description="Add your first guardian to keep contact details in one place."
-            />
-          ) : null}
-          {!guardiansError && guardians.length > 0 ? (
-            <ClubGuardiansList guardians={guardians} />
-          ) : null}
-          <Link href="/guardians/new" className={buttonVariants()}>
-            Add guardian
           </Link>
         </CardContent>
       </Card>
