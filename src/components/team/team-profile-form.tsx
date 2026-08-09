@@ -160,7 +160,7 @@ export function TeamProfileForm({
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save team"}
+        {pending ? "Saving…" : "Save"}
       </Button>
     </form>
   );

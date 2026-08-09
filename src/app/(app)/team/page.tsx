@@ -23,12 +23,12 @@ import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
+import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -136,37 +136,30 @@ export default async function TeamPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            {canEdit
-              ? "Team details for this season."
-              : "Team details (read-only)."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <dl className="grid gap-3 text-sm">
-            <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
-            <ReadOnly
-              label="Home venue"
-              value={homeVenue?.name ?? "—"}
-              href={homeVenue ? `/venues/${homeVenue.id}` : null}
-            />
-            <ReadOnly
-              label="Training venue"
-              value={trainingVenue?.name ?? "—"}
-              href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
-            />
-            <ReadOnly label="Training days" value={trainingDaysLabel} />
-          </dl>
-          {canEdit ? (
-            <Link
-              href="/team/edit"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Edit
-            </Link>
-          ) : null}
+        <CardContent>
+          <div className="flex items-start gap-2">
+            <dl className="grid min-w-0 flex-1 gap-3 text-sm">
+              <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
+              <ReadOnly
+                label="Home venue"
+                value={homeVenue?.name ?? "—"}
+                href={homeVenue ? `/venues/${homeVenue.id}` : null}
+              />
+              <ReadOnly
+                label="Training venue"
+                value={trainingVenue?.name ?? "—"}
+                href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
+              />
+              <ReadOnly label="Training days" value={trainingDaysLabel} />
+            </dl>
+            {canEdit ? (
+              <EditIconLink
+                href="/team/edit"
+                label="Edit team"
+                className="-mt-1 -mr-1"
+              />
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 

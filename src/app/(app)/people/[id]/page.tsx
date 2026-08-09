@@ -22,6 +22,7 @@ import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
 import { PersonInvitationPanel } from "@/components/people/person-admin-panels";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
@@ -227,12 +228,10 @@ export default async function PersonDetailPage({
         actions={
           <>
             {canEdit || self ? (
-              <Link
+              <EditIconLink
                 href={`/people/${person.id}/edit`}
-                className={buttonVariants({ size: "sm" })}
-              >
-                Edit
-              </Link>
+                label="Edit person"
+              />
             ) : null}
             <Link
               href="/people"

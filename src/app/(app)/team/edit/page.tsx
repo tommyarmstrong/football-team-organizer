@@ -59,18 +59,7 @@ export default async function EditTeamPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Edit team"
-        description={team.name}
-        actions={
-          <Link
-            href="/team"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
-      />
+      <PageHeader title="Edit team" description={team.name} />
 
       <Card>
         <CardHeader>

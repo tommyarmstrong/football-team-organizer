@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { EditIconButton } from "@/components/shared/edit-icon-control";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import {
   objectListClassName,
@@ -161,15 +162,10 @@ function PlayerGuardianLinkRow({
         <LinkChips link={link} />
       </Link>
       <div className="flex items-center gap-1 pr-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground"
+        <EditIconButton
+          label={`Edit ${name}`}
           onClick={() => setEditing(true)}
-        >
-          Edit
-        </Button>
+        />
         <ListUnlinkButton
           label={`Unlink ${name}`}
           unlinkAction={() =>
