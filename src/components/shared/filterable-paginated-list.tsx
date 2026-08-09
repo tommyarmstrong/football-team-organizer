@@ -63,6 +63,7 @@ export function FilterablePaginatedList<T>({
   defaultPageSize = 20,
   singularLabel,
   pluralLabel,
+  totalCountPhrase = "in total",
 }: {
   items: T[];
   getSearchText: (item: T) => string;
@@ -75,6 +76,8 @@ export function FilterablePaginatedList<T>({
   defaultPageSize?: ListPageSize;
   singularLabel: string;
   pluralLabel: string;
+  /** Phrase after the count, e.g. "in this squad" instead of "in total". */
+  totalCountPhrase?: string;
 }) {
   const idPrefix = useId();
   const filterId = `${idPrefix}-filter`;
@@ -144,7 +147,7 @@ export function FilterablePaginatedList<T>({
           <div className="text-muted-foreground flex flex-col gap-3 text-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p>
-                {total} {totalNoun} in total
+                {total} {totalNoun} {totalCountPhrase}
                 {normalizedFilter ? ` (filtered from ${items.length})` : ""}
               </p>
               <div className="flex items-center gap-2 sm:justify-end">

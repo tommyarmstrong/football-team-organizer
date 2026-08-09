@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getManager } from "@/lib/data/managers";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
@@ -7,7 +6,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ManagerForm } from "@/components/managers/manager-form";
 import { DeleteManagerButton } from "@/components/managers/delete-manager-button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -45,14 +43,6 @@ export default async function ManagerDetailPage({
       <PageHeader
         title={managerDisplayName(manager)}
         description={manager.email ?? manager.phone ?? "Manager"}
-        actions={
-          <Link
-            href="/club"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to club
-          </Link>
-        }
       />
 
       {canEdit ? (

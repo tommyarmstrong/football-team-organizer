@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
-import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { canEditActiveTeam } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -30,9 +30,8 @@ export default async function MatchesPage({
       ? rawFilter
       : "all";
 
-  const [{ data: matches, error }, team, canEdit] = await Promise.all([
+  const [{ data: matches, error }, canEdit] = await Promise.all([
     listMatches(filter),
-    getActiveTeam(),
     canEditActiveTeam(),
   ]);
 
@@ -40,8 +39,12 @@ export default async function MatchesPage({
     <div className="space-y-6">
       <PageHeader
         title="Matches"
-        description={
-          team ? `Fixtures and results · ${team.name}` : "Fixtures and results"
+        actions={
+          canEdit ? (
+            <Link href="/matches/new" className={buttonVariants()}>
+              New fixture
+            </Link>
+          ) : undefined
         }
       />
 
@@ -79,25 +82,11 @@ export default async function MatchesPage({
                 : "No matches"
           }
           description="Create a fixture to get started."
-          action={
-            canEdit ? (
-              <Link href="/matches/new" className={buttonVariants()}>
-                New fixture
-              </Link>
-            ) : undefined
-          }
         />
       ) : null}
 
       {!error && matches.length > 0 ? (
-        <div className="space-y-4">
-          <MatchesDirectoryList matches={matches} canEdit={canEdit} />
-          {canEdit ? (
-            <Link href="/matches/new" className={buttonVariants()}>
-              New fixture
-            </Link>
-          ) : null}
-        </div>
+        <MatchesDirectoryList matches={matches} />
       ) : null}
     </div>
   );

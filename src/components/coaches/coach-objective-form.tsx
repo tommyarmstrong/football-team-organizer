@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 
 export function CoachObjectiveForm({
   coachId,
@@ -123,41 +124,14 @@ export function CoachObjectiveForm({
       </form>
 
       {mode === "edit" && objective ? (
-        <DeleteObjectiveButton coachId={coachId} objectiveId={objective.id} />
+        <ListDeleteButton
+          label="Delete objective"
+          confirmMessage="Delete this development objective? This cannot be undone."
+          deleteAction={() =>
+            deleteCoachObjectiveAndReturnAction(coachId, objective.id)
+          }
+        />
       ) : null}
     </div>
-  );
-}
-
-function DeleteObjectiveButton({
-  coachId,
-  objectiveId,
-}: {
-  coachId: string;
-  objectiveId: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    async () => deleteCoachObjectiveAndReturnAction(coachId, objectiveId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      action={formAction}
-      onSubmit={(event) => {
-        if (
-          !window.confirm(
-            "Delete this development objective? This cannot be undone.",
-          )
-        ) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="destructive" disabled={pending}>
-        {pending ? "Deleting…" : "Delete objective"}
-      </Button>
-    </form>
   );
 }

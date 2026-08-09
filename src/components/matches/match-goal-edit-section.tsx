@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 
 export function MatchGoalEditSection({
   matchId,
@@ -277,39 +278,16 @@ function EditableGoalSection({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Back to match"}
+          {pending ? "Saving…" : "Save"}
         </Button>
-        <DeleteGoalForm matchId={matchId} goalId={goal.id} />
+        <ListDeleteButton
+          label="Remove goal"
+          confirmMessage="Remove this goal?"
+          deleteAction={() =>
+            deleteGoalAndReturnToMatchAction(matchId, goal.id)
+          }
+        />
       </div>
     </div>
-  );
-}
-
-function DeleteGoalForm({
-  matchId,
-  goalId,
-}: {
-  matchId: string;
-  goalId: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    async () => deleteGoalAndReturnToMatchAction(matchId, goalId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      action={formAction}
-      onSubmit={(event) => {
-        if (!window.confirm("Remove this goal?")) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        {pending ? "Removing…" : "Remove goal"}
-      </Button>
-    </form>
   );
 }

@@ -51,6 +51,7 @@ export function TeamRosterSection({
           filterPlaceholder="Filter squad by name…"
           singularLabel="player"
           pluralLabel="players"
+          totalCountPhrase="in this squad"
           defaultPageSize={20}
           emptyFilterTitle="No players match"
           emptyFilterDescription="Try a different name, or clear the filter."

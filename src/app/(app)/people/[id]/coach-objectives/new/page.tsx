@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPerson } from "@/lib/data/people";
 import { getViewerContext, isClubStaff } from "@/lib/authz/context";
@@ -7,7 +6,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CoachObjectiveForm } from "@/components/coaches/coach-objective-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -49,14 +47,6 @@ export default async function NewCoachObjectivePage({
         <EmptyState
           title="Read-only access"
           description="Only club staff can add development objectives."
-          action={
-            <Link
-              href={`/people/${person.id}`}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to person
-            </Link>
-          }
         />
       </div>
     );
@@ -67,14 +57,6 @@ export default async function NewCoachObjectivePage({
       <PageHeader
         title="New objective"
         description={`Development objective for ${personDisplayName(person)}`}
-        actions={
-          <Link
-            href={`/people/${person.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to person
-          </Link>
-        }
       />
 
       <Card>

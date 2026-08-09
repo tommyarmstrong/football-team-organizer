@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 
 function cardPersonLabel(card: CardWithPerson): string {
   if (card.player) return playerDisplayName(card.player);
@@ -195,39 +196,16 @@ function EditableCardSection({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Back to match"}
+          {pending ? "Saving…" : "Save"}
         </Button>
-        <DeleteCardForm matchId={matchId} cardId={card.id} />
+        <ListDeleteButton
+          label="Remove card"
+          confirmMessage="Remove this card?"
+          deleteAction={() =>
+            deleteCardAndReturnToMatchAction(matchId, card.id)
+          }
+        />
       </div>
     </div>
-  );
-}
-
-function DeleteCardForm({
-  matchId,
-  cardId,
-}: {
-  matchId: string;
-  cardId: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    async () => deleteCardAndReturnToMatchAction(matchId, cardId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      action={formAction}
-      onSubmit={(event) => {
-        if (!window.confirm("Remove this card?")) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        {pending ? "Removing…" : "Remove card"}
-      </Button>
-    </form>
   );
 }

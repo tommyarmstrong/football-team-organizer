@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPerson } from "@/lib/data/people";
 import { getCoachObjective } from "@/lib/data/coach-objectives";
@@ -12,7 +11,6 @@ import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CoachObjectiveForm } from "@/components/coaches/coach-objective-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -63,14 +61,6 @@ export default async function CoachObjectiveEditPage({
       <PageHeader
         title={objective.body}
         description={`${personDisplayName(person)} · ${labelCoachObjectiveType(objective.objective_type)}`}
-        actions={
-          <Link
-            href={`/people/${person.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to person
-          </Link>
-        }
       />
 
       <Card>

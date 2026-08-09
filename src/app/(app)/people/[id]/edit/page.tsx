@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
@@ -8,7 +7,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PersonForm } from "@/components/people/person-form";
 import { PersonClubRolesSection } from "@/components/people/person-admin-panels";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -54,18 +52,7 @@ export default async function EditPersonPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Edit person"
-        description={personDisplayName(person)}
-        actions={
-          <Link
-            href={`/people/${person.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
-      />
+      <PageHeader title="Edit person" description={personDisplayName(person)} />
 
       <Card>
         <CardHeader>

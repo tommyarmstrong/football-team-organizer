@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewerContext, canManageClub } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { GuardianForm } from "@/components/guardians/guardian-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -28,14 +26,6 @@ export default async function NewGuardianPage() {
         <EmptyState
           title="No club found"
           description="Create a club before adding guardians."
-          action={
-            <Link
-              href="/club"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to club
-            </Link>
-          }
         />
       </div>
     );
@@ -46,14 +36,6 @@ export default async function NewGuardianPage() {
       <PageHeader
         title="Add guardian"
         description={`Record a guardian for ${club.name}`}
-        actions={
-          <Link
-            href="/club"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
       />
 
       <Card>

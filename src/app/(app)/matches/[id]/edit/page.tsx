@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canEditTeam, getViewerContext } from "@/lib/authz/context";
 import { listCompetitions } from "@/lib/data/competitions";
@@ -10,7 +9,6 @@ import { formatMatchVersusTitle } from "@/lib/format";
 import { MatchForm } from "@/components/matches/match-form";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PageHeader } from "@/components/shared/page-header";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -90,14 +88,6 @@ export default async function EditMatchPage({
           match.opponent_name,
           match.home_away,
         )}
-        actions={
-          <Link
-            href={`/matches/${match.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
       />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}

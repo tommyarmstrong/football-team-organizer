@@ -55,7 +55,7 @@ export default async function CompetitionDetailPage({
         <CardHeader>
           <CardTitle>Edit competition</CardTitle>
           <CardDescription>
-            Update competition details. Use Back to team to save and return.
+            Update competition details. Use Save to save and return.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

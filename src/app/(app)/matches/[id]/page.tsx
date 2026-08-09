@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { matchAllowsEvents } from "@/lib/constants";
@@ -9,10 +8,12 @@ import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import { formatMatchTitle, scoreFromGoals } from "@/lib/format";
+import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CollapsibleCard } from "@/components/shared/collapsible-card";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import {
@@ -22,7 +23,6 @@ import {
 import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
-import { buttonVariants } from "@/components/ui/button";
 
 export default async function MatchDetailPage({
   params,
@@ -120,20 +120,19 @@ export default async function MatchDetailPage({
           />
         }
         actions={
-          <>
-            {canEdit ? (
+          canEdit ? (
+            <>
               <EditIconLink
                 href={`/matches/${match.id}/edit`}
                 label="Edit match"
               />
-            ) : null}
-            <Link
-              href="/matches"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back
-            </Link>
-          </>
+              <ListDeleteButton
+                label={`Delete match vs ${opponentName}`}
+                confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
+                deleteAction={deleteMatchAction.bind(null, match.id)}
+              />
+            </>
+          ) : undefined
         }
       />
 
@@ -141,26 +140,6 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <>
-          <CollapsibleCard title="Players of the match">
-            <MatchPlayersOfTheMatchSection
-              matchId={match.id}
-              players={eventPlayers}
-              coachPlayerOfTheMatchId={match.player_of_the_match_id}
-              playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
-              canEdit={canEdit}
-            />
-          </CollapsibleCard>
-
-          <CollapsibleCard title="Periods">
-            {periodsError ? <ErrorBanner message={periodsError} /> : null}
-            <MatchPeriodsSection
-              matchId={match.id}
-              periods={periods}
-              goals={goals}
-              canEdit={canEdit}
-            />
-          </CollapsibleCard>
-
           <CollapsibleCard title="Goals">
             {goalsError ? <ErrorBanner message={goalsError} /> : null}
             <MatchGoalsSection
@@ -173,12 +152,12 @@ export default async function MatchDetailPage({
             />
           </CollapsibleCard>
 
-          <CollapsibleCard title="Cards">
-            {cardsError ? <ErrorBanner message={cardsError} /> : null}
-            <MatchCardsSection
+          <CollapsibleCard title="Periods">
+            {periodsError ? <ErrorBanner message={periodsError} /> : null}
+            <MatchPeriodsSection
               matchId={match.id}
-              cards={cards}
-              players={eventPlayers}
+              periods={periods}
+              goals={goals}
               canEdit={canEdit}
             />
           </CollapsibleCard>
@@ -200,6 +179,30 @@ export default async function MatchDetailPage({
             canEdit={canEdit}
           />
         </CollapsibleCard>
+      ) : null}
+
+      {allowsEvents ? (
+        <>
+          <CollapsibleCard title="Players of the match">
+            <MatchPlayersOfTheMatchSection
+              matchId={match.id}
+              players={eventPlayers}
+              coachPlayerOfTheMatchId={match.player_of_the_match_id}
+              playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
+
+          <CollapsibleCard title="Cards">
+            {cardsError ? <ErrorBanner message={cardsError} /> : null}
+            <MatchCardsSection
+              matchId={match.id}
+              cards={cards}
+              players={eventPlayers}
+              canEdit={canEdit}
+            />
+          </CollapsibleCard>
+        </>
       ) : null}
     </div>
   );

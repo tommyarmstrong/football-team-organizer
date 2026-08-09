@@ -39,7 +39,7 @@ export default function NoAccessPage() {
             href="/login"
             className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
           >
-            Back to login
+            Sign in
           </Link>
         </div>
       </div>

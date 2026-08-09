@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
@@ -7,7 +6,6 @@ import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TeamProfileForm } from "@/components/team/team-profile-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -30,14 +28,6 @@ export default async function EditTeamPage() {
         <EmptyState
           title="No team selected"
           description="Select or create a team before editing its profile."
-          action={
-            <Link
-              href="/team"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to team
-            </Link>
-          }
         />
       </div>
     );

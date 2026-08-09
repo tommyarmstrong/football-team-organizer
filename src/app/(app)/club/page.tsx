@@ -46,7 +46,6 @@ export default async function ClubPage() {
       <PageHeader
         title={club.name}
         description={<ClubHeaderMeta club={club} teams={teams} />}
-        actions={<EditIconLink href="/club/edit" label="Edit club details" />}
       />
 
       <Card>
@@ -57,15 +56,24 @@ export default async function ClubPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {club.about ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {club.about}
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              No club philosophy yet. Add one when you edit club details.
-            </p>
-          )}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              {club.about ? (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {club.about}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No club philosophy yet. Add one when you edit club details.
+                </p>
+              )}
+            </div>
+            <EditIconLink
+              href="/club/edit"
+              label="Edit club details"
+              className="-mt-1 -mr-1"
+            />
+          </div>
         </CardContent>
       </Card>
 

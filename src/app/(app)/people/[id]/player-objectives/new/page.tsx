@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPerson } from "@/lib/data/people";
 import { getPlayerTeams } from "@/lib/data/players";
@@ -8,7 +7,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerObjectiveForm } from "@/components/players/player-objective-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -55,14 +53,6 @@ export default async function NewPlayerObjectivePage({
         <EmptyState
           title="Read-only access"
           description="Only coaches and club management can add player development objectives."
-          action={
-            <Link
-              href={`/people/${person.id}`}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to person
-            </Link>
-          }
         />
       </div>
     );
@@ -73,14 +63,6 @@ export default async function NewPlayerObjectivePage({
       <PageHeader
         title="New objective"
         description={`Development objective for ${personDisplayName(person)}`}
-        actions={
-          <Link
-            href={`/people/${person.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to person
-          </Link>
-        }
       />
 
       <p className="text-muted-foreground text-sm">

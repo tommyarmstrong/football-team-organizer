@@ -166,10 +166,6 @@ export default async function TeamPage() {
       <Card>
         <CardHeader>
           <CardTitle>Squad</CardTitle>
-          <CardDescription>
-            Players in this team. People are shared across the club; adding here
-            does not remove them from other teams.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {rosterError ? (
@@ -189,9 +185,6 @@ export default async function TeamPage() {
       <Card>
         <CardHeader>
           <CardTitle>Coaching staff</CardTitle>
-          <CardDescription>
-            Coaches assigned to this team from the club&apos;s staff.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {teamCoachesError ? (
@@ -202,6 +195,26 @@ export default async function TeamPage() {
               teamId={team.id}
               assigned={teamCoaches}
               candidates={coachCandidates}
+              canEdit={canEdit}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Competitions</CardTitle>
+          <CardDescription>
+            Leagues, cups, and other competitions for {team.season_label}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {competitionsError ? (
+            <ErrorBanner message={competitionsError} />
+          ) : (
+            <CompetitionsSection
+              key={team.id}
+              competitions={competitions}
               canEdit={canEdit}
             />
           )}
@@ -223,26 +236,6 @@ export default async function TeamPage() {
             candidates={assistantCandidates}
             canEdit={canEdit}
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Competitions</CardTitle>
-          <CardDescription>
-            Leagues, cups, and other competitions for {team.season_label}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {competitionsError ? (
-            <ErrorBanner message={competitionsError} />
-          ) : (
-            <CompetitionsSection
-              key={team.id}
-              competitions={competitions}
-              canEdit={canEdit}
-            />
-          )}
         </CardContent>
       </Card>
     </div>

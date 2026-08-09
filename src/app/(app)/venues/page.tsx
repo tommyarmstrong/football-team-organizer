@@ -27,38 +27,30 @@ export default async function VenuesPage() {
     <div className="space-y-8">
       <PageHeader
         title="Venues"
-        description={
-          club
-            ? `Home and training grounds for ${club.name}`
-            : "Home and training grounds"
+        actions={
+          canAdd ? (
+            <Link href="/venues/new" className={buttonVariants()}>
+              Add venue
+            </Link>
+          ) : undefined
         }
       />
 
       {error ? <ErrorBanner message={error} /> : null}
 
-      <section className="space-y-4" aria-labelledby="venues-list-heading">
-        <h2 id="venues-list-heading" className="text-lg font-medium">
-          All venues
-        </h2>
-        {!error && venues.length === 0 ? (
-          <EmptyState
-            title="No venues yet"
-            description={
-              canAdd
-                ? "Add a venue so teams can link home and training grounds."
-                : "Venues will appear here when club staff adds them."
-            }
-          />
-        ) : null}
-        {!error && venues.length > 0 ? (
-          <VenuesDirectoryList venues={venues} />
-        ) : null}
-        {canAdd ? (
-          <Link href="/venues/new" className={buttonVariants()}>
-            Add venue
-          </Link>
-        ) : null}
-      </section>
+      {!error && venues.length === 0 ? (
+        <EmptyState
+          title="No venues yet"
+          description={
+            canAdd
+              ? "Add a venue so teams can link home and training grounds."
+              : "Venues will appear here when club staff adds them."
+          }
+        />
+      ) : null}
+      {!error && venues.length > 0 ? (
+        <VenuesDirectoryList venues={venues} />
+      ) : null}
     </div>
   );
 }

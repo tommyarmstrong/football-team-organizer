@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { listCompetitions } from "@/lib/data/competitions";
 import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
@@ -6,7 +5,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MatchForm } from "@/components/matches/match-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,14 +35,6 @@ export default async function NewMatchPage() {
         <EmptyState
           title="Read-only access"
           description="Only coaches and club management can add fixtures for this team."
-          action={
-            <Link
-              href="/matches"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to matches
-            </Link>
-          }
         />
       </div>
     );
@@ -58,14 +48,6 @@ export default async function NewMatchPage() {
       <PageHeader
         title="New fixture"
         description={`Schedule a match for ${team.name}`}
-        actions={
-          <Link
-            href="/matches"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
       />
 
       {error ? <ErrorBanner message={error} /> : null}

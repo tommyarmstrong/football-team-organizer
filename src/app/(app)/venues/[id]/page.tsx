@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVenue } from "@/lib/data/venues";
 import { getViewerContext } from "@/lib/authz/context";
@@ -13,7 +12,6 @@ import {
   VenueParkingChip,
   VenueSurfaceChips,
 } from "@/components/venues/venue-chips";
-import { buttonVariants } from "@/components/ui/button";
 
 export default async function VenueDetailPage({
   params,
@@ -59,23 +57,15 @@ export default async function VenueDetailPage({
           </div>
         }
         actions={
-          <>
-            {canEdit ? (
-              <>
-                <EditIconLink
-                  href={`/venues/${venue.id}/edit`}
-                  label="Edit venue"
-                />
-                <DeleteVenueButton venueId={venue.id} label="Delete" />
-              </>
-            ) : null}
-            <Link
-              href="/venues"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back to venues
-            </Link>
-          </>
+          canEdit ? (
+            <>
+              <EditIconLink
+                href={`/venues/${venue.id}/edit`}
+                label="Edit venue"
+              />
+              <DeleteVenueButton venueId={venue.id} label="Delete venue" />
+            </>
+          ) : undefined
         }
       />
 
