@@ -11,10 +11,7 @@ import {
   COMPETITION_PERIOD_LABELS,
   DEFAULT_COMPETITION_PERIODS,
 } from "@/lib/constants";
-import {
-  saveCompetitionAndReturnToTeamAction,
-  updateCompetitionAction,
-} from "@/lib/team/actions";
+import { saveCompetitionAndReturnToTeamAction } from "@/lib/team/actions";
 import { labelCompetitionKind } from "@/lib/format";
 import type { Competition } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
@@ -25,22 +22,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function CompetitionForm({ competition }: { competition: Competition }) {
-  const boundUpdate = updateCompetitionAction.bind(null, competition.id);
   const boundReturn = saveCompetitionAndReturnToTeamAction.bind(
     null,
     competition.id,
   );
   const [state, formAction, pending] = useActionState(
-    boundUpdate,
-    INITIAL_ACTION_STATE,
-  );
-  const [returnState, returnAction, returnPending] = useActionState(
     boundReturn,
     INITIAL_ACTION_STATE,
   );
-
-  const busy = pending || returnPending;
-  const error = state.error ?? returnState.error;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -55,7 +44,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             required
             aria-required="true"
             defaultValue={competition.name}
-            disabled={busy}
+            disabled={pending}
           />
         </div>
         <div className="space-y-2">
@@ -64,7 +53,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             id="kind"
             name="kind"
             defaultValue={competition.kind ?? "league"}
-            disabled={busy}
+            disabled={pending}
           >
             {COMPETITION_KINDS.map((kind) => (
               <option key={kind} value={kind}>
@@ -80,7 +69,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             name="season"
             placeholder="e.g. 2025/26"
             defaultValue={competition.season ?? ""}
-            disabled={busy}
+            disabled={pending}
           />
         </div>
         <div className="space-y-2">
@@ -89,7 +78,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             id="knockout"
             name="knockout"
             defaultValue={competition.knockout ? "yes" : "no"}
-            disabled={busy}
+            disabled={pending}
           >
             <option value="no">No</option>
             <option value="yes">Yes</option>
@@ -101,7 +90,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             id="age_group"
             name="age_group"
             defaultValue={competition.age_group ?? ""}
-            disabled={busy}
+            disabled={pending}
           >
             <option value="">None</option>
             {AGE_GROUPS.map((group) => (
@@ -117,7 +106,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             id="gender"
             name="gender"
             defaultValue={competition.gender ?? ""}
-            disabled={busy}
+            disabled={pending}
           >
             <option value="">None</option>
             {COMPETITION_GENDERS.map((gender) => (
@@ -137,7 +126,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             step={1}
             inputMode="numeric"
             defaultValue={competition.players_per_team ?? ""}
-            disabled={busy}
+            disabled={pending}
           />
         </div>
         <div className="space-y-2">
@@ -146,7 +135,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             id="periods"
             name="periods"
             defaultValue={competition.periods ?? DEFAULT_COMPETITION_PERIODS}
-            disabled={busy}
+            disabled={pending}
           >
             {COMPETITION_PERIODS.map((periods) => (
               <option key={periods} value={periods}>
@@ -165,7 +154,7 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             step={1}
             inputMode="numeric"
             defaultValue={competition.minutes_per_period ?? ""}
-            disabled={busy}
+            disabled={pending}
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
@@ -175,29 +164,16 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             name="notes"
             rows={3}
             defaultValue={competition.notes ?? ""}
-            disabled={busy}
+            disabled={pending}
           />
         </div>
       </div>
 
-      {error ? <ErrorBanner message={error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
+      {state.error ? <ErrorBanner message={state.error} /> : null}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
-        </Button>
-        <Button
-          type="submit"
-          formAction={returnAction}
-          variant="outline"
-          disabled={busy}
-        >
-          {returnPending ? "Saving…" : "Back to team"}
         </Button>
       </div>
     </form>

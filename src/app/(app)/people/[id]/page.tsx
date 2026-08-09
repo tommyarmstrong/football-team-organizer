@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   canEditPlayer,
@@ -31,7 +30,6 @@ import { PlayerObjectivesSection } from "@/components/players/player-objectives-
 import { CoachObjectivesSection } from "@/components/coaches/coach-objectives-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -205,16 +203,23 @@ export default async function PersonDetailPage({
       !linkedGuardianIds.has(row.id),
   );
 
+  const displayName = personDisplayName(person);
+  const title =
+    player?.position != null && player.position !== ""
+      ? `${displayName} (${player.position})`
+      : displayName;
+
   return (
     <div className="space-y-8">
       <PageHeader
-        title={personDisplayName(person)}
+        title={title}
         description={
           <PersonHeaderMeta
             email={person.email}
             phone={person.phone}
             roles={roles}
             player={player}
+            showPlayerAge={Boolean(player)}
             emergencyContactName={
               canViewContact && emergencyGuardian
                 ? guardianDisplayName(emergencyGuardian)
@@ -226,20 +231,12 @@ export default async function PersonDetailPage({
           />
         }
         actions={
-          <>
-            {canEdit || self ? (
-              <EditIconLink
-                href={`/people/${person.id}/edit`}
-                label="Edit person"
-              />
-            ) : null}
-            <Link
-              href="/people"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back
-            </Link>
-          </>
+          canEdit || self ? (
+            <EditIconLink
+              href={`/people/${person.id}/edit`}
+              label="Edit person"
+            />
+          ) : undefined
         }
       />
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGuardian, getGuardianPlayers } from "@/lib/data/guardians";
 import { listPlayers } from "@/lib/data/players";
@@ -9,7 +8,6 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { GuardianForm } from "@/components/guardians/guardian-form";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
 import { DeleteGuardianButton } from "@/components/guardians/delete-guardian-button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -61,14 +59,6 @@ export default async function GuardianDetailPage({
       <PageHeader
         title={guardianDisplayName(guardian)}
         description={guardian.email ?? guardian.phone ?? "Guardian"}
-        actions={
-          <Link
-            href="/club"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to club
-          </Link>
-        }
       />
 
       {canEdit ? (

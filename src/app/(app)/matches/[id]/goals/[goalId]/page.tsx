@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getGoal } from "@/lib/data/goals";
@@ -10,7 +9,6 @@ import { goalScorerLabel } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -76,16 +74,6 @@ export default async function MatchGoalEditPage({
       <PageHeader
         title={`⚽ ${goalScorerLabel(goal)}`}
         description={`vs ${match.opponent_name}`}
-        actions={
-          canEdit ? null : (
-            <Link
-              href={`/matches/${match.id}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back to match
-            </Link>
-          )
-        }
       />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
@@ -94,8 +82,8 @@ export default async function MatchGoalEditPage({
         <CardHeader>
           <CardTitle>Edit goal</CardTitle>
           <CardDescription>
-            Update the scorer, assist, minute, period, and flags. Use Back to
-            match to save and return.
+            Update the scorer, assist, minute, period, and flags. Use Save to
+            save and return.
           </CardDescription>
         </CardHeader>
         <CardContent>

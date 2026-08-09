@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { listGoalsForMatch } from "@/lib/data/goals";
@@ -9,7 +8,6 @@ import { listRosterForTeam } from "@/lib/data/players";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchPeriodEditSection } from "@/components/matches/match-period-edit-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -73,16 +71,6 @@ export default async function MatchPeriodEditPage({
       <PageHeader
         title={period.name}
         description={`vs ${match.opponent_name}`}
-        actions={
-          canEdit ? null : (
-            <Link
-              href={`/matches/${match.id}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back to match
-            </Link>
-          )
-        }
       />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
@@ -91,8 +79,8 @@ export default async function MatchPeriodEditPage({
         <CardHeader>
           <CardTitle>Edit period</CardTitle>
           <CardDescription>
-            Set the period type, starting players, and goals. Use Back to match
-            to save and return.
+            Set the period type, starting players, and goals. Use Save to save
+            and return.
           </CardDescription>
         </CardHeader>
         <CardContent>

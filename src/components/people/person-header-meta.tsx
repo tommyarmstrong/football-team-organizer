@@ -1,4 +1,4 @@
-import { formatAge, formatShortDate } from "@/lib/format";
+import { formatAge } from "@/lib/format";
 import type { PersonPlayerRef } from "@/lib/data/people";
 import {
   PersonRoleChips,
@@ -12,6 +12,7 @@ export function PersonHeaderMeta({
   player,
   emergencyContactName,
   emergencyPhone,
+  showPlayerAge = false,
 }: {
   email: string | null;
   phone: string | null;
@@ -19,6 +20,8 @@ export function PersonHeaderMeta({
   player: PersonPlayerRef | null;
   emergencyContactName: string | null;
   emergencyPhone: string | null;
+  /** When true, age is rendered under the page title instead of here. */
+  showPlayerAge?: boolean;
 }) {
   const showEmergency = Boolean(roles.player || roles.coach);
   const telHref = emergencyPhone
@@ -28,18 +31,11 @@ export function PersonHeaderMeta({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
+        {showPlayerAge && player?.date_of_birth ? (
+          <p>{formatAge(player.date_of_birth)}</p>
+        ) : null}
         {email ? <p>{email}</p> : null}
         {phone ? <p>{phone}</p> : null}
-        {player?.position ? <p>{player.position}</p> : null}
-        {player?.date_of_birth ? (
-          <p>
-            DOB: {formatShortDate(player.date_of_birth)}
-            <span className="text-muted-foreground">
-              {" "}
-              ({formatAge(player.date_of_birth)})
-            </span>
-          </p>
-        ) : null}
         {player?.school ? <p>School: {player.school}</p> : null}
         {showEmergency && emergencyContactName ? (
           <p className="font-bold">

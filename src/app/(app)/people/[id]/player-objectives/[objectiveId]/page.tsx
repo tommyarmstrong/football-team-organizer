@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPerson } from "@/lib/data/people";
 import { getPlayerTeams } from "@/lib/data/players";
@@ -12,7 +11,6 @@ import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerObjectiveForm } from "@/components/players/player-objective-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -68,14 +66,6 @@ export default async function PlayerObjectiveEditPage({
       <PageHeader
         title={objective.body}
         description={`${personDisplayName(person)} · ${labelPlayerObjectiveType(objective.objective_type)}`}
-        actions={
-          <Link
-            href={`/people/${person.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to person
-          </Link>
-        }
       />
 
       <Card>

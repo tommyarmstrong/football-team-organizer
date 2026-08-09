@@ -14,13 +14,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function DashboardPage() {
   const team = await getCurrentTeam();
@@ -63,7 +57,6 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Next fixture</CardTitle>
-            <CardDescription>Upcoming scheduled match</CardDescription>
           </CardHeader>
           <CardContent>
             {next.data ? (
@@ -71,9 +64,7 @@ export default async function DashboardPage() {
                 href={`/matches/${next.data.id}`}
                 className="block space-y-1 transition-opacity hover:opacity-80"
               >
-                <p className="text-lg font-medium">
-                  vs {next.data.opponent_name}
-                </p>
+                <p className="text-lg font-medium">{next.data.opponent_name}</p>
                 <p className="text-muted-foreground text-sm">
                   {formatMatchDate(next.data.date)}
                   {formatKickoffTime(next.data.kickoff_time)
@@ -81,11 +72,17 @@ export default async function DashboardPage() {
                     : ""}
                   {" · "}
                   {labelHomeAway(next.data.home_away)}
-                  {next.data.venue ? ` · ${next.data.venue.name}` : ""}
-                  {next.data.competition
-                    ? ` · ${next.data.competition.name}`
-                    : ""}
                 </p>
+                {next.data.venue ? (
+                  <p className="text-muted-foreground text-sm">
+                    {next.data.venue.name}
+                  </p>
+                ) : null}
+                {next.data.competition ? (
+                  <p className="text-muted-foreground text-sm">
+                    {next.data.competition.name}
+                  </p>
+                ) : null}
               </Link>
             ) : (
               <EmptyState
@@ -109,7 +106,6 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Last result</CardTitle>
-            <CardDescription>Most recent played match</CardDescription>
           </CardHeader>
           <CardContent>
             {last.data ? (
@@ -118,7 +114,7 @@ export default async function DashboardPage() {
                 className="block space-y-1 transition-opacity hover:opacity-80"
               >
                 <p className="text-lg font-medium">
-                  vs {last.data.opponent_name}{" "}
+                  {last.data.opponent_name}{" "}
                   <span className="text-muted-foreground">
                     {formatScore(last.data.goals_for, last.data.goals_against)}
                   </span>
@@ -142,10 +138,22 @@ export default async function DashboardPage() {
                 </p>
                 <p className="text-muted-foreground text-sm">
                   {formatMatchDate(last.data.date)}
-                  {last.data.competition
-                    ? ` · ${last.data.competition.name}`
+                  {formatKickoffTime(last.data.kickoff_time)
+                    ? ` · ${formatKickoffTime(last.data.kickoff_time)}`
                     : ""}
+                  {" · "}
+                  {labelHomeAway(last.data.home_away)}
                 </p>
+                {last.data.venue ? (
+                  <p className="text-muted-foreground text-sm">
+                    {last.data.venue.name}
+                  </p>
+                ) : null}
+                {last.data.competition ? (
+                  <p className="text-muted-foreground text-sm">
+                    {last.data.competition.name}
+                  </p>
+                ) : null}
               </Link>
             ) : (
               <EmptyState
@@ -160,9 +168,6 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Top scorers</CardTitle>
-          <CardDescription>
-            Goals for {team.season_label} · see Stats for charts
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {scorers.data.length === 0 ? (

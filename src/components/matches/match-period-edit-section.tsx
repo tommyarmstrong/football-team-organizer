@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -157,44 +158,17 @@ function EditablePeriodSection({
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Back to match"}
+          {pending ? "Saving…" : "Save"}
         </Button>
-        <DeletePeriodForm matchId={matchId} periodId={period.id} />
+        <ListDeleteButton
+          label="Remove period"
+          confirmMessage="Remove this period? Goals linked to it will keep their text label but lose the period link."
+          deleteAction={() =>
+            deletePeriodAndReturnToMatchAction(matchId, period.id)
+          }
+        />
       </div>
     </div>
-  );
-}
-
-function DeletePeriodForm({
-  matchId,
-  periodId,
-}: {
-  matchId: string;
-  periodId: string;
-}) {
-  const [state, formAction, pending] = useActionState(
-    async () => deletePeriodAndReturnToMatchAction(matchId, periodId),
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      action={formAction}
-      onSubmit={(event) => {
-        if (
-          !window.confirm(
-            "Remove this period? Goals linked to it will keep their text label but lose the period link.",
-          )
-        ) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        {pending ? "Removing…" : "Remove period"}
-      </Button>
-    </form>
   );
 }
 

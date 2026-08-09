@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ClubForm } from "@/components/clubs/club-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -36,18 +34,7 @@ export default async function EditClubPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Edit club details"
-        description={club.name}
-        actions={
-          <Link
-            href="/club"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
-      />
+      <PageHeader title="Edit club details" description={club.name} />
 
       <Card>
         <CardHeader>

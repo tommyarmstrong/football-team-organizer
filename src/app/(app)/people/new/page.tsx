@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { PageHeader } from "@/components/shared/page-header";
 import { PersonForm } from "@/components/people/person-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -25,14 +23,6 @@ export default async function NewPersonPage() {
       <PageHeader
         title="Add person"
         description="Create a shared identity record. Players do not receive a login by default."
-        actions={
-          <Link
-            href="/people"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back to people
-          </Link>
-        }
       />
 
       <Card>

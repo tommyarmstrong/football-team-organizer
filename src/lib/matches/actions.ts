@@ -187,5 +187,5 @@ export async function deleteMatchAction(id: string): Promise<ActionState> {
   revalidatePath("/dashboard");
   revalidatePath("/stats");
   revalidatePath("/club");
-  return {};
+  redirect("/matches");
 }

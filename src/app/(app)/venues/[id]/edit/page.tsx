@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getVenue } from "@/lib/data/venues";
 import { getViewerContext } from "@/lib/authz/context";
@@ -6,7 +5,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { VenueForm } from "@/components/venues/venue-form";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -55,18 +53,7 @@ export default async function EditVenuePage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Edit venue"
-        description={venue.name}
-        actions={
-          <Link
-            href={`/venues/${venue.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
-      />
+      <PageHeader title="Edit venue" description={venue.name} />
 
       <Card>
         <CardHeader>

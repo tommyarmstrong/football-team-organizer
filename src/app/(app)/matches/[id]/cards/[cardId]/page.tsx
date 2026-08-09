@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getCard } from "@/lib/data/cards";
@@ -9,7 +8,6 @@ import { CARD_TYPE_EMOJIS, CARD_TYPE_LABELS } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchCardEditSection } from "@/components/matches/match-card-edit-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -66,16 +64,6 @@ export default async function MatchCardEditPage({
       <PageHeader
         title={`${CARD_TYPE_EMOJIS[card.type]} ${CARD_TYPE_LABELS[card.type]}`}
         description={`vs ${match.opponent_name}`}
-        actions={
-          canEdit ? null : (
-            <Link
-              href={`/matches/${match.id}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Back to match
-            </Link>
-          )
-        }
       />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
@@ -84,8 +72,8 @@ export default async function MatchCardEditPage({
         <CardHeader>
           <CardTitle>Edit card</CardTitle>
           <CardDescription>
-            Update the player, card type, and notes. Use Back to match to save
-            and return.
+            Update the player, card type, and notes. Use Save to save and
+            return.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -51,6 +51,7 @@ export function TeamStaffSection({
           filterPlaceholder="Filter coaches by name…"
           singularLabel="coach"
           pluralLabel="coaches"
+          totalCountPhrase="supporting this team"
           defaultPageSize={5}
           emptyFilterTitle="No coaches match"
           emptyFilterDescription="Try a different name, or clear the filter."

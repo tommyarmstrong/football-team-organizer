@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { VenueForm } from "@/components/venues/venue-form";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -27,14 +25,6 @@ export default async function NewVenuePage() {
         <EmptyState
           title="Read-only access"
           description="Only coaches and club management can add venues."
-          action={
-            <Link
-              href="/venues"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to venues
-            </Link>
-          }
         />
       </div>
     );
@@ -47,14 +37,6 @@ export default async function NewVenuePage() {
         <EmptyState
           title="No club found"
           description="Create a club before adding venues."
-          action={
-            <Link
-              href="/venues"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Back to venues
-            </Link>
-          }
         />
       </div>
     );
@@ -65,14 +47,6 @@ export default async function NewVenuePage() {
       <PageHeader
         title="Add venue"
         description={`Add a home or training ground for ${club.name}`}
-        actions={
-          <Link
-            href="/venues"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Back
-          </Link>
-        }
       />
 
       <Card>
