@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PencilIcon } from "lucide-react";
 import {
   getViewerContext,
   canEditTeam,
@@ -28,9 +29,9 @@ import { CompetitionsSection } from "@/components/team/competitions-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -136,14 +137,20 @@ export default async function TeamPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            {canEdit
-              ? "Team details for this season."
-              : "Team details (read-only)."}
-          </CardDescription>
-        </CardHeader>
+        {canEdit ? (
+          <CardHeader>
+            <CardAction>
+              <Link
+                href="/team/edit"
+                aria-label="Edit team"
+                title="Edit team"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-9 items-center justify-center rounded-md transition-colors"
+              >
+                <PencilIcon className="size-4" aria-hidden="true" />
+              </Link>
+            </CardAction>
+          </CardHeader>
+        ) : null}
         <CardContent className="space-y-4">
           <dl className="grid gap-3 text-sm">
             <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
@@ -159,14 +166,6 @@ export default async function TeamPage() {
             />
             <ReadOnly label="Training days" value={trainingDaysLabel} />
           </dl>
-          {canEdit ? (
-            <Link
-              href="/team/edit"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Edit
-            </Link>
-          ) : null}
         </CardContent>
       </Card>
 
