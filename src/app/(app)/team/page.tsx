@@ -31,7 +31,6 @@ import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -137,35 +136,33 @@ export default async function TeamPage() {
       />
 
       <Card>
-        {canEdit ? (
-          <CardHeader>
-            <CardAction>
+        <CardContent>
+          <div className="flex items-start gap-2">
+            <dl className="grid min-w-0 flex-1 gap-3 text-sm">
+              <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
+              <ReadOnly
+                label="Home venue"
+                value={homeVenue?.name ?? "—"}
+                href={homeVenue ? `/venues/${homeVenue.id}` : null}
+              />
+              <ReadOnly
+                label="Training venue"
+                value={trainingVenue?.name ?? "—"}
+                href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
+              />
+              <ReadOnly label="Training days" value={trainingDaysLabel} />
+            </dl>
+            {canEdit ? (
               <Link
                 href="/team/edit"
                 aria-label="Edit team"
                 title="Edit team"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-9 items-center justify-center rounded-md transition-colors"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors"
               >
                 <PencilIcon className="size-4" aria-hidden="true" />
               </Link>
-            </CardAction>
-          </CardHeader>
-        ) : null}
-        <CardContent className="space-y-4">
-          <dl className="grid gap-3 text-sm">
-            <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
-            <ReadOnly
-              label="Home venue"
-              value={homeVenue?.name ?? "—"}
-              href={homeVenue ? `/venues/${homeVenue.id}` : null}
-            />
-            <ReadOnly
-              label="Training venue"
-              value={trainingVenue?.name ?? "—"}
-              href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
-            />
-            <ReadOnly label="Training days" value={trainingDaysLabel} />
-          </dl>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 
