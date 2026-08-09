@@ -6,6 +6,7 @@ import { listVisibleTeams } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ClubHeaderMeta } from "@/components/clubs/club-header-meta";
 import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
@@ -45,11 +46,7 @@ export default async function ClubPage() {
       <PageHeader
         title={club.name}
         description={<ClubHeaderMeta club={club} teams={teams} />}
-        actions={
-          <Link href="/club/edit" className={buttonVariants({ size: "sm" })}>
-            Edit club details
-          </Link>
-        }
+        actions={<EditIconLink href="/club/edit" label="Edit club details" />}
       />
 
       <Card>

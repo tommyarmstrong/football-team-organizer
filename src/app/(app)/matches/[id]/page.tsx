@@ -12,6 +12,7 @@ import { formatMatchTitle, scoreFromGoals } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CollapsibleCard } from "@/components/shared/collapsible-card";
+import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import {
@@ -121,12 +122,10 @@ export default async function MatchDetailPage({
         actions={
           <>
             {canEdit ? (
-              <Link
+              <EditIconLink
                 href={`/matches/${match.id}/edit`}
-                className={buttonVariants({ size: "sm" })}
-              >
-                Edit
-              </Link>
+                label="Edit match"
+              />
             ) : null}
             <Link
               href="/matches"

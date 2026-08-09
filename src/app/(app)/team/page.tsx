@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PencilIcon } from "lucide-react";
 import {
   getViewerContext,
   canEditTeam,
@@ -24,6 +23,7 @@ import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
+import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
@@ -153,14 +153,11 @@ export default async function TeamPage() {
               <ReadOnly label="Training days" value={trainingDaysLabel} />
             </dl>
             {canEdit ? (
-              <Link
+              <EditIconLink
                 href="/team/edit"
-                aria-label="Edit team"
-                title="Edit team"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors"
-              >
-                <PencilIcon className="size-4" aria-hidden="true" />
-              </Link>
+                label="Edit team"
+                className="-mt-1 -mr-1"
+              />
             ) : null}
           </div>
         </CardContent>
