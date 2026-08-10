@@ -897,6 +897,24 @@ on conflict (id) do update set
   notes = excluded.notes;
 
 -- Match-day squad for the World Cup final (starting XI).
+-- Delete by (match_id, player_id) first so re-seed works when existing rows
+-- use different primary keys (e.g. UI-created squad entries).
+delete from public.match_players
+where match_id = 'e0000001-0000-4000-8000-000000000006'
+  and player_id in (
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000004',
+    'a0000001-0000-4000-8000-000000000005',
+    'a0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000007',
+    'a0000001-0000-4000-8000-000000000008',
+    'a0000001-0000-4000-8000-000000000009',
+    'a0000001-0000-4000-8000-000000000010',
+    'a0000001-0000-4000-8000-000000000011'
+  );
+
 insert into public.match_players (id, match_id, player_id)
 values
   (
