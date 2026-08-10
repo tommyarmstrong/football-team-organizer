@@ -45,5 +45,8 @@ next-env.d.ts
 # supabase CLI local cache
 supabase/.temp
 
+# Private local seed data (real teams / people — do not commit)
+supabase/seed.private.sql
+
 # Work in progress feature development
 docs/feature_requests_1.md
