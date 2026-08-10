@@ -148,92 +148,101 @@ export function MatchForm({
         </div>
 
         {mode === "edit" ? (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="match_day_squad_count">Match-day squad</Label>
-              <Input
-                id="match_day_squad_count"
-                readOnly
-                value={
-                  matchDaySquadCount == null ? "—" : String(matchDaySquadCount)
-                }
-                disabled
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <NativeSelect
-                id="status"
-                name="status"
-                required
-                value={status}
-                onChange={(e) => setStatus(e.target.value as MatchStatus)}
-                disabled={pending}
-              >
-                {MATCH_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {labelMatchStatus(s)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            {showEvents ? (
-              <>
-                <div className="space-y-2 sm:col-span-2">
-                  <p className="text-muted-foreground text-sm">
-                    Score is taken from goals recorded below (including
-                    opposition goals).
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="player_of_the_match_id">
-                    Coach&apos;s player of the match
-                  </Label>
-                  <NativeSelect
-                    id="player_of_the_match_id"
-                    name="player_of_the_match_id"
-                    defaultValue={match?.player_of_the_match_id ?? ""}
-                    disabled={pending}
-                  >
-                    <option value="">None</option>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {playerDisplayName(player, {
-                          shirtNumber: player.shirt_number,
-                        })}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="players_player_of_the_match_id">
-                    Player&apos;s player of the match
-                  </Label>
-                  <NativeSelect
-                    id="players_player_of_the_match_id"
-                    name="players_player_of_the_match_id"
-                    defaultValue={match?.players_player_of_the_match_id ?? ""}
-                    disabled={pending}
-                  >
-                    <option value="">None</option>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {playerDisplayName(player, {
-                          shirtNumber: player.shirt_number,
-                        })}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm sm:col-span-2">
-                Players of the match are available when status is In progress or
-                Played. Changing away from those statuses clears player of the
-                match selections (goals and cards recorded below are kept).
-              </p>
-            )}
-          </>
+          <div className="space-y-2">
+            <Label htmlFor="match_day_squad_count">Match-day squad</Label>
+            <Input
+              id="match_day_squad_count"
+              readOnly
+              value={
+                matchDaySquadCount == null ? "—" : String(matchDaySquadCount)
+              }
+              disabled
+            />
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <NativeSelect
+            id="status"
+            name="status"
+            required
+            value={status}
+            onChange={(e) => setStatus(e.target.value as MatchStatus)}
+            disabled={pending}
+          >
+            {MATCH_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {labelMatchStatus(s)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+
+        {mode === "edit" ? (
+          showEvents ? (
+            <>
+              <div className="space-y-2 sm:col-span-2">
+                <p className="text-muted-foreground text-sm">
+                  Score is taken from goals recorded on the match page
+                  (including opposition goals). Goals and cards unlock when
+                  status is In progress or Played.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="player_of_the_match_id">
+                  Coach&apos;s player of the match
+                </Label>
+                <NativeSelect
+                  id="player_of_the_match_id"
+                  name="player_of_the_match_id"
+                  defaultValue={match?.player_of_the_match_id ?? ""}
+                  disabled={pending}
+                >
+                  <option value="">None</option>
+                  {players.map((player) => (
+                    <option key={player.id} value={player.id}>
+                      {playerDisplayName(player, {
+                        shirtNumber: player.shirt_number,
+                      })}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="players_player_of_the_match_id">
+                  Player&apos;s player of the match
+                </Label>
+                <NativeSelect
+                  id="players_player_of_the_match_id"
+                  name="players_player_of_the_match_id"
+                  defaultValue={match?.players_player_of_the_match_id ?? ""}
+                  disabled={pending}
+                >
+                  <option value="">None</option>
+                  {players.map((player) => (
+                    <option key={player.id} value={player.id}>
+                      {playerDisplayName(player, {
+                        shirtNumber: player.shirt_number,
+                      })}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm sm:col-span-2">
+              Goals, cards, and players of the match unlock when status is In
+              progress or Played. Changing away from those statuses clears
+              player of the match selections (goals and cards already recorded
+              are kept).
+            </p>
+          )
+        ) : showEvents ? (
+          <p className="text-muted-foreground text-sm sm:col-span-2">
+            After you create this fixture, you can record goals, cards, periods,
+            and players of the match on the match page.
+          </p>
         ) : null}
 
         <div className="space-y-2 sm:col-span-2">

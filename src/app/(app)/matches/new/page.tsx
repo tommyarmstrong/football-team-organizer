@@ -57,8 +57,8 @@ export default async function NewMatchPage() {
         <CardHeader>
           <CardTitle>Fixture details</CardTitle>
           <CardDescription>
-            Score, goals, and player of the match are entered later when the
-            match is played.
+            Defaults to Scheduled. Set status to In progress or Played to unlock
+            goals, cards, and players of the match on the fixture page.
           </CardDescription>
         </CardHeader>
         <CardContent>
