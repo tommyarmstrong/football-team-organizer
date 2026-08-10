@@ -270,6 +270,7 @@ export type Database = {
           training_venue_id: string | null;
           training_days: string[] | null;
           season_label: string;
+          photo_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -283,6 +284,7 @@ export type Database = {
           training_venue_id?: string | null;
           training_days?: string[] | null;
           season_label: string;
+          photo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -296,6 +298,7 @@ export type Database = {
           training_venue_id?: string | null;
           training_days?: string[] | null;
           season_label?: string;
+          photo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -707,6 +710,7 @@ export type Database = {
           notes: string | null;
           periods: Database["public"]["Enums"]["competition_periods"];
           players_per_team: number | null;
+          result: Database["public"]["Enums"]["competition_result"];
           season: string | null;
           team_id: string;
         };
@@ -722,6 +726,7 @@ export type Database = {
           notes?: string | null;
           periods?: Database["public"]["Enums"]["competition_periods"];
           players_per_team?: number | null;
+          result?: Database["public"]["Enums"]["competition_result"];
           season?: string | null;
           team_id: string;
         };
@@ -737,6 +742,7 @@ export type Database = {
           notes?: string | null;
           periods?: Database["public"]["Enums"]["competition_periods"];
           players_per_team?: number | null;
+          result?: Database["public"]["Enums"]["competition_result"];
           season?: string | null;
           team_id?: string;
         };
@@ -746,6 +752,51 @@ export type Database = {
             columns: ["team_id"];
             isOneToOne: false;
             referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      player_of_the_month: {
+        Row: {
+          id: string;
+          team_id: string;
+          player_id: string;
+          month: string;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          player_id: string;
+          month: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          team_id?: string;
+          player_id?: string;
+          month?: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_of_the_month_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_of_the_month_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
             referencedColumns: ["id"];
           },
         ];
@@ -1215,6 +1266,17 @@ export type Database = {
       competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
       competition_gender: "female" | "male" | "mixed";
       competition_periods: "1" | "2" | "4" | "other";
+      competition_result:
+        | "champions"
+        | "runner_up"
+        | "third_place"
+        | "semi_final"
+        | "knock_outs"
+        | "group_stage"
+        | "promoted"
+        | "relegated"
+        | "none"
+        | "ongoing";
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";
@@ -1282,6 +1344,7 @@ export type PlayerGuardian = Tables<"player_guardians">;
 export type Guardian = Tables<"guardians">;
 export type TeamPlayer = Tables<"team_players">;
 export type Competition = Tables<"competitions">;
+export type PlayerOfTheMonth = Tables<"player_of_the_month">;
 export type Coach = Tables<"coaches">;
 export type TeamCoach = Tables<"team_coaches">;
 export type Match = Tables<"matches">;
@@ -1302,6 +1365,7 @@ export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
 export type CompetitionGender = Enums<"competition_gender">;
 export type CompetitionPeriods = Enums<"competition_periods">;
+export type CompetitionResult = Enums<"competition_result">;
 export type MatchHomeAway = Enums<"match_home_away">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;

@@ -1,6 +1,12 @@
 import dynamic from "next/dynamic";
 import { getCurrentTeam } from "@/lib/data/team";
-import { getGoalsByPlayerStats, getResultsOverTime } from "@/lib/data/stats";
+import {
+  getAssistsByPlayerStats,
+  getGoalsByPlayerStats,
+  getMatchesPlayedByPlayerStats,
+  getPlayerOfTheMatchByPlayerStats,
+  getResultsOverTime,
+} from "@/lib/data/stats";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -18,6 +24,16 @@ const GoalsByPlayerChart = dynamic(
   () =>
     import("@/components/stats/stats-charts").then(
       (mod) => mod.GoalsByPlayerChart,
+    ),
+  {
+    loading: () => <Skeleton className="h-72 w-full" />,
+  },
+);
+
+const PlayerCountChart = dynamic(
+  () =>
+    import("@/components/stats/stats-charts").then(
+      (mod) => mod.PlayerCountChart,
     ),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
@@ -46,12 +62,22 @@ export default async function StatsPage() {
     );
   }
 
-  const [goalsByPlayer, results] = await Promise.all([
-    getGoalsByPlayerStats(),
-    getResultsOverTime(),
-  ]);
+  const [goalsByPlayer, assistsByPlayer, potmByPlayer, matchesPlayed, results] =
+    await Promise.all([
+      getGoalsByPlayerStats(),
+      getAssistsByPlayerStats(),
+      getPlayerOfTheMatchByPlayerStats(),
+      getMatchesPlayedByPlayerStats(),
+      getResultsOverTime(),
+    ]);
 
-  const errors = [goalsByPlayer.error, results.error].filter(Boolean);
+  const errors = [
+    goalsByPlayer.error,
+    assistsByPlayer.error,
+    potmByPlayer.error,
+    matchesPlayed.error,
+    results.error,
+  ].filter(Boolean);
 
   return (
     <div className="space-y-8">
@@ -111,6 +137,71 @@ export default async function StatsPage() {
             />
           ) : (
             <GoalsByPlayerChart data={goalsByPlayer.data} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Assists by player</CardTitle>
+          <CardDescription>Assists recorded on our goals</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {assistsByPlayer.data.length === 0 ? (
+            <EmptyState
+              title="No assists yet"
+              description="Add assists on match detail pages to populate this chart."
+            />
+          ) : (
+            <PlayerCountChart
+              data={assistsByPlayer.data}
+              metricLabel="Assists"
+              ariaTitle="assists by player"
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Player of the match by player</CardTitle>
+          <CardDescription>
+            Coach and players&apos; awards on played matches
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {potmByPlayer.data.length === 0 ? (
+            <EmptyState
+              title="No awards yet"
+              description="Select players of the match on fixtures to populate this chart."
+            />
+          ) : (
+            <PlayerCountChart
+              data={potmByPlayer.data}
+              metricLabel="Awards"
+              ariaTitle="player of the match by player"
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Matches played by player</CardTitle>
+          <CardDescription>Appearances in match-day squads</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {matchesPlayed.data.length === 0 ? (
+            <EmptyState
+              title="No squad appearances yet"
+              description="Add match-day squads to populate this chart."
+            />
+          ) : (
+            <PlayerCountChart
+              data={matchesPlayed.data}
+              metricLabel="Matches"
+              ariaTitle="matches played by player"
+            />
           )}
         </CardContent>
       </Card>

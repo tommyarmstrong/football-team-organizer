@@ -6,8 +6,7 @@ import type { MatchWithRelations } from "@/lib/data/matches";
 import {
   formatKickoffTime,
   formatMatchDate,
-  formatScore,
-  labelHomeAway,
+  formatMatchTitle,
   labelMatchStatus,
 } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
@@ -15,8 +14,10 @@ import { objectListRowClassName } from "@/components/shared/object-list";
 
 export function MatchesDirectoryList({
   matches,
+  teamName,
 }: {
   matches: MatchWithRelations[];
+  teamName: string;
   canEdit?: boolean;
 }) {
   return (
@@ -26,9 +27,9 @@ export function MatchesDirectoryList({
       getSearchText={(match) =>
         [
           match.opponent_name,
+          teamName,
           match.venue?.name ?? "",
           match.competition?.name ?? "",
-          labelHomeAway(match.home_away),
           labelMatchStatus(match.status),
         ].join(" ")
       }
@@ -38,41 +39,47 @@ export function MatchesDirectoryList({
       defaultPageSize={20}
       emptyFilterTitle="No fixtures match"
       emptyFilterDescription="Try a different opponent, venue, or competition."
-      renderItem={(match) => (
-        <Link
-          href={`/matches/${match.id}`}
-          className={objectListRowClassName("flex-col items-stretch gap-1")}
-        >
-          <p className="font-medium">{match.opponent_name}</p>
-          <p className="text-muted-foreground text-sm">
-            {formatMatchDate(match.date)}
-            {formatKickoffTime(match.kickoff_time)
-              ? ` · ${formatKickoffTime(match.kickoff_time)}`
-              : ""}
-            {" · "}
-            {labelHomeAway(match.home_away)}
-          </p>
-          {match.venue ? (
-            <p className="text-muted-foreground text-sm">{match.venue.name}</p>
-          ) : null}
-          {match.competition ? (
-            <p className="text-muted-foreground text-sm">
-              {match.competition.name}
-            </p>
-          ) : null}
-          <p className="text-sm">
-            {matchAllowsEvents(match.status) ? (
-              <span className="font-medium">
-                {formatScore(match.goals_for, match.goals_against)}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">
+      renderItem={(match) => {
+        const title = formatMatchTitle(
+          teamName,
+          match.opponent_name,
+          match.home_away,
+          match.status,
+          match.goals_for,
+          match.goals_against,
+        );
+        const dateTime = [
+          formatMatchDate(match.date),
+          formatKickoffTime(match.kickoff_time),
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
+        return (
+          <Link
+            href={`/matches/${match.id}`}
+            className={objectListRowClassName("flex-col items-stretch gap-1")}
+          >
+            <p className="font-bold">{title}</p>
+            {match.competition ? (
+              <p className="text-muted-foreground text-sm">
+                {match.competition.name}
+              </p>
+            ) : null}
+            <p className="text-muted-foreground text-sm">{dateTime}</p>
+            {match.venue ? (
+              <p className="text-muted-foreground text-sm">
+                {match.venue.name}
+              </p>
+            ) : null}
+            {!matchAllowsEvents(match.status) ? (
+              <p className="text-muted-foreground text-sm">
                 {labelMatchStatus(match.status)}
-              </span>
-            )}
-          </p>
-        </Link>
-      )}
+              </p>
+            ) : null}
+          </Link>
+        );
+      }}
     />
   );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
-import { canEditActiveTeam } from "@/lib/data/team";
+import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -30,10 +30,12 @@ export default async function MatchesPage({
       ? rawFilter
       : "all";
 
-  const [{ data: matches, error }, canEdit] = await Promise.all([
+  const [team, { data: matches, error }, canEdit] = await Promise.all([
+    getActiveTeam(),
     listMatches(filter),
     canEditActiveTeam(),
   ]);
+  const teamName = team?.name ?? "Our team";
 
   return (
     <div className="space-y-6">
@@ -86,7 +88,7 @@ export default async function MatchesPage({
       ) : null}
 
       {!error && matches.length > 0 ? (
-        <MatchesDirectoryList matches={matches} />
+        <MatchesDirectoryList matches={matches} teamName={teamName} />
       ) : null}
     </div>
   );

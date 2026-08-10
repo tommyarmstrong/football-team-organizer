@@ -12,17 +12,43 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { GoalsByPlayerPoint, ResultOverTimePoint } from "@/lib/data/stats";
+import type {
+  GoalsByPlayerPoint,
+  PlayerCountPoint,
+  ResultOverTimePoint,
+} from "@/lib/data/stats";
 
 export function GoalsByPlayerChart({ data }: { data: GoalsByPlayerPoint[] }) {
-  const summary = data.map((row) => `${row.name}: ${row.goals}`).join("; ");
+  return (
+    <PlayerCountChart
+      data={data.map((row) => ({
+        playerId: row.playerId,
+        name: row.name,
+        count: row.goals,
+      }))}
+      metricLabel="Goals"
+      ariaTitle="goals by player"
+    />
+  );
+}
+
+export function PlayerCountChart({
+  data,
+  metricLabel,
+  ariaTitle,
+}: {
+  data: PlayerCountPoint[];
+  metricLabel: string;
+  ariaTitle: string;
+}) {
+  const summary = data.map((row) => `${row.name}: ${row.count}`).join("; ");
 
   return (
     <figure className="space-y-4">
       <div
         className="h-72 w-full"
         role="img"
-        aria-label={`Bar chart of goals by player. ${summary}`}
+        aria-label={`Bar chart of ${ariaTitle}. ${summary}`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -41,25 +67,27 @@ export function GoalsByPlayerChart({ data }: { data: GoalsByPlayerPoint[] }) {
             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
             <Tooltip />
             <Bar
-              dataKey="goals"
-              name="Goals"
+              dataKey="count"
+              name={metricLabel}
               fill="var(--color-foreground)"
               radius={4}
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="sr-only">Goals by player: {summary}</figcaption>
+      <figcaption className="sr-only">
+        {metricLabel} by player: {summary}
+      </figcaption>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[16rem] text-left text-sm">
-          <caption className="sr-only">Goals by player</caption>
+          <caption className="sr-only">{metricLabel} by player</caption>
           <thead>
             <tr className="border-border text-muted-foreground border-b">
               <th scope="col" className="py-2 pr-3 font-medium">
                 Player
               </th>
               <th scope="col" className="py-2 font-medium tabular-nums">
-                Goals
+                {metricLabel}
               </th>
             </tr>
           </thead>
@@ -67,7 +95,7 @@ export function GoalsByPlayerChart({ data }: { data: GoalsByPlayerPoint[] }) {
             {data.map((row) => (
               <tr key={row.playerId} className="border-border/60 border-b">
                 <td className="py-2 pr-3">{row.name}</td>
-                <td className="py-2 tabular-nums">{row.goals}</td>
+                <td className="py-2 tabular-nums">{row.count}</td>
               </tr>
             ))}
           </tbody>

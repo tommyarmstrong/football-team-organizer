@@ -10,6 +10,7 @@ import {
   getCoach,
   removeCoachFromTeam,
   updateCoach,
+  updateCoachText,
 } from "@/lib/data/coaches";
 import {
   createCoachObjective,
@@ -66,6 +67,24 @@ export async function updateCoachAction(
   const personId = await revalidatePersonForCoach(id);
   if (personId) redirect(`/people/${personId}`);
   redirect("/people");
+}
+
+export async function updateCoachTextAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const biography = str(formData, "biography") || null;
+  const philosophy = str(formData, "philosophy") || null;
+
+  const { error } = await updateCoachText(id, { biography, philosophy });
+  if (error) return { error };
+
+  const personId = await revalidatePersonForCoach(id);
+  if (personId) {
+    revalidatePath(`/people/${personId}/edit`);
+  }
+  return { success: "Coach profile saved." };
 }
 
 export async function deleteCoachAction(id: string): Promise<ActionState> {

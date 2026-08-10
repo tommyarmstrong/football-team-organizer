@@ -386,12 +386,12 @@ describe("formatMatchTitle", () => {
   it("embeds the home-first score when played or in progress", () => {
     expect(
       formatMatchTitle("England", "West Germany", "home", "played", 4, 2),
-    ).toBe("England 4 - 2 West Germany");
+    ).toBe("England 4-2 West Germany");
     expect(
       formatMatchTitle("England", "West Germany", "away", "in_progress", 4, 2),
-    ).toBe("West Germany 2 - 4 England");
+    ).toBe("West Germany 2-4 England");
     expect(
       formatMatchTitle("England", "West Germany", "neutral", "played", 1, 1),
-    ).toBe("England 1 - 1 West Germany");
+    ).toBe("England 1-1 West Germany");
   });
 });
