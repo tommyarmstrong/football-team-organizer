@@ -38,7 +38,9 @@ export function VenueParkingChip({
 }: {
   parking: VenueParking | null | undefined;
 }) {
-  if (!parking) return null;
+  if (!parking || parking === "no_parking" || parking === "unknown") {
+    return null;
+  }
 
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Parking">
