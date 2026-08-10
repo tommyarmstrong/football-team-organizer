@@ -14,7 +14,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -52,9 +51,6 @@ export default async function ClubPage() {
       <Card>
         <CardHeader>
           <CardTitle>About {club.name}</CardTitle>
-          <CardDescription>
-            Club philosophy and what the club stands for.
-          </CardDescription>
           <CardAction>
             <EditIconLink href="/club/edit" label="Edit club details" />
           </CardAction>
@@ -75,9 +71,6 @@ export default async function ClubPage() {
       <Card>
         <CardHeader>
           <CardTitle>Teams</CardTitle>
-          <CardDescription>
-            Teams for {club.name}. Open a team to edit its profile and squad.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {teamsError ? <ErrorBanner message={teamsError} /> : null}

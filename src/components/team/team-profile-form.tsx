@@ -124,7 +124,10 @@ export function TeamProfileForm({
             defaultValue={team.gender}
             disabled={pending}
           >
-            {TEAM_GENDERS.map((g) => (
+            {(TEAM_GENDERS.includes(team.gender)
+              ? TEAM_GENDERS
+              : [...TEAM_GENDERS, team.gender]
+            ).map((g) => (
               <option key={g} value={g}>
                 {labelGender(g)}
               </option>

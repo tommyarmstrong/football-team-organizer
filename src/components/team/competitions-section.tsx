@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { deleteCompetitionAction } from "@/lib/team/actions";
-import { labelCompetitionKind } from "@/lib/format";
 import type { Competition } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -34,7 +31,7 @@ export function CompetitionsSection({
       ) : (
         <ul className={objectListClassName}>
           {competitions.map((competition) => (
-            <li key={competition.id} className="flex items-stretch">
+            <li key={competition.id}>
               <Link
                 href={`/competitions/${competition.id}`}
                 className={objectListRowClassName()}
@@ -42,25 +39,8 @@ export function CompetitionsSection({
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {competition.name}
                 </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <CompetitionResultChip result={competition.result} />
-                  <span className="text-muted-foreground">
-                    {labelCompetitionKind(competition.kind)}
-                  </span>
-                </span>
+                <CompetitionResultChip result={competition.result} />
               </Link>
-              {canEdit ? (
-                <div className="flex items-center pr-2">
-                  <ListDeleteButton
-                    label={`Delete ${competition.name}`}
-                    confirmMessage={`Delete “${competition.name}”? Matches keep their fixture data; the competition link is cleared.`}
-                    deleteAction={deleteCompetitionAction.bind(
-                      null,
-                      competition.id,
-                    )}
-                  />
-                </div>
-              ) : null}
             </li>
           ))}
         </ul>

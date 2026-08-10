@@ -39,12 +39,15 @@ export const TEAM_PHOTO_MIME_TYPES = new Set([
   "image/gif",
 ]);
 
-export const TEAM_GENDERS: TeamGender[] = ["girls", "boys", "mixed"];
+/** Selectable team genders in forms. Legacy `mixed` remains in the DB enum. */
+export const TEAM_GENDERS: TeamGender[] = ["boys", "girls", "men", "women"];
 
-/** Display labels: DB keeps boys/girls/mixed; UI shows Female/Male/Mixed. */
+/** Display labels for team gender enum values (including legacy `mixed`). */
 export const TEAM_GENDER_LABELS: Record<TeamGender, string> = {
-  girls: "Female",
-  boys: "Male",
+  boys: "Boys",
+  girls: "Girls",
+  men: "Men",
+  women: "Women",
   mixed: "Mixed",
 };
 

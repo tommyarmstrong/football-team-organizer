@@ -59,7 +59,7 @@ export function CreateTeamForm({
             id="new-team-gender"
             name="gender"
             required
-            defaultValue="mixed"
+            defaultValue="boys"
             disabled={pending}
           >
             {TEAM_GENDERS.map((g) => (
