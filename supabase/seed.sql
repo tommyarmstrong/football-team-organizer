@@ -2,7 +2,7 @@
 --
 -- Seeded domain data:
 --   - 1 club (The Football Association)
---   - 8 venues
+--   - 26 venues (training/national + 2025/26 Premier League stadiums)
 --   - 2 teams (England Men 1966, England Women 2022)
 --   - 1 club manager (John Hall) + people row
 --   - 5 coaches (Keegan, Robson, Howe, Ramsey, Wiegman) + their people rows
@@ -105,18 +105,18 @@ upserted_venues as (
       'Manchester',
       'M16 0RA',
       array['grass']::public.venue_surface[],
-      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
     ),
     (
       'a0000006-0000-4000-8000-000000000006',
       '11111111-1111-1111-1111-111111111111',
-      'Brighton & Hove Community Stadium',
+      'American Express Stadium',
       'Village Way',
       'Falmer',
       'Brighton',
       'BN1 9BL',
       array['grass']::public.venue_surface[],
-      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
     ),
     (
       'a0000007-0000-4000-8000-000000000007',
@@ -139,6 +139,204 @@ upserted_venues as (
       'S2 4SU',
       array['grass']::public.venue_surface[],
       array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000009-0000-4000-8000-000000000009',
+      '11111111-1111-1111-1111-111111111111',
+      'Emirates Stadium',
+      'Hornsey Road',
+      null,
+      'London',
+      'N7 7AJ',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000010-0000-4000-8000-000000000010',
+      '11111111-1111-1111-1111-111111111111',
+      'Villa Park',
+      'Trinity Road',
+      null,
+      'Birmingham',
+      'B6 6HE',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000011-0000-4000-8000-000000000011',
+      '11111111-1111-1111-1111-111111111111',
+      'Vitality Stadium',
+      'Kings Park',
+      null,
+      'Bournemouth',
+      'BH7 7AF',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000012-0000-4000-8000-000000000012',
+      '11111111-1111-1111-1111-111111111111',
+      'Gtech Community Stadium',
+      'Lionel Road South',
+      null,
+      'Brentford',
+      'TW8 0RU',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000013-0000-4000-8000-000000000013',
+      '11111111-1111-1111-1111-111111111111',
+      'Turf Moor',
+      'Harry Potts Way',
+      null,
+      'Burnley',
+      'BB10 4BX',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000014-0000-4000-8000-000000000014',
+      '11111111-1111-1111-1111-111111111111',
+      'Stamford Bridge',
+      'Fulham Road',
+      null,
+      'London',
+      'SW6 1HS',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000015-0000-4000-8000-000000000015',
+      '11111111-1111-1111-1111-111111111111',
+      'Selhurst Park',
+      'Selhurst Road',
+      null,
+      'London',
+      'SE25 6PU',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000016-0000-4000-8000-000000000016',
+      '11111111-1111-1111-1111-111111111111',
+      'Hill Dickinson Stadium',
+      'Regent Road',
+      null,
+      'Liverpool',
+      'L3 0BW',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000017-0000-4000-8000-000000000017',
+      '11111111-1111-1111-1111-111111111111',
+      'Craven Cottage',
+      'Stevenage Road',
+      null,
+      'London',
+      'SW6 6HH',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000018-0000-4000-8000-000000000018',
+      '11111111-1111-1111-1111-111111111111',
+      'Elland Road',
+      'Elland Road',
+      null,
+      'Leeds',
+      'LS11 0ES',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000019-0000-4000-8000-000000000019',
+      '11111111-1111-1111-1111-111111111111',
+      'Anfield',
+      'Anfield Road',
+      null,
+      'Liverpool',
+      'L4 0TH',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000020-0000-4000-8000-000000000020',
+      '11111111-1111-1111-1111-111111111111',
+      'Etihad Stadium',
+      'Ashton New Road',
+      null,
+      'Manchester',
+      'M11 3FF',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000021-0000-4000-8000-000000000021',
+      '11111111-1111-1111-1111-111111111111',
+      'St James'' Park',
+      'Strawberry Place',
+      null,
+      'Newcastle upon Tyne',
+      'NE1 4ST',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000022-0000-4000-8000-000000000022',
+      '11111111-1111-1111-1111-111111111111',
+      'City Ground',
+      'Pavilion Road',
+      null,
+      'West Bridgford',
+      'NG2 5FJ',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000023-0000-4000-8000-000000000023',
+      '11111111-1111-1111-1111-111111111111',
+      'Stadium of Light',
+      'Stadium Way',
+      null,
+      'Sunderland',
+      'SR5 1SU',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000024-0000-4000-8000-000000000024',
+      '11111111-1111-1111-1111-111111111111',
+      'Tottenham Hotspur Stadium',
+      'High Road',
+      'Tottenham',
+      'London',
+      'N17 0BX',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000025-0000-4000-8000-000000000025',
+      '11111111-1111-1111-1111-111111111111',
+      'London Stadium',
+      'Queen Elizabeth Olympic Park',
+      'Stratford',
+      'London',
+      'E20 2ST',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000026-0000-4000-8000-000000000026',
+      '11111111-1111-1111-1111-111111111111',
+      'Molineux Stadium',
+      'Waterloo Road',
+      null,
+      'Wolverhampton',
+      'WV1 4QR',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
     )
   on conflict (id) do update set
     club_id = excluded.club_id,
