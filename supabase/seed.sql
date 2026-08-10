@@ -2,7 +2,7 @@
 --
 -- Seeded domain data:
 --   - 1 club (The Football Association)
---   - 4 venues
+--   - 8 venues
 --   - 2 teams (England Men 1966, England Women 2022)
 --   - 1 club manager (John Hall) + people row
 --   - 5 coaches (Keegan, Robson, Howe, Ramsey, Wiegman) + their people rows
@@ -92,6 +92,50 @@ upserted_venues as (
       'TF10 9AT',
       array['grass']::public.venue_surface[],
       array['bbq']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000005-0000-4000-8000-000000000005',
+      '11111111-1111-1111-1111-111111111111',
+      'Old Trafford',
+      'Sir Matt Busby Way',
+      null,
+      'Manchester',
+      'M16 0RA',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000006-0000-4000-8000-000000000006',
+      '11111111-1111-1111-1111-111111111111',
+      'Brighton & Hove Community Stadium',
+      'Village Way',
+      'Falmer',
+      'Brighton',
+      'BN1 9BL',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000007-0000-4000-8000-000000000007',
+      '11111111-1111-1111-1111-111111111111',
+      'St Mary''s Stadium',
+      'Britannia Road',
+      null,
+      'Southampton',
+      'SO14 5FP',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000008-0000-4000-8000-000000000008',
+      '11111111-1111-1111-1111-111111111111',
+      'Bramall Lane',
+      'Bramall Lane',
+      null,
+      'Sheffield',
+      'S2 4SU',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'local_outlets']::public.venue_food_and_drink[]
     )
   on conflict (id) do update set
     club_id = excluded.club_id,
@@ -853,6 +897,24 @@ on conflict (id) do update set
   notes = excluded.notes;
 
 -- Match-day squad for the World Cup final (starting XI).
+-- Delete by (match_id, player_id) first so re-seed works when existing rows
+-- use different primary keys (e.g. UI-created squad entries).
+delete from public.match_players
+where match_id = 'e0000001-0000-4000-8000-000000000006'
+  and player_id in (
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000004',
+    'a0000001-0000-4000-8000-000000000005',
+    'a0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000007',
+    'a0000001-0000-4000-8000-000000000008',
+    'a0000001-0000-4000-8000-000000000009',
+    'a0000001-0000-4000-8000-000000000010',
+    'a0000001-0000-4000-8000-000000000011'
+  );
+
 insert into public.match_players (id, match_id, player_id)
 values
   (
@@ -1359,7 +1421,7 @@ on conflict (id) do update set
   periods = excluded.periods,
   minutes_per_period = excluded.minutes_per_period;
 
--- England Women Euro 2022 matches (final at Wembley; other tournament venues not seeded).
+-- England Women Euro 2022 matches (tournament venues linked).
 insert into public.matches (
   id,
   team_id,
@@ -1380,7 +1442,7 @@ values
     '2022-07-06',
     '20:00',
     'home',
-    null,
+    'a0000005-0000-4000-8000-000000000005',
     'd0000001-0000-4000-8000-000000000002',
     'played',
     'Group A — Old Trafford'
@@ -1392,7 +1454,7 @@ values
     '2022-07-11',
     '20:00',
     'home',
-    null,
+    'a0000006-0000-4000-8000-000000000006',
     'd0000001-0000-4000-8000-000000000002',
     'played',
     'Group A — Brighton & Hove Community Stadium'
@@ -1404,7 +1466,7 @@ values
     '2022-07-15',
     '20:00',
     'away',
-    null,
+    'a0000007-0000-4000-8000-000000000007',
     'd0000001-0000-4000-8000-000000000002',
     'played',
     'Group A — St Mary''s Stadium'
@@ -1416,7 +1478,7 @@ values
     '2022-07-20',
     '20:00',
     'home',
-    null,
+    'a0000006-0000-4000-8000-000000000006',
     'd0000001-0000-4000-8000-000000000002',
     'played',
     'Quarter-final — after extra time — Brighton & Hove Community Stadium'
@@ -1428,7 +1490,7 @@ values
     '2022-07-26',
     '20:00',
     'home',
-    null,
+    'a0000008-0000-4000-8000-000000000008',
     'd0000001-0000-4000-8000-000000000002',
     'played',
     'Semi-final — Bramall Lane'
