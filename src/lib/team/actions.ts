@@ -21,9 +21,20 @@ import { setTeamHeadCoach } from "@/lib/data/coaches";
 import { parseOptionalInt, parseYesNo, str as formStr } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import {
+  AGE_GROUPS,
+  COMPETITION_GENDERS,
+  COMPETITION_KINDS,
+  COMPETITION_PERIODS,
+  COMPETITION_RESULTS,
+  DEFAULT_COMPETITION_PERIODS,
+  DEFAULT_COMPETITION_RESULT,
+  TEAM_GENDER_LABELS,
   TEAM_PHOTO_MAX_BYTES,
   TEAM_PHOTO_MIME_TYPES,
   TEAM_PHOTOS_BUCKET,
+  TRAINING_DAYS,
+  type AgeGroup,
+  type TrainingDay,
 } from "@/lib/constants";
 import type {
   CompetitionGender,
@@ -33,19 +44,6 @@ import type {
   TablesUpdate,
   TeamGender,
 } from "@/lib/supabase/database.types";
-import {
-  AGE_GROUPS,
-  COMPETITION_GENDERS,
-  COMPETITION_KINDS,
-  COMPETITION_PERIODS,
-  COMPETITION_RESULTS,
-  DEFAULT_COMPETITION_PERIODS,
-  DEFAULT_COMPETITION_RESULT,
-  TEAM_GENDERS,
-  TRAINING_DAYS,
-  type AgeGroup,
-  type TrainingDay,
-} from "@/lib/constants";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -88,7 +86,7 @@ function parseTeamFields(formData: FormData):
   if (!(AGE_GROUPS as readonly string[]).includes(age_group)) {
     return { error: "Select a valid age group.", ok: false };
   }
-  if (!TEAM_GENDERS.includes(gender)) {
+  if (!(gender in TEAM_GENDER_LABELS)) {
     return { error: "Invalid gender.", ok: false };
   }
 

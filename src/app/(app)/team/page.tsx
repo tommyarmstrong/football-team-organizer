@@ -81,7 +81,7 @@ export default async function TeamPage() {
               <CardTitle>Create your first team</CardTitle>
               <CardDescription>
                 Add a team to {club?.name}. You can create more later (e.g. U10
-                Male, U11 Female A).
+                Boys, U11 Girls A).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,7 +140,7 @@ export default async function TeamPage() {
         <img
           src={team.photo_url}
           alt={`${team.name} team photo`}
-          className="h-48 w-full rounded-xl object-cover sm:h-72 md:h-80"
+          className="ring-foreground/10 h-48 w-full rounded-xl object-cover ring-1 sm:h-72 md:h-80"
         />
       ) : null}
 
