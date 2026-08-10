@@ -42,6 +42,7 @@ export async function createMatchAction(
   const date = str(formData, "date");
   const kickoff_time = str(formData, "kickoff_time") || null;
   const home_away = str(formData, "home_away") as MatchHomeAway;
+  const status = (str(formData, "status") || "scheduled") as MatchStatus;
   const competition_id = str(formData, "competition_id") || null;
   const notes = str(formData, "notes") || null;
   const club_notes = str(formData, "club_notes") || null;
@@ -51,6 +52,9 @@ export async function createMatchAction(
   }
   if (!MATCH_HOME_AWAYS.includes(home_away)) {
     return { error: "Invalid home/away value." };
+  }
+  if (!MATCH_STATUSES.includes(status)) {
+    return { error: "Invalid status." };
   }
 
   const team = await getActiveTeam();
@@ -68,7 +72,7 @@ export async function createMatchAction(
     competition_id,
     notes,
     club_notes,
-    status: "scheduled",
+    status,
     player_of_the_match_id: null,
     players_player_of_the_match_id: null,
   });
