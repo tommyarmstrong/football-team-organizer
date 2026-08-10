@@ -12,10 +12,9 @@ import {
   formatAwardMonth,
   formatKickoffTime,
   formatMatchDate,
-  formatScore,
+  formatMatchTitle,
   labelHomeAway,
   playerDisplayName,
-  resultLetter,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -140,45 +139,34 @@ export default async function DashboardPage() {
                 href={`/matches/${last.data.id}`}
                 className="block space-y-1 transition-opacity hover:opacity-80"
               >
-                <p className="text-lg font-medium">
-                  {last.data.opponent_name}{" "}
-                  <span className="text-muted-foreground">
-                    {formatScore(last.data.goals_for, last.data.goals_against)}
-                  </span>
-                  {(() => {
-                    const letter = resultLetter(
-                      last.data.goals_for,
-                      last.data.goals_against,
-                    );
-                    if (!letter) return null;
-                    const label =
-                      letter === "W" ? "Win" : letter === "D" ? "Draw" : "Loss";
-                    return (
-                      <span
-                        className="text-muted-foreground ml-2 text-sm font-normal"
-                        aria-label={label}
-                      >
-                        ({letter} · {label})
-                      </span>
-                    );
-                  })()}
+                <p className="font-bold">
+                  {formatMatchTitle(
+                    team.name,
+                    last.data.opponent_name,
+                    last.data.home_away,
+                    last.data.status,
+                    last.data.goals_for,
+                    last.data.goals_against,
+                  )}
                 </p>
-                <p className="text-muted-foreground text-sm">
-                  {formatMatchDate(last.data.date)}
-                  {formatKickoffTime(last.data.kickoff_time)
-                    ? ` · ${formatKickoffTime(last.data.kickoff_time)}`
-                    : ""}
-                  {" · "}
-                  {labelHomeAway(last.data.home_away)}
-                </p>
-                {last.data.venue ? (
-                  <p className="text-muted-foreground text-sm">
-                    {last.data.venue.name}
-                  </p>
-                ) : null}
                 {last.data.competition ? (
                   <p className="text-muted-foreground text-sm">
                     {last.data.competition.name}
+                  </p>
+                ) : null}
+                {(last.data.date || last.data.kickoff_time) && (
+                  <p className="text-muted-foreground text-sm">
+                    {[
+                      formatMatchDate(last.data.date),
+                      formatKickoffTime(last.data.kickoff_time),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+                {last.data.venue ? (
+                  <p className="text-muted-foreground text-sm">
+                    {last.data.venue.name}
                   </p>
                 ) : null}
               </Link>
@@ -191,6 +179,63 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Competitions</CardTitle>
+          <CardDescription>
+            Leagues, cups, and other competitions for {team.season_label}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {competitions.error ? (
+            <ErrorBanner message={competitions.error} />
+          ) : (
+            <CompetitionsSection
+              key={team.id}
+              competitions={competitions.data}
+              canEdit={canEdit}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Player of the month</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {potMonth.data.length === 0 ? (
+            <EmptyState
+              title="No monthly awards yet"
+              description="Add player of the month awards from the Team page."
+            />
+          ) : (
+            <ol className="divide-border border-border divide-y rounded-xl border">
+              {potMonth.data.map((award, index) => (
+                <li key={award.id}>
+                  <Link
+                    href={`/people/${award.player.person_id}`}
+                    className="hover:bg-muted/50 flex items-center justify-between gap-3 px-4 py-3 transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-muted-foreground w-5 text-sm">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium">
+                        {playerDisplayName(award.player)}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {formatAwardMonth(award.month)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+        </CardContent>
+      </Card>
 
       <LeaderboardCard
         title="Top scorers"
@@ -233,63 +278,6 @@ export default async function DashboardPage() {
           valueLabel: `${row.count} ${row.count === 1 ? "award" : "awards"}`,
         }))}
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Player of the month</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {potMonth.data.length === 0 ? (
-            <EmptyState
-              title="No monthly awards yet"
-              description="Add player of the month awards from the Team page."
-            />
-          ) : (
-            <ol className="divide-border border-border divide-y rounded-xl border">
-              {potMonth.data.map((award, index) => (
-                <li key={award.id}>
-                  <Link
-                    href={`/people/${award.player.person_id}`}
-                    className="hover:bg-muted/50 flex items-center justify-between gap-3 px-4 py-3 transition-colors"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="text-muted-foreground w-5 text-sm">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium">
-                        {playerDisplayName(award.player)}
-                      </span>
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {formatAwardMonth(award.month)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Competitions</CardTitle>
-          <CardDescription>
-            Leagues, cups, and other competitions for {team.season_label}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {competitions.error ? (
-            <ErrorBanner message={competitions.error} />
-          ) : (
-            <CompetitionsSection
-              key={team.id}
-              competitions={competitions.data}
-              canEdit={canEdit}
-            />
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

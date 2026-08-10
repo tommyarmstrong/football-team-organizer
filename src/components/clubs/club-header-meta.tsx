@@ -1,4 +1,4 @@
-import { AGE_GROUPS, TEAM_GENDERS } from "@/lib/constants";
+import { AGE_GROUPS, TEAM_GENDER_LABELS } from "@/lib/constants";
 import { labelGender } from "@/lib/format";
 import type { Team, TeamGender } from "@/lib/supabase/database.types";
 import { RoleChip } from "@/components/shared/role-chip";
@@ -24,7 +24,9 @@ export function clubAgeRangeLabel(teams: Team[]): string | null {
 
 export function clubGendersPresent(teams: Team[]): TeamGender[] {
   const present = new Set(teams.map((team) => team.gender));
-  return TEAM_GENDERS.filter((gender) => present.has(gender));
+  return (Object.keys(TEAM_GENDER_LABELS) as TeamGender[]).filter((gender) =>
+    present.has(gender),
+  );
 }
 
 function formatWebsiteHref(website: string): string {
