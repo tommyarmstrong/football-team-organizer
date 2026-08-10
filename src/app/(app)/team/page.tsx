@@ -6,7 +6,6 @@ import {
 } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { listCompetitions } from "@/lib/data/competitions";
 import {
   listCoaches,
   listCoachesNotOnTeam,
@@ -17,6 +16,7 @@ import {
   listGuardianAssistantCandidates,
   listGuardianAssistants,
 } from "@/lib/data/members";
+import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listVenues } from "@/lib/data/venues";
 import { labelGender } from "@/lib/format";
 import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
@@ -25,7 +25,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { CreateTeamForm } from "@/components/team/create-team-form";
-import { CompetitionsSection } from "@/components/team/competitions-section";
+import { PlayerOfTheMonthSection } from "@/components/team/player-of-the-month-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
@@ -102,15 +102,14 @@ export default async function TeamPage() {
   const teamClubVenues = clubVenues.filter((v) => v.club_id === team.club_id);
 
   const [
-    { data: competitions, error: competitionsError },
     { data: roster, error: rosterError },
     { data: playerCandidates },
     { data: teamCoaches, error: teamCoachesError },
     { data: coachCandidates },
     { data: assistants },
     { data: assistantCandidates },
+    { data: potmAwards, error: potmError },
   ] = await Promise.all([
-    listCompetitions(team.id),
     listRosterForTeam(team.id, { includeInactive: true }),
     club
       ? listPlayersNotOnTeam(club.id, team.id)
@@ -119,6 +118,7 @@ export default async function TeamPage() {
     listCoachesNotOnTeam(team.club_id, team.id),
     listGuardianAssistants(team.id, team.club_id),
     listGuardianAssistantCandidates(team.id, team.club_id),
+    listPlayerOfTheMonth(team.id),
   ]);
 
   const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
@@ -134,6 +134,15 @@ export default async function TeamPage() {
         title={team.name}
         description={`${club?.name ?? ""} · ${labelGender(team.gender)} · ${team.age_group} · ${team.season_label}`}
       />
+
+      {team.photo_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={team.photo_url}
+          alt={`${team.name} team photo`}
+          className="h-48 w-full rounded-xl object-cover sm:h-72 md:h-80"
+        />
+      ) : null}
 
       <Card>
         <CardContent>
@@ -160,6 +169,22 @@ export default async function TeamPage() {
               />
             ) : null}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Player of the month</CardTitle>
+          <CardDescription>
+            Monthly awards for standout players this season.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {potmError ? (
+            <ErrorBanner message={potmError} />
+          ) : (
+            <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
+          )}
         </CardContent>
       </Card>
 
@@ -195,26 +220,6 @@ export default async function TeamPage() {
               teamId={team.id}
               assigned={teamCoaches}
               candidates={coachCandidates}
-              canEdit={canEdit}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Competitions</CardTitle>
-          <CardDescription>
-            Leagues, cups, and other competitions for {team.season_label}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {competitionsError ? (
-            <ErrorBanner message={competitionsError} />
-          ) : (
-            <CompetitionsSection
-              key={team.id}
-              competitions={competitions}
               canEdit={canEdit}
             />
           )}

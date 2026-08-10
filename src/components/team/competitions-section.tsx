@@ -9,13 +9,16 @@ import {
   objectListRowClassName,
 } from "@/components/shared/object-list";
 import { AddCompetitionForm } from "@/components/team/add-competition-form";
+import { CompetitionResultChip } from "@/components/team/competition-result-chip";
 
 export function CompetitionsSection({
   competitions,
   canEdit = true,
+  showAddForm = true,
 }: {
   competitions: Competition[];
   canEdit?: boolean;
+  showAddForm?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -39,8 +42,11 @@ export function CompetitionsSection({
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {competition.name}
                 </span>
-                <span className="text-muted-foreground shrink-0">
-                  {labelCompetitionKind(competition.kind)}
+                <span className="flex shrink-0 items-center gap-2">
+                  <CompetitionResultChip result={competition.result} />
+                  <span className="text-muted-foreground">
+                    {labelCompetitionKind(competition.kind)}
+                  </span>
                 </span>
               </Link>
               {canEdit ? (
@@ -60,7 +66,7 @@ export function CompetitionsSection({
         </ul>
       )}
 
-      {canEdit ? <AddCompetitionForm /> : null}
+      {canEdit && showAddForm ? <AddCompetitionForm /> : null}
     </div>
   );
 }

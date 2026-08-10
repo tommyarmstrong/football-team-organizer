@@ -203,6 +203,28 @@ export async function updateCoach(
   };
 }
 
+export async function updateCoachText(
+  id: string,
+  input: { biography: string | null; philosophy: string | null },
+): Promise<{ data: CoachWithPerson | null; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("coaches")
+    .update({
+      biography: input.biography,
+      philosophy: input.philosophy,
+    } satisfies TablesUpdate<"coaches">)
+    .eq("id", id)
+    .select(`*, ${PERSON_EMBED}`)
+    .single();
+
+  if (error) return { data: null, error: error.message };
+  return {
+    data: mapCoach(data as Coach & { person: Person | Person[] | null }),
+    error: null,
+  };
+}
+
 export async function setCoachActiveRole(
   id: string,
   activeRole: boolean,

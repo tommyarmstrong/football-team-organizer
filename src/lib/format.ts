@@ -4,6 +4,7 @@ import {
   COACH_OBJECTIVE_TYPE_LABELS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_PERIOD_LABELS,
+  COMPETITION_RESULT_LABELS,
   GOAL_KIND_LABELS,
   MATCH_STATUS_LABELS,
   OPPOSITION_GOAL_LABEL,
@@ -21,6 +22,7 @@ import type {
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
+  CompetitionResult,
   MatchHomeAway,
   MatchStatus,
   PlayerObjectiveStatus,
@@ -213,7 +215,7 @@ export function formatMatchVersusTitle(
 }
 
 /**
- * Played / in progress: "Home 4 - 2 Away".
+ * Played / in progress: "Home 4-2 Away".
  * Otherwise the versus title (e.g. "Home vs Away").
  */
 export function formatMatchTitle(
@@ -232,7 +234,7 @@ export function formatMatchTitle(
   const awayGoals = homeAway === "away" ? goalsFor : goalsAgainst;
   const homeName = homeAway === "away" ? opponentName : teamName;
   const awayName = homeAway === "away" ? teamName : opponentName;
-  return `${homeName} ${homeGoals} - ${awayGoals} ${awayName}`;
+  return `${homeName} ${homeGoals}-${awayGoals} ${awayName}`;
 }
 
 export function labelVenueSurface(surface: VenueSurface): string {
@@ -303,6 +305,24 @@ export function labelCompetitionPeriods(
 ): string {
   if (!periods) return "—";
   return COMPETITION_PERIOD_LABELS[periods];
+}
+
+export function labelCompetitionResult(
+  result: CompetitionResult | null | undefined,
+): string {
+  if (!result) return "—";
+  return COMPETITION_RESULT_LABELS[result];
+}
+
+export function formatAwardMonth(month: string): string {
+  const [year, monthPart] = month.split("-");
+  if (!year || !monthPart) return month;
+  const date = new Date(Number(year), Number(monthPart) - 1, 1);
+  if (Number.isNaN(date.getTime())) return month;
+  return new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 export function labelCardType(type: CardType): string {

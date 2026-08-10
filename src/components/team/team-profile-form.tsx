@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   AGE_GROUPS,
@@ -33,11 +33,64 @@ export function TeamProfileForm({
     updateTeamAction,
     INITIAL_ACTION_STATE,
   );
+  const [previewSrc, setPreviewSrc] = useState(team.photo_url ?? "");
+  const [clearPhoto, setClearPhoto] = useState(false);
 
   const selectedDays = new Set(team.training_days ?? []);
 
   return (
     <form action={formAction} className="space-y-4">
+      <input
+        type="hidden"
+        name="clear_photo"
+        value={clearPhoto ? "true" : ""}
+      />
+
+      <div className="space-y-2">
+        <Label htmlFor="team-photo">Team photo</Label>
+        <div className="space-y-3">
+          {previewSrc && !clearPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewSrc}
+              alt=""
+              className="h-40 w-full rounded-xl object-cover sm:h-56"
+            />
+          ) : (
+            <div className="bg-muted text-muted-foreground flex h-40 w-full items-center justify-center rounded-xl text-sm sm:h-56">
+              No team photo
+            </div>
+          )}
+          <Input
+            id="team-photo"
+            name="photo"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            disabled={pending}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              setClearPhoto(false);
+              setPreviewSrc(URL.createObjectURL(file));
+            }}
+          />
+          <p className="text-muted-foreground text-xs">
+            PNG, JPEG, WebP, or GIF. Max 5 MB. Shown above the team profile.
+          </p>
+          {team.photo_url ? (
+            <label className="text-muted-foreground flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={clearPhoto}
+                disabled={pending}
+                onChange={(event) => setClearPhoto(event.target.checked)}
+              />
+              Remove uploaded photo
+            </label>
+          ) : null}
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Team name" htmlFor="name">
           <Input

@@ -12,6 +12,7 @@ import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -54,26 +55,20 @@ export default async function ClubPage() {
           <CardDescription>
             Club philosophy and what the club stands for.
           </CardDescription>
+          <CardAction>
+            <EditIconLink href="/club/edit" label="Edit club details" />
+          </CardAction>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              {club.about ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {club.about}
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No club philosophy yet. Add one when you edit club details.
-                </p>
-              )}
-            </div>
-            <EditIconLink
-              href="/club/edit"
-              label="Edit club details"
-              className="-mt-1 -mr-1"
-            />
-          </div>
+          {club.about ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {club.about}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No club philosophy yet. Add one when you edit club details.
+            </p>
+          )}
         </CardContent>
       </Card>
 

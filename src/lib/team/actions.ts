@@ -19,10 +19,17 @@ import {
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
 import { parseOptionalInt, parseYesNo, str as formStr } from "@/lib/form-parse";
+import { createClient } from "@/lib/supabase/server";
+import {
+  TEAM_PHOTO_MAX_BYTES,
+  TEAM_PHOTO_MIME_TYPES,
+  TEAM_PHOTOS_BUCKET,
+} from "@/lib/constants";
 import type {
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
+  CompetitionResult,
   TablesUpdate,
   TeamGender,
 } from "@/lib/supabase/database.types";
@@ -31,7 +38,9 @@ import {
   COMPETITION_GENDERS,
   COMPETITION_KINDS,
   COMPETITION_PERIODS,
+  COMPETITION_RESULTS,
   DEFAULT_COMPETITION_PERIODS,
+  DEFAULT_COMPETITION_RESULT,
   TEAM_GENDERS,
   TRAINING_DAYS,
   type AgeGroup,
@@ -116,6 +125,19 @@ export async function updateTeamAction(
   const parsed = parseTeamFields(formData);
   if (!parsed.ok) return { error: parsed.error };
 
+  const clearPhoto = str(formData, "clear_photo") === "true";
+  let photoUrl = team.photo_url;
+  if (clearPhoto) {
+    photoUrl = null;
+  }
+
+  const photoEntry = formData.get("photo");
+  if (photoEntry instanceof File && photoEntry.size > 0) {
+    const uploaded = await uploadTeamPhoto(team.id, photoEntry);
+    if ("error" in uploaded) return { error: uploaded.error };
+    photoUrl = uploaded.url;
+  }
+
   const { error } = await updateTeam(team.id, {
     name: parsed.name,
     age_group: parsed.age_group,
@@ -124,6 +146,7 @@ export async function updateTeamAction(
     training_venue_id: parsed.training_venue_id,
     training_days: parsed.training_days,
     season_label: parsed.season_label,
+    photo_url: photoUrl,
   });
   if (error) return { error };
 
@@ -136,6 +159,46 @@ export async function updateTeamAction(
   revalidatePath("/people");
   revalidatePath("/venues");
   redirect("/team");
+}
+
+async function uploadTeamPhoto(
+  teamId: string,
+  file: File,
+): Promise<{ url: string } | { error: string }> {
+  if (!TEAM_PHOTO_MIME_TYPES.has(file.type)) {
+    return { error: "Photo must be a PNG, JPEG, WebP, or GIF image." };
+  }
+  if (file.size > TEAM_PHOTO_MAX_BYTES) {
+    return { error: "Photo must be 5 MB or smaller." };
+  }
+
+  const ext =
+    file.type === "image/png"
+      ? "png"
+      : file.type === "image/jpeg"
+        ? "jpg"
+        : file.type === "image/webp"
+          ? "webp"
+          : file.type === "image/gif"
+            ? "gif"
+            : null;
+  if (!ext) return { error: "Unsupported photo file type." };
+
+  const supabase = await createClient();
+  const path = `${teamId}/${crypto.randomUUID()}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from(TEAM_PHOTOS_BUCKET)
+    .upload(path, bytes, {
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (uploadError) return { error: uploadError.message };
+
+  const { data } = supabase.storage.from(TEAM_PHOTOS_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl };
 }
 
 export async function createTeamAction(
@@ -212,6 +275,7 @@ export async function createCompetitionAction(
   if (error) return { error };
 
   revalidatePath("/team");
+  revalidatePath("/dashboard");
   revalidatePath("/matches");
   return { success: "Competition added." };
 }
@@ -273,6 +337,12 @@ function parseCompetitionUpdate(
 
   const notes = str(formData, "notes") || null;
 
+  const resultRaw = str(formData, "result");
+  const result: CompetitionResult =
+    resultRaw && COMPETITION_RESULTS.includes(resultRaw as CompetitionResult)
+      ? (resultRaw as CompetitionResult)
+      : DEFAULT_COMPETITION_RESULT;
+
   return {
     name,
     kind,
@@ -284,13 +354,16 @@ function parseCompetitionUpdate(
     periods,
     minutes_per_period: minutesPerPeriod,
     notes,
+    result,
   };
 }
 
 function revalidateCompetitionPaths(id: string) {
   revalidatePath("/team");
+  revalidatePath("/dashboard");
   revalidatePath("/matches");
   revalidatePath(`/competitions/${id}`);
+  revalidatePath(`/competitions/${id}/edit`);
 }
 
 export async function updateCompetitionAction(
@@ -308,8 +381,8 @@ export async function updateCompetitionAction(
   return { success: "Competition updated." };
 }
 
-/** Saves competition fields and returns to the team page. */
-export async function saveCompetitionAndReturnToTeamAction(
+/** Saves competition fields and returns to the competition detail page. */
+export async function saveCompetitionAndReturnAction(
   id: string,
   _prev: ActionState,
   formData: FormData,
@@ -321,7 +394,16 @@ export async function saveCompetitionAndReturnToTeamAction(
   if (error) return { error };
 
   revalidateCompetitionPaths(id);
-  redirect("/team");
+  redirect(`/competitions/${id}`);
+}
+
+/** @deprecated Prefer saveCompetitionAndReturnAction */
+export async function saveCompetitionAndReturnToTeamAction(
+  id: string,
+  prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return saveCompetitionAndReturnAction(id, prev, formData);
 }
 
 export async function deleteCompetitionAction(
@@ -331,6 +413,7 @@ export async function deleteCompetitionAction(
   if (error) return { error };
 
   revalidatePath("/team");
+  revalidatePath("/dashboard");
   revalidatePath("/matches");
-  redirect("/team");
+  redirect("/dashboard");
 }

@@ -9,9 +9,12 @@ import {
   COMPETITION_KINDS,
   COMPETITION_PERIODS,
   COMPETITION_PERIOD_LABELS,
+  COMPETITION_RESULTS,
+  COMPETITION_RESULT_LABELS,
   DEFAULT_COMPETITION_PERIODS,
+  DEFAULT_COMPETITION_RESULT,
 } from "@/lib/constants";
-import { saveCompetitionAndReturnToTeamAction } from "@/lib/team/actions";
+import { saveCompetitionAndReturnAction } from "@/lib/team/actions";
 import { labelCompetitionKind } from "@/lib/format";
 import type { Competition } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
@@ -22,10 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function CompetitionForm({ competition }: { competition: Competition }) {
-  const boundReturn = saveCompetitionAndReturnToTeamAction.bind(
-    null,
-    competition.id,
-  );
+  const boundReturn = saveCompetitionAndReturnAction.bind(null, competition.id);
   const [state, formAction, pending] = useActionState(
     boundReturn,
     INITIAL_ACTION_STATE,
@@ -58,6 +58,21 @@ export function CompetitionForm({ competition }: { competition: Competition }) {
             {COMPETITION_KINDS.map((kind) => (
               <option key={kind} value={kind}>
                 {labelCompetitionKind(kind)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="result">Result</Label>
+          <NativeSelect
+            id="result"
+            name="result"
+            defaultValue={competition.result ?? DEFAULT_COMPETITION_RESULT}
+            disabled={pending}
+          >
+            {COMPETITION_RESULTS.map((result) => (
+              <option key={result} value={result}>
+                {COMPETITION_RESULT_LABELS[result]}
               </option>
             ))}
           </NativeSelect>

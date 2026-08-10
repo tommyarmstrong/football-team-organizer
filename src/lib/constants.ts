@@ -5,6 +5,7 @@ import type {
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
+  CompetitionResult,
   MatchHomeAway,
   MatchStatus,
   PlayerObjectiveStatus,
@@ -26,6 +27,17 @@ export const APP_DESCRIPTION =
 export const DEFAULT_CLUB_ICON_SRC = "/football-icon.svg";
 
 export const CLUB_ICONS_BUCKET = "club-icons";
+
+export const TEAM_PHOTOS_BUCKET = "team-photos";
+
+export const TEAM_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
+export const TEAM_PHOTO_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
 
 export const TEAM_GENDERS: TeamGender[] = ["girls", "boys", "mixed"];
 
@@ -121,6 +133,34 @@ export const COMPETITION_PERIOD_LABELS: Record<CompetitionPeriods, string> = {
 };
 
 export const DEFAULT_COMPETITION_PERIODS: CompetitionPeriods = "2";
+
+export const COMPETITION_RESULTS: CompetitionResult[] = [
+  "champions",
+  "runner_up",
+  "third_place",
+  "semi_final",
+  "knock_outs",
+  "group_stage",
+  "promoted",
+  "relegated",
+  "none",
+  "ongoing",
+];
+
+export const COMPETITION_RESULT_LABELS: Record<CompetitionResult, string> = {
+  champions: "Champions",
+  runner_up: "Runner up",
+  third_place: "Third place",
+  semi_final: "Semi-final",
+  knock_outs: "Knock-outs",
+  group_stage: "Group stage",
+  promoted: "Promoted",
+  relegated: "Relegated",
+  none: "None",
+  ongoing: "Ongoing",
+};
+
+export const DEFAULT_COMPETITION_RESULT: CompetitionResult = "ongoing";
 
 export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
 

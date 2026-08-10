@@ -1,12 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
+import { getCoach } from "@/lib/data/coaches";
 import { getPerson } from "@/lib/data/people";
 import { personDisplayName } from "@/lib/people/person";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PersonForm } from "@/components/people/person-form";
 import { PersonClubRolesSection } from "@/components/people/person-admin-panels";
+import { CoachTextCards } from "@/components/coaches/coach-text-cards";
 import {
   Card,
   CardContent,
@@ -50,6 +52,17 @@ export default async function EditPersonPage({
         null)
       : (person.players.find((row) => row.active_role) ?? null);
 
+  const coachRole =
+    club != null
+      ? (person.coaches.find(
+          (row) => row.club_id === club.id && row.active_role,
+        ) ??
+        person.coaches.find((row) => row.active_role) ??
+        null)
+      : (person.coaches.find((row) => row.active_role) ?? null);
+
+  const coachRecord = coachRole ? (await getCoach(coachRole.id)).data : null;
+
   return (
     <div className="space-y-6">
       <PageHeader title="Edit person" description={personDisplayName(person)} />
@@ -66,6 +79,14 @@ export default async function EditPersonPage({
           <PersonForm mode="edit" person={person} player={player} />
         </CardContent>
       </Card>
+
+      {coachRecord && (canEdit || self) ? (
+        <CoachTextCards
+          coachId={coachRecord.id}
+          biography={coachRecord.biography}
+          philosophy={coachRecord.philosophy}
+        />
+      ) : null}
 
       {canEdit && club ? (
         <Card>
