@@ -13,6 +13,7 @@
 --   - 6 England Women matches (Austria, Norway, Northern Ireland, Spain, Sweden, Germany)
 --   - Match periods (halves; extra time on AET ties) linked on every match
 --   - Goals with period, minute, and assist where applicable
+--   - Coach's player of the match on England Women Euro 2022 fixtures (UEFA POTM)
 --
 -- AFTER SEEDING (initial admin):
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
@@ -1445,6 +1446,7 @@ on conflict (id) do update set
   minutes_per_period = excluded.minutes_per_period;
 
 -- England Women Euro 2022 matches (tournament venues linked).
+-- Coach's player of the match = UEFA Technical Observers' official POTM.
 insert into public.matches (
   id,
   team_id,
@@ -1455,7 +1457,8 @@ insert into public.matches (
   venue_id,
   competition_id,
   status,
-  notes
+  notes,
+  player_of_the_match_id
 )
 values
   (
@@ -1468,7 +1471,8 @@ values
     'a0000005-0000-4000-8000-000000000005',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Group A — Old Trafford'
+    'Group A — Old Trafford',
+    'a0000002-0000-4000-8000-000000000010' -- Georgia Stanway
   ),
   (
     'e0000002-0000-4000-8000-000000000002',
@@ -1480,7 +1484,8 @@ values
     'a0000006-0000-4000-8000-000000000006',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Group A — Brighton & Hove Community Stadium'
+    'Group A — Brighton & Hove Community Stadium',
+    'a0000002-0000-4000-8000-000000000007' -- Beth Mead
   ),
   (
     'e0000002-0000-4000-8000-000000000003',
@@ -1492,7 +1497,8 @@ values
     'a0000007-0000-4000-8000-000000000007',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Group A — St Mary''s Stadium'
+    'Group A — St Mary''s Stadium',
+    'a0000002-0000-4000-8000-000000000023' -- Alessia Russo
   ),
   (
     'e0000002-0000-4000-8000-000000000004',
@@ -1504,7 +1510,8 @@ values
     'a0000006-0000-4000-8000-000000000006',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Quarter-final — after extra time — Brighton & Hove Community Stadium'
+    'Quarter-final — after extra time — Brighton & Hove Community Stadium',
+    'a0000002-0000-4000-8000-000000000006' -- Millie Bright
   ),
   (
     'e0000002-0000-4000-8000-000000000005',
@@ -1516,7 +1523,8 @@ values
     'a0000008-0000-4000-8000-000000000008',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Semi-final — Bramall Lane'
+    'Semi-final — Bramall Lane',
+    'a0000002-0000-4000-8000-000000000007' -- Beth Mead
   ),
   (
     'e0000002-0000-4000-8000-000000000006',
@@ -1528,7 +1536,8 @@ values
     'a0000003-0000-4000-8000-000000000003',
     'd0000001-0000-4000-8000-000000000002',
     'played',
-    'Final — after extra time'
+    'Final — after extra time',
+    'a0000002-0000-4000-8000-000000000004' -- Keira Walsh
   )
 on conflict (id) do update set
   team_id = excluded.team_id,
@@ -1539,7 +1548,8 @@ on conflict (id) do update set
   venue_id = excluded.venue_id,
   competition_id = excluded.competition_id,
   status = excluded.status,
-  notes = excluded.notes;
+  notes = excluded.notes,
+  player_of_the_match_id = excluded.player_of_the_match_id;
 
 -- Periods for all England Women Euro 2022 matches.
 -- Extra time on the Spain QF and Germany final (both AET).
