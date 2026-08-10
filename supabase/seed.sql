@@ -981,6 +981,18 @@ on conflict (id) do update set
 
 -- Periods for all England Men World Cup 1966 matches.
 -- Extra time only on the final (went to AET).
+-- Remove any prior periods for these matches (e.g. UI-created duplicates)
+-- so re-seed keeps a single canonical set.
+delete from public.match_periods
+where match_id in (
+  'e0000001-0000-4000-8000-000000000001',
+  'e0000001-0000-4000-8000-000000000002',
+  'e0000001-0000-4000-8000-000000000003',
+  'e0000001-0000-4000-8000-000000000004',
+  'e0000001-0000-4000-8000-000000000005',
+  'e0000001-0000-4000-8000-000000000006'
+);
+
 insert into public.match_periods (id, match_id, name, sort_order)
 values
   -- vs Uruguay
@@ -1553,6 +1565,18 @@ on conflict (id) do update set
 
 -- Periods for all England Women Euro 2022 matches.
 -- Extra time on the Spain QF and Germany final (both AET).
+-- Remove any prior periods for these matches (e.g. UI-created duplicates)
+-- so re-seed keeps a single canonical set.
+delete from public.match_periods
+where match_id in (
+  'e0000002-0000-4000-8000-000000000001',
+  'e0000002-0000-4000-8000-000000000002',
+  'e0000002-0000-4000-8000-000000000003',
+  'e0000002-0000-4000-8000-000000000004',
+  'e0000002-0000-4000-8000-000000000005',
+  'e0000002-0000-4000-8000-000000000006'
+);
+
 insert into public.match_periods (id, match_id, name, sort_order)
 values
   -- vs Austria
