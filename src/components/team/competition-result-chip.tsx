@@ -1,4 +1,5 @@
 import type { CompetitionResult } from "@/lib/supabase/database.types";
+import { COMPETITION_RESULT_LABELS } from "@/lib/constants";
 import { RoleChip } from "@/components/shared/role-chip";
 import { cn } from "@/lib/utils";
 
@@ -55,27 +56,9 @@ export function CompetitionResultChip({
     );
   }
 
-  const labels: Record<
-    Exclude<
-      CompetitionResult,
-      | "champions"
-      | "runner_up"
-      | "third_place"
-      | "semi_final"
-      | "promoted"
-      | "none"
-    >,
-    string
-  > = {
-    knock_outs: "Knock-outs",
-    group_stage: "Group stage",
-    relegated: "Relegated",
-    ongoing: "Ongoing",
-  };
-
   return (
     <RoleChip className={GREY_CHIP_CLASS}>
-      <span>{labels[result]}</span>
+      <span>{COMPETITION_RESULT_LABELS[result]}</span>
     </RoleChip>
   );
 }
