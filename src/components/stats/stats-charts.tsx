@@ -12,25 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type {
-  GoalsByPlayerPoint,
-  PlayerCountPoint,
-  ResultOverTimePoint,
-} from "@/lib/data/stats";
-
-export function GoalsByPlayerChart({ data }: { data: GoalsByPlayerPoint[] }) {
-  return (
-    <PlayerCountChart
-      data={data.map((row) => ({
-        playerId: row.playerId,
-        name: row.name,
-        count: row.goals,
-      }))}
-      metricLabel="Goals"
-      ariaTitle="goals by player"
-    />
-  );
-}
+import type { PlayerCountPoint, ResultOverTimePoint } from "@/lib/data/stats";
 
 export function PlayerCountChart({
   data,

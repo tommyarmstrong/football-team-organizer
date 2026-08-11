@@ -32,6 +32,9 @@ export type GoalsByPlayerPoint = {
   playerId: string;
   name: string;
   goals: number;
+  position: string | null;
+  matchesPlayed: number;
+  periodsPlayed: number;
 };
 
 export type PlayerCountPoint = {
@@ -232,15 +235,106 @@ export async function getGoalsByPlayerStats(): Promise<{
   data: GoalsByPlayerPoint[];
   error: string | null;
 }> {
-  const { data, error } = await getTopScorers(50);
-  if (error) return { data: [], error };
+  const team = await getActiveTeam();
+  if (!team) return { data: [], error: "No team selected." };
+
+  const supabase = await createClient();
+  const { data: goalRows, error: goalsError } = await supabase
+    .from("goals")
+    .select(
+      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status)`,
+    )
+    .eq("match.team_id", team.id)
+    .eq("match.status", "played")
+    .eq("is_opposition", false)
+    .not("player_id", "is", null);
+
+  if (goalsError) return { data: [], error: goalsError.message };
+
+  const byPlayer = new Map<string, GoalsByPlayerPoint>();
+  for (const row of goalRows ?? []) {
+    const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
+    if (!player) continue;
+    const position =
+      playerRaw && !Array.isArray(playerRaw) && "position" in playerRaw
+        ? ((playerRaw.position as string | null | undefined) ?? null)
+        : null;
+    const existing = byPlayer.get(player.id);
+    if (existing) {
+      existing.goals += 1;
+      continue;
+    }
+    byPlayer.set(player.id, {
+      playerId: player.id,
+      name: `${player.first_name} ${player.last_name}`,
+      goals: 1,
+      position,
+      matchesPlayed: 0,
+      periodsPlayed: 0,
+    });
+  }
+
+  if (byPlayer.size === 0) return { data: [], error: null };
+
+  const playerIds = [...byPlayer.keys()];
+
+  const { data: playedMatches, error: matchesError } = await supabase
+    .from("matches")
+    .select("id")
+    .eq("team_id", team.id)
+    .eq("status", "played");
+
+  if (matchesError) return { data: [], error: matchesError.message };
+
+  const matchIds = (playedMatches ?? []).map((match) => match.id);
+  if (matchIds.length === 0) {
+    return {
+      data: [...byPlayer.values()].sort((a, b) => b.goals - a.goals),
+      error: null,
+    };
+  }
+
+  const [{ data: appearanceRows, error: appearancesError }, periodsResult] =
+    await Promise.all([
+      supabase
+        .from("match_players")
+        .select("player_id")
+        .in("match_id", matchIds)
+        .in("player_id", playerIds),
+      supabase.from("match_periods").select("id").in("match_id", matchIds),
+    ]);
+
+  if (appearancesError) return { data: [], error: appearancesError.message };
+  if (periodsResult.error) {
+    return { data: [], error: periodsResult.error.message };
+  }
+
+  for (const row of appearanceRows ?? []) {
+    const entry = byPlayer.get(row.player_id);
+    if (entry) entry.matchesPlayed += 1;
+  }
+
+  const periodIds = (periodsResult.data ?? []).map((period) => period.id);
+  if (periodIds.length > 0) {
+    const { data: starterRows, error: startersError } = await supabase
+      .from("match_period_starters")
+      .select("player_id")
+      .in("period_id", periodIds)
+      .in("player_id", playerIds);
+
+    if (startersError) return { data: [], error: startersError.message };
+
+    for (const row of starterRows ?? []) {
+      const entry = byPlayer.get(row.player_id);
+      if (entry) entry.periodsPlayed += 1;
+    }
+  }
 
   return {
-    data: data.map((row) => ({
-      playerId: row.player.id,
-      name: `${row.player.first_name} ${row.player.last_name}`,
-      goals: row.goals,
-    })),
+    data: [...byPlayer.values()].sort((a, b) => b.goals - a.goals),
     error: null,
   };
 }
