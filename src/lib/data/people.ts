@@ -66,6 +66,7 @@ export async function listPeople(): Promise<{
         )
       )`,
     )
+    .neq("account_status", "disabled")
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -246,6 +247,67 @@ export async function updatePerson(
     return { data: null, error: error.message };
   }
   return { data, error: null };
+}
+
+/**
+ * Soft-delete a person: deactivate all roles, revoke open invites, and mark
+ * account_status disabled so they leave the directory while historic links stay.
+ */
+export async function deletePerson(
+  id: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { data: person, error: loadError } = await getPerson(id);
+  if (loadError) return { error: loadError };
+  if (!person) return { error: "Person not found." };
+
+  for (const row of person.players) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("players")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.coaches) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("coaches")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.guardians) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("guardians")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.managers) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("managers")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+
+  const { error: inviteError } = await supabase
+    .from("person_invitations")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("person_id", id)
+    .is("accepted_at", null)
+    .is("revoked_at", null);
+  if (inviteError) return { error: inviteError.message };
+
+  const { error } = await supabase
+    .from("people")
+    .update({ account_status: "disabled" })
+    .eq("id", id);
+  return { error: error?.message ?? null };
 }
 
 export async function linkRoleToPerson(input: {

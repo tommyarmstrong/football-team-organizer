@@ -11,12 +11,14 @@ import { playerDisplayName } from "@/lib/format";
 import type { PlayerWithPerson } from "@/lib/data/players";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import { objectListRowClassName } from "@/components/shared/object-list";
+import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamRosterSection({
@@ -70,9 +72,7 @@ export function TeamRosterSection({
                 <span className="text-muted-foreground shrink-0">
                   {entry.position ?? "No position"}
                 </span>
-                <span className="text-muted-foreground shrink-0">
-                  {entry.active ? "Active" : "Inactive"}
-                </span>
+                <RoleChip>{entry.active ? "Active" : "Inactive"}</RoleChip>
               </Link>
               {canEdit ? (
                 <div className="flex items-center pr-2">
@@ -137,6 +137,19 @@ function AddRosterPlayerForm({
             value: player.id,
             label: playerDisplayName(player),
           }))}
+        />
+      </div>
+      <div className="space-y-2 sm:w-24">
+        <Label htmlFor="roster-shirt">Shirt #</Label>
+        <Input
+          id="roster-shirt"
+          name="shirt_number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          disabled={pending}
+          placeholder="Optional"
+          className="tabular-nums"
         />
       </div>
       <Button type="submit" disabled={pending}>

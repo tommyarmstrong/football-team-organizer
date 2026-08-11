@@ -255,7 +255,7 @@ export async function updateRosterEntryAction(
 
   await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
-  return { success: "Squad details saved." };
+  return { success: "ok" };
 }
 
 export async function removePlayerFromTeamAction(

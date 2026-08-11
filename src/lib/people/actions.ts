@@ -25,6 +25,7 @@ import {
 } from "@/lib/data/managers";
 import {
   createPerson,
+  deletePerson,
   getPerson,
   linkRoleToPerson,
   updatePerson,
@@ -76,6 +77,32 @@ export async function createPersonAction(
 
   revalidatePeople(data.id);
   redirect(`/people/${data.id}`);
+}
+
+export async function deletePersonAction(id: string): Promise<ActionState> {
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+
+  const club = await getPrimaryClub();
+  if (!club || !canManageClub(ctx, club.id)) {
+    return { error: "Only club management can delete people." };
+  }
+
+  const { data: existing, error: loadError } = await getPerson(id);
+  if (loadError) return { error: loadError };
+  if (!existing) return { error: "Person not found." };
+
+  if (existing.auth_user_id === ctx.userId) {
+    return { error: "You cannot delete your own person record." };
+  }
+
+  const { error } = await deletePerson(id);
+  if (error) return { error };
+
+  revalidatePeople();
+  revalidatePath("/team");
+  revalidatePath("/club");
+  redirect("/people");
 }
 
 export async function updatePersonAction(
