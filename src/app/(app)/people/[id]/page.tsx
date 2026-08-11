@@ -22,6 +22,7 @@ import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
+import { DeletePersonButton } from "@/components/people/delete-person-button";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
 import { PersonInvitationPanel } from "@/components/people/person-admin-panels";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
@@ -234,10 +235,15 @@ export default async function PersonDetailPage({
         }
         actions={
           canEdit || self ? (
-            <EditIconLink
-              href={`/people/${person.id}/edit`}
-              label="Edit person"
-            />
+            <>
+              <EditIconLink
+                href={`/people/${person.id}/edit`}
+                label="Edit person"
+              />
+              {canEdit && !self ? (
+                <DeletePersonButton personId={person.id} />
+              ) : null}
+            </>
           ) : undefined
         }
       />

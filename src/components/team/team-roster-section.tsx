@@ -6,12 +6,15 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addRosterPlayerAction,
   removePlayerFromTeamAction,
+  updateRosterEntryAction,
 } from "@/lib/players/actions";
 import { playerDisplayName } from "@/lib/format";
 import type { PlayerWithPerson } from "@/lib/data/players";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
@@ -55,8 +58,10 @@ export function TeamRosterSection({
           defaultPageSize={20}
           emptyFilterTitle="No players match"
           emptyFilterDescription="Try a different name, or clear the filter."
-          renderItem={(entry) => (
-            <div className="flex items-stretch">
+          renderItem={(entry) =>
+            canEdit ? (
+              <EditableRosterRow entry={entry} />
+            ) : (
               <Link
                 href={`/people/${entry.person_id}`}
                 className={objectListRowClassName()}
@@ -74,24 +79,91 @@ export function TeamRosterSection({
                   {entry.active ? "Active" : "Inactive"}
                 </span>
               </Link>
-              {canEdit ? (
-                <div className="flex items-center pr-2">
-                  <ListUnlinkButton
-                    label={`Remove ${playerDisplayName(entry)} from squad`}
-                    confirmMessage={`Remove ${playerDisplayName(entry)} from this squad?`}
-                    unlinkAction={() =>
-                      removePlayerFromTeamAction(entry.team_player_id, entry.id)
-                    }
-                  />
-                </div>
-              ) : null}
-            </div>
-          )}
+            )
+          }
         />
       )}
 
       {canEdit ? (
         <AddRosterPlayerForm teamId={teamId} candidates={candidates} />
+      ) : null}
+    </div>
+  );
+}
+
+function EditableRosterRow({ entry }: { entry: RosterPlayer }) {
+  const bound = updateRosterEntryAction.bind(
+    null,
+    entry.team_player_id,
+    entry.id,
+  );
+  const [state, formAction, pending] = useActionState(
+    bound,
+    INITIAL_ACTION_STATE,
+  );
+
+  return (
+    <div className="space-y-2 px-4 py-3">
+      <form
+        action={formAction}
+        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      >
+        <div className="space-y-2 sm:w-20">
+          <Label htmlFor={`shirt-${entry.team_player_id}`}>Shirt #</Label>
+          <Input
+            id={`shirt-${entry.team_player_id}`}
+            name="shirt_number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            defaultValue={entry.shirt_number ?? ""}
+            disabled={pending}
+            placeholder="—"
+            className="tabular-nums"
+          />
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <Label>Player</Label>
+          <Link
+            href={`/people/${entry.person_id}`}
+            className="flex h-8 items-center truncate font-medium underline-offset-4 hover:underline"
+          >
+            {playerDisplayName(entry)}
+            <span className="text-muted-foreground ml-2 font-normal">
+              {entry.position ?? "No position"}
+            </span>
+          </Link>
+        </div>
+        <div className="space-y-2 sm:w-32">
+          <Label htmlFor={`active-${entry.team_player_id}`}>Status</Label>
+          <NativeSelect
+            id={`active-${entry.team_player_id}`}
+            name="active"
+            defaultValue={entry.active ? "true" : "false"}
+            disabled={pending}
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </NativeSelect>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button type="submit" disabled={pending} size="sm" variant="outline">
+            {pending ? "Saving…" : "Save"}
+          </Button>
+          <ListUnlinkButton
+            label={`Remove ${playerDisplayName(entry)} from squad`}
+            confirmMessage={`Remove ${playerDisplayName(entry)} from this squad?`}
+            unlinkAction={() =>
+              removePlayerFromTeamAction(entry.team_player_id, entry.id)
+            }
+          />
+        </div>
+      </form>
+      {state.error ? <ErrorBanner message={state.error} /> : null}
+      {state.success ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          {state.success}
+        </p>
       ) : null}
     </div>
   );
@@ -137,6 +209,19 @@ function AddRosterPlayerForm({
             value: player.id,
             label: playerDisplayName(player),
           }))}
+        />
+      </div>
+      <div className="space-y-2 sm:w-24">
+        <Label htmlFor="roster-shirt">Shirt #</Label>
+        <Input
+          id="roster-shirt"
+          name="shirt_number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          disabled={pending}
+          placeholder="Optional"
+          className="tabular-nums"
         />
       </div>
       <Button type="submit" disabled={pending}>
