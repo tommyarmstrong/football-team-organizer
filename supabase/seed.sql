@@ -14,17 +14,16 @@
 --   - 6 England Men 1966 matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
 --   - 5 England Men Euro 96 matches (Switzerland, Scotland, Netherlands, Spain, Germany) — historical
 --   - 8 England Men World Cup 2026 matches (Croatia, Ghana, Panama, DR Congo, Mexico, Norway,
---     Argentina, France) — group + knockout through QF historical/reported; SF + final projected
+--     Argentina, France) — historical / publicly reported throughout (3rd place finish)
 --   - 6 England Women matches (Austria, Norway, Northern Ireland, Spain, Sweden, Germany)
 --   - Match periods (halves; extra time on AET ties) linked on every match
 --   - Goals with period, minute, and assist where applicable
 --   - Sample disciplinary cards on selected fixtures
 --   - Coach's player of the match on England Women Euro 2022 fixtures (UEFA POTM)
 --
--- Historical vs projected (World Cup 2026):
---   Historical / publicly reported: Tuchel; 26-man squad (Chalobah #12 after Livramento injury);
---   Group L results; R32/R16/QF results and venues.
---   Counterfactual (seed requires result = champions): SF win vs Argentina and final win vs France.
+-- World Cup 2026 (public results): Tuchel; 26-man squad (Chalobah #12 after Livramento injury);
+-- Group L; knockout through QF; SF loss 1-2 to Argentina (Atlanta); bronze win 6-4 vs France
+-- (Hard Rock Stadium); competition result third_place.
 --
 -- AFTER SEEDING (initial admin):
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
@@ -2699,13 +2698,10 @@ on conflict (id) do update set
 -- ---------------------------------------------------------------------------
 -- England Men: FIFA World Cup 2026
 -- ---------------------------------------------------------------------------
--- Historical / publicly reported: Thomas Tuchel head coach; final 26-man squad
--- (Chalobah replaced injured Livramento at No.12); Group L fixtures and results
--- vs Croatia, Ghana, Panama; knockout results through the quarter-final
--- (DR Congo, Mexico, Norway aet).
--- Counterfactual (user requirement: competition result Champions): semi-final
--- and final path invented — England beat Argentina then France to lift the
--- trophy. Documented so reseed consumers can distinguish projected outcomes.
+-- Public results: Thomas Tuchel head coach; final 26-man squad (Chalobah #12
+-- after Livramento injury); Group L; knockout through QF (DR Congo, Mexico,
+-- Norway aet); SF loss 1-2 vs Argentina (Atlanta, 15 Jul); bronze win 6-4 vs
+-- France (Hard Rock Stadium, 18 Jul); competition result third_place.
 
 -- Head coach: Thomas Tuchel.
 insert into public.people (id, first_name, last_name, account_status)
@@ -2728,7 +2724,7 @@ values (
   'e0000001-0000-4000-8000-000000000007',
   '2025-01-01',
   true, true, true,
-  'Thomas Tuchel (born 29 August 1973) became England head coach in 2025. A Champions League-winning club manager with Chelsea and Paris Saint-Germain, he guided England through a perfect World Cup qualifying campaign and into the 2026 finals in North America.'
+  'Thomas Tuchel (born 29 August 1973) became England head coach in 2025. A Champions League-winning club manager with Chelsea and Paris Saint-Germain, he guided England to a third-place finish at the 2026 FIFA World Cup in North America.'
 )
 on conflict (id) do update set
   club_id = excluded.club_id,
@@ -2846,7 +2842,7 @@ on conflict (team_id, player_id) do update set
   shirt_number = excluded.shirt_number,
   active = excluded.active;
 
--- World Cup 2025/26 competition for England Men (result: champions — counterfactual final path).
+-- World Cup 2025/26 competition for England Men (result: third_place).
 insert into public.competitions (
   id, team_id, name, kind, season, knockout, age_group, gender,
   players_per_team, periods, minutes_per_period, result, venue_mode, venue_id, notes
@@ -2863,10 +2859,10 @@ values (
   11,
   '2',
   45,
-  'champions',
+  'third_place',
   'multiple',
   null,
-  'Group + knockout through QF use reported 2026 results; SF vs Argentina and final vs France are projected champion-path fixtures.'
+  'Public 2026 results: SF loss to Argentina; bronze medal win vs France.'
 )
 on conflict (id) do update set
   team_id = excluded.team_id,
@@ -2967,24 +2963,24 @@ values
     'bbbbbbbb-bbbb-cccc-dddd-000000002026',
     'Argentina',
     '2026-07-15',
-    '15:00',
+    '20:00',
     'home',
     'a0000030-0000-4000-8000-000000000030',
     'd0000001-0000-4000-8000-000000000004',
     'played',
-    'Semi-final — projected champion path (counterfactual)'
+    'Semi-final — England 1-2 Argentina — Mercedes-Benz Stadium, Atlanta'
   ),
   (
     'e0000004-0000-4000-8000-000000000008',
     'bbbbbbbb-bbbb-cccc-dddd-000000002026',
     'France',
-    '2026-07-19',
-    '15:00',
-    'home',
+    '2026-07-18',
+    '22:00',
+    'away',
     'a0000032-0000-4000-8000-000000000032',
     'd0000001-0000-4000-8000-000000000004',
     'played',
-    'Final — projected champion path (counterfactual)'
+    'Third-place play-off — France 4-6 England — Hard Rock Stadium, Miami'
   )
 on conflict (id) do update set
   team_id = excluded.team_id,
@@ -3028,13 +3024,18 @@ values
   ('a2000004-0000-4000-8000-000000000071', 'e0000004-0000-4000-8000-000000000007', 'First half', 50),
   ('a2000004-0000-4000-8000-000000000072', 'e0000004-0000-4000-8000-000000000007', 'Second half', 60),
   ('a2000004-0000-4000-8000-000000000081', 'e0000004-0000-4000-8000-000000000008', 'First half', 50),
-  ('a2000004-0000-4000-8000-000000000082', 'e0000004-0000-4000-8000-000000000008', 'Second half', 60),
-  ('a2000004-0000-4000-8000-000000000083', 'e0000004-0000-4000-8000-000000000008', 'Extra time 1', 80),
-  ('a2000004-0000-4000-8000-000000000084', 'e0000004-0000-4000-8000-000000000008', 'Extra time 2', 90)
+  ('a2000004-0000-4000-8000-000000000082', 'e0000004-0000-4000-8000-000000000008', 'Second half', 60)
 on conflict (id) do update set
   match_id = excluded.match_id,
   name = excluded.name,
   sort_order = excluded.sort_order;
+
+-- Drop leftover extra-time period ids from earlier seed revisions.
+delete from public.match_periods
+where id in (
+  'a2000004-0000-4000-8000-000000000083',
+  'a2000004-0000-4000-8000-000000000084'
+);
 
 -- England Men World Cup 2026 goals.
 insert into public.goals (
@@ -3234,11 +3235,11 @@ values
   (
     'f0000004-0000-4000-8000-000000000014',
     'e0000004-0000-4000-8000-000000000007',
-    'a0000004-0000-4000-8000-000000000009',
-    'a0000004-0000-4000-8000-000000000010',
-    'a2000004-0000-4000-8000-000000000071',
-    'First half',
-    34,
+    'a0000004-0000-4000-8000-000000000018', -- Anthony Gordon
+    'a0000004-0000-4000-8000-000000000017', -- Morgan Rogers
+    'a2000004-0000-4000-8000-000000000072',
+    'Second half',
+    55,
     false
   ),
   (
@@ -3248,47 +3249,118 @@ values
     null,
     'a2000004-0000-4000-8000-000000000072',
     'Second half',
-    55,
+    85,
     true
   ),
   (
     'f0000004-0000-4000-8000-000000000016',
     'e0000004-0000-4000-8000-000000000007',
-    'a0000004-0000-4000-8000-000000000007',
-    'a0000004-0000-4000-8000-000000000004',
+    null,
+    null,
     'a2000004-0000-4000-8000-000000000072',
     'Second half',
-    71,
-    false
+    92,
+    true
   ),
+  -- Third-place play-off: France 4-6 England
   (
     'f0000004-0000-4000-8000-000000000017',
     'e0000004-0000-4000-8000-000000000008',
-    'a0000004-0000-4000-8000-000000000010',
-    'a0000004-0000-4000-8000-000000000007',
+    'a0000004-0000-4000-8000-000000000004', -- Declan Rice
+    null,
     'a2000004-0000-4000-8000-000000000081',
     'First half',
-    28,
+    3,
     false
   ),
   (
     'f0000004-0000-4000-8000-000000000018',
     'e0000004-0000-4000-8000-000000000008',
-    null,
-    null,
-    'a2000004-0000-4000-8000-000000000082',
-    'Second half',
-    61,
-    true
+    'a0000004-0000-4000-8000-000000000002', -- Ezri Konsa
+    'a0000004-0000-4000-8000-000000000004', -- Rice (corner)
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    18,
+    false
   ),
   (
     'f0000004-0000-4000-8000-000000000019',
     'e0000004-0000-4000-8000-000000000008',
-    'a0000004-0000-4000-8000-000000000009',
-    'a0000004-0000-4000-8000-000000000010',
-    'a2000004-0000-4000-8000-000000000083',
-    'Extra time 1',
-    102,
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka
+    'a0000004-0000-4000-8000-000000000011', -- Marcus Rashford
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    37,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001a',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka
+    'a0000004-0000-4000-8000-000000000021', -- Eberechi Eze
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    46,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001b',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    48,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001c',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    54,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001d',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    66,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001e',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka (pen)
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    87,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001f',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    96,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000020',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000010', -- Jude Bellingham
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    98,
     false
   )
 on conflict (id) do update set
@@ -3299,6 +3371,27 @@ on conflict (id) do update set
   period = excluded.period,
   minute = excluded.minute,
   is_opposition = excluded.is_opposition;
+
+update public.goals
+set is_penalty = true
+where id = 'f0000004-0000-4000-8000-00000000001e';
+
+update public.goals
+set is_penalty = false
+where id in (
+  'f0000004-0000-4000-8000-000000000014',
+  'f0000004-0000-4000-8000-000000000015',
+  'f0000004-0000-4000-8000-000000000016',
+  'f0000004-0000-4000-8000-000000000017',
+  'f0000004-0000-4000-8000-000000000018',
+  'f0000004-0000-4000-8000-000000000019',
+  'f0000004-0000-4000-8000-00000000001a',
+  'f0000004-0000-4000-8000-00000000001b',
+  'f0000004-0000-4000-8000-00000000001c',
+  'f0000004-0000-4000-8000-00000000001d',
+  'f0000004-0000-4000-8000-00000000001f',
+  'f0000004-0000-4000-8000-000000000020'
+);
 
 -- Sample disciplinary cards (World Cup 2026).
 insert into public.cards (
@@ -3317,22 +3410,11 @@ values
   (
     'ca000004-0000-4000-8000-000000000002',
     'e0000004-0000-4000-8000-000000000007',
-    'a0000004-0000-4000-8000-000000000004', -- Declan Rice
+    'a0000004-0000-4000-8000-000000000008', -- Elliot Anderson
     null, null,
     'yellow_1st',
-    'Booked in the semi-final.',
+    'Booked in the semi-final (37'').',
     null, null
-  ),
-  (
-    'ca000004-0000-4000-8000-000000000003',
-    'e0000004-0000-4000-8000-000000000008',
-    null,
-    'c0000001-0000-4000-8000-000000000007', -- Thomas Tuchel
-    null,
-    'other',
-    null,
-    'Spoken to by referee about bench conduct.',
-    'Logged for club records.'
   )
 on conflict (id) do update set
   match_id = excluded.match_id,
@@ -3344,43 +3426,57 @@ on conflict (id) do update set
   referee_notes = excluded.referee_notes,
   club_notes = excluded.club_notes;
 
--- Match-day squad for the World Cup final (starting XI).
+-- Remove previously seeded bench card id if present.
+delete from public.cards
+where id = 'ca000004-0000-4000-8000-000000000003';
+
+-- Match-day squad for the semi-final (starting XI).
 delete from public.match_players
-where match_id = 'e0000004-0000-4000-8000-000000000008'
-  and player_id in (
-    'a0000004-0000-4000-8000-000000000001',
-    'a0000004-0000-4000-8000-000000000002',
-    'a0000004-0000-4000-8000-000000000005',
-    'a0000004-0000-4000-8000-000000000006',
-    'a0000004-0000-4000-8000-000000000003',
-    'a0000004-0000-4000-8000-000000000004',
-    'a0000004-0000-4000-8000-000000000008',
-    'a0000004-0000-4000-8000-000000000007',
-    'a0000004-0000-4000-8000-000000000010',
-    'a0000004-0000-4000-8000-000000000018',
-    'a0000004-0000-4000-8000-000000000009'
-  );
+where match_id = 'e0000004-0000-4000-8000-000000000007';
 
 insert into public.match_players (id, match_id, player_id)
 values
-  ('a1000004-0000-4000-8000-000000000001', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000001'),
-  ('a1000004-0000-4000-8000-000000000002', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000002'),
-  ('a1000004-0000-4000-8000-000000000003', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000005'),
-  ('a1000004-0000-4000-8000-000000000004', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000006'),
-  ('a1000004-0000-4000-8000-000000000005', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000003'),
-  ('a1000004-0000-4000-8000-000000000006', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000004'),
-  ('a1000004-0000-4000-8000-000000000007', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000008'),
-  ('a1000004-0000-4000-8000-000000000008', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000007'),
-  ('a1000004-0000-4000-8000-000000000009', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000010'),
-  ('a1000004-0000-4000-8000-000000000010', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000018'),
-  ('a1000004-0000-4000-8000-000000000011', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000009')
+  ('a1000004-0000-4000-8000-000000000101', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000001'), -- Pickford
+  ('a1000004-0000-4000-8000-000000000102', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000004'), -- Rice
+  ('a1000004-0000-4000-8000-000000000103', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000005'), -- Stones
+  ('a1000004-0000-4000-8000-000000000104', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000006'), -- Guehi
+  ('a1000004-0000-4000-8000-000000000105', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000008'), -- Anderson
+  ('a1000004-0000-4000-8000-000000000106', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000009'), -- Kane
+  ('a1000004-0000-4000-8000-000000000107', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000010'), -- Bellingham
+  ('a1000004-0000-4000-8000-000000000108', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000017'), -- Rogers
+  ('a1000004-0000-4000-8000-000000000109', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000018'), -- Gordon
+  ('a1000004-0000-4000-8000-00000000010a', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000024'), -- James
+  ('a1000004-0000-4000-8000-00000000010b', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000025')  -- Spence
 on conflict (id) do update set
   match_id = excluded.match_id,
   player_id = excluded.player_id;
 
--- Starting XI for each period of the World Cup final.
+-- Match-day squad for the third-place play-off (starting XI).
+delete from public.match_players
+where match_id = 'e0000004-0000-4000-8000-000000000008';
+
+insert into public.match_players (id, match_id, player_id)
+values
+  ('a1000004-0000-4000-8000-000000000001', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000013'), -- Henderson
+  ('a1000004-0000-4000-8000-000000000002', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000002'), -- Konsa
+  ('a1000004-0000-4000-8000-000000000003', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000004'), -- Rice
+  ('a1000004-0000-4000-8000-000000000004', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000006'), -- Guehi
+  ('a1000004-0000-4000-8000-000000000005', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000007'), -- Saka
+  ('a1000004-0000-4000-8000-000000000006', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000011'), -- Rashford
+  ('a1000004-0000-4000-8000-000000000007', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000017'), -- Rogers
+  ('a1000004-0000-4000-8000-000000000008', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000021'), -- Eze
+  ('a1000004-0000-4000-8000-000000000009', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000022'), -- Toney
+  ('a1000004-0000-4000-8000-00000000000a', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000025'), -- Spence
+  ('a1000004-0000-4000-8000-00000000000b', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000026')  -- Quansah
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id;
+
+-- Starting XI for each period of the semi-final.
 delete from public.match_period_starters
 where period_id in (
+  'a2000004-0000-4000-8000-000000000071',
+  'a2000004-0000-4000-8000-000000000072',
   'a2000004-0000-4000-8000-000000000081',
   'a2000004-0000-4000-8000-000000000082',
   'a2000004-0000-4000-8000-000000000083',
@@ -3391,24 +3487,46 @@ insert into public.match_period_starters (period_id, player_id)
 select period_id, player_id
 from (
   values
-    ('a2000004-0000-4000-8000-000000000081'::uuid),
-    ('a2000004-0000-4000-8000-000000000082'::uuid),
-    ('a2000004-0000-4000-8000-000000000083'::uuid),
-    ('a2000004-0000-4000-8000-000000000084'::uuid)
+    ('a2000004-0000-4000-8000-000000000071'::uuid),
+    ('a2000004-0000-4000-8000-000000000072'::uuid)
 ) as periods(period_id)
 cross join (
   values
     ('a0000004-0000-4000-8000-000000000001'::uuid),
-    ('a0000004-0000-4000-8000-000000000002'::uuid),
+    ('a0000004-0000-4000-8000-000000000004'::uuid),
     ('a0000004-0000-4000-8000-000000000005'::uuid),
     ('a0000004-0000-4000-8000-000000000006'::uuid),
-    ('a0000004-0000-4000-8000-000000000003'::uuid),
-    ('a0000004-0000-4000-8000-000000000004'::uuid),
     ('a0000004-0000-4000-8000-000000000008'::uuid),
-    ('a0000004-0000-4000-8000-000000000007'::uuid),
+    ('a0000004-0000-4000-8000-000000000009'::uuid),
     ('a0000004-0000-4000-8000-000000000010'::uuid),
+    ('a0000004-0000-4000-8000-000000000017'::uuid),
     ('a0000004-0000-4000-8000-000000000018'::uuid),
-    ('a0000004-0000-4000-8000-000000000009'::uuid)
+    ('a0000004-0000-4000-8000-000000000024'::uuid),
+    ('a0000004-0000-4000-8000-000000000025'::uuid)
+) as squad(player_id)
+on conflict (period_id, player_id) do nothing;
+
+-- Starting XI for each period of the third-place play-off.
+insert into public.match_period_starters (period_id, player_id)
+select period_id, player_id
+from (
+  values
+    ('a2000004-0000-4000-8000-000000000081'::uuid),
+    ('a2000004-0000-4000-8000-000000000082'::uuid)
+) as periods(period_id)
+cross join (
+  values
+    ('a0000004-0000-4000-8000-000000000013'::uuid),
+    ('a0000004-0000-4000-8000-000000000002'::uuid),
+    ('a0000004-0000-4000-8000-000000000004'::uuid),
+    ('a0000004-0000-4000-8000-000000000006'::uuid),
+    ('a0000004-0000-4000-8000-000000000007'::uuid),
+    ('a0000004-0000-4000-8000-000000000011'::uuid),
+    ('a0000004-0000-4000-8000-000000000017'::uuid),
+    ('a0000004-0000-4000-8000-000000000021'::uuid),
+    ('a0000004-0000-4000-8000-000000000022'::uuid),
+    ('a0000004-0000-4000-8000-000000000025'::uuid),
+    ('a0000004-0000-4000-8000-000000000026'::uuid)
 ) as squad(player_id)
 on conflict (period_id, player_id) do nothing;
 
