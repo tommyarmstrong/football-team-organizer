@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -17,11 +17,13 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { EditIconButton } from "@/components/shared/edit-icon-control";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function PlayerTeamsSection({
@@ -48,20 +50,22 @@ export function PlayerTeamsSection({
         />
       ) : (
         <ul className={objectListClassName}>
-          {memberships.map((membership) => (
-            <li key={membership.team_player_id}>
-              {canEdit ? (
-                <EditableMembershipRow
-                  playerId={playerId}
-                  membership={membership}
-                />
-              ) : (
-                <div className="flex items-stretch">
-                  <OpenTeamRow membership={membership} />
-                </div>
-              )}
-            </li>
-          ))}
+          {memberships.map((membership) =>
+            canEdit ? (
+              <MembershipRow
+                key={membership.team_player_id}
+                playerId={playerId}
+                membership={membership}
+              />
+            ) : (
+              <li
+                key={membership.team_player_id}
+                className="flex items-stretch"
+              >
+                <OpenTeamRow membership={membership} />
+              </li>
+            ),
+          )}
         </ul>
       )}
 
@@ -69,6 +73,17 @@ export function PlayerTeamsSection({
         <AddToTeamForm playerId={playerId} availableTeams={availableTeams} />
       ) : null}
     </div>
+  );
+}
+
+function MembershipChips({ membership }: { membership: PlayerTeamMembership }) {
+  return (
+    <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+      {membership.shirt_number != null ? (
+        <RoleChip>#{membership.shirt_number}</RoleChip>
+      ) : null}
+      <RoleChip>{membership.active ? "Active" : "Inactive"}</RoleChip>
+    </span>
   );
 }
 
@@ -91,24 +106,72 @@ function OpenTeamRow({ membership }: { membership: PlayerTeamMembership }) {
       <span className="min-w-0 flex-1 truncate font-medium">
         {membership.team_name}
       </span>
-      <span className="text-muted-foreground shrink-0 tabular-nums">
-        {membership.shirt_number != null
-          ? `#${membership.shirt_number}`
-          : "No shirt #"}
-      </span>
-      <span className="text-muted-foreground shrink-0">
-        {membership.active ? "Active" : "Inactive"}
-      </span>
+      <MembershipChips membership={membership} />
     </button>
   );
 }
 
-function EditableMembershipRow({
+function MembershipRow({
   playerId,
   membership,
 }: {
   playerId: string;
   membership: PlayerTeamMembership;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <li className="space-y-3 px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="min-w-0 truncate text-sm font-medium">
+            {membership.team_name}
+          </span>
+          <ListUnlinkButton
+            label={`Remove from ${membership.team_name}`}
+            confirmMessage="Remove this player from the team?"
+            unlinkAction={() =>
+              removePlayerFromTeamAction(membership.team_player_id, playerId)
+            }
+          />
+        </div>
+        <EditMembershipForm
+          playerId={playerId}
+          membership={membership}
+          onCancel={() => setEditing(false)}
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-stretch">
+      <OpenTeamRow membership={membership} />
+      <div className="flex items-center gap-1 pr-2">
+        <EditIconButton
+          label={`Edit ${membership.team_name} squad details`}
+          onClick={() => setEditing(true)}
+        />
+        <ListUnlinkButton
+          label={`Remove from ${membership.team_name}`}
+          confirmMessage="Remove this player from the team?"
+          unlinkAction={() =>
+            removePlayerFromTeamAction(membership.team_player_id, playerId)
+          }
+        />
+      </div>
+    </li>
+  );
+}
+
+function EditMembershipForm({
+  playerId,
+  membership,
+  onCancel,
+}: {
+  playerId: string;
+  membership: PlayerTeamMembership;
+  onCancel: () => void;
 }) {
   const bound = updateRosterEntryAction.bind(
     null,
@@ -119,81 +182,65 @@ function EditableMembershipRow({
     bound,
     INITIAL_ACTION_STATE,
   );
-  const router = useRouter();
-  const [openPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (state.success) onCancel();
+  }, [state.success, onCancel]);
 
   return (
-    <div className="space-y-2 px-4 py-3">
-      <form
-        action={formAction}
-        className="flex flex-col gap-3 sm:flex-row sm:items-end"
-      >
-        <div className="min-w-0 flex-1 space-y-2">
-          <Label>Team</Label>
-          <button
-            type="button"
-            disabled={openPending}
-            onClick={() => {
-              startTransition(async () => {
-                await setActiveTeamAction(membership.team_id);
-                router.push("/team");
-              });
-            }}
-            className="flex h-8 w-full items-center truncate text-left font-medium underline-offset-4 hover:underline disabled:opacity-60"
-          >
-            {membership.team_name}
-          </button>
+    <form
+      action={formAction}
+      className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+    >
+      <div className="space-y-2 sm:w-24">
+        <Label htmlFor={`edit-shirt-${membership.team_player_id}`}>
+          Shirt #
+        </Label>
+        <Input
+          id={`edit-shirt-${membership.team_player_id}`}
+          name="shirt_number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          defaultValue={membership.shirt_number ?? ""}
+          disabled={pending}
+          placeholder="Optional"
+          className="tabular-nums"
+        />
+      </div>
+      <div className="space-y-2 sm:w-36">
+        <Label htmlFor={`edit-active-${membership.team_player_id}`}>
+          Status
+        </Label>
+        <NativeSelect
+          id={`edit-active-${membership.team_player_id}`}
+          name="active"
+          defaultValue={membership.active ? "true" : "false"}
+          disabled={pending}
+        >
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </NativeSelect>
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+      {state.error ? (
+        <div className="w-full sm:basis-full">
+          <ErrorBanner message={state.error} />
         </div>
-        <div className="space-y-2 sm:w-20">
-          <Label htmlFor={`player-shirt-${membership.team_player_id}`}>
-            Shirt #
-          </Label>
-          <Input
-            id={`player-shirt-${membership.team_player_id}`}
-            name="shirt_number"
-            inputMode="numeric"
-            min={1}
-            step={1}
-            defaultValue={membership.shirt_number ?? ""}
-            disabled={pending}
-            placeholder="—"
-            className="tabular-nums"
-          />
-        </div>
-        <div className="space-y-2 sm:w-32">
-          <Label htmlFor={`player-active-${membership.team_player_id}`}>
-            Status
-          </Label>
-          <NativeSelect
-            id={`player-active-${membership.team_player_id}`}
-            name="active"
-            defaultValue={membership.active ? "true" : "false"}
-            disabled={pending}
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </NativeSelect>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button type="submit" disabled={pending} size="sm" variant="outline">
-            {pending ? "Saving…" : "Save"}
-          </Button>
-          <ListUnlinkButton
-            label={`Remove from ${membership.team_name}`}
-            confirmMessage="Remove this player from the team?"
-            unlinkAction={() =>
-              removePlayerFromTeamAction(membership.team_player_id, playerId)
-            }
-          />
-        </div>
-      </form>
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
       ) : null}
-    </div>
+    </form>
   );
 }
 
