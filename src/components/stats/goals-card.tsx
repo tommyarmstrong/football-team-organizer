@@ -173,9 +173,9 @@ export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
                   {metricLabel} by player: {summary}
                 </figcaption>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[16rem] text-left text-sm">
+                  <table className="w-full min-w-[20rem] text-left text-sm">
                     <caption className="sr-only">
-                      {metricLabel} by player
+                      Goals and goals per game by player
                     </caption>
                     <thead>
                       <tr className="border-border text-muted-foreground border-b">
@@ -184,9 +184,15 @@ export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
                         </th>
                         <th
                           scope="col"
+                          className="py-2 pr-3 font-medium tabular-nums"
+                        >
+                          Goals
+                        </th>
+                        <th
+                          scope="col"
                           className="py-2 font-medium tabular-nums"
                         >
-                          {metricLabel}
+                          Goals per game
                         </th>
                       </tr>
                     </thead>
@@ -197,8 +203,11 @@ export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
                           className="border-border/60 border-b"
                         >
                           <td className="py-2 pr-3">{row.name}</td>
+                          <td className="py-2 pr-3 tabular-nums">
+                            {row.goalsDisplay}
+                          </td>
                           <td className="py-2 tabular-nums">
-                            {row.displayValue}
+                            {row.goalsPerGameDisplay}
                           </td>
                         </tr>
                       ))}

@@ -18,10 +18,12 @@ export function PlayerCountChart({
   data,
   metricLabel,
   ariaTitle,
+  perGameLabel,
 }: {
   data: PlayerCountPoint[];
   metricLabel: string;
   ariaTitle: string;
+  perGameLabel?: string;
 }) {
   const summary = data.map((row) => `${row.name}: ${row.count}`).join("; ");
 
@@ -61,25 +63,52 @@ export function PlayerCountChart({
         {metricLabel} by player: {summary}
       </figcaption>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[16rem] text-left text-sm">
-          <caption className="sr-only">{metricLabel} by player</caption>
+        <table
+          className={`w-full text-left text-sm ${perGameLabel ? "min-w-[20rem]" : "min-w-[16rem]"}`}
+        >
+          <caption className="sr-only">
+            {perGameLabel
+              ? `${metricLabel} and ${perGameLabel.toLowerCase()} by player`
+              : `${metricLabel} by player`}
+          </caption>
           <thead>
             <tr className="border-border text-muted-foreground border-b">
               <th scope="col" className="py-2 pr-3 font-medium">
                 Player
               </th>
-              <th scope="col" className="py-2 font-medium tabular-nums">
+              <th
+                scope="col"
+                className={`py-2 font-medium tabular-nums ${perGameLabel ? "pr-3" : ""}`}
+              >
                 {metricLabel}
               </th>
+              {perGameLabel ? (
+                <th scope="col" className="py-2 font-medium tabular-nums">
+                  {perGameLabel}
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => (
-              <tr key={row.playerId} className="border-border/60 border-b">
-                <td className="py-2 pr-3">{row.name}</td>
-                <td className="py-2 tabular-nums">{row.count}</td>
-              </tr>
-            ))}
+            {data.map((row) => {
+              const perGame =
+                row.matchesPlayed != null && row.matchesPlayed > 0
+                  ? (row.count / row.matchesPlayed).toFixed(2)
+                  : "—";
+              return (
+                <tr key={row.playerId} className="border-border/60 border-b">
+                  <td className="py-2 pr-3">{row.name}</td>
+                  <td
+                    className={`py-2 tabular-nums ${perGameLabel ? "pr-3" : ""}`}
+                  >
+                    {row.count}
+                  </td>
+                  {perGameLabel ? (
+                    <td className="py-2 tabular-nums">{perGame}</td>
+                  ) : null}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

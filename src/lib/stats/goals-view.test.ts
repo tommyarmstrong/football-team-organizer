@@ -105,6 +105,19 @@ describe("buildGoalsViewRows", () => {
       "Dee None",
     ]);
   });
+
+  it("always includes goals and goals-per-game table values", () => {
+    const rows = buildGoalsViewRows(sample, ["ALL"], "total");
+    expect(rows[0]).toMatchObject({
+      name: "Ada Mid",
+      goalsDisplay: "6",
+      goalsPerGameDisplay: "2.00",
+    });
+    expect(rows.find((row) => row.name === "Cal Def")).toMatchObject({
+      goalsDisplay: "2",
+      goalsPerGameDisplay: "—",
+    });
+  });
 });
 
 describe("formatGoalsMetricValue", () => {
