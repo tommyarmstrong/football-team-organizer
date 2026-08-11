@@ -109,9 +109,7 @@ export function TeamSwitcher({
   if (teams.length < 2) return null;
 
   const activeTeam = teams.find((team) => team.id === activeTeamId) ?? null;
-  const activeName = activeTeam
-    ? teamSwitcherLabel(activeTeam)
-    : "Team";
+  const activeName = activeTeam ? teamSwitcherLabel(activeTeam) : "Team";
 
   return (
     <Popover>

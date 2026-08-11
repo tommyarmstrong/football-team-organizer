@@ -271,14 +271,13 @@ export async function createTeamAction(
 }
 
 async function requireEditableActiveTeam() {
-  const [ctx, team] = await Promise.all([
-    getViewerContext(),
-    getActiveTeam(),
-  ]);
+  const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
   if (!ctx) return { error: "Not signed in." as const };
   if (!team) return { error: "No team selected." as const };
   if (!canEditTeam(ctx, team.id)) {
-    return { error: "You do not have permission to manage this team." as const };
+    return {
+      error: "You do not have permission to manage this team." as const,
+    };
   }
   return { ctx, team };
 }
@@ -286,8 +285,9 @@ async function requireEditableActiveTeam() {
 /** Soft-archive the active season team; historical data remain available. */
 export async function archiveTeamAction(
   _prev: ActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<ActionState> {
+  void formData;
   const gate = await requireEditableActiveTeam();
   if ("error" in gate) return { error: gate.error };
   const { team } = gate;
@@ -310,8 +310,9 @@ export async function archiveTeamAction(
 /** Restore an archived season team to active. */
 export async function unarchiveTeamAction(
   _prev: ActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<ActionState> {
+  void formData;
   const gate = await requireEditableActiveTeam();
   if ("error" in gate) return { error: gate.error };
   const { team } = gate;

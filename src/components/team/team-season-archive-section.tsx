@@ -83,11 +83,7 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
               </p>
             ) : null}
             <form action={restoreAction}>
-              <Button
-                type="submit"
-                variant="outline"
-                disabled={restorePending}
-              >
+              <Button type="submit" variant="outline" disabled={restorePending}>
                 {restorePending ? "Restoring…" : "Restore this season"}
               </Button>
             </form>
@@ -122,11 +118,7 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
                 }
               }}
             >
-              <Button
-                type="submit"
-                variant="outline"
-                disabled={archivePending}
-              >
+              <Button type="submit" variant="outline" disabled={archivePending}>
                 {archivePending ? "Archiving…" : "Archive season"}
               </Button>
             </form>
