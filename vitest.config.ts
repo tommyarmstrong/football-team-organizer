@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      exclude: ["src/lib/supabase/**", "src/components/ui/**", "**/*.test.ts"],
+    },
   },
   resolve: {
     alias: {
