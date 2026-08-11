@@ -4,7 +4,7 @@ import {
   canEditTeam,
   canManageClub,
 } from "@/lib/authz/context";
-import { getActiveTeam } from "@/lib/data/team";
+import { getActiveTeam, isTeamArchived } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import {
   listCoaches,
@@ -127,13 +127,33 @@ export default async function TeamPage() {
     teamClubVenues.find((v) => v.id === team.home_venue_id) ?? null;
   const trainingVenue =
     teamClubVenues.find((v) => v.id === team.training_venue_id) ?? null;
+  const archived = isTeamArchived(team);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title={teamDisplayName(team)}
-        description={`${club?.name ?? ""} · ${labelGender(team.gender)} · ${team.age_group} · ${team.season_label}`}
+        description={`${club?.name ?? ""} · ${labelGender(team.gender)} · ${team.age_group} · ${team.season_label}${
+          archived ? " · Archived" : ""
+        }`}
       />
+
+      {archived ? (
+        <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm">
+          <p className="font-medium">Archived season</p>
+          <p className="text-muted-foreground mt-1">
+            This is the historical record for {team.season_label}. Matches,
+            squad, and scorers stay available. Start the next season from{" "}
+            <Link
+              href="/team/edit"
+              className="text-foreground underline-offset-4 hover:underline"
+            >
+              Edit team
+            </Link>
+            .
+          </p>
+        </div>
+      ) : null}
 
       {team.photo_url ? (
         // eslint-disable-next-line @next/next/no-img-element

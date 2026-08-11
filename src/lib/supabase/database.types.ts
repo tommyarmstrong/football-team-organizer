@@ -272,6 +272,7 @@ export type Database = {
           training_days: string[] | null;
           season_label: string;
           photo_url: string | null;
+          archived_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -287,6 +288,7 @@ export type Database = {
           training_days?: string[] | null;
           season_label: string;
           photo_url?: string | null;
+          archived_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -302,6 +304,7 @@ export type Database = {
           training_days?: string[] | null;
           season_label?: string;
           photo_url?: string | null;
+          archived_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

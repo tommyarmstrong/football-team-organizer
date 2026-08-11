@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { ActionState } from "@/lib/action-state";
-import { canManageClub, getViewerContext } from "@/lib/authz/context";
+import {
+  canEditTeam,
+  canManageClub,
+  getViewerContext,
+} from "@/lib/authz/context";
 import {
   createCompetition,
   deleteCompetition,
@@ -12,8 +16,12 @@ import {
 } from "@/lib/data/competitions";
 import {
   ACTIVE_TEAM_COOKIE,
+  archiveTeam,
   createTeam,
   getActiveTeam,
+  isTeamArchived,
+  startNewTeamSeason,
+  unarchiveTeam,
   updateTeam,
 } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
@@ -259,6 +267,105 @@ export async function createTeamAction(
 
   revalidatePath("/", "layout");
   revalidatePath("/club");
+  redirect("/team");
+}
+
+async function requireEditableActiveTeam() {
+  const [ctx, team] = await Promise.all([
+    getViewerContext(),
+    getActiveTeam(),
+  ]);
+  if (!ctx) return { error: "Not signed in." as const };
+  if (!team) return { error: "No team selected." as const };
+  if (!canEditTeam(ctx, team.id)) {
+    return { error: "You do not have permission to manage this team." as const };
+  }
+  return { ctx, team };
+}
+
+/** Soft-archive the active season team; historical data remain available. */
+export async function archiveTeamAction(
+  _prev: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  const gate = await requireEditableActiveTeam();
+  if ("error" in gate) return { error: gate.error };
+  const { team } = gate;
+
+  if (isTeamArchived(team)) {
+    return { error: "This season is already archived." };
+  }
+
+  const { error } = await archiveTeam(team.id);
+  if (error) return { error };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/team");
+  revalidatePath("/team/edit");
+  revalidatePath("/club");
+  revalidatePath("/dashboard");
+  return { success: "Season archived. Historical data remain available." };
+}
+
+/** Restore an archived season team to active. */
+export async function unarchiveTeamAction(
+  _prev: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  const gate = await requireEditableActiveTeam();
+  if ("error" in gate) return { error: gate.error };
+  const { team } = gate;
+
+  if (!isTeamArchived(team)) {
+    return { error: "This season is not archived." };
+  }
+
+  const { error } = await unarchiveTeam(team.id);
+  if (error) return { error };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/team");
+  revalidatePath("/team/edit");
+  revalidatePath("/club");
+  revalidatePath("/dashboard");
+  return { success: "Season restored." };
+}
+
+/**
+ * Archive the current season (if needed) and open a new season with the same
+ * team profile. Coaching staff and coach/management access are copied; the
+ * squad and matches stay on the previous season record.
+ */
+export async function startNewSeasonAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const gate = await requireEditableActiveTeam();
+  if ("error" in gate) return { error: gate.error };
+  const { team } = gate;
+
+  const season_label = str(formData, "season_label");
+  if (!season_label) {
+    return { error: "New season is required." };
+  }
+
+  const { data, error } = await startNewTeamSeason(team, season_label);
+  if (error) return { error };
+  if (!data) return { error: "Could not start the new season." };
+
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_TEAM_COOKIE, data.id, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
+  revalidatePath("/", "layout");
+  revalidatePath("/team");
+  revalidatePath("/team/edit");
+  revalidatePath("/club");
+  revalidatePath("/dashboard");
+  revalidatePath("/people");
   redirect("/team");
 }
 

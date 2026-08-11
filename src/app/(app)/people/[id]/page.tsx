@@ -171,6 +171,7 @@ export default async function PersonDetailPage({
       player != null &&
       team.club_id === player.club_id &&
       ctx.editableTeamIds.includes(team.id) &&
+      team.archived_at == null &&
       !playerTeamIds.has(team.id),
   );
 
@@ -180,6 +181,7 @@ export default async function PersonDetailPage({
       coach != null &&
       team.club_id === coach.club_id &&
       ctx.editableTeamIds.includes(team.id) &&
+      team.archived_at == null &&
       !coachTeamIds.has(team.id),
   );
 

@@ -12,12 +12,15 @@ vi.mock("@/lib/supabase/server", () => ({
 function team(overrides: Partial<Team> & Pick<Team, "id" | "club_id">): Team {
   return {
     name: "U12 Blues",
+    display_name: null,
     age_group: "U12",
     gender: "mixed",
     home_venue_id: null,
     training_venue_id: null,
     training_days: null,
     season_label: "2025/26",
+    photo_url: null,
+    archived_at: null,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,

@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { setActiveTeamAction } from "@/lib/team/actions";
+import { isTeamArchived } from "@/lib/team/season";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -14,7 +15,12 @@ import {
 } from "@/components/ui/popover";
 import type { Team } from "@/lib/supabase/database.types";
 
-type TeamOption = Pick<Team, "id" | "name">;
+type TeamOption = Pick<Team, "id" | "name" | "season_label" | "archived_at">;
+
+function teamSwitcherLabel(team: TeamOption): string {
+  const base = `${team.name} · ${team.season_label}`;
+  return isTeamArchived(team) ? `${base} (archived)` : base;
+}
 
 export function TeamPickerList({
   teams,
@@ -37,8 +43,8 @@ export function TeamPickerList({
     startTransition(async () => {
       await setActiveTeamAction(teamId);
       router.refresh();
-      onSelected?.();
     });
+    onSelected?.();
   }
 
   return (
@@ -50,6 +56,7 @@ export function TeamPickerList({
     >
       {teams.map((team) => {
         const active = team.id === activeTeamId;
+        const archived = isTeamArchived(team);
         return (
           <button
             key={team.id}
@@ -65,7 +72,18 @@ export function TeamPickerList({
                 : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
-            <span className="min-w-0 flex-1 truncate">{team.name}</span>
+            <span className="min-w-0 flex-1 truncate">
+              <span className="block truncate">{team.name}</span>
+              <span
+                className={cn(
+                  "block truncate text-xs font-normal",
+                  archived ? "text-muted-foreground" : "text-muted-foreground",
+                )}
+              >
+                {team.season_label}
+                {archived ? " · archived" : ""}
+              </span>
+            </span>
             {active ? (
               <CheckIcon className="text-foreground size-4 shrink-0" />
             ) : null}
@@ -90,8 +108,10 @@ export function TeamSwitcher({
 }) {
   if (teams.length < 2) return null;
 
-  const activeName =
-    teams.find((team) => team.id === activeTeamId)?.name ?? "Team";
+  const activeTeam = teams.find((team) => team.id === activeTeamId) ?? null;
+  const activeName = activeTeam
+    ? teamSwitcherLabel(activeTeam)
+    : "Team";
 
   return (
     <Popover>
@@ -113,7 +133,7 @@ export function TeamSwitcher({
       <PopoverContent
         align={align}
         sideOffset={6}
-        className="w-56 max-w-[calc(100vw-2rem)] p-1.5"
+        className="w-64 max-w-[calc(100vw-2rem)] p-1.5"
       >
         <PopoverHeader className="px-2.5 pt-1.5 pb-1">
           <PopoverTitle className="text-muted-foreground text-xs font-medium">
