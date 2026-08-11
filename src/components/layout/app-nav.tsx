@@ -42,7 +42,7 @@ export function AppNav({
   activeTeamId = null,
 }: {
   showManagement?: boolean;
-  teams?: Pick<Team, "id" | "name">[];
+  teams?: Pick<Team, "id" | "name" | "season_label" | "archived_at">[];
   activeTeamId?: string | null;
 }) {
   const pathname = usePathname();

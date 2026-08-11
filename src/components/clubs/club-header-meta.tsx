@@ -1,4 +1,5 @@
 import { AGE_GROUPS, TEAM_GENDER_LABELS } from "@/lib/constants";
+import { isTeamArchived } from "@/lib/team/season";
 import { labelGender } from "@/lib/format";
 import type { Team, TeamGender } from "@/lib/supabase/database.types";
 import { RoleChip } from "@/components/shared/role-chip";
@@ -8,8 +9,14 @@ function ageGroupIndex(ageGroup: string): number {
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
+/** Prefer current (non-archived) seasons for club summary chips. */
+function currentSeasonTeams(teams: Team[]): Team[] {
+  const active = teams.filter((team) => !isTeamArchived(team));
+  return active.length > 0 ? active : teams;
+}
+
 export function clubAgeRangeLabel(teams: Team[]): string | null {
-  const known = teams
+  const known = currentSeasonTeams(teams)
     .map((team) => team.age_group)
     .filter((ageGroup) => (AGE_GROUPS as readonly string[]).includes(ageGroup));
 
@@ -23,7 +30,7 @@ export function clubAgeRangeLabel(teams: Team[]): string | null {
 }
 
 export function clubGendersPresent(teams: Team[]): TeamGender[] {
-  const present = new Set(teams.map((team) => team.gender));
+  const present = new Set(currentSeasonTeams(teams).map((team) => team.gender));
   return (Object.keys(TEAM_GENDER_LABELS) as TeamGender[]).filter((gender) =>
     present.has(gender),
   );

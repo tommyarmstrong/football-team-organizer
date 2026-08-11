@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/authz/context";
+import { isTeamArchived, sortTeamsForDisplay } from "@/lib/team/season";
 import type {
   Team,
   TablesInsert,
@@ -9,10 +10,20 @@ import type {
 } from "@/lib/supabase/database.types";
 
 export type { Team };
+export { isTeamArchived, sortTeamsForDisplay };
 
 export const ACTIVE_TEAM_COOKIE = "fto_active_team";
 
-/** All teams the signed-in user can see (RLS-filtered), ordered by name. */
+const TEAM_NAME_SEASON_UNIQUE = "teams_club_name_season_uidx";
+
+function mapTeamWriteError(message: string): string {
+  if (message.includes(TEAM_NAME_SEASON_UNIQUE)) {
+    return "A team with this name and season already exists in the club.";
+  }
+  return message;
+}
+
+/** All teams the signed-in user can see (RLS-filtered), ordered for display. */
 export const listVisibleTeams = cache(
   async (): Promise<{ data: Team[]; error: string | null }> => {
     const supabase = await createClient();
@@ -22,13 +33,14 @@ export const listVisibleTeams = cache(
       .order("name", { ascending: true });
 
     if (error) return { data: [], error: error.message };
-    return { data: data ?? [], error: null };
+    return { data: sortTeamsForDisplay(data ?? []), error: null };
   },
 );
 
 /**
  * The active team for team-scoped screens. Resolved from the active-team cookie
- * when it points at a team the user can see; otherwise the first visible team.
+ * when it points at a team the user can see; otherwise the first visible
+ * non-archived team (falling back to any visible team).
  */
 export const getActiveTeam = cache(async (): Promise<Team | null> => {
   const { data: teams } = await listVisibleTeams();
@@ -41,7 +53,7 @@ export const getActiveTeam = cache(async (): Promise<Team | null> => {
     if (match) return match;
   }
 
-  return teams[0];
+  return teams.find((team) => !isTeamArchived(team)) ?? teams[0];
 });
 
 /** Backwards-compatible alias used across the app for the current team. */
@@ -73,7 +85,7 @@ export async function updateTeam(
     .select("*")
     .single();
 
-  if (error) return { data: null, error: error.message };
+  if (error) return { data: null, error: mapTeamWriteError(error.message) };
   return { data, error: null };
 }
 
@@ -87,8 +99,115 @@ export async function createTeam(
     .select("*")
     .single();
 
-  if (error) return { data: null, error: error.message };
+  if (error) return { data: null, error: mapTeamWriteError(error.message) };
   return { data, error: null };
+}
+
+/** Soft-archive a season team so historical data remain available. */
+export async function archiveTeam(
+  id: string,
+): Promise<{ data: Team | null; error: string | null }> {
+  return updateTeam(id, { archived_at: new Date().toISOString() });
+}
+
+/** Clear archive so the season team is treated as current again. */
+export async function unarchiveTeam(
+  id: string,
+): Promise<{ data: Team | null; error: string | null }> {
+  return updateTeam(id, { archived_at: null });
+}
+
+/**
+ * Open a new season for the same team identity: optionally archive the source
+ * season, create a successor with the same profile, and copy coaching staff +
+ * management/coach access. Roster and matches stay on the archived season.
+ */
+export async function startNewTeamSeason(
+  source: Team,
+  seasonLabel: string,
+): Promise<{ data: Team | null; error: string | null }> {
+  const season_label = seasonLabel.trim();
+  if (!season_label) {
+    return { data: null, error: "Season is required." };
+  }
+  if (season_label === source.season_label) {
+    return {
+      data: null,
+      error: "Enter a new season label that differs from the current season.",
+    };
+  }
+
+  // Create the successor first so a uniqueness failure does not archive the
+  // current season without a replacement.
+  const created = await createTeam({
+    club_id: source.club_id,
+    name: source.name,
+    display_name: source.display_name,
+    age_group: source.age_group,
+    gender: source.gender,
+    home_venue_id: source.home_venue_id,
+    training_venue_id: source.training_venue_id,
+    training_days: source.training_days,
+    season_label,
+    photo_url: source.photo_url,
+  });
+  if (created.error || !created.data) {
+    return { data: null, error: created.error ?? "Could not create team." };
+  }
+
+  const supabase = await createClient();
+  const successorId = created.data.id;
+
+  const [
+    { data: coaches, error: coachesError },
+    { data: members, error: membersError },
+  ] = await Promise.all([
+    supabase
+      .from("team_coaches")
+      .select("coach_id, role")
+      .eq("team_id", source.id),
+    supabase
+      .from("team_members")
+      .select("user_id, role")
+      .eq("team_id", source.id)
+      .in("role", ["coach", "management"]),
+  ]);
+
+  if (coachesError) {
+    return { data: null, error: coachesError.message };
+  }
+  if (membersError) {
+    return { data: null, error: membersError.message };
+  }
+
+  if (coaches && coaches.length > 0) {
+    const { error } = await supabase.from("team_coaches").insert(
+      coaches.map((row) => ({
+        team_id: successorId,
+        coach_id: row.coach_id,
+        role: row.role,
+      })),
+    );
+    if (error) return { data: null, error: error.message };
+  }
+
+  if (members && members.length > 0) {
+    const { error } = await supabase.from("team_members").insert(
+      members.map((row) => ({
+        team_id: successorId,
+        user_id: row.user_id,
+        role: row.role,
+      })),
+    );
+    if (error) return { data: null, error: error.message };
+  }
+
+  if (!isTeamArchived(source)) {
+    const archived = await archiveTeam(source.id);
+    if (archived.error) return { data: null, error: archived.error };
+  }
+
+  return { data: created.data, error: null };
 }
 
 /** True when the active team is editable by the current user. */

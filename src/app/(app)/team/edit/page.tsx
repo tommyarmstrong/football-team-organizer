@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
-import { getActiveTeam } from "@/lib/data/team";
+import { getActiveTeam, isTeamArchived } from "@/lib/data/team";
 import { listCoaches, listTeamCoaches } from "@/lib/data/coaches";
 import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TeamProfileForm } from "@/components/team/team-profile-form";
+import { TeamSeasonArchiveSection } from "@/components/team/team-season-archive-section";
 import {
   Card,
   CardContent,
@@ -46,10 +47,18 @@ export default async function EditTeamPage() {
 
   const coaches = clubCoaches.filter((c) => c.club_id === team.club_id);
   const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
+  const archived = isTeamArchived(team);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Edit team" description={team.name} />
+      <PageHeader
+        title="Edit team"
+        description={
+          archived
+            ? `${team.name} · ${team.season_label} (archived)`
+            : `${team.name} · ${team.season_label}`
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -66,6 +75,19 @@ export default async function EditTeamPage() {
             venues={clubVenues}
             headCoachId={headCoach?.coach_id ?? null}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Season</CardTitle>
+          <CardDescription>
+            Team name and season together identify a season record. Archiving
+            keeps matches, squad, and scorers available as history.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TeamSeasonArchiveSection key={team.id} team={team} />
         </CardContent>
       </Card>
     </div>

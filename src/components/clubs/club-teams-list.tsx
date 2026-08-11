@@ -10,9 +10,11 @@ export function ClubTeamsList({ teams }: { teams: Team[] }) {
       items={teams}
       getItemKey={(team) => team.id}
       getSearchText={(team) =>
-        `${team.name} ${team.age_group} ${team.season_label}`
+        `${team.name} ${team.age_group} ${team.season_label}${
+          team.archived_at ? " archived" : ""
+        }`
       }
-      filterPlaceholder="Filter teams by name…"
+      filterPlaceholder="Filter teams by name or season…"
       singularLabel="team"
       pluralLabel="teams"
       defaultPageSize={5}
