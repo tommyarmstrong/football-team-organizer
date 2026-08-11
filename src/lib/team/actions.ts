@@ -28,6 +28,7 @@ import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
 import { parseOptionalInt, parseYesNo, str as formStr } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
+import { isValidSeasonLabel, SEASON_FORMAT_HINT } from "@/lib/team/season";
 import {
   AGE_GROUPS,
   COMPETITION_GENDERS,
@@ -94,6 +95,9 @@ function parseTeamFields(formData: FormData):
 
   if (!name || !age_group || !season_label) {
     return { error: "Name, age group, and season are required.", ok: false };
+  }
+  if (!isValidSeasonLabel(season_label)) {
+    return { error: SEASON_FORMAT_HINT, ok: false };
   }
   if (!(AGE_GROUPS as readonly string[]).includes(age_group)) {
     return { error: "Select a valid age group.", ok: false };
@@ -349,6 +353,9 @@ export async function startNewSeasonAction(
   if (!season_label) {
     return { error: "New season is required." };
   }
+  if (!isValidSeasonLabel(season_label)) {
+    return { error: SEASON_FORMAT_HINT };
+  }
 
   const { data, error } = await startNewTeamSeason(team, season_label);
   if (error) return { error };
@@ -420,7 +427,11 @@ function parseCompetitionUpdate(
       ? (kindRaw as CompetitionKind)
       : "league";
 
-  const season = str(formData, "season") || null;
+  const seasonRaw = str(formData, "season");
+  const season = seasonRaw || null;
+  if (season && !isValidSeasonLabel(season)) {
+    return { error: SEASON_FORMAT_HINT };
+  }
   const knockout = parseYesNo(formData, "knockout", false);
   const organizer = str(formData, "organizer") || null;
 

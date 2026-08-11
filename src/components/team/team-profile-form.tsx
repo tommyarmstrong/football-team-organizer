@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SeasonInput } from "@/components/team/season-input";
 
 export function TeamProfileForm({
   team,
@@ -144,11 +145,10 @@ export function TeamProfileForm({
           </NativeSelect>
         </Field>
         <Field label="Season" htmlFor="season_label">
-          <Input
+          <SeasonInput
             id="season_label"
             name="season_label"
             required
-            placeholder="e.g. 2025/26"
             defaultValue={team.season_label}
             disabled={pending}
           />

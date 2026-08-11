@@ -169,6 +169,12 @@
     color-mix(in srgb, var(--club-colour) 70%, transparent);
 }
 
+[data-club-colour="true"] .team-photo {
+  --tw-ring-shadow: 0 0 #0000;
+  box-shadow: 0 0 0 1.5px
+    color-mix(in srgb, var(--club-colour) 70%, transparent);
+}
+
 [data-club-colour="true"] [data-slot="card-footer"] {
   border-top-color: color-mix(in srgb, var(--club-colour) 55%, transparent);
 }

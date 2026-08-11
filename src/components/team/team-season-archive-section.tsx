@@ -10,9 +10,9 @@ import {
 import { isTeamArchived } from "@/lib/team/season";
 import type { Team } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SeasonInput } from "@/components/team/season-input";
 
 export function TeamSeasonArchiveSection({ team }: { team: Team }) {
   const archived = isTeamArchived(team);
@@ -45,11 +45,10 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
         <form action={startAction} className="space-y-3">
           <div className="space-y-2 sm:max-w-xs">
             <Label htmlFor="new-season-label">New season</Label>
-            <Input
+            <SeasonInput
               id="new-season-label"
               name="season_label"
               required
-              placeholder="e.g. 2026/27"
               disabled={startPending}
             />
           </div>

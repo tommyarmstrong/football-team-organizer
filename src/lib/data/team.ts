@@ -2,7 +2,12 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/authz/context";
-import { isTeamArchived, sortTeamsForDisplay } from "@/lib/team/season";
+import {
+  isTeamArchived,
+  isValidSeasonLabel,
+  SEASON_FORMAT_HINT,
+  sortTeamsForDisplay,
+} from "@/lib/team/season";
 import type {
   Team,
   TablesInsert,
@@ -129,6 +134,9 @@ export async function startNewTeamSeason(
   const season_label = seasonLabel.trim();
   if (!season_label) {
     return { data: null, error: "Season is required." };
+  }
+  if (!isValidSeasonLabel(season_label)) {
+    return { data: null, error: SEASON_FORMAT_HINT };
   }
   if (season_label === source.season_label) {
     return {

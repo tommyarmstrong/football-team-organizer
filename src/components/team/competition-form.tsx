@@ -29,6 +29,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
+import { SeasonInput } from "@/components/team/season-input";
 import {
   CardAction,
   CardContent,
@@ -154,11 +155,10 @@ export function CompetitionForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="season">Season</Label>
-              <Input
+              <SeasonInput
                 id="season"
                 name="season"
-                placeholder="e.g. 2025/26"
-                defaultValue={competition?.season ?? ""}
+                defaultValue={competition?.season}
                 disabled={pending}
               />
             </div>
