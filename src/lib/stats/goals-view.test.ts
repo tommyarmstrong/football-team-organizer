@@ -16,6 +16,10 @@ const sample: GoalsByPlayerPoint[] = [
     position: "MID",
     matchesPlayed: 3,
     periodsPlayed: 6,
+    goalCompetitions: Array.from({ length: 6 }, () => ({
+      competitionId: "c1",
+      competitionKind: "league" as const,
+    })),
   },
   {
     playerId: "2",
@@ -24,6 +28,10 @@ const sample: GoalsByPlayerPoint[] = [
     position: "FWD",
     matchesPlayed: 4,
     periodsPlayed: 8,
+    goalCompetitions: Array.from({ length: 4 }, () => ({
+      competitionId: "c1",
+      competitionKind: "cup" as const,
+    })),
   },
   {
     playerId: "3",
@@ -32,6 +40,10 @@ const sample: GoalsByPlayerPoint[] = [
     position: "DEF",
     matchesPlayed: 0,
     periodsPlayed: 0,
+    goalCompetitions: Array.from({ length: 2 }, () => ({
+      competitionId: null,
+      competitionKind: null,
+    })),
   },
   {
     playerId: "4",
@@ -40,6 +52,9 @@ const sample: GoalsByPlayerPoint[] = [
     position: null,
     matchesPlayed: 2,
     periodsPlayed: 4,
+    goalCompetitions: [
+      { competitionId: "c2", competitionKind: "friendly" as const },
+    ],
   },
 ];
 

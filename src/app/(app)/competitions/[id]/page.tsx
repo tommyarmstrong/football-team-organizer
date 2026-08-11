@@ -1,6 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
+import { listVenues } from "@/lib/data/venues";
+import { getCurrentTeam } from "@/lib/data/team";
+import {
+  COMPETITION_VENUE_SPECIAL_LABELS,
+  type CompetitionVenueSpecial,
+} from "@/lib/constants";
 import {
   labelCompetitionGender,
   labelCompetitionKind,
@@ -47,6 +53,9 @@ export default async function CompetitionDetailPage({
   }
 
   const canEdit = canEditTeam(ctx, competition.team_id);
+  const team = await getCurrentTeam();
+  const { data: venues } = await listVenues(team?.club_id);
+  const venueLabel = competitionVenueLabel(competition, venues);
 
   return (
     <div className="space-y-8">
@@ -57,6 +66,10 @@ export default async function CompetitionDetailPage({
             <p>{labelCompetitionKind(competition.kind)}</p>
             <CompetitionResultChip result={competition.result} />
             <dl className="grid gap-2 sm:grid-cols-2">
+              <Detail
+                label="Organizer"
+                value={competition.organizer?.trim() || "—"}
+              />
               <Detail
                 label="Result"
                 value={labelCompetitionResult(competition.result)}
@@ -71,6 +84,7 @@ export default async function CompetitionDetailPage({
                 label="Gender"
                 value={labelCompetitionGender(competition.gender)}
               />
+              <Detail label="Venue" value={venueLabel} />
               <Detail
                 label="Players per team"
                 value={
@@ -80,7 +94,7 @@ export default async function CompetitionDetailPage({
                 }
               />
               <Detail
-                label="Periods"
+                label="Periods per match"
                 value={labelCompetitionPeriods(competition.periods)}
               />
               <Detail
@@ -124,4 +138,27 @@ function Detail({ label, value }: { label: string; value: string }) {
       <dd className="text-foreground font-medium">{value}</dd>
     </div>
   );
+}
+
+function competitionVenueLabel(
+  competition: {
+    venue_mode: string;
+    venue_id: string | null;
+  },
+  venues: Array<{ id: string; name: string }>,
+): string {
+  if (competition.venue_mode === "venue" && competition.venue_id) {
+    return (
+      venues.find((venue) => venue.id === competition.venue_id)?.name ?? "—"
+    );
+  }
+  if (
+    competition.venue_mode === "unknown" ||
+    competition.venue_mode === "multiple"
+  ) {
+    return COMPETITION_VENUE_SPECIAL_LABELS[
+      competition.venue_mode as CompetitionVenueSpecial
+    ];
+  }
+  return "—";
 }

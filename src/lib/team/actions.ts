@@ -26,6 +26,7 @@ import {
   COMPETITION_KINDS,
   COMPETITION_PERIODS,
   COMPETITION_RESULTS,
+  COMPETITION_VENUE_SPECIAL,
   DEFAULT_COMPETITION_PERIODS,
   DEFAULT_COMPETITION_RESULT,
   TEAM_GENDER_LABELS,
@@ -34,6 +35,7 @@ import {
   TEAM_PHOTOS_BUCKET,
   TRAINING_DAYS,
   type AgeGroup,
+  type CompetitionVenueSpecial,
   type TrainingDay,
 } from "@/lib/constants";
 import type {
@@ -62,6 +64,7 @@ function parseTeamFields(formData: FormData):
   | {
       ok: true;
       name: string;
+      display_name: string | null;
       age_group: AgeGroup;
       gender: TeamGender;
       home_venue_id: string | null;
@@ -72,6 +75,7 @@ function parseTeamFields(formData: FormData):
     }
   | { ok: false; error: string } {
   const name = str(formData, "name");
+  const display_name = str(formData, "display_name") || null;
   const age_group = str(formData, "age_group");
   const gender = str(formData, "gender") as TeamGender;
   const home_venue_id = str(formData, "home_venue_id") || null;
@@ -93,6 +97,7 @@ function parseTeamFields(formData: FormData):
   return {
     ok: true,
     name,
+    display_name,
     age_group: age_group as AgeGroup,
     gender,
     home_venue_id,
@@ -138,6 +143,7 @@ export async function updateTeamAction(
 
   const { error } = await updateTeam(team.id, {
     name: parsed.name,
+    display_name: parsed.display_name,
     age_group: parsed.age_group,
     gender: parsed.gender,
     home_venue_id: parsed.home_venue_id,
@@ -260,22 +266,38 @@ export async function createCompetitionAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const name = str(formData, "name");
-  const kindRaw = str(formData, "kind");
-  const kind =
-    kindRaw && COMPETITION_KINDS.includes(kindRaw as CompetitionKind)
-      ? (kindRaw as CompetitionKind)
-      : "league";
+  const parsed = parseCompetitionUpdate(formData);
+  if ("error" in parsed) return parsed;
 
-  if (!name) return { error: "Competition name is required." };
-
-  const { error } = await createCompetition({ name, kind });
+  const { error } = await createCompetition({
+    ...parsed,
+    name: parsed.name!,
+  });
   if (error) return { error };
 
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
   return { success: "Competition added." };
+}
+
+function parseCompetitionVenue(
+  formData: FormData,
+):
+  | { venue_mode: "unknown" | "multiple"; venue_id: null }
+  | { venue_mode: "venue"; venue_id: string }
+  | { error: string } {
+  const venueRaw = str(formData, "venue");
+  if (
+    !venueRaw ||
+    (COMPETITION_VENUE_SPECIAL as readonly string[]).includes(venueRaw)
+  ) {
+    return {
+      venue_mode: (venueRaw || "unknown") as CompetitionVenueSpecial,
+      venue_id: null,
+    };
+  }
+  return { venue_mode: "venue", venue_id: venueRaw };
 }
 
 function parseCompetitionUpdate(
@@ -292,6 +314,7 @@ function parseCompetitionUpdate(
 
   const season = str(formData, "season") || null;
   const knockout = parseYesNo(formData, "knockout", false);
+  const organizer = str(formData, "organizer") || null;
 
   const ageGroupRaw = str(formData, "age_group");
   let age_group: string | null = null;
@@ -341,11 +364,15 @@ function parseCompetitionUpdate(
       ? (resultRaw as CompetitionResult)
       : DEFAULT_COMPETITION_RESULT;
 
+  const venue = parseCompetitionVenue(formData);
+  if ("error" in venue) return venue;
+
   return {
     name,
     kind,
     season,
     knockout,
+    organizer,
     age_group,
     gender,
     players_per_team: playersPerTeam,
@@ -353,6 +380,8 @@ function parseCompetitionUpdate(
     minutes_per_period: minutesPerPeriod,
     notes,
     result,
+    venue_mode: venue.venue_mode,
+    venue_id: venue.venue_id,
   };
 }
 
@@ -362,6 +391,8 @@ function revalidateCompetitionPaths(id: string) {
   revalidatePath("/matches");
   revalidatePath(`/competitions/${id}`);
   revalidatePath(`/competitions/${id}/edit`);
+  revalidatePath("/competitions/new");
+  revalidatePath("/stats");
 }
 
 export async function updateCompetitionAction(
@@ -393,6 +424,25 @@ export async function saveCompetitionAndReturnAction(
 
   revalidateCompetitionPaths(id);
   redirect(`/competitions/${id}`);
+}
+
+/** Creates a competition from the full form and returns to its detail page. */
+export async function createCompetitionAndReturnAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parseCompetitionUpdate(formData);
+  if ("error" in parsed) return parsed;
+
+  const { data, error } = await createCompetition({
+    ...parsed,
+    name: parsed.name!,
+  });
+  if (error) return { error };
+  if (!data) return { error: "Could not create competition." };
+
+  revalidateCompetitionPaths(data.id);
+  redirect(`/competitions/${data.id}`);
 }
 
 /** @deprecated Prefer saveCompetitionAndReturnAction */

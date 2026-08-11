@@ -314,6 +314,15 @@ export function labelCompetitionResult(
   return COMPETITION_RESULT_LABELS[result];
 }
 
+/** Prefer team display_name when set; otherwise the official team name. */
+export function teamDisplayName(team: {
+  name: string;
+  display_name?: string | null;
+}): string {
+  const display = team.display_name?.trim();
+  return display || team.name;
+}
+
 export function formatAwardMonth(month: string): string {
   const [year, monthPart] = month.split("-");
   if (!year || !monthPart) return month;

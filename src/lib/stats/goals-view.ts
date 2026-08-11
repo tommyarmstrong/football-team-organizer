@@ -1,5 +1,10 @@
 import { PLAYER_POSITIONS } from "@/lib/constants";
 import type { GoalsByPlayerPoint } from "@/lib/data/stats";
+import {
+  ALL_COMPETITIONS,
+  ALL_COMPETITION_KINDS,
+  matchesCompetitionFilters,
+} from "@/lib/stats/competition-filters";
 
 export const GOALS_POSITION_FILTERS = [
   "ALL",
@@ -45,6 +50,36 @@ export function toggleGoalsPositionFilter(
     (value): value is Exclude<GoalsPositionFilter, "ALL"> =>
       value !== "ALL" && selected.has(value),
   );
+}
+
+export function filterGoalsByCompetition(
+  data: GoalsByPlayerPoint[],
+  selectedCompetitionId: string,
+  selectedCompetitionKind: string,
+): GoalsByPlayerPoint[] {
+  const noCompetitionFilter =
+    selectedCompetitionId === ALL_COMPETITIONS &&
+    selectedCompetitionKind === ALL_COMPETITION_KINDS;
+  if (noCompetitionFilter) return data;
+
+  return data
+    .map((row) => {
+      const matching = (row.goalCompetitions ?? []).filter((goal) =>
+        matchesCompetitionFilters({
+          competitionId: goal.competitionId,
+          competitionKind: goal.competitionKind,
+          selectedCompetitionId,
+          selectedCompetitionKind,
+        }),
+      );
+      if (matching.length === 0) return null;
+      return {
+        ...row,
+        goals: matching.length,
+        goalCompetitions: matching,
+      };
+    })
+    .filter((row): row is GoalsByPlayerPoint => row != null);
 }
 
 export function filterGoalsByPositions(
@@ -97,6 +132,8 @@ export function buildGoalsViewRows(
   data: GoalsByPlayerPoint[],
   selectedPositions: readonly GoalsPositionFilter[],
   metric: GoalsMetric,
+  selectedCompetitionId: string = ALL_COMPETITIONS,
+  selectedCompetitionKind: string = ALL_COMPETITION_KINDS,
 ): Array<{
   playerId: string;
   name: string;
@@ -105,7 +142,14 @@ export function buildGoalsViewRows(
   goalsDisplay: string;
   goalsPerGameDisplay: string;
 }> {
-  return filterGoalsByPositions(data, selectedPositions)
+  return filterGoalsByPositions(
+    filterGoalsByCompetition(
+      data,
+      selectedCompetitionId,
+      selectedCompetitionKind,
+    ),
+    selectedPositions,
+  )
     .map((row) => {
       const value = goalsMetricValue(row, metric);
       if (value == null) return null;

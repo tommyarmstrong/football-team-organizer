@@ -131,7 +131,7 @@ export const COMPETITION_PERIODS: CompetitionPeriods[] = [
 export const COMPETITION_PERIOD_LABELS: Record<CompetitionPeriods, string> = {
   "1": "1",
   "2": "2 (Halves)",
-  "4": "4",
+  "4": "4 (Quarters)",
   other: "Other",
 };
 
@@ -146,6 +146,8 @@ export const COMPETITION_RESULTS: CompetitionResult[] = [
   "group_stage",
   "promoted",
   "relegated",
+  "completed",
+  "cancelled",
   "none",
   "ongoing",
 ];
@@ -159,9 +161,27 @@ export const COMPETITION_RESULT_LABELS: Record<CompetitionResult, string> = {
   group_stage: "Group stage",
   promoted: "Promoted",
   relegated: "Relegated",
+  completed: "Completed",
+  cancelled: "Cancelled",
   none: "None",
   ongoing: "Ongoing",
 };
+
+/** Competition venue field values that are not a configured venue id. */
+export const COMPETITION_VENUE_SPECIAL = ["unknown", "multiple"] as const;
+export type CompetitionVenueSpecial =
+  (typeof COMPETITION_VENUE_SPECIAL)[number];
+
+export const COMPETITION_VENUE_SPECIAL_LABELS: Record<
+  CompetitionVenueSpecial,
+  string
+> = {
+  unknown: "Unknown",
+  multiple: "Multiple",
+};
+
+/** Recent form boxes shown on the Stats page. */
+export const STATS_FORM_LIMIT = 8;
 
 export const DEFAULT_COMPETITION_RESULT: CompetitionResult = "ongoing";
 

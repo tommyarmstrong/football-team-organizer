@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { getCurrentTeam } from "@/lib/data/team";
+import { listCompetitions } from "@/lib/data/competitions";
 import {
   getAssistsByPlayerStats,
   getGoalsByPlayerStats,
@@ -7,6 +8,7 @@ import {
   getPlayerOfTheMatchByPlayerStats,
   getResultsOverTime,
 } from "@/lib/data/stats";
+import { teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -37,10 +39,10 @@ const PlayerCountChart = dynamic(
   },
 );
 
-const ResultsOverTimeChart = dynamic(
+const ResultsOverTimeCard = dynamic(
   () =>
-    import("@/components/stats/stats-charts").then(
-      (mod) => mod.ResultsOverTimeChart,
+    import("@/components/stats/results-over-time-card").then(
+      (mod) => mod.ResultsOverTimeCard,
     ),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
@@ -59,14 +61,27 @@ export default async function StatsPage() {
     );
   }
 
-  const [goalsByPlayer, assistsByPlayer, potmByPlayer, matchesPlayed, results] =
-    await Promise.all([
-      getGoalsByPlayerStats(),
-      getAssistsByPlayerStats(),
-      getPlayerOfTheMatchByPlayerStats(),
-      getMatchesPlayedByPlayerStats(),
-      getResultsOverTime(),
-    ]);
+  const [
+    goalsByPlayer,
+    assistsByPlayer,
+    potmByPlayer,
+    matchesPlayed,
+    results,
+    competitions,
+  ] = await Promise.all([
+    getGoalsByPlayerStats(),
+    getAssistsByPlayerStats(),
+    getPlayerOfTheMatchByPlayerStats(),
+    getMatchesPlayedByPlayerStats(),
+    getResultsOverTime(),
+    listCompetitions(team.id),
+  ]);
+
+  const competitionOptions = competitions.data.map((competition) => ({
+    id: competition.id,
+    name: competition.name,
+    kind: competition.kind,
+  }));
 
   const errors = [
     goalsByPlayer.error,
@@ -74,13 +89,14 @@ export default async function StatsPage() {
     potmByPlayer.error,
     matchesPlayed.error,
     results.error,
+    competitions.error,
   ].filter(Boolean);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Stats"
-        description={`${team.name} · ${team.season_label}`}
+        description={`${teamDisplayName(team)} · ${team.season_label}`}
       />
 
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
@@ -89,7 +105,7 @@ export default async function StatsPage() {
         <CardHeader>
           <CardTitle>Form</CardTitle>
           <CardDescription>
-            Recent results from played matches (oldest → newest)
+            Most recent 8 played matches (oldest → newest)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,24 +120,12 @@ export default async function StatsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Results over time</CardTitle>
-          <CardDescription>Goals for vs against by match</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {results.data.length === 0 ? (
-            <EmptyState
-              title="No results yet"
-              description="Played matches with scores will appear here."
-            />
-          ) : (
-            <ResultsOverTimeChart data={results.data} />
-          )}
-        </CardContent>
-      </Card>
+      <ResultsOverTimeCard
+        data={results.data}
+        competitions={competitionOptions}
+      />
 
-      <GoalsCard data={goalsByPlayer.data} />
+      <GoalsCard data={goalsByPlayer.data} competitions={competitionOptions} />
 
       <Card>
         <CardHeader>
