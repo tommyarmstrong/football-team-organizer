@@ -1,14 +1,14 @@
--- Local / dev seed: FA club, England Men 1966 + England Women 2022.
+-- Local / dev seed: FA club, England Men 1965/66 + England Women 2021/22.
 --
 -- Seeded domain data:
 --   - 1 club (The Football Association)
 --   - 26 venues (training/national + 2025/26 Premier League stadiums)
---   - 2 teams (England Men 1966, England Women 2022)
+--   - 2 teams (England Men 1965/66, England Women 2021/22)
 --   - 1 club manager (John Hall) + people row
 --   - 5 coaches (Keegan, Robson, Howe, Ramsey, Wiegman) + their people rows
 --   - 22 England Men players (1966 World Cup squad) + their people rows
 --   - 23 England Women players (2022 Euros squad) + their people rows
---   - 2 competitions (World Cup 1966, UEFA Women's Euro 2022)
+--   - 2 competitions (World Cup 1965/66, UEFA Women's Euro 2021/22)
 --   - 6 England Men matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
 --   - 6 England Women matches (Austria, Norway, Northern Ireland, Spain, Sweden, Germany)
 --   - Match periods (halves; extra time on AET ties) linked on every match
@@ -354,6 +354,7 @@ upserted_teams as (
     id,
     club_id,
     name,
+    display_name,
     age_group,
     gender,
     home_venue_id,
@@ -366,27 +367,30 @@ upserted_teams as (
       'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
       '11111111-1111-1111-1111-111111111111',
       'England Men',
+      'England',
       'Adults',
       'men',
       'a0000003-0000-4000-8000-000000000003',
       'a0000004-0000-4000-8000-000000000004',
       array['mon', 'wed', 'fri'],
-      '1966'
+      '1965/66'
     ),
     (
       'bbbbbbbb-bbbb-cccc-dddd-ffffffffffff',
       '11111111-1111-1111-1111-111111111111',
       'England Women',
+      'England',
       'Adults',
       'women',
       'a0000003-0000-4000-8000-000000000003',
       'a0000004-0000-4000-8000-000000000004',
       array['tue', 'thu'],
-      '2022'
+      '2021/22'
     )
   on conflict (id) do update set
     club_id = excluded.club_id,
     name = excluded.name,
+    display_name = excluded.display_name,
     age_group = excluded.age_group,
     gender = excluded.gender,
     home_venue_id = excluded.home_venue_id,
@@ -986,18 +990,35 @@ on conflict (team_id, player_id) do update set
   shirt_number = excluded.shirt_number,
   active = excluded.active;
 
--- World Cup 1966 competition for England Men.
-insert into public.competitions (id, team_id, name, kind)
+-- World Cup 1965/66 competition for England Men.
+insert into public.competitions (
+  id,
+  team_id,
+  name,
+  kind,
+  season,
+  result,
+  venue_mode,
+  venue_id
+)
 values (
   'd0000001-0000-4000-8000-000000000001',
   'bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee',
-  'World Cup 1966',
-  'cup'
+  'World Cup',
+  'cup',
+  '1965/66',
+  'champions',
+  'multiple',
+  null
 )
 on conflict (id) do update set
   team_id = excluded.team_id,
   name = excluded.name,
-  kind = excluded.kind;
+  kind = excluded.kind,
+  season = excluded.season,
+  result = excluded.result,
+  venue_mode = excluded.venue_mode,
+  venue_id = excluded.venue_id;
 
 -- England Men World Cup 1966 matches (all home / completed at Wembley).
 -- Score is derived from goal rows.
@@ -1616,7 +1637,7 @@ on conflict (team_id, player_id) do update set
   shirt_number = excluded.shirt_number,
   active = excluded.active;
 
--- UEFA Women's Euro 2022 competition for England Women.
+-- UEFA Women's Euro 2021/22 competition for England Women.
 insert into public.competitions (
   id,
   team_id,
@@ -1628,20 +1649,26 @@ insert into public.competitions (
   gender,
   players_per_team,
   periods,
-  minutes_per_period
+  minutes_per_period,
+  result,
+  venue_mode,
+  venue_id
 )
 values (
   'd0000001-0000-4000-8000-000000000002',
   'bbbbbbbb-bbbb-cccc-dddd-ffffffffffff',
-  'UEFA Women''s Euro 2022',
+  'Women''s Euros',
   'cup',
-  '2022',
+  '2021/22',
   true,
   'Adults',
   'female',
   11,
   '2',
-  45
+  45,
+  'champions',
+  'multiple',
+  null
 )
 on conflict (id) do update set
   team_id = excluded.team_id,
@@ -1653,7 +1680,10 @@ on conflict (id) do update set
   gender = excluded.gender,
   players_per_team = excluded.players_per_team,
   periods = excluded.periods,
-  minutes_per_period = excluded.minutes_per_period;
+  minutes_per_period = excluded.minutes_per_period,
+  result = excluded.result,
+  venue_mode = excluded.venue_mode,
+  venue_id = excluded.venue_id;
 
 -- England Women Euro 2022 matches (tournament venues linked).
 -- Coach's player of the match = UEFA Technical Observers' official POTM.

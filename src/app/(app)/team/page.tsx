@@ -6,6 +6,7 @@ import {
 } from "@/lib/authz/context";
 import { getActiveTeam, isTeamArchived } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
+import { listCompetitions } from "@/lib/data/competitions";
 import {
   listCoaches,
   listCoachesNotOnTeam,
@@ -25,6 +26,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { CreateTeamForm } from "@/components/team/create-team-form";
+import { CompetitionsSection } from "@/components/team/competitions-section";
 import { PlayerOfTheMonthSection } from "@/components/team/player-of-the-month-section";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
@@ -109,6 +111,7 @@ export default async function TeamPage() {
     { data: assistants },
     { data: assistantCandidates },
     { data: potmAwards, error: potmError },
+    competitions,
   ] = await Promise.all([
     listRosterForTeam(team.id, { includeInactive: true }),
     club
@@ -119,6 +122,7 @@ export default async function TeamPage() {
     listGuardianAssistants(team.id, team.club_id),
     listGuardianAssistantCandidates(team.id, team.club_id),
     listPlayerOfTheMonth(team.id),
+    listCompetitions(team.id),
   ]);
 
   const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
@@ -160,7 +164,7 @@ export default async function TeamPage() {
         <img
           src={team.photo_url}
           alt={`${team.name} team photo`}
-          className="ring-foreground/10 h-48 w-full rounded-xl object-cover ring-1 sm:h-72 md:h-80"
+          className="team-photo ring-foreground/10 h-48 w-full rounded-xl object-cover ring-1 sm:h-72 md:h-80"
         />
       ) : null}
 
@@ -194,16 +198,20 @@ export default async function TeamPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Player of the month</CardTitle>
+          <CardTitle>Competitions</CardTitle>
           <CardDescription>
-            Monthly awards for standout players this season.
+            Leagues, cups, and other competitions for {team.season_label}.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {potmError ? (
-            <ErrorBanner message={potmError} />
+          {competitions.error ? (
+            <ErrorBanner message={competitions.error} />
           ) : (
-            <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
+            <CompetitionsSection
+              key={team.id}
+              competitions={competitions.data}
+              canEdit={canEdit}
+            />
           )}
         </CardContent>
       </Card>
@@ -261,6 +269,22 @@ export default async function TeamPage() {
             candidates={assistantCandidates}
             canEdit={canEdit}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Player of the month</CardTitle>
+          <CardDescription>
+            Monthly awards for standout players this season.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {potmError ? (
+            <ErrorBanner message={potmError} />
+          ) : (
+            <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
+          )}
         </CardContent>
       </Card>
     </div>

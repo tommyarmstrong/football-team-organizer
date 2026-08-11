@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isTeamArchived, sortTeamsForDisplay } from "@/lib/team/season";
+import {
+  DEFAULT_SEASON,
+  isTeamArchived,
+  isValidSeasonLabel,
+  SEASON_OPTIONS,
+  sortTeamsForDisplay,
+} from "@/lib/team/season";
 import type { Team } from "@/lib/supabase/database.types";
 
 function team(overrides: Partial<Team> & Pick<Team, "id" | "name">): Team {
@@ -19,6 +25,28 @@ function team(overrides: Partial<Team> & Pick<Team, "id" | "name">): Team {
     ...overrides,
   };
 }
+
+describe("isValidSeasonLabel", () => {
+  it("accepts YYYY/YY where YY is the following year", () => {
+    expect(isValidSeasonLabel("2025/26")).toBe(true);
+    expect(isValidSeasonLabel("1965/66")).toBe(true);
+    expect(isValidSeasonLabel("1995/96")).toBe(true);
+    expect(isValidSeasonLabel("1999/00")).toBe(true);
+  });
+
+  it("rejects malformed or non-consecutive seasons", () => {
+    expect(isValidSeasonLabel("2025")).toBe(false);
+    expect(isValidSeasonLabel("2025-26")).toBe(false);
+    expect(isValidSeasonLabel("1956/66")).toBe(false);
+    expect(isValidSeasonLabel("2025/25")).toBe(false);
+    expect(isValidSeasonLabel("")).toBe(false);
+  });
+
+  it("exposes presets with 2026/27 as default", () => {
+    expect(SEASON_OPTIONS).toContain(DEFAULT_SEASON);
+    expect(DEFAULT_SEASON).toBe("2026/27");
+  });
+});
 
 describe("isTeamArchived", () => {
   it("is false when archived_at is null", () => {

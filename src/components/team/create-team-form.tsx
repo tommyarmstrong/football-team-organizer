@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { SeasonInput } from "@/components/team/season-input";
 
 export function CreateTeamForm({
   coaches = [],
@@ -116,11 +117,10 @@ export function CreateTeamForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-team-season">Season</Label>
-          <Input
+          <SeasonInput
             id="new-team-season"
             name="season_label"
             required
-            placeholder="e.g. 2025/26"
             disabled={pending}
           />
         </div>
