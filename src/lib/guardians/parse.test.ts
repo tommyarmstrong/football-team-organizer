@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseEmergencyContact,
   parseGuardianForm,
   parseGuardianRelationship,
   parseLegalGuardian,
@@ -95,5 +96,13 @@ describe("parseLegalGuardian", () => {
     const checked = guardianFormData({ legal_guardian: "on" });
     expect(parseLegalGuardian(checked)).toBe(true);
     expect(parseLegalGuardian(new FormData())).toBe(false);
+  });
+});
+
+describe("parseEmergencyContact", () => {
+  it("reads the emergency contact checkbox", () => {
+    const checked = guardianFormData({ emergency_contact: "on" });
+    expect(parseEmergencyContact(checked)).toBe(true);
+    expect(parseEmergencyContact(new FormData())).toBe(false);
   });
 });

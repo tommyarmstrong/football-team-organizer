@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   coachDisplayName,
   formatAge,
+  formatAwardMonth,
   formatGoalMinute,
   formatHomeFirstScore,
   formatKickoffTime,
@@ -22,6 +23,7 @@ import {
   labelCompetitionGender,
   labelCompetitionKind,
   labelCompetitionPeriods,
+  labelCompetitionResult,
   labelGender,
   labelHomeAway,
   labelMatchStatus,
@@ -71,6 +73,32 @@ describe("formatAge", () => {
 
   it("omits months when exactly N years", () => {
     expect(formatAge("2015-08-15", new Date(2025, 7, 15))).toBe("10 years");
+  });
+
+  it("borrows a year when the month offset is negative", () => {
+    expect(formatAge("2015-10-15", new Date(2025, 7, 15))).toBe(
+      "9 years, 10 months",
+    );
+  });
+
+  it("uses singular year and month labels", () => {
+    expect(formatAge("2024-08-15", new Date(2025, 7, 15))).toBe("1 year");
+    expect(formatAge("2025-07-15", new Date(2025, 7, 15))).toBe("1 month");
+  });
+
+  it("clamps future dates of birth to zero months", () => {
+    expect(formatAge("2026-01-01", new Date(2025, 7, 15))).toBe("0 months");
+  });
+});
+
+describe("formatAwardMonth", () => {
+  it("formats YYYY-MM as a long month and year", () => {
+    expect(formatAwardMonth("2025-03")).toBe("March 2025");
+  });
+
+  it("returns the original string when the month is invalid", () => {
+    expect(formatAwardMonth("2025")).toBe("2025");
+    expect(formatAwardMonth("not-a-month")).toBe("not-a-month");
   });
 });
 
@@ -267,12 +295,16 @@ describe("label helpers", () => {
     expect(labelCompetitionKind(null)).toBe("—");
   });
 
-  it("labels competition gender and periods", () => {
+  it("labels competition gender, periods, and result", () => {
     expect(labelCompetitionGender("female")).toBe("Female");
     expect(labelCompetitionGender(null)).toBe("—");
     expect(labelCompetitionPeriods("2")).toBe("2 (Halves)");
     expect(labelCompetitionPeriods("other")).toBe("Other");
     expect(labelCompetitionPeriods(null)).toBe("—");
+    expect(labelCompetitionResult("champions")).toBe("Champions");
+    expect(labelCompetitionResult("runner_up")).toBe("Runner up");
+    expect(labelCompetitionResult(null)).toBe("—");
+    expect(labelCompetitionResult(undefined)).toBe("—");
   });
 
   it("labels venue, card, and objective enums", () => {

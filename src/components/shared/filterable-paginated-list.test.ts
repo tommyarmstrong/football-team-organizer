@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getVisiblePageNumbers } from "@/components/shared/filterable-paginated-list";
+import { objectListRowClassName } from "@/components/shared/object-list";
 
 describe("getVisiblePageNumbers", () => {
   it("lists every page when there are few pages", () => {
@@ -31,5 +32,16 @@ describe("getVisiblePageNumbers", () => {
       11,
       12,
     ]);
+  });
+
+  it("lists exactly seven pages without ellipses", () => {
+    expect(getVisiblePageNumbers(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+});
+
+describe("objectListRowClassName", () => {
+  it("includes the base row classes and optional extras", () => {
+    expect(objectListRowClassName()).toContain("min-h-12");
+    expect(objectListRowClassName("text-red-500")).toContain("text-red-500");
   });
 });
