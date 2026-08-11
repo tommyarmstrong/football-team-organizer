@@ -20,11 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const GoalsByPlayerChart = dynamic(
-  () =>
-    import("@/components/stats/stats-charts").then(
-      (mod) => mod.GoalsByPlayerChart,
-    ),
+const GoalsCard = dynamic(
+  () => import("@/components/stats/goals-card").then((mod) => mod.GoalsCard),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
@@ -124,22 +121,7 @@ export default async function StatsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Goals by player</CardTitle>
-          <CardDescription>Our goals in played matches</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {goalsByPlayer.data.length === 0 ? (
-            <EmptyState
-              title="No goals yet"
-              description="Add goals on match detail pages to populate this chart."
-            />
-          ) : (
-            <GoalsByPlayerChart data={goalsByPlayer.data} />
-          )}
-        </CardContent>
-      </Card>
+      <GoalsCard data={goalsByPlayer.data} />
 
       <Card>
         <CardHeader>
