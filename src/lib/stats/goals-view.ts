@@ -102,6 +102,8 @@ export function buildGoalsViewRows(
   name: string;
   value: number;
   displayValue: string;
+  goalsDisplay: string;
+  goalsPerGameDisplay: string;
 }> {
   return filterGoalsByPositions(data, selectedPositions)
     .map((row) => {
@@ -112,6 +114,11 @@ export function buildGoalsViewRows(
         name: row.name,
         value,
         displayValue: formatGoalsMetricValue(value, metric),
+        goalsDisplay: formatGoalsMetricValue(row.goals, "total"),
+        goalsPerGameDisplay: formatGoalsMetricValue(
+          goalsMetricValue(row, "per_game"),
+          "per_game",
+        ),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row != null)

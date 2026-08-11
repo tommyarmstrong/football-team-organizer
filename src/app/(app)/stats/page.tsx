@@ -138,6 +138,7 @@ export default async function StatsPage() {
             <PlayerCountChart
               data={assistsByPlayer.data}
               metricLabel="Assists"
+              perGameLabel="Assists per game"
               ariaTitle="assists by player"
             />
           )}

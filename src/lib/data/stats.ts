@@ -41,6 +41,7 @@ export type PlayerCountPoint = {
   playerId: string;
   name: string;
   count: number;
+  matchesPlayed?: number;
 };
 
 export type ResultOverTimePoint = {
@@ -343,14 +344,49 @@ export async function getAssistsByPlayerStats(): Promise<{
   data: PlayerCountPoint[];
   error: string | null;
 }> {
+  const team = await getActiveTeam();
+  if (!team) return { data: [], error: "No team selected." };
+
   const { data, error } = await getTopAssists(50);
   if (error) return { data: [], error };
+  if (data.length === 0) return { data: [], error: null };
+
+  const supabase = await createClient();
+  const playerIds = data.map((row) => row.player.id);
+  const matchesPlayedByPlayer = new Map<string, number>(
+    playerIds.map((id) => [id, 0]),
+  );
+
+  const { data: playedMatches, error: matchesError } = await supabase
+    .from("matches")
+    .select("id")
+    .eq("team_id", team.id)
+    .eq("status", "played");
+
+  if (matchesError) return { data: [], error: matchesError.message };
+
+  const matchIds = (playedMatches ?? []).map((match) => match.id);
+  if (matchIds.length > 0) {
+    const { data: appearanceRows, error: appearancesError } = await supabase
+      .from("match_players")
+      .select("player_id")
+      .in("match_id", matchIds)
+      .in("player_id", playerIds);
+
+    if (appearancesError) return { data: [], error: appearancesError.message };
+
+    for (const row of appearanceRows ?? []) {
+      const current = matchesPlayedByPlayer.get(row.player_id) ?? 0;
+      matchesPlayedByPlayer.set(row.player_id, current + 1);
+    }
+  }
 
   return {
     data: data.map((row) => ({
       playerId: row.player.id,
       name: `${row.player.first_name} ${row.player.last_name}`,
       count: row.count,
+      matchesPlayed: matchesPlayedByPlayer.get(row.player.id) ?? 0,
     })),
     error: null,
   };
