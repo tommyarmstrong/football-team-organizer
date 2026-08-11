@@ -1,19 +1,29 @@
--- Local / dev seed: FA club, England Men 1965/66 + England Women 2021/22.
+-- Local / dev seed: FA club + England Men (1965/66, 1995/96, 2025/26) + England Women 2021/22.
 --
 -- Seeded domain data:
 --   - 1 club (The Football Association)
---   - 26 venues (training/national + 2025/26 Premier League stadiums)
---   - 2 teams (England Men 1965/66, England Women 2021/22)
+--   - 32 venues (training/national + 2025/26 Premier League stadiums + WC 2026 tournament venues)
+--   - 4 teams (England Men 1965/66, England Men 1995/96, England Men 2025/26, England Women 2021/22)
 --   - 1 club manager (John Hall) + people row
---   - 5 coaches (Keegan, Robson, Howe, Ramsey, Wiegman) + their people rows
+--   - 7 coaches (Keegan, Robson, Howe, Ramsey, Wiegman, Venables, Tuchel) + their people rows
 --   - 22 England Men players (1966 World Cup squad) + their people rows
+--   - 22 England Men players (Euro 96 squad) + their people rows
+--   - 26 England Men players (World Cup 2026 squad) + their people rows
 --   - 23 England Women players (2022 Euros squad) + their people rows
---   - 2 competitions (World Cup 1965/66, UEFA Women's Euro 2021/22)
---   - 6 England Men matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
+--   - 4 competitions (World Cup 1965/66, Euro 96, World Cup 2025/26, UEFA Women's Euro 2021/22)
+--   - 6 England Men 1966 matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
+--   - 5 England Men Euro 96 matches (Switzerland, Scotland, Netherlands, Spain, Germany) — historical
+--   - 8 England Men World Cup 2026 matches (Croatia, Ghana, Panama, DR Congo, Mexico, Norway,
+--     Argentina, France) — historical / publicly reported throughout (3rd place finish)
 --   - 6 England Women matches (Austria, Norway, Northern Ireland, Spain, Sweden, Germany)
 --   - Match periods (halves; extra time on AET ties) linked on every match
 --   - Goals with period, minute, and assist where applicable
+--   - Sample disciplinary cards on selected fixtures
 --   - Coach's player of the match on England Women Euro 2022 fixtures (UEFA POTM)
+--
+-- World Cup 2026 (public results): Tuchel; 26-man squad (Chalobah #12 after Livramento injury);
+-- Group L; knockout through QF; SF loss 1-2 to Argentina (Atlanta); bronze win 6-4 vs France
+-- (Hard Rock Stadium); competition result third_place.
 --
 -- AFTER SEEDING (initial admin):
 -- 1. Create a user in Supabase Auth (Authentication -> Users), or sign in once.
@@ -337,6 +347,72 @@ upserted_venues as (
       'WV1 4QR',
       array['grass']::public.venue_surface[],
       array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000027-0000-4000-8000-000000000027',
+      '11111111-1111-1111-1111-111111111111',
+      'AT&T Stadium',
+      '1 AT&T Way',
+      null,
+      'Arlington',
+      'TX 76011',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000028-0000-4000-8000-000000000028',
+      '11111111-1111-1111-1111-111111111111',
+      'Gillette Stadium',
+      '1 Patriot Place',
+      null,
+      'Foxborough',
+      'MA 02035',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000029-0000-4000-8000-000000000029',
+      '11111111-1111-1111-1111-111111111111',
+      'MetLife Stadium',
+      '1 MetLife Stadium Drive',
+      null,
+      'East Rutherford',
+      'NJ 07073',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000030-0000-4000-8000-000000000030',
+      '11111111-1111-1111-1111-111111111111',
+      'Mercedes-Benz Stadium',
+      '1 AMB Drive NW',
+      null,
+      'Atlanta',
+      'GA 30313',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000031-0000-4000-8000-000000000031',
+      '11111111-1111-1111-1111-111111111111',
+      'Estadio Azteca',
+      'Calzada de Tlalpan 3465',
+      'Santa Ursula Coapa',
+      'Mexico City',
+      '04650',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
+    ),
+    (
+      'a0000032-0000-4000-8000-000000000032',
+      '11111111-1111-1111-1111-111111111111',
+      'Hard Rock Stadium',
+      '347 Don Shula Drive',
+      null,
+      'Miami Gardens',
+      'FL 33056',
+      array['grass']::public.venue_surface[],
+      array['cafe', 'bar', 'toilets', 'rain_shelter']::public.venue_food_and_drink[]
     )
   on conflict (id) do update set
     club_id = excluded.club_id,
@@ -386,6 +462,30 @@ upserted_teams as (
       'a0000004-0000-4000-8000-000000000004',
       array['tue', 'thu'],
       '2021/22'
+    ),
+    (
+      'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+      '11111111-1111-1111-1111-111111111111',
+      'England Men',
+      'England',
+      'Adults',
+      'men',
+      'a0000003-0000-4000-8000-000000000003',
+      'a0000004-0000-4000-8000-000000000004',
+      array['mon', 'wed', 'fri'],
+      '1995/96'
+    ),
+    (
+      'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+      '11111111-1111-1111-1111-111111111111',
+      'England Men',
+      'England',
+      'Adults',
+      'men',
+      'a0000003-0000-4000-8000-000000000003',
+      'a0000004-0000-4000-8000-000000000004',
+      array['mon', 'wed', 'fri'],
+      '2025/26'
     )
   on conflict (id) do update set
     club_id = excluded.club_id,
@@ -2126,5 +2226,1308 @@ on conflict (id) do update set
   minute = excluded.minute,
   is_opposition = excluded.is_opposition,
   is_own_goal = excluded.is_own_goal;
+
+-- ---------------------------------------------------------------------------
+-- England Men: UEFA Euro 1996 (historical)
+-- ---------------------------------------------------------------------------
+-- Historical: squad, Terry Venables, all five England matches at Wembley,
+-- goals, and semi-final exit to Germany on penalties. Competition result:
+-- semi_final.
+
+-- Head coach: Terry Venables.
+insert into public.people (id, first_name, last_name, account_status)
+values (
+  'e0000001-0000-4000-8000-000000000006',
+  'Terry',
+  'Venables',
+  'none'
+)
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
+insert into public.coaches (
+  id, club_id, person_id, joined_date, dbs_checked, fa_level_1, fa_level_2, biography
+)
+values (
+  'c0000001-0000-4000-8000-000000000006',
+  '11111111-1111-1111-1111-111111111111',
+  'e0000001-0000-4000-8000-000000000006',
+  '1994-01-28',
+  true, true, true,
+  'Terry Venables (born 6 January 1943) managed England from 1994 to 1996 and led the hosts at UEFA Euro 1996. A former Chelsea, Tottenham and Barcelona player and coach, he guided England to the semi-finals on home soil before a penalty shoot-out defeat to Germany at Wembley. Known for tactical flexibility and man-management, Venables remains closely associated with the Euro 96 summer.'
+)
+on conflict (id) do update set
+  club_id = excluded.club_id,
+  person_id = excluded.person_id,
+  joined_date = excluded.joined_date,
+  dbs_checked = excluded.dbs_checked,
+  fa_level_1 = excluded.fa_level_1,
+  fa_level_2 = excluded.fa_level_2,
+  biography = excluded.biography;
+
+insert into public.team_coaches (team_id, coach_id, role)
+values (
+  'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+  'c0000001-0000-4000-8000-000000000006',
+  'Head Coach'
+)
+on conflict (team_id, coach_id) do update set role = excluded.role;
+
+-- England Men Euro 96 squad (full 22).
+insert into public.people (id, first_name, last_name, account_status)
+values
+  ('b0000003-0000-4000-8000-000000000001', 'David', 'Seaman', 'none'),
+  ('b0000003-0000-4000-8000-000000000002', 'Gary', 'Neville', 'none'),
+  ('b0000003-0000-4000-8000-000000000003', 'Stuart', 'Pearce', 'none'),
+  ('b0000003-0000-4000-8000-000000000004', 'Paul', 'Ince', 'none'),
+  ('b0000003-0000-4000-8000-000000000005', 'Tony', 'Adams', 'none'),
+  ('b0000003-0000-4000-8000-000000000006', 'Gareth', 'Southgate', 'none'),
+  ('b0000003-0000-4000-8000-000000000007', 'David', 'Platt', 'none'),
+  ('b0000003-0000-4000-8000-000000000008', 'Paul', 'Gascoigne', 'none'),
+  ('b0000003-0000-4000-8000-000000000009', 'Alan', 'Shearer', 'none'),
+  ('b0000003-0000-4000-8000-000000000010', 'Teddy', 'Sheringham', 'none'),
+  ('b0000003-0000-4000-8000-000000000011', 'Darren', 'Anderton', 'none'),
+  ('b0000003-0000-4000-8000-000000000012', 'Steve', 'Howey', 'none'),
+  ('b0000003-0000-4000-8000-000000000013', 'Tim', 'Flowers', 'none'),
+  ('b0000003-0000-4000-8000-000000000014', 'Nick', 'Barmby', 'none'),
+  ('b0000003-0000-4000-8000-000000000015', 'Jamie', 'Redknapp', 'none'),
+  ('b0000003-0000-4000-8000-000000000016', 'Sol', 'Campbell', 'none'),
+  ('b0000003-0000-4000-8000-000000000017', 'Steve', 'McManaman', 'none'),
+  ('b0000003-0000-4000-8000-000000000018', 'Les', 'Ferdinand', 'none'),
+  ('b0000003-0000-4000-8000-000000000019', 'Phil', 'Neville', 'none'),
+  ('b0000003-0000-4000-8000-000000000020', 'Steve', 'Stone', 'none'),
+  ('b0000003-0000-4000-8000-000000000021', 'Robbie', 'Fowler', 'none'),
+  ('b0000003-0000-4000-8000-000000000022', 'Ian', 'Walker', 'none')
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
+insert into public.players (id, club_id, person_id, position, date_of_birth)
+values
+  ('a0000003-0000-4000-8000-000000000001', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000001', 'GK', '1963-09-19'),
+  ('a0000003-0000-4000-8000-000000000002', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000002', 'DEF', '1975-02-18'),
+  ('a0000003-0000-4000-8000-000000000003', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000003', 'DEF', '1962-04-24'),
+  ('a0000003-0000-4000-8000-000000000004', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000004', 'MID', '1967-10-21'),
+  ('a0000003-0000-4000-8000-000000000005', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000005', 'DEF', '1966-10-10'),
+  ('a0000003-0000-4000-8000-000000000006', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000006', 'DEF', '1970-09-03'),
+  ('a0000003-0000-4000-8000-000000000007', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000007', 'MID', '1966-06-10'),
+  ('a0000003-0000-4000-8000-000000000008', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000008', 'MID', '1967-05-27'),
+  ('a0000003-0000-4000-8000-000000000009', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000009', 'FWD', '1970-08-13'),
+  ('a0000003-0000-4000-8000-000000000010', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000010', 'FWD', '1966-04-02'),
+  ('a0000003-0000-4000-8000-000000000011', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000011', 'MID', '1972-03-03'),
+  ('a0000003-0000-4000-8000-000000000012', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000012', 'DEF', '1971-10-26'),
+  ('a0000003-0000-4000-8000-000000000013', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000013', 'GK', '1967-02-03'),
+  ('a0000003-0000-4000-8000-000000000014', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000014', 'MID', '1974-02-11'),
+  ('a0000003-0000-4000-8000-000000000015', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000015', 'MID', '1973-06-25'),
+  ('a0000003-0000-4000-8000-000000000016', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000016', 'DEF', '1974-09-18'),
+  ('a0000003-0000-4000-8000-000000000017', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000017', 'MID', '1972-02-11'),
+  ('a0000003-0000-4000-8000-000000000018', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000018', 'FWD', '1966-12-08'),
+  ('a0000003-0000-4000-8000-000000000019', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000019', 'DEF', '1977-01-21'),
+  ('a0000003-0000-4000-8000-000000000020', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000020', 'MID', '1971-08-20'),
+  ('a0000003-0000-4000-8000-000000000021', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000021', 'FWD', '1975-04-09'),
+  ('a0000003-0000-4000-8000-000000000022', '11111111-1111-1111-1111-111111111111', 'b0000003-0000-4000-8000-000000000022', 'GK', '1971-10-31')
+on conflict (id) do update set
+  club_id = excluded.club_id,
+  person_id = excluded.person_id,
+  position = excluded.position,
+  date_of_birth = excluded.date_of_birth;
+
+insert into public.team_players (team_id, player_id, shirt_number, active)
+values
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000001', 1, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000002', 2, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000003', 3, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000004', 4, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000005', 5, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000006', 6, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000007', 7, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000008', 8, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000009', 9, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000010', 10, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000011', 11, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000012', 12, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000013', 13, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000014', 14, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000015', 15, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000016', 16, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000017', 17, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000018', 18, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000019', 19, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000020', 20, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000021', 21, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000000096', 'a0000003-0000-4000-8000-000000000022', 22, true)
+on conflict (team_id, player_id) do update set
+  shirt_number = excluded.shirt_number,
+  active = excluded.active;
+
+-- Euro 96 competition for England Men.
+insert into public.competitions (
+  id, team_id, name, kind, season, knockout, age_group, gender,
+  players_per_team, periods, minutes_per_period, result, venue_mode, venue_id
+)
+values (
+  'd0000001-0000-4000-8000-000000000003',
+  'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+  'Euro 96',
+  'cup',
+  '1995/96',
+  true,
+  'Adults',
+  'male',
+  11,
+  '2',
+  45,
+  'semi_final',
+  'multiple',
+  null
+)
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  name = excluded.name,
+  kind = excluded.kind,
+  season = excluded.season,
+  knockout = excluded.knockout,
+  age_group = excluded.age_group,
+  gender = excluded.gender,
+  players_per_team = excluded.players_per_team,
+  periods = excluded.periods,
+  minutes_per_period = excluded.minutes_per_period,
+  result = excluded.result,
+  venue_mode = excluded.venue_mode,
+  venue_id = excluded.venue_id;
+
+-- England Men Euro 96 matches (all at Wembley).
+insert into public.matches (
+  id, team_id, opponent_name, date, kickoff_time, home_away, venue_id,
+  competition_id, status, notes
+)
+values
+  (
+    'e0000003-0000-4000-8000-000000000001',
+    'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+    'Switzerland',
+    '1996-06-08',
+    '15:00',
+    'home',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000003',
+    'played',
+    'Group A — Wembley Stadium'
+  ),
+  (
+    'e0000003-0000-4000-8000-000000000002',
+    'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+    'Scotland',
+    '1996-06-15',
+    '15:00',
+    'home',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000003',
+    'played',
+    'Group A — Wembley Stadium'
+  ),
+  (
+    'e0000003-0000-4000-8000-000000000003',
+    'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+    'Netherlands',
+    '1996-06-18',
+    '19:30',
+    'home',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000003',
+    'played',
+    'Group A — Wembley Stadium'
+  ),
+  (
+    'e0000003-0000-4000-8000-000000000004',
+    'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+    'Spain',
+    '1996-06-22',
+    '15:00',
+    'home',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000003',
+    'played',
+    'Quarter-final — won 4-2 on penalties after extra time'
+  ),
+  (
+    'e0000003-0000-4000-8000-000000000005',
+    'bbbbbbbb-bbbb-cccc-dddd-000000000096',
+    'Germany',
+    '1996-06-26',
+    '19:30',
+    'home',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000003',
+    'played',
+    'Semi-final — lost 6-5 on penalties after extra time'
+  )
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  opponent_name = excluded.opponent_name,
+  date = excluded.date,
+  kickoff_time = excluded.kickoff_time,
+  home_away = excluded.home_away,
+  venue_id = excluded.venue_id,
+  competition_id = excluded.competition_id,
+  status = excluded.status,
+  notes = excluded.notes;
+
+delete from public.match_periods
+where match_id in (
+  'e0000003-0000-4000-8000-000000000001',
+  'e0000003-0000-4000-8000-000000000002',
+  'e0000003-0000-4000-8000-000000000003',
+  'e0000003-0000-4000-8000-000000000004',
+  'e0000003-0000-4000-8000-000000000005'
+);
+
+insert into public.match_periods (id, match_id, name, sort_order)
+values
+  ('a2000003-0000-4000-8000-000000000011', 'e0000003-0000-4000-8000-000000000001', 'First half', 50),
+  ('a2000003-0000-4000-8000-000000000012', 'e0000003-0000-4000-8000-000000000001', 'Second half', 60),
+  ('a2000003-0000-4000-8000-000000000021', 'e0000003-0000-4000-8000-000000000002', 'First half', 50),
+  ('a2000003-0000-4000-8000-000000000022', 'e0000003-0000-4000-8000-000000000002', 'Second half', 60),
+  ('a2000003-0000-4000-8000-000000000031', 'e0000003-0000-4000-8000-000000000003', 'First half', 50),
+  ('a2000003-0000-4000-8000-000000000032', 'e0000003-0000-4000-8000-000000000003', 'Second half', 60),
+  ('a2000003-0000-4000-8000-000000000041', 'e0000003-0000-4000-8000-000000000004', 'First half', 50),
+  ('a2000003-0000-4000-8000-000000000042', 'e0000003-0000-4000-8000-000000000004', 'Second half', 60),
+  ('a2000003-0000-4000-8000-000000000043', 'e0000003-0000-4000-8000-000000000004', 'Extra time 1', 80),
+  ('a2000003-0000-4000-8000-000000000044', 'e0000003-0000-4000-8000-000000000004', 'Extra time 2', 90),
+  ('a2000003-0000-4000-8000-000000000051', 'e0000003-0000-4000-8000-000000000005', 'First half', 50),
+  ('a2000003-0000-4000-8000-000000000052', 'e0000003-0000-4000-8000-000000000005', 'Second half', 60),
+  ('a2000003-0000-4000-8000-000000000053', 'e0000003-0000-4000-8000-000000000005', 'Extra time 1', 80),
+  ('a2000003-0000-4000-8000-000000000054', 'e0000003-0000-4000-8000-000000000005', 'Extra time 2', 90)
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  name = excluded.name,
+  sort_order = excluded.sort_order;
+
+-- England Men Euro 96 goals.
+insert into public.goals (
+  id, match_id, player_id, assist_player_id, period_id, period, minute, is_opposition
+)
+values
+  (
+    'f0000003-0000-4000-8000-000000000001',
+    'e0000003-0000-4000-8000-000000000001',
+    'a0000003-0000-4000-8000-000000000009',
+    null,
+    'a2000003-0000-4000-8000-000000000011',
+    'First half',
+    23,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000002',
+    'e0000003-0000-4000-8000-000000000001',
+    null,
+    null,
+    'a2000003-0000-4000-8000-000000000012',
+    'Second half',
+    83,
+    true
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000003',
+    'e0000003-0000-4000-8000-000000000002',
+    'a0000003-0000-4000-8000-000000000009',
+    'a0000003-0000-4000-8000-000000000010',
+    'a2000003-0000-4000-8000-000000000022',
+    'Second half',
+    53,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000004',
+    'e0000003-0000-4000-8000-000000000002',
+    'a0000003-0000-4000-8000-000000000008',
+    'a0000003-0000-4000-8000-000000000011',
+    'a2000003-0000-4000-8000-000000000022',
+    'Second half',
+    79,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000005',
+    'e0000003-0000-4000-8000-000000000003',
+    'a0000003-0000-4000-8000-000000000009',
+    null,
+    'a2000003-0000-4000-8000-000000000031',
+    'First half',
+    23,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000006',
+    'e0000003-0000-4000-8000-000000000003',
+    'a0000003-0000-4000-8000-000000000010',
+    'a0000003-0000-4000-8000-000000000009',
+    'a2000003-0000-4000-8000-000000000032',
+    'Second half',
+    51,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000007',
+    'e0000003-0000-4000-8000-000000000003',
+    'a0000003-0000-4000-8000-000000000009',
+    'a0000003-0000-4000-8000-000000000010',
+    'a2000003-0000-4000-8000-000000000032',
+    'Second half',
+    57,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000008',
+    'e0000003-0000-4000-8000-000000000003',
+    'a0000003-0000-4000-8000-000000000010',
+    'a0000003-0000-4000-8000-000000000009',
+    'a2000003-0000-4000-8000-000000000032',
+    'Second half',
+    62,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-000000000009',
+    'e0000003-0000-4000-8000-000000000003',
+    null,
+    null,
+    'a2000003-0000-4000-8000-000000000032',
+    'Second half',
+    78,
+    true
+  ),
+  (
+    'f0000003-0000-4000-8000-00000000000a',
+    'e0000003-0000-4000-8000-000000000005',
+    'a0000003-0000-4000-8000-000000000009',
+    'a0000003-0000-4000-8000-000000000008',
+    'a2000003-0000-4000-8000-000000000051',
+    'First half',
+    3,
+    false
+  ),
+  (
+    'f0000003-0000-4000-8000-00000000000b',
+    'e0000003-0000-4000-8000-000000000005',
+    null,
+    null,
+    'a2000003-0000-4000-8000-000000000051',
+    'First half',
+    16,
+    true
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id,
+  assist_player_id = excluded.assist_player_id,
+  period_id = excluded.period_id,
+  period = excluded.period,
+  minute = excluded.minute,
+  is_opposition = excluded.is_opposition;
+
+-- Sample disciplinary cards (Euro 96).
+insert into public.cards (
+  id, match_id, player_id, coach_id, guardian_id, type, coach_notes, referee_notes, club_notes
+)
+values
+  (
+    'ca000003-0000-4000-8000-000000000001',
+    'e0000003-0000-4000-8000-000000000001',
+    'a0000003-0000-4000-8000-000000000002', -- Gary Neville
+    null, null,
+    'yellow_1st',
+    'Booked for a late challenge.',
+    null, null
+  ),
+  (
+    'ca000003-0000-4000-8000-000000000002',
+    'e0000003-0000-4000-8000-000000000005',
+    'a0000003-0000-4000-8000-000000000008', -- Paul Gascoigne
+    null, null,
+    'yellow_1st',
+    'Booked in the semi-final.',
+    null, null
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id,
+  coach_id = excluded.coach_id,
+  guardian_id = excluded.guardian_id,
+  type = excluded.type,
+  coach_notes = excluded.coach_notes,
+  referee_notes = excluded.referee_notes,
+  club_notes = excluded.club_notes;
+
+-- Match-day squad for the Euro 96 semi-final (starting XI).
+delete from public.match_players
+where match_id = 'e0000003-0000-4000-8000-000000000005'
+  and player_id in (
+    'a0000003-0000-4000-8000-000000000001',
+    'a0000003-0000-4000-8000-000000000003',
+    'a0000003-0000-4000-8000-000000000005',
+    'a0000003-0000-4000-8000-000000000006',
+    'a0000003-0000-4000-8000-000000000004',
+    'a0000003-0000-4000-8000-000000000007',
+    'a0000003-0000-4000-8000-000000000008',
+    'a0000003-0000-4000-8000-000000000011',
+    'a0000003-0000-4000-8000-000000000017',
+    'a0000003-0000-4000-8000-000000000009',
+    'a0000003-0000-4000-8000-000000000010'
+  );
+
+insert into public.match_players (id, match_id, player_id)
+values
+  ('a1000003-0000-4000-8000-000000000001', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000001'),
+  ('a1000003-0000-4000-8000-000000000002', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000003'),
+  ('a1000003-0000-4000-8000-000000000003', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000005'),
+  ('a1000003-0000-4000-8000-000000000004', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000006'),
+  ('a1000003-0000-4000-8000-000000000005', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000004'),
+  ('a1000003-0000-4000-8000-000000000006', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000007'),
+  ('a1000003-0000-4000-8000-000000000007', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000008'),
+  ('a1000003-0000-4000-8000-000000000008', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000011'),
+  ('a1000003-0000-4000-8000-000000000009', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000017'),
+  ('a1000003-0000-4000-8000-000000000010', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000009'),
+  ('a1000003-0000-4000-8000-000000000011', 'e0000003-0000-4000-8000-000000000005', 'a0000003-0000-4000-8000-000000000010')
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id;
+
+-- ---------------------------------------------------------------------------
+-- England Men: FIFA World Cup 2026
+-- ---------------------------------------------------------------------------
+-- Public results: Thomas Tuchel head coach; final 26-man squad (Chalobah #12
+-- after Livramento injury); Group L; knockout through QF (DR Congo, Mexico,
+-- Norway aet); SF loss 1-2 vs Argentina (Atlanta, 15 Jul); bronze win 6-4 vs
+-- France (Hard Rock Stadium, 18 Jul); competition result third_place.
+
+-- Head coach: Thomas Tuchel.
+insert into public.people (id, first_name, last_name, account_status)
+values (
+  'e0000001-0000-4000-8000-000000000007',
+  'Thomas',
+  'Tuchel',
+  'none'
+)
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
+insert into public.coaches (
+  id, club_id, person_id, joined_date, dbs_checked, fa_level_1, fa_level_2, biography
+)
+values (
+  'c0000001-0000-4000-8000-000000000007',
+  '11111111-1111-1111-1111-111111111111',
+  'e0000001-0000-4000-8000-000000000007',
+  '2025-01-01',
+  true, true, true,
+  'Thomas Tuchel (born 29 August 1973) became England head coach in 2025. A Champions League-winning club manager with Chelsea and Paris Saint-Germain, he guided England to a third-place finish at the 2026 FIFA World Cup in North America.'
+)
+on conflict (id) do update set
+  club_id = excluded.club_id,
+  person_id = excluded.person_id,
+  joined_date = excluded.joined_date,
+  dbs_checked = excluded.dbs_checked,
+  fa_level_1 = excluded.fa_level_1,
+  fa_level_2 = excluded.fa_level_2,
+  biography = excluded.biography;
+
+insert into public.team_coaches (team_id, coach_id, role)
+values (
+  'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+  'c0000001-0000-4000-8000-000000000007',
+  'Head Coach'
+)
+on conflict (team_id, coach_id) do update set role = excluded.role;
+
+-- England Men World Cup 2026 squad (26).
+insert into public.people (id, first_name, last_name, account_status)
+values
+  ('b0000004-0000-4000-8000-000000000001', 'Jordan', 'Pickford', 'none'),
+  ('b0000004-0000-4000-8000-000000000002', 'Ezri', 'Konsa', 'none'),
+  ('b0000004-0000-4000-8000-000000000003', 'Nico', 'O''Reilly', 'none'),
+  ('b0000004-0000-4000-8000-000000000004', 'Declan', 'Rice', 'none'),
+  ('b0000004-0000-4000-8000-000000000005', 'John', 'Stones', 'none'),
+  ('b0000004-0000-4000-8000-000000000006', 'Marc', 'Guehi', 'none'),
+  ('b0000004-0000-4000-8000-000000000007', 'Bukayo', 'Saka', 'none'),
+  ('b0000004-0000-4000-8000-000000000008', 'Elliot', 'Anderson', 'none'),
+  ('b0000004-0000-4000-8000-000000000009', 'Harry', 'Kane', 'none'),
+  ('b0000004-0000-4000-8000-000000000010', 'Jude', 'Bellingham', 'none'),
+  ('b0000004-0000-4000-8000-000000000011', 'Marcus', 'Rashford', 'none'),
+  ('b0000004-0000-4000-8000-000000000012', 'Trevoh', 'Chalobah', 'none'),
+  ('b0000004-0000-4000-8000-000000000013', 'Dean', 'Henderson', 'none'),
+  ('b0000004-0000-4000-8000-000000000014', 'Jordan', 'Henderson', 'none'),
+  ('b0000004-0000-4000-8000-000000000015', 'Dan', 'Burn', 'none'),
+  ('b0000004-0000-4000-8000-000000000016', 'Kobbie', 'Mainoo', 'none'),
+  ('b0000004-0000-4000-8000-000000000017', 'Morgan', 'Rogers', 'none'),
+  ('b0000004-0000-4000-8000-000000000018', 'Anthony', 'Gordon', 'none'),
+  ('b0000004-0000-4000-8000-000000000019', 'Ollie', 'Watkins', 'none'),
+  ('b0000004-0000-4000-8000-000000000020', 'Noni', 'Madueke', 'none'),
+  ('b0000004-0000-4000-8000-000000000021', 'Eberechi', 'Eze', 'none'),
+  ('b0000004-0000-4000-8000-000000000022', 'Ivan', 'Toney', 'none'),
+  ('b0000004-0000-4000-8000-000000000023', 'James', 'Trafford', 'none'),
+  ('b0000004-0000-4000-8000-000000000024', 'Reece', 'James', 'none'),
+  ('b0000004-0000-4000-8000-000000000025', 'Djed', 'Spence', 'none'),
+  ('b0000004-0000-4000-8000-000000000026', 'Jarell', 'Quansah', 'none')
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  last_name = excluded.last_name;
+
+insert into public.players (id, club_id, person_id, position, date_of_birth)
+values
+  ('a0000004-0000-4000-8000-000000000001', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000001', 'GK', '1994-03-07'),
+  ('a0000004-0000-4000-8000-000000000002', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000002', 'DEF', '1997-10-23'),
+  ('a0000004-0000-4000-8000-000000000003', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000003', 'DEF', '2005-03-21'),
+  ('a0000004-0000-4000-8000-000000000004', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000004', 'MID', '1999-01-14'),
+  ('a0000004-0000-4000-8000-000000000005', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000005', 'DEF', '1994-05-28'),
+  ('a0000004-0000-4000-8000-000000000006', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000006', 'DEF', '2000-07-13'),
+  ('a0000004-0000-4000-8000-000000000007', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000007', 'FWD', '2001-09-05'),
+  ('a0000004-0000-4000-8000-000000000008', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000008', 'MID', '2002-11-06'),
+  ('a0000004-0000-4000-8000-000000000009', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000009', 'FWD', '1993-07-28'),
+  ('a0000004-0000-4000-8000-000000000010', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000010', 'MID', '2003-06-29'),
+  ('a0000004-0000-4000-8000-000000000011', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000011', 'FWD', '1997-10-31'),
+  ('a0000004-0000-4000-8000-000000000012', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000012', 'DEF', '1999-07-05'),
+  ('a0000004-0000-4000-8000-000000000013', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000013', 'GK', '1997-03-12'),
+  ('a0000004-0000-4000-8000-000000000014', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000014', 'MID', '1990-06-17'),
+  ('a0000004-0000-4000-8000-000000000015', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000015', 'DEF', '1992-05-09'),
+  ('a0000004-0000-4000-8000-000000000016', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000016', 'MID', '2005-04-19'),
+  ('a0000004-0000-4000-8000-000000000017', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000017', 'MID', '2002-07-26'),
+  ('a0000004-0000-4000-8000-000000000018', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000018', 'FWD', '2001-02-24'),
+  ('a0000004-0000-4000-8000-000000000019', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000019', 'FWD', '1995-12-30'),
+  ('a0000004-0000-4000-8000-000000000020', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000020', 'FWD', '2002-03-10'),
+  ('a0000004-0000-4000-8000-000000000021', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000021', 'MID', '1998-06-29'),
+  ('a0000004-0000-4000-8000-000000000022', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000022', 'FWD', '1996-03-16'),
+  ('a0000004-0000-4000-8000-000000000023', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000023', 'GK', '2002-10-10'),
+  ('a0000004-0000-4000-8000-000000000024', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000024', 'DEF', '1999-12-08'),
+  ('a0000004-0000-4000-8000-000000000025', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000025', 'DEF', '2000-08-09'),
+  ('a0000004-0000-4000-8000-000000000026', '11111111-1111-1111-1111-111111111111', 'b0000004-0000-4000-8000-000000000026', 'DEF', '2003-01-29')
+on conflict (id) do update set
+  club_id = excluded.club_id,
+  person_id = excluded.person_id,
+  position = excluded.position,
+  date_of_birth = excluded.date_of_birth;
+
+insert into public.team_players (team_id, player_id, shirt_number, active)
+values
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000001', 1, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000002', 2, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000003', 3, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000004', 4, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000005', 5, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000006', 6, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000007', 7, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000008', 8, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000009', 9, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000010', 10, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000011', 11, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000012', 12, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000013', 13, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000014', 14, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000015', 15, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000016', 16, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000017', 17, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000018', 18, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000019', 19, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000020', 20, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000021', 21, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000022', 22, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000023', 23, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000024', 24, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000025', 25, true),
+  ('bbbbbbbb-bbbb-cccc-dddd-000000002026', 'a0000004-0000-4000-8000-000000000026', 26, true)
+on conflict (team_id, player_id) do update set
+  shirt_number = excluded.shirt_number,
+  active = excluded.active;
+
+-- World Cup 2025/26 competition for England Men (result: third_place).
+insert into public.competitions (
+  id, team_id, name, kind, season, knockout, age_group, gender,
+  players_per_team, periods, minutes_per_period, result, venue_mode, venue_id, notes
+)
+values (
+  'd0000001-0000-4000-8000-000000000004',
+  'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+  'World Cup',
+  'cup',
+  '2025/26',
+  true,
+  'Adults',
+  'male',
+  11,
+  '2',
+  45,
+  'third_place',
+  'multiple',
+  null,
+  'Public 2026 results: SF loss to Argentina; bronze medal win vs France.'
+)
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  name = excluded.name,
+  kind = excluded.kind,
+  season = excluded.season,
+  knockout = excluded.knockout,
+  age_group = excluded.age_group,
+  gender = excluded.gender,
+  players_per_team = excluded.players_per_team,
+  periods = excluded.periods,
+  minutes_per_period = excluded.minutes_per_period,
+  result = excluded.result,
+  venue_mode = excluded.venue_mode,
+  venue_id = excluded.venue_id,
+  notes = excluded.notes;
+
+-- England Men World Cup 2026 matches.
+insert into public.matches (
+  id, team_id, opponent_name, date, kickoff_time, home_away, venue_id,
+  competition_id, status, notes
+)
+values
+  (
+    'e0000004-0000-4000-8000-000000000001',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Croatia',
+    '2026-06-17',
+    '15:00',
+    'home',
+    'a0000027-0000-4000-8000-000000000027',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Group L — AT&T Stadium, Arlington'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000002',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Ghana',
+    '2026-06-23',
+    '16:00',
+    'home',
+    'a0000028-0000-4000-8000-000000000028',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Group L — Gillette Stadium, Foxborough'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000003',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Panama',
+    '2026-06-27',
+    '17:00',
+    'away',
+    'a0000029-0000-4000-8000-000000000029',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Group L — MetLife Stadium, East Rutherford'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000004',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'DR Congo',
+    '2026-07-01',
+    '12:00',
+    'home',
+    'a0000030-0000-4000-8000-000000000030',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Round of 32 — Mercedes-Benz Stadium, Atlanta'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000005',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Mexico',
+    '2026-07-05',
+    '19:00',
+    'away',
+    'a0000031-0000-4000-8000-000000000031',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Round of 16 — Estadio Azteca, Mexico City'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000006',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Norway',
+    '2026-07-11',
+    '17:00',
+    'away',
+    'a0000032-0000-4000-8000-000000000032',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Quarter-final — after extra time — Hard Rock Stadium'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000007',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'Argentina',
+    '2026-07-15',
+    '20:00',
+    'home',
+    'a0000030-0000-4000-8000-000000000030',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Semi-final — England 1-2 Argentina — Mercedes-Benz Stadium, Atlanta'
+  ),
+  (
+    'e0000004-0000-4000-8000-000000000008',
+    'bbbbbbbb-bbbb-cccc-dddd-000000002026',
+    'France',
+    '2026-07-18',
+    '22:00',
+    'away',
+    'a0000032-0000-4000-8000-000000000032',
+    'd0000001-0000-4000-8000-000000000004',
+    'played',
+    'Third-place play-off — France 4-6 England — Hard Rock Stadium, Miami'
+  )
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  opponent_name = excluded.opponent_name,
+  date = excluded.date,
+  kickoff_time = excluded.kickoff_time,
+  home_away = excluded.home_away,
+  venue_id = excluded.venue_id,
+  competition_id = excluded.competition_id,
+  status = excluded.status,
+  notes = excluded.notes;
+
+delete from public.match_periods
+where match_id in (
+  'e0000004-0000-4000-8000-000000000001',
+  'e0000004-0000-4000-8000-000000000002',
+  'e0000004-0000-4000-8000-000000000003',
+  'e0000004-0000-4000-8000-000000000004',
+  'e0000004-0000-4000-8000-000000000005',
+  'e0000004-0000-4000-8000-000000000006',
+  'e0000004-0000-4000-8000-000000000007',
+  'e0000004-0000-4000-8000-000000000008'
+);
+
+insert into public.match_periods (id, match_id, name, sort_order)
+values
+  ('a2000004-0000-4000-8000-000000000011', 'e0000004-0000-4000-8000-000000000001', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000012', 'e0000004-0000-4000-8000-000000000001', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000021', 'e0000004-0000-4000-8000-000000000002', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000022', 'e0000004-0000-4000-8000-000000000002', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000031', 'e0000004-0000-4000-8000-000000000003', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000032', 'e0000004-0000-4000-8000-000000000003', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000041', 'e0000004-0000-4000-8000-000000000004', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000042', 'e0000004-0000-4000-8000-000000000004', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000051', 'e0000004-0000-4000-8000-000000000005', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000052', 'e0000004-0000-4000-8000-000000000005', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000061', 'e0000004-0000-4000-8000-000000000006', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000062', 'e0000004-0000-4000-8000-000000000006', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000063', 'e0000004-0000-4000-8000-000000000006', 'Extra time 1', 80),
+  ('a2000004-0000-4000-8000-000000000064', 'e0000004-0000-4000-8000-000000000006', 'Extra time 2', 90),
+  ('a2000004-0000-4000-8000-000000000071', 'e0000004-0000-4000-8000-000000000007', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000072', 'e0000004-0000-4000-8000-000000000007', 'Second half', 60),
+  ('a2000004-0000-4000-8000-000000000081', 'e0000004-0000-4000-8000-000000000008', 'First half', 50),
+  ('a2000004-0000-4000-8000-000000000082', 'e0000004-0000-4000-8000-000000000008', 'Second half', 60)
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  name = excluded.name,
+  sort_order = excluded.sort_order;
+
+-- Drop leftover extra-time period ids from earlier seed revisions.
+delete from public.match_periods
+where id in (
+  'a2000004-0000-4000-8000-000000000083',
+  'a2000004-0000-4000-8000-000000000084'
+);
+
+-- England Men World Cup 2026 goals.
+insert into public.goals (
+  id, match_id, player_id, assist_player_id, period_id, period, minute, is_opposition
+)
+values
+  (
+    'f0000004-0000-4000-8000-000000000001',
+    'e0000004-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000009',
+    null,
+    'a2000004-0000-4000-8000-000000000011',
+    'First half',
+    12,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000002',
+    'e0000004-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000009',
+    'a0000004-0000-4000-8000-000000000010',
+    'a2000004-0000-4000-8000-000000000011',
+    'First half',
+    42,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000003',
+    'e0000004-0000-4000-8000-000000000001',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000011',
+    'First half',
+    36,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000004',
+    'e0000004-0000-4000-8000-000000000001',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000011',
+    'First half',
+    45,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000005',
+    'e0000004-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000004',
+    'a2000004-0000-4000-8000-000000000012',
+    'Second half',
+    47,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000006',
+    'e0000004-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000011',
+    'a0000004-0000-4000-8000-000000000017',
+    'a2000004-0000-4000-8000-000000000012',
+    'Second half',
+    85,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000007',
+    'e0000004-0000-4000-8000-000000000003',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000007',
+    'a2000004-0000-4000-8000-000000000032',
+    'Second half',
+    62,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000008',
+    'e0000004-0000-4000-8000-000000000003',
+    'a0000004-0000-4000-8000-000000000009',
+    'a0000004-0000-4000-8000-000000000010',
+    'a2000004-0000-4000-8000-000000000032',
+    'Second half',
+    67,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000009',
+    'e0000004-0000-4000-8000-000000000004',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000041',
+    'First half',
+    58,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000a',
+    'e0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000009',
+    'a0000004-0000-4000-8000-000000000018',
+    'a2000004-0000-4000-8000-000000000042',
+    'Second half',
+    75,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000b',
+    'e0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000009',
+    'a0000004-0000-4000-8000-000000000007',
+    'a2000004-0000-4000-8000-000000000042',
+    'Second half',
+    86,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000c',
+    'e0000004-0000-4000-8000-000000000005',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000004',
+    'a2000004-0000-4000-8000-000000000051',
+    'First half',
+    36,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000d',
+    'e0000004-0000-4000-8000-000000000005',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000007',
+    'a2000004-0000-4000-8000-000000000051',
+    'First half',
+    38,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000e',
+    'e0000004-0000-4000-8000-000000000005',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000051',
+    'First half',
+    42,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000000f',
+    'e0000004-0000-4000-8000-000000000005',
+    'a0000004-0000-4000-8000-000000000009',
+    null,
+    'a2000004-0000-4000-8000-000000000052',
+    'Second half',
+    60,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000010',
+    'e0000004-0000-4000-8000-000000000005',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000052',
+    'Second half',
+    69,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000011',
+    'e0000004-0000-4000-8000-000000000006',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000009',
+    'a2000004-0000-4000-8000-000000000061',
+    'First half',
+    45,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000012',
+    'e0000004-0000-4000-8000-000000000006',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000062',
+    'Second half',
+    70,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000013',
+    'e0000004-0000-4000-8000-000000000006',
+    'a0000004-0000-4000-8000-000000000010',
+    'a0000004-0000-4000-8000-000000000018',
+    'a2000004-0000-4000-8000-000000000063',
+    'Extra time 1',
+    93,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000014',
+    'e0000004-0000-4000-8000-000000000007',
+    'a0000004-0000-4000-8000-000000000018', -- Anthony Gordon
+    'a0000004-0000-4000-8000-000000000017', -- Morgan Rogers
+    'a2000004-0000-4000-8000-000000000072',
+    'Second half',
+    55,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000015',
+    'e0000004-0000-4000-8000-000000000007',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000072',
+    'Second half',
+    85,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000016',
+    'e0000004-0000-4000-8000-000000000007',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000072',
+    'Second half',
+    92,
+    true
+  ),
+  -- Third-place play-off: France 4-6 England
+  (
+    'f0000004-0000-4000-8000-000000000017',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000004', -- Declan Rice
+    null,
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    3,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000018',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000002', -- Ezri Konsa
+    'a0000004-0000-4000-8000-000000000004', -- Rice (corner)
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    18,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000019',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka
+    'a0000004-0000-4000-8000-000000000011', -- Marcus Rashford
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    37,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001a',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka
+    'a0000004-0000-4000-8000-000000000021', -- Eberechi Eze
+    'a2000004-0000-4000-8000-000000000081',
+    'First half',
+    46,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001b',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    48,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001c',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    54,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001d',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    66,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001e',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000007', -- Bukayo Saka (pen)
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    87,
+    false
+  ),
+  (
+    'f0000004-0000-4000-8000-00000000001f',
+    'e0000004-0000-4000-8000-000000000008',
+    null,
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    96,
+    true
+  ),
+  (
+    'f0000004-0000-4000-8000-000000000020',
+    'e0000004-0000-4000-8000-000000000008',
+    'a0000004-0000-4000-8000-000000000010', -- Jude Bellingham
+    null,
+    'a2000004-0000-4000-8000-000000000082',
+    'Second half',
+    98,
+    false
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id,
+  assist_player_id = excluded.assist_player_id,
+  period_id = excluded.period_id,
+  period = excluded.period,
+  minute = excluded.minute,
+  is_opposition = excluded.is_opposition;
+
+update public.goals
+set is_penalty = true
+where id = 'f0000004-0000-4000-8000-00000000001e';
+
+update public.goals
+set is_penalty = false
+where id in (
+  'f0000004-0000-4000-8000-000000000014',
+  'f0000004-0000-4000-8000-000000000015',
+  'f0000004-0000-4000-8000-000000000016',
+  'f0000004-0000-4000-8000-000000000017',
+  'f0000004-0000-4000-8000-000000000018',
+  'f0000004-0000-4000-8000-000000000019',
+  'f0000004-0000-4000-8000-00000000001a',
+  'f0000004-0000-4000-8000-00000000001b',
+  'f0000004-0000-4000-8000-00000000001c',
+  'f0000004-0000-4000-8000-00000000001d',
+  'f0000004-0000-4000-8000-00000000001f',
+  'f0000004-0000-4000-8000-000000000020'
+);
+
+-- Sample disciplinary cards (World Cup 2026).
+insert into public.cards (
+  id, match_id, player_id, coach_id, guardian_id, type, coach_notes, referee_notes, club_notes
+)
+values
+  (
+    'ca000004-0000-4000-8000-000000000001',
+    'e0000004-0000-4000-8000-000000000005',
+    'a0000004-0000-4000-8000-000000000026', -- Jarell Quansah
+    null, null,
+    'red',
+    'Sent off in the round of 16.',
+    null, null
+  ),
+  (
+    'ca000004-0000-4000-8000-000000000002',
+    'e0000004-0000-4000-8000-000000000007',
+    'a0000004-0000-4000-8000-000000000008', -- Elliot Anderson
+    null, null,
+    'yellow_1st',
+    'Booked in the semi-final (37'').',
+    null, null
+  )
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id,
+  coach_id = excluded.coach_id,
+  guardian_id = excluded.guardian_id,
+  type = excluded.type,
+  coach_notes = excluded.coach_notes,
+  referee_notes = excluded.referee_notes,
+  club_notes = excluded.club_notes;
+
+-- Remove previously seeded bench card id if present.
+delete from public.cards
+where id = 'ca000004-0000-4000-8000-000000000003';
+
+-- Match-day squad for the semi-final (starting XI).
+delete from public.match_players
+where match_id = 'e0000004-0000-4000-8000-000000000007';
+
+insert into public.match_players (id, match_id, player_id)
+values
+  ('a1000004-0000-4000-8000-000000000101', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000001'), -- Pickford
+  ('a1000004-0000-4000-8000-000000000102', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000004'), -- Rice
+  ('a1000004-0000-4000-8000-000000000103', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000005'), -- Stones
+  ('a1000004-0000-4000-8000-000000000104', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000006'), -- Guehi
+  ('a1000004-0000-4000-8000-000000000105', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000008'), -- Anderson
+  ('a1000004-0000-4000-8000-000000000106', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000009'), -- Kane
+  ('a1000004-0000-4000-8000-000000000107', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000010'), -- Bellingham
+  ('a1000004-0000-4000-8000-000000000108', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000017'), -- Rogers
+  ('a1000004-0000-4000-8000-000000000109', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000018'), -- Gordon
+  ('a1000004-0000-4000-8000-00000000010a', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000024'), -- James
+  ('a1000004-0000-4000-8000-00000000010b', 'e0000004-0000-4000-8000-000000000007', 'a0000004-0000-4000-8000-000000000025')  -- Spence
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id;
+
+-- Match-day squad for the third-place play-off (starting XI).
+delete from public.match_players
+where match_id = 'e0000004-0000-4000-8000-000000000008';
+
+insert into public.match_players (id, match_id, player_id)
+values
+  ('a1000004-0000-4000-8000-000000000001', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000013'), -- Henderson
+  ('a1000004-0000-4000-8000-000000000002', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000002'), -- Konsa
+  ('a1000004-0000-4000-8000-000000000003', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000004'), -- Rice
+  ('a1000004-0000-4000-8000-000000000004', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000006'), -- Guehi
+  ('a1000004-0000-4000-8000-000000000005', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000007'), -- Saka
+  ('a1000004-0000-4000-8000-000000000006', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000011'), -- Rashford
+  ('a1000004-0000-4000-8000-000000000007', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000017'), -- Rogers
+  ('a1000004-0000-4000-8000-000000000008', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000021'), -- Eze
+  ('a1000004-0000-4000-8000-000000000009', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000022'), -- Toney
+  ('a1000004-0000-4000-8000-00000000000a', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000025'), -- Spence
+  ('a1000004-0000-4000-8000-00000000000b', 'e0000004-0000-4000-8000-000000000008', 'a0000004-0000-4000-8000-000000000026')  -- Quansah
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  player_id = excluded.player_id;
+
+-- Starting XI for each period of the semi-final.
+delete from public.match_period_starters
+where period_id in (
+  'a2000004-0000-4000-8000-000000000071',
+  'a2000004-0000-4000-8000-000000000072',
+  'a2000004-0000-4000-8000-000000000081',
+  'a2000004-0000-4000-8000-000000000082',
+  'a2000004-0000-4000-8000-000000000083',
+  'a2000004-0000-4000-8000-000000000084'
+);
+
+insert into public.match_period_starters (period_id, player_id)
+select period_id, player_id
+from (
+  values
+    ('a2000004-0000-4000-8000-000000000071'::uuid),
+    ('a2000004-0000-4000-8000-000000000072'::uuid)
+) as periods(period_id)
+cross join (
+  values
+    ('a0000004-0000-4000-8000-000000000001'::uuid),
+    ('a0000004-0000-4000-8000-000000000004'::uuid),
+    ('a0000004-0000-4000-8000-000000000005'::uuid),
+    ('a0000004-0000-4000-8000-000000000006'::uuid),
+    ('a0000004-0000-4000-8000-000000000008'::uuid),
+    ('a0000004-0000-4000-8000-000000000009'::uuid),
+    ('a0000004-0000-4000-8000-000000000010'::uuid),
+    ('a0000004-0000-4000-8000-000000000017'::uuid),
+    ('a0000004-0000-4000-8000-000000000018'::uuid),
+    ('a0000004-0000-4000-8000-000000000024'::uuid),
+    ('a0000004-0000-4000-8000-000000000025'::uuid)
+) as squad(player_id)
+on conflict (period_id, player_id) do nothing;
+
+-- Starting XI for each period of the third-place play-off.
+insert into public.match_period_starters (period_id, player_id)
+select period_id, player_id
+from (
+  values
+    ('a2000004-0000-4000-8000-000000000081'::uuid),
+    ('a2000004-0000-4000-8000-000000000082'::uuid)
+) as periods(period_id)
+cross join (
+  values
+    ('a0000004-0000-4000-8000-000000000013'::uuid),
+    ('a0000004-0000-4000-8000-000000000002'::uuid),
+    ('a0000004-0000-4000-8000-000000000004'::uuid),
+    ('a0000004-0000-4000-8000-000000000006'::uuid),
+    ('a0000004-0000-4000-8000-000000000007'::uuid),
+    ('a0000004-0000-4000-8000-000000000011'::uuid),
+    ('a0000004-0000-4000-8000-000000000017'::uuid),
+    ('a0000004-0000-4000-8000-000000000021'::uuid),
+    ('a0000004-0000-4000-8000-000000000022'::uuid),
+    ('a0000004-0000-4000-8000-000000000025'::uuid),
+    ('a0000004-0000-4000-8000-000000000026'::uuid)
+) as squad(player_id)
+on conflict (period_id, player_id) do nothing;
 
 commit;
