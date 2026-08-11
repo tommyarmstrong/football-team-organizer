@@ -35,6 +35,7 @@ import {
   playerDisplayName,
   resultLetter,
   scoreFromGoals,
+  teamDisplayName,
 } from "@/lib/format";
 
 describe("formatMatchDate", () => {
@@ -299,10 +300,13 @@ describe("label helpers", () => {
     expect(labelCompetitionGender("female")).toBe("Female");
     expect(labelCompetitionGender(null)).toBe("—");
     expect(labelCompetitionPeriods("2")).toBe("2 (Halves)");
+    expect(labelCompetitionPeriods("4")).toBe("4 (Quarters)");
     expect(labelCompetitionPeriods("other")).toBe("Other");
     expect(labelCompetitionPeriods(null)).toBe("—");
     expect(labelCompetitionResult("champions")).toBe("Champions");
     expect(labelCompetitionResult("runner_up")).toBe("Runner up");
+    expect(labelCompetitionResult("completed")).toBe("Completed");
+    expect(labelCompetitionResult("cancelled")).toBe("Cancelled");
     expect(labelCompetitionResult(null)).toBe("—");
     expect(labelCompetitionResult(undefined)).toBe("—");
   });
@@ -427,5 +431,22 @@ describe("formatMatchTitle", () => {
     expect(
       formatMatchTitle("England", "West Germany", "neutral", "played", 1, 1),
     ).toBe("England 1-1 West Germany");
+  });
+});
+
+describe("teamDisplayName", () => {
+  it("prefers display_name when set", () => {
+    expect(
+      teamDisplayName({ name: "U11 Boys Blues", display_name: "Blues" }),
+    ).toBe("Blues");
+  });
+
+  it("falls back to name", () => {
+    expect(
+      teamDisplayName({ name: "U11 Boys Blues", display_name: null }),
+    ).toBe("U11 Boys Blues");
+    expect(
+      teamDisplayName({ name: "U11 Boys Blues", display_name: "  " }),
+    ).toBe("U11 Boys Blues");
   });
 });

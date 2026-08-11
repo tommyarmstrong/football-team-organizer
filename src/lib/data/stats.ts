@@ -5,6 +5,8 @@ import {
   mapPlayerNameEmbed,
   PLAYER_NAME_EMBED,
 } from "@/lib/people/named-player";
+import type { CompetitionKind } from "@/lib/supabase/database.types";
+import { STATS_FORM_LIMIT } from "@/lib/constants";
 
 export type TopScorer = {
   player: {
@@ -35,6 +37,11 @@ export type GoalsByPlayerPoint = {
   position: string | null;
   matchesPlayed: number;
   periodsPlayed: number;
+  /** One entry per goal for competition filtering. */
+  goalCompetitions: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+  }>;
 };
 
 export type PlayerCountPoint = {
@@ -51,6 +58,9 @@ export type ResultOverTimePoint = {
   goalsFor: number;
   goalsAgainst: number;
   result: "W" | "D" | "L";
+  competitionId: string | null;
+  competitionKind: CompetitionKind | null;
+  competitionName: string | null;
 };
 
 async function getShirtByPlayer(
@@ -243,7 +253,7 @@ export async function getGoalsByPlayerStats(): Promise<{
   const { data: goalRows, error: goalsError } = await supabase
     .from("goals")
     .select(
-      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status)`,
+      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status, competition_id, competition:competitions(id, kind))`,
     )
     .eq("match.team_id", team.id)
     .eq("match.status", "played")
@@ -263,9 +273,32 @@ export async function getGoalsByPlayerStats(): Promise<{
       playerRaw && !Array.isArray(playerRaw) && "position" in playerRaw
         ? ((playerRaw.position as string | null | undefined) ?? null)
         : null;
+    const matchRaw = Array.isArray(row.match) ? row.match[0] : row.match;
+    const competitionRaw =
+      matchRaw && typeof matchRaw === "object" && "competition" in matchRaw
+        ? Array.isArray(matchRaw.competition)
+          ? matchRaw.competition[0]
+          : matchRaw.competition
+        : null;
+    const competitionId =
+      (competitionRaw &&
+      typeof competitionRaw === "object" &&
+      "id" in competitionRaw
+        ? (competitionRaw.id as string)
+        : null) ??
+      (matchRaw && typeof matchRaw === "object" && "competition_id" in matchRaw
+        ? ((matchRaw.competition_id as string | null) ?? null)
+        : null);
+    const competitionKind =
+      competitionRaw &&
+      typeof competitionRaw === "object" &&
+      "kind" in competitionRaw
+        ? ((competitionRaw.kind as CompetitionKind | null) ?? null)
+        : null;
     const existing = byPlayer.get(player.id);
     if (existing) {
       existing.goals += 1;
+      existing.goalCompetitions.push({ competitionId, competitionKind });
       continue;
     }
     byPlayer.set(player.id, {
@@ -275,6 +308,7 @@ export async function getGoalsByPlayerStats(): Promise<{
       position,
       matchesPlayed: 0,
       periodsPlayed: 0,
+      goalCompetitions: [{ competitionId, competitionKind }],
     });
   }
 
@@ -462,7 +496,9 @@ export async function getResultsOverTime(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
-    .select("id, date, opponent_name, status, goals(is_opposition)")
+    .select(
+      "id, date, opponent_name, status, competition_id, competition:competitions(id, name, kind), goals(is_opposition)",
+    )
     .eq("team_id", team.id)
     .eq("status", "played")
     .order("date", { ascending: true });
@@ -479,6 +515,9 @@ export async function getResultsOverTime(): Promise<{
     const letter = resultLetter(goalsFor, goalsAgainst);
     if (!letter) continue;
     form.push(letter);
+    const competitionRaw = Array.isArray(match.competition)
+      ? match.competition[0]
+      : match.competition;
     points.push({
       matchId: match.id,
       date: match.date,
@@ -486,8 +525,13 @@ export async function getResultsOverTime(): Promise<{
       goalsFor,
       goalsAgainst,
       result: letter,
+      competitionId: competitionRaw?.id ?? match.competition_id ?? null,
+      competitionKind: (competitionRaw?.kind as CompetitionKind | null) ?? null,
+      competitionName: competitionRaw?.name ?? null,
     });
   }
 
-  return { data: points, error: null, form };
+  const recentForm = form.slice(-STATS_FORM_LIMIT);
+
+  return { data: points, error: null, form: recentForm };
 }

@@ -1,17 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { getViewerContext, canEditTeam } from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
+import { listVenues } from "@/lib/data/venues";
+import { getCurrentTeam } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { CompetitionForm } from "@/components/team/competition-form";
-import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 export default async function EditCompetitionPage({
   params,
@@ -43,25 +38,19 @@ export default async function EditCompetitionPage({
     redirect(`/competitions/${competition.id}`);
   }
 
+  const team = await getCurrentTeam();
+  const { data: venues } = await listVenues(team?.club_id);
+
   return (
     <div className="space-y-6">
       <PageHeader title="Edit competition" description={competition.name} />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Competition details</CardTitle>
-          <CardDescription>
-            Update competition details. Use Save to save and return.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <CompetitionForm competition={competition} />
-          <DeleteCompetitionButton
-            competitionId={competition.id}
-            competitionName={competition.name}
-            label="Delete competition"
-          />
-        </CardContent>
+        <CompetitionForm
+          competition={competition}
+          venues={venues}
+          mode="edit"
+        />
       </Card>
     </div>
   );

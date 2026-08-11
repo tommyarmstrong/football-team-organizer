@@ -390,7 +390,7 @@ export default async function PersonDetailPage({
         </Card>
       ) : null}
 
-      {canEdit ? (
+      {canEdit && (roles.coach || roles.guardian || roles.manager) ? (
         <Card>
           <CardHeader>
             <CardTitle>Login Account</CardTitle>

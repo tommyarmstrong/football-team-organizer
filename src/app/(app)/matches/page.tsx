@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
 import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -35,7 +36,7 @@ export default async function MatchesPage({
     listMatches(filter),
     canEditActiveTeam(),
   ]);
-  const teamName = team?.name ?? "Our team";
+  const teamName = team ? teamDisplayName(team) : "Our team";
 
   return (
     <div className="space-y-6">

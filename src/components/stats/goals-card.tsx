@@ -20,6 +20,12 @@ import {
   type GoalsMetric,
   type GoalsPositionFilter,
 } from "@/lib/stats/goals-view";
+import {
+  ALL_COMPETITION_KINDS,
+  ALL_COMPETITIONS,
+  type CompetitionFilterOption,
+} from "@/lib/stats/competition-filters";
+import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,11 +58,25 @@ function FilterButton({
   );
 }
 
-export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
+export function GoalsCard({
+  data,
+  competitions,
+}: {
+  data: GoalsByPlayerPoint[];
+  competitions: CompetitionFilterOption[];
+}) {
   const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
   const [metric, setMetric] = useState<GoalsMetric>("total");
+  const [competitionId, setCompetitionId] = useState(ALL_COMPETITIONS);
+  const [competitionKind, setCompetitionKind] = useState(ALL_COMPETITION_KINDS);
 
-  const rows = buildGoalsViewRows(data, positions, metric);
+  const rows = buildGoalsViewRows(
+    data,
+    positions,
+    metric,
+    competitionId,
+    competitionKind,
+  );
   const metricLabel = goalsMetricLabel(metric);
   const summary = rows
     .map((row) => `${row.name}: ${row.displayValue}`)
@@ -76,6 +96,15 @@ export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
           />
         ) : (
           <>
+            <StatsCompetitionFilters
+              idPrefix="goals"
+              competitions={competitions}
+              competitionId={competitionId}
+              competitionKind={competitionKind}
+              onCompetitionIdChange={setCompetitionId}
+              onCompetitionKindChange={setCompetitionKind}
+            />
+
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Position
@@ -123,7 +152,7 @@ export function GoalsCard({ data }: { data: GoalsByPlayerPoint[] }) {
             {rows.length === 0 ? (
               <EmptyState
                 title="No goals for this view"
-                description="Try another position filter or metric."
+                description="Try another competition, position filter, or metric."
               />
             ) : (
               <figure className="space-y-4">

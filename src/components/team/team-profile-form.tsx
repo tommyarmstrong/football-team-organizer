@@ -101,6 +101,15 @@ export function TeamProfileForm({
             disabled={pending}
           />
         </Field>
+        <Field label="Display name" htmlFor="display_name">
+          <Input
+            id="display_name"
+            name="display_name"
+            placeholder="Shown on dashboard, matches, and stats"
+            defaultValue={team.display_name ?? ""}
+            disabled={pending}
+          />
+        </Field>
         <Field label="Age group" htmlFor="age_group">
           <NativeSelect
             id="age_group"

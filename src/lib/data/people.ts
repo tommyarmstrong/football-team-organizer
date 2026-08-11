@@ -36,6 +36,11 @@ export type PersonDirectoryItem = Person & {
     coach: boolean;
     manager: boolean;
   };
+  emergency_contact: {
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+  } | null;
 };
 
 export async function listPeople(): Promise<{
@@ -46,7 +51,20 @@ export async function listPeople(): Promise<{
   const { data, error } = await supabase
     .from("people")
     .select(
-      "*, managers(id, active_role), coaches(id, active_role), guardians(id, active_role), players(id, active_role)",
+      `*,
+      managers(id, active_role),
+      coaches(id, active_role),
+      guardians(id, active_role),
+      players(
+        id,
+        active_role,
+        player_guardians(
+          emergency_contact,
+          guardian:guardians(
+            person:people!person_id(first_name, last_name, phone)
+          )
+        )
+      )`,
     )
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
@@ -58,9 +76,72 @@ export async function listPeople(): Promise<{
       managers: { id: string; active_role: boolean }[] | null;
       coaches: { id: string; active_role: boolean }[] | null;
       guardians: { id: string; active_role: boolean }[] | null;
-      players: { id: string; active_role: boolean }[] | null;
+      players:
+        | {
+            id: string;
+            active_role: boolean;
+            player_guardians:
+              | {
+                  emergency_contact: boolean;
+                  guardian:
+                    | {
+                        person:
+                          | {
+                              first_name: string;
+                              last_name: string;
+                              phone: string | null;
+                            }
+                          | {
+                              first_name: string;
+                              last_name: string;
+                              phone: string | null;
+                            }[]
+                          | null;
+                      }
+                    | {
+                        person:
+                          | {
+                              first_name: string;
+                              last_name: string;
+                              phone: string | null;
+                            }
+                          | {
+                              first_name: string;
+                              last_name: string;
+                              phone: string | null;
+                            }[]
+                          | null;
+                      }[]
+                    | null;
+                }[]
+              | null;
+          }[]
+        | null;
     };
     const { managers, coaches, guardians, players, ...rest } = person;
+
+    let emergency_contact: PersonDirectoryItem["emergency_contact"] = null;
+    for (const player of players ?? []) {
+      if (!player.active_role) continue;
+      const link = (player.player_guardians ?? []).find(
+        (row) => row.emergency_contact,
+      );
+      if (!link) continue;
+      const guardian = Array.isArray(link.guardian)
+        ? link.guardian[0]
+        : link.guardian;
+      const contactPerson = Array.isArray(guardian?.person)
+        ? guardian?.person[0]
+        : guardian?.person;
+      if (!contactPerson) continue;
+      emergency_contact = {
+        first_name: contactPerson.first_name,
+        last_name: contactPerson.last_name,
+        phone: contactPerson.phone,
+      };
+      break;
+    }
+
     return {
       ...rest,
       roles: {
@@ -69,6 +150,7 @@ export async function listPeople(): Promise<{
         coach: (coaches ?? []).some((r) => r.active_role),
         manager: (managers ?? []).some((r) => r.active_role),
       },
+      emergency_contact,
     };
   });
 

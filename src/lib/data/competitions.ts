@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentTeam } from "@/lib/data/team";
 import type {
   Competition,
-  CompetitionKind,
+  TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 
@@ -53,10 +53,9 @@ export async function getCompetition(
   return { data, error: null };
 }
 
-export async function createCompetition(input: {
-  name: string;
-  kind: CompetitionKind | null;
-}): Promise<{ data: Competition | null; error: string | null }> {
+export async function createCompetition(
+  input: Omit<TablesInsert<"competitions">, "team_id">,
+): Promise<{ data: Competition | null; error: string | null }> {
   const team = await getCurrentTeam();
   if (!team) {
     return { data: null, error: "No team found for your account." };
@@ -66,9 +65,8 @@ export async function createCompetition(input: {
   const { data, error } = await supabase
     .from("competitions")
     .insert({
+      ...input,
       team_id: team.id,
-      name: input.name,
-      kind: input.kind,
     })
     .select("*")
     .single();

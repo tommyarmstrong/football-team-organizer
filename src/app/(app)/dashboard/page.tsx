@@ -15,6 +15,7 @@ import {
   formatMatchTitle,
   labelHomeAway,
   playerDisplayName,
+  teamDisplayName,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -41,6 +42,7 @@ export default async function DashboardPage() {
     );
   }
 
+  const displayName = teamDisplayName(team);
   const [next, last, scorers, assists, potm, competitions, potMonth, canEdit] =
     await Promise.all([
       getNextFixture(),
@@ -67,14 +69,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <PageHeader
         title="Dashboard"
-        description={`${team.name} · ${team.season_label}`}
-        actions={
-          canEdit ? (
-            <Link href="/matches/new" className={buttonVariants()}>
-              New fixture
-            </Link>
-          ) : undefined
-        }
+        description={`${displayName} · ${team.season_label}`}
       />
 
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
@@ -141,7 +136,7 @@ export default async function DashboardPage() {
               >
                 <p className="font-bold">
                   {formatMatchTitle(
-                    team.name,
+                    displayName,
                     last.data.opponent_name,
                     last.data.home_away,
                     last.data.status,
@@ -252,7 +247,7 @@ export default async function DashboardPage() {
       />
 
       <LeaderboardCard
-        title="Assists"
+        title="Most assists"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
         rows={assists.data.map((row) => ({

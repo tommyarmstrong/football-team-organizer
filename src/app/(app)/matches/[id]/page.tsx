@@ -7,7 +7,11 @@ import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
-import { formatMatchTitle, scoreFromGoals } from "@/lib/format";
+import {
+  formatMatchTitle,
+  scoreFromGoals,
+  teamDisplayName,
+} from "@/lib/format";
 import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -52,7 +56,7 @@ export default async function MatchDetailPage({
     match.status === "cancelled" || match.status === "postponed";
 
   const team = ctx.visibleTeams.find((t) => t.id === match.team_id);
-  const teamName = team?.name ?? "Our team";
+  const teamName = team ? teamDisplayName(team) : "Our team";
   const opponentName = match.opponent_name;
 
   const [

@@ -5,8 +5,8 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { AddCompetitionForm } from "@/components/team/add-competition-form";
 import { CompetitionResultChip } from "@/components/team/competition-result-chip";
+import { buttonVariants } from "@/components/ui/button";
 
 export function CompetitionsSection({
   competitions,
@@ -46,7 +46,11 @@ export function CompetitionsSection({
         </ul>
       )}
 
-      {canEdit && showAddForm ? <AddCompetitionForm /> : null}
+      {canEdit && showAddForm ? (
+        <Link href="/competitions/new" className={buttonVariants()}>
+          Add
+        </Link>
+      ) : null}
     </div>
   );
 }

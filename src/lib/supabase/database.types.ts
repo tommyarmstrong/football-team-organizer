@@ -264,6 +264,7 @@ export type Database = {
           id: string;
           club_id: string;
           name: string;
+          display_name: string | null;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
           home_venue_id: string | null;
@@ -278,6 +279,7 @@ export type Database = {
           id?: string;
           club_id: string;
           name: string;
+          display_name?: string | null;
           age_group: string;
           gender: Database["public"]["Enums"]["team_gender"];
           home_venue_id?: string | null;
@@ -292,6 +294,7 @@ export type Database = {
           id?: string;
           club_id?: string;
           name?: string;
+          display_name?: string | null;
           age_group?: string;
           gender?: Database["public"]["Enums"]["team_gender"];
           home_venue_id?: string | null;
@@ -708,11 +711,14 @@ export type Database = {
           minutes_per_period: number | null;
           name: string;
           notes: string | null;
+          organizer: string | null;
           periods: Database["public"]["Enums"]["competition_periods"];
           players_per_team: number | null;
           result: Database["public"]["Enums"]["competition_result"];
           season: string | null;
           team_id: string;
+          venue_id: string | null;
+          venue_mode: string;
         };
         Insert: {
           age_group?: string | null;
@@ -724,11 +730,14 @@ export type Database = {
           minutes_per_period?: number | null;
           name: string;
           notes?: string | null;
+          organizer?: string | null;
           periods?: Database["public"]["Enums"]["competition_periods"];
           players_per_team?: number | null;
           result?: Database["public"]["Enums"]["competition_result"];
           season?: string | null;
           team_id: string;
+          venue_id?: string | null;
+          venue_mode?: string;
         };
         Update: {
           age_group?: string | null;
@@ -740,11 +749,14 @@ export type Database = {
           minutes_per_period?: number | null;
           name?: string;
           notes?: string | null;
+          organizer?: string | null;
           periods?: Database["public"]["Enums"]["competition_periods"];
           players_per_team?: number | null;
           result?: Database["public"]["Enums"]["competition_result"];
           season?: string | null;
           team_id?: string;
+          venue_id?: string | null;
+          venue_mode?: string;
         };
         Relationships: [
           {
@@ -752,6 +764,13 @@ export type Database = {
             columns: ["team_id"];
             isOneToOne: false;
             referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "competitions_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
             referencedColumns: ["id"];
           },
         ];
@@ -1276,7 +1295,9 @@ export type Database = {
         | "promoted"
         | "relegated"
         | "none"
-        | "ongoing";
+        | "ongoing"
+        | "completed"
+        | "cancelled";
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";

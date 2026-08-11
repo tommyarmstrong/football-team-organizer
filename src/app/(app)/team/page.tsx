@@ -18,7 +18,7 @@ import {
 } from "@/lib/data/members";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listVenues } from "@/lib/data/venues";
-import { labelGender } from "@/lib/format";
+import { labelGender, teamDisplayName } from "@/lib/format";
 import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -131,7 +131,7 @@ export default async function TeamPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={team.name}
+        title={teamDisplayName(team)}
         description={`${club?.name ?? ""} · ${labelGender(team.gender)} · ${team.age_group} · ${team.season_label}`}
       />
 
