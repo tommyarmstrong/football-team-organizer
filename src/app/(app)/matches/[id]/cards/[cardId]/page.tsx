@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditMatchDay } from "@/lib/authz/context";
 import { getCard } from "@/lib/data/cards";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { getMatch } from "@/lib/data/matches";
@@ -39,7 +39,7 @@ export default async function MatchCardEditPage({
     notFound();
   }
 
-  const canEdit = canEditTeam(ctx, match.team_id);
+  const canEdit = canEditMatchDay(ctx, match.team_id);
 
   const [
     { data: players, error: playersError },

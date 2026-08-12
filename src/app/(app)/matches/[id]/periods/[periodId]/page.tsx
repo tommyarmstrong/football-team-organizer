@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditMatchDay } from "@/lib/authz/context";
 import { listGoalsForMatch } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { getPeriod } from "@/lib/data/match-periods";
@@ -41,7 +41,7 @@ export default async function MatchPeriodEditPage({
     notFound();
   }
 
-  const canEdit = canEditTeam(ctx, match.team_id);
+  const canEdit = canEditMatchDay(ctx, match.team_id);
   const teamName =
     ctx.visibleTeams.find((t) => t.id === match.team_id)?.name ?? "Our team";
 

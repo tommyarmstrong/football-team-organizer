@@ -1258,6 +1258,7 @@ export type Database = {
       is_club_management: { Args: { p_club_id: string }; Returns: boolean };
       is_club_staff: { Args: { p_club_id: string }; Returns: boolean };
       can_edit_team: { Args: { p_team_id: string }; Returns: boolean };
+      can_edit_match_day: { Args: { p_team_id: string }; Returns: boolean };
       can_edit_match_goals: { Args: { p_team_id: string }; Returns: boolean };
       can_read_team: { Args: { p_team_id: string }; Returns: boolean };
       can_edit_player: { Args: { p_player_id: string }; Returns: boolean };

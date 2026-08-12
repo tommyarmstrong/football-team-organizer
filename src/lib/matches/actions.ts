@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import {
+  canEditMatchDay,
+  canEditTeam,
+  getViewerContext,
+} from "@/lib/authz/context";
+import {
   MATCH_HOME_AWAYS,
   MATCH_STATUSES,
   matchAllowsEvents,
@@ -57,8 +62,11 @@ export async function createMatchAction(
     return { error: "Invalid status." };
   }
 
-  const team = await getActiveTeam();
+  const [team, ctx] = await Promise.all([getActiveTeam(), getViewerContext()]);
   if (!team) return { error: "No team selected." };
+  if (!ctx || !canEditMatchDay(ctx, team.id)) {
+    return { error: "You do not have permission to add fixtures." };
+  }
 
   const venueResult = await parseVenueId(formData, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
@@ -113,13 +121,23 @@ export async function updateMatchAction(
     return { error: "Invalid status." };
   }
 
-  const team = await getActiveTeam();
+  const [team, ctx, existing] = await Promise.all([
+    getActiveTeam(),
+    getViewerContext(),
+    getMatch(id),
+  ]);
   if (!team) return { error: "No team selected." };
+  if (existing.error) return { error: existing.error };
+  if (!existing.data) return { error: "Match not found." };
+  if (!ctx || !canEditMatchDay(ctx, existing.data.team_id)) {
+    return { error: "You do not have permission to edit this match." };
+  }
 
   const venueResult = await parseVenueId(formData, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
   const allowsEvents = matchAllowsEvents(status);
+  const canEditPotm = canEditTeam(ctx, existing.data.team_id);
 
   const { error } = await updateMatch(id, {
     opponent_name,
@@ -129,12 +147,16 @@ export async function updateMatchAction(
     venue_id: venueResult.venue_id,
     status,
     competition_id,
-    player_of_the_match_id: allowsEvents ? player_of_the_match_id : null,
-    players_player_of_the_match_id: allowsEvents
-      ? players_player_of_the_match_id
-      : null,
     notes,
     club_notes,
+    ...(canEditPotm
+      ? {
+          player_of_the_match_id: allowsEvents ? player_of_the_match_id : null,
+          players_player_of_the_match_id: allowsEvents
+            ? players_player_of_the_match_id
+            : null,
+        }
+      : {}),
   });
 
   if (error) return { error };
@@ -158,9 +180,15 @@ export async function updateMatchPlayersOfTheMatchAction(
   const players_player_of_the_match_id =
     str(formData, "players_player_of_the_match_id") || null;
 
-  const { data: match, error: loadError } = await getMatch(id);
+  const [ctx, loaded] = await Promise.all([getViewerContext(), getMatch(id)]);
+  const { data: match, error: loadError } = loaded;
   if (loadError) return { error: loadError };
   if (!match) return { error: "Match not found." };
+  if (!ctx || !canEditTeam(ctx, match.team_id)) {
+    return {
+      error: "Only coaches and management can set player of the match.",
+    };
+  }
 
   if (!matchAllowsEvents(match.status)) {
     return {
@@ -184,6 +212,13 @@ export async function updateMatchPlayersOfTheMatchAction(
 }
 
 export async function deleteMatchAction(id: string): Promise<ActionState> {
+  const [ctx, loaded] = await Promise.all([getViewerContext(), getMatch(id)]);
+  if (loaded.error) return { error: loaded.error };
+  if (!loaded.data) return { error: "Match not found." };
+  if (!ctx || !canEditMatchDay(ctx, loaded.data.team_id)) {
+    return { error: "You do not have permission to delete this match." };
+  }
+
   const { error } = await deleteMatch(id);
   if (error) return { error };
 

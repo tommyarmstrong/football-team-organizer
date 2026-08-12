@@ -258,7 +258,8 @@ export default async function TeamPage() {
         <CardHeader>
           <CardTitle>Guardian assistants</CardTitle>
           <CardDescription>
-            Guardians who can record goal scorers and assists during matches.
+            Guardians who can add fixtures and record match-day squad, periods,
+            goals, assists, and cards. They cannot set player of the match.
           </CardDescription>
         </CardHeader>
         <CardContent>

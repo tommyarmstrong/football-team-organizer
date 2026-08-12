@@ -181,6 +181,16 @@ export function canEditTeam(ctx: ViewerContext, teamId: string): boolean {
   return ctx.editableTeamIds.includes(teamId);
 }
 
+/**
+ * Record fixtures and match-day events (squad, periods, goals/assists, cards).
+ * Guardian assistants get this without full team-edit rights (no POTM).
+ */
+export function canEditMatchDay(ctx: ViewerContext, teamId: string): boolean {
+  return (
+    canEditTeam(ctx, teamId) || hasTeamRole(ctx, teamId, "guardian_assistant")
+  );
+}
+
 export function canManageClub(ctx: ViewerContext, clubId: string): boolean {
   return ctx.managementClubIds.includes(clubId);
 }

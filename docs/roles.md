@@ -85,11 +85,15 @@ Guardians have read (but not write) access to:
 
 ### Permissions
 
-Guardian assistants assist coaches. They have all the access of Guardians, and in addition, they have:
+Guardian assistants assist coaches. They have all the access of Guardians, and in addition they can record match-day data for their team:
 
-- Write access to match goal scorers
-- Write access to match goal assists
-- Write access to match scorers
+- Add and edit matches
+- Write access to match-day squad
+- Write access to match periods
+- Write access to match goal scorers and assists
+- Write access to match cards
+
+They cannot add or edit player of the match (coach or management only).
 
 ## Player
 

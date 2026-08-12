@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { MatchListFilter } from "@/lib/constants";
 import { listMatches } from "@/lib/data/matches";
-import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { canEditActiveMatchDay, getActiveTeam } from "@/lib/data/team";
 import { teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -34,7 +34,7 @@ export default async function MatchesPage({
   const [team, { data: matches, error }, canEdit] = await Promise.all([
     getActiveTeam(),
     listMatches(filter),
-    canEditActiveTeam(),
+    canEditActiveMatchDay(),
   ]);
   const teamName = team ? teamDisplayName(team) : "Our team";
 

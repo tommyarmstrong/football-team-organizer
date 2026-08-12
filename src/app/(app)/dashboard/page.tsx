@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { canEditActiveTeam, getCurrentTeam } from "@/lib/data/team";
+import {
+  canEditActiveMatchDay,
+  canEditActiveTeam,
+  getCurrentTeam,
+} from "@/lib/data/team";
 import { getLastResult, getNextFixture } from "@/lib/data/matches";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
@@ -43,17 +47,27 @@ export default async function DashboardPage() {
   }
 
   const displayName = teamDisplayName(team);
-  const [next, last, scorers, assists, potm, competitions, potMonth, canEdit] =
-    await Promise.all([
-      getNextFixture(),
-      getLastResult(),
-      getTopScorers(5),
-      getTopAssists(5),
-      getTopPlayersOfTheMatch(5),
-      listCompetitions(team.id),
-      listPlayerOfTheMonth(team.id, 5),
-      canEditActiveTeam(),
-    ]);
+  const [
+    next,
+    last,
+    scorers,
+    assists,
+    potm,
+    competitions,
+    potMonth,
+    canEditMatch,
+    canEditTeam,
+  ] = await Promise.all([
+    getNextFixture(),
+    getLastResult(),
+    getTopScorers(5),
+    getTopAssists(5),
+    getTopPlayersOfTheMatch(5),
+    listCompetitions(team.id),
+    listPlayerOfTheMonth(team.id, 5),
+    canEditActiveMatchDay(),
+    canEditActiveTeam(),
+  ]);
 
   const errors = [
     next.error,
@@ -110,7 +124,7 @@ export default async function DashboardPage() {
                 title="No upcoming fixture"
                 description="Schedule the next match."
                 action={
-                  canEdit ? (
+                  canEditMatch ? (
                     <Link
                       href="/matches/new"
                       className={buttonVariants({ size: "sm" })}
@@ -189,7 +203,7 @@ export default async function DashboardPage() {
             <CompetitionsSection
               key={team.id}
               competitions={competitions.data}
-              canEdit={canEdit}
+              canEdit={canEditTeam}
             />
           )}
         </CardContent>
