@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccessClubAndPeople,
+  canEditMatchDay,
   canEditPlayer,
   canEditTeam,
   canManageClub,
@@ -77,6 +78,32 @@ describe("canReadTeam / canEditTeam / canManageClub", () => {
     expect(canEditTeam(ctx, "team-2")).toBe(false);
     expect(canManageClub(ctx, "club-1")).toBe(true);
     expect(canManageClub(ctx, "club-2")).toBe(false);
+  });
+});
+
+describe("canEditMatchDay", () => {
+  it("allows team editors and guardian assistants, not plain guardians", () => {
+    expect(
+      canEditMatchDay(viewer({ editableTeamIds: ["team-1"] }), "team-1"),
+    ).toBe(true);
+    expect(
+      canEditMatchDay(
+        viewer({ memberTeamRoles: { "team-1": ["guardian_assistant"] } }),
+        "team-1",
+      ),
+    ).toBe(true);
+    expect(
+      canEditMatchDay(
+        viewer({ memberTeamRoles: { "team-1": ["guardian"] } }),
+        "team-1",
+      ),
+    ).toBe(false);
+    expect(
+      canEditMatchDay(
+        viewer({ memberTeamRoles: { "team-1": ["guardian_assistant"] } }),
+        "team-2",
+      ),
+    ).toBe(false);
   });
 });
 

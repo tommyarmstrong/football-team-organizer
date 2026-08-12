@@ -1,5 +1,5 @@
 import { listCompetitions } from "@/lib/data/competitions";
-import { canEditActiveTeam, getActiveTeam } from "@/lib/data/team";
+import { canEditActiveMatchDay, getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -16,7 +16,7 @@ import {
 export default async function NewMatchPage() {
   const [team, canEdit] = await Promise.all([
     getActiveTeam(),
-    canEditActiveTeam(),
+    canEditActiveMatchDay(),
   ]);
 
   if (!team) {
@@ -34,7 +34,7 @@ export default async function NewMatchPage() {
         <PageHeader title="New fixture" />
         <EmptyState
           title="Read-only access"
-          description="Only coaches and club management can add fixtures for this team."
+          description="Only coaches, management, and guardian assistants can add fixtures for this team."
         />
       </div>
     );

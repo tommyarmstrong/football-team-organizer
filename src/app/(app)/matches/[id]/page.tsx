@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import {
+  getViewerContext,
+  canEditMatchDay,
+  canEditTeam,
+} from "@/lib/authz/context";
 import { matchAllowsEvents } from "@/lib/constants";
 import { listCardsForMatch } from "@/lib/data/cards";
 import { listGoalsForMatch } from "@/lib/data/goals";
@@ -50,7 +54,8 @@ export default async function MatchDetailPage({
     notFound();
   }
 
-  const canEdit = canEditTeam(ctx, match.team_id);
+  const canEdit = canEditMatchDay(ctx, match.team_id);
+  const canEditPlayerOfTheMatch = canEditTeam(ctx, match.team_id);
   const allowsEvents = matchAllowsEvents(match.status);
   const isCancelledOrPostponed =
     match.status === "cancelled" || match.status === "postponed";
@@ -169,7 +174,9 @@ export default async function MatchDetailPage({
       ) : (
         <p className="text-muted-foreground text-sm">
           {canEdit
-            ? "Edit the match and set status to In progress or Played to record periods, goals, cards, and players of the match."
+            ? canEditPlayerOfTheMatch
+              ? "Edit the match and set status to In progress or Played to record periods, goals, cards, and players of the match."
+              : "Edit the match and set status to In progress or Played to record periods, goals, and cards."
             : "Periods, goals, cards, and players of the match appear once the match is in progress or played."}
         </p>
       )}
@@ -193,7 +200,7 @@ export default async function MatchDetailPage({
               players={eventPlayers}
               coachPlayerOfTheMatchId={match.player_of_the_match_id}
               playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
-              canEdit={canEdit}
+              canEdit={canEditPlayerOfTheMatch}
             />
           </CollapsibleCard>
 

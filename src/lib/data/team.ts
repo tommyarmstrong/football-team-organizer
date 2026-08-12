@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { getViewerContext } from "@/lib/authz/context";
+import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
 import {
   isTeamArchived,
   isValidSeasonLabel,
@@ -223,4 +223,11 @@ export async function canEditActiveTeam(): Promise<boolean> {
   const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
   if (!ctx || !team) return false;
   return ctx.editableTeamIds.includes(team.id);
+}
+
+/** True when the user can record fixtures and match-day events for the active team. */
+export async function canEditActiveMatchDay(): Promise<boolean> {
+  const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
+  if (!ctx || !team) return false;
+  return canEditMatchDay(ctx, team.id);
 }

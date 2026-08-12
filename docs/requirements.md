@@ -253,7 +253,7 @@ A user may hold any combination of roles on one team and a different set on anot
 
 **`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they appear in any of `managers.user_id`, `team_members`, `guardians.user_id`, or `players.user_id` (checked via the `has_app_access` RPC in middleware).
 
-RLS uses SECURITY DEFINER helper functions (`is_club_management`, `is_club_staff`, `can_read_club`, `can_read_team`, `can_read_team_row`, `can_edit_team`, `can_read_player`, `can_read_player_row`, `can_edit_player`, `can_view_player_contact`, `player_club_id`) to enforce these rules on every table.
+RLS uses SECURITY DEFINER helper functions (`is_club_management`, `is_club_staff`, `can_read_club`, `can_read_team`, `can_read_team_row`, `can_edit_team`, `can_edit_match_day`, `can_edit_match_goals`, `can_read_player`, `can_read_player_row`, `can_edit_player`, `can_view_player_contact`, `player_club_id`) to enforce these rules on every table. `can_edit_match_day` covers fixtures, squad, periods, goals/assists, and cards (including guardian assistants). Player of the match stays on `can_edit_team` (coach/management).
 
 Policies must never reference another RLS-protected table directly: policy expressions run as the calling user, so `clubs`/`teams`/`players`/`player_guardians` would recurse into each other. The `*_row` helpers take the row's own columns as arguments, which also keeps `insert … returning` working (the new row is not yet visible to a self-lookup).
 

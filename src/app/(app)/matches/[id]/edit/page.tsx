@@ -1,5 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { canEditTeam, getViewerContext } from "@/lib/authz/context";
+import {
+  canEditMatchDay,
+  canEditTeam,
+  getViewerContext,
+} from "@/lib/authz/context";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { getMatch } from "@/lib/data/matches";
@@ -39,7 +43,7 @@ export default async function EditMatchPage({
     notFound();
   }
 
-  if (!canEditTeam(ctx, match.team_id)) {
+  if (!canEditMatchDay(ctx, match.team_id)) {
     redirect(`/matches/${match.id}`);
   }
 
@@ -108,6 +112,7 @@ export default async function EditMatchPage({
             venues={venues}
             players={eventPlayers}
             matchDaySquadCount={matchSquadIds.size}
+            canEditPlayerOfTheMatch={canEditTeam(ctx, match.team_id)}
           />
         </CardContent>
       </Card>
