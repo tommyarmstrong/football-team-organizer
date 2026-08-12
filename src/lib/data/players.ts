@@ -3,6 +3,7 @@ import { getActiveTeam } from "@/lib/data/team";
 import { createPerson, updatePerson } from "@/lib/data/people";
 import {
   PERSON_EMBED,
+  unwrapPerson,
   withPersonFields,
   type PersonFields,
 } from "@/lib/people/person";
@@ -120,14 +121,16 @@ export async function listRosterForTeam(
         Array.isArray(row.player) ? row.player[0] : row.player
       ) as (Player & { person: Person | Person[] | null }) | undefined;
       if (!playerRaw || !playerRaw.active_role) return null;
-      const player = mapPlayer(playerRaw);
+      // Prefer soft mapping: people embeds can be null under RLS without
+      // crashing team/match pages (names may be blank until policy allows).
+      const person = unwrapPerson(playerRaw.person);
       return {
-        id: player.id,
-        person_id: player.person_id,
+        id: playerRaw.id,
+        person_id: playerRaw.person_id,
         team_player_id: row.id,
-        first_name: player.first_name,
-        last_name: player.last_name,
-        position: player.position,
+        first_name: person?.first_name ?? "",
+        last_name: person?.last_name ?? "",
+        position: playerRaw.position,
         shirt_number: row.shirt_number,
         active: row.active,
       } satisfies RosterPlayer;
@@ -411,9 +414,13 @@ export async function listPlayersNotOnTeam(
   if (rosterError) return { data: [], error: rosterError.message };
 
   const onTeam = new Set((roster ?? []).map((r) => r.player_id));
-  const mapped = (players ?? [])
-    .filter((p) => !onTeam.has(p.id))
-    .map((p) => mapPlayer(p as Player & { person: Person | Person[] | null }));
+  const mapped: PlayerWithPerson[] = [];
+  for (const p of players ?? []) {
+    if (onTeam.has(p.id)) continue;
+    const row = p as Player & { person: Person | Person[] | null };
+    if (!unwrapPerson(row.person)) continue;
+    mapped.push(mapPlayer(row));
+  }
   mapped.sort(
     (a, b) =>
       a.last_name.localeCompare(b.last_name) ||
