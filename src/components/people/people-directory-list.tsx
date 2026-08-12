@@ -68,7 +68,7 @@ export function PeopleDirectoryList({
         return (
           <Link
             href={`/people/${person.id}`}
-            className={objectListRowClassName()}
+            className={objectListRowClassName("cursor-pointer")}
           >
             <div className="min-w-0 flex-1 space-y-1.5">
               <p className="font-medium">{displayName(person)}</p>

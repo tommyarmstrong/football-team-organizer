@@ -5,6 +5,7 @@ import {
   canManageClub,
   canViewPlayerContact,
   getViewerContext,
+  isSelfPerson,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getCoach, getCoachTeams } from "@/lib/data/coaches";
@@ -63,7 +64,7 @@ export default async function PersonDetailPage({
   }
   if (!person) notFound();
 
-  const self = person.auth_user_id === ctx.userId;
+  const self = isSelfPerson(ctx, person);
 
   const player =
     club != null

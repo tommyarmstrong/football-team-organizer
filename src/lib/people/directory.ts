@@ -1,6 +1,7 @@
 import {
   canManageClub,
   canViewPlayerContact,
+  isSelfPerson,
   staffTeamIds,
   type ViewerContext,
 } from "@/lib/authz/context";
@@ -13,6 +14,7 @@ export type PersonDirectoryRoles = {
 };
 
 export type PersonDirectoryVisibility = {
+  id: string;
   auth_user_id: string | null;
   roles: PersonDirectoryRoles;
   playerIds: string[];
@@ -38,7 +40,7 @@ export function isPersonVisibleInDirectory(
 ): boolean {
   if (canManageClub(ctx, clubId)) return true;
 
-  const self = person.auth_user_id === ctx.userId;
+  const self = isSelfPerson(ctx, person);
   const coachViewer = isCoachDirectoryViewer(ctx);
   const guardianViewer = isGuardianDirectoryViewer(ctx);
 

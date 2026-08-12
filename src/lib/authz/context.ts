@@ -23,6 +23,8 @@ export type ViewerContext = {
    * Prefer people first + last name; else auth metadata; else email local-part.
    */
   displayName: string | null;
+  /** Linked people.id when the login is attached to a person. */
+  personId: string | null;
   managementClubIds: string[];
   /** Teams where the user holds the team_members role `coach`. */
   coachTeamIds: string[];
@@ -151,6 +153,7 @@ export const getViewerContext = cache(
       firstName,
       lastName,
       displayName: peopleDisplayName ?? resolveAuthDisplayName(user),
+      personId,
       managementClubIds,
       coachTeamIds,
       managementTeamIds,
@@ -175,6 +178,15 @@ export function hasTeamRole(
 
 export function canReadTeam(ctx: ViewerContext, teamId: string): boolean {
   return ctx.visibleTeams.some((team) => team.id === teamId);
+}
+
+/** True when this people row is the signed-in user's own person. */
+export function isSelfPerson(
+  ctx: ViewerContext,
+  person: { id: string; auth_user_id: string | null },
+): boolean {
+  if (ctx.personId && person.id === ctx.personId) return true;
+  return person.auth_user_id === ctx.userId;
 }
 
 export function canEditTeam(ctx: ViewerContext, teamId: string): boolean {

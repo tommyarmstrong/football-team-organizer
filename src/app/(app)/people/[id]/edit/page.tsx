@@ -1,5 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { canManageClub, getViewerContext } from "@/lib/authz/context";
+import {
+  canManageClub,
+  getViewerContext,
+  isSelfPerson,
+} from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getCoach } from "@/lib/data/coaches";
 import { getPerson } from "@/lib/data/people";
@@ -39,7 +43,7 @@ export default async function EditPersonPage({
   }
   if (!person) notFound();
 
-  const self = person.auth_user_id === ctx.userId;
+  const self = isSelfPerson(ctx, person);
   const canEdit = Boolean(club && canManageClub(ctx, club.id));
   if (!canEdit && !self) redirect("/dashboard");
 

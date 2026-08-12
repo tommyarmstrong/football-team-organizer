@@ -4,6 +4,7 @@ import {
   canEditMatchDay,
   canEditPlayer,
   canEditTeam,
+  isSelfPerson,
   canManageClub,
   canReadTeam,
   canViewClubTeams,
@@ -47,6 +48,7 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
     memberTeamRoles: {},
     guardianPlayerIds: [],
     selfPlayerIds: [],
+    personId: null,
     visibleTeams: [],
     editableTeamIds: [],
     isManagement: false,
@@ -62,6 +64,29 @@ describe("hasTeamRole", () => {
     expect(hasTeamRole(ctx, "team-1", "coach")).toBe(true);
     expect(hasTeamRole(ctx, "team-1", "management")).toBe(false);
     expect(hasTeamRole(ctx, "team-2", "coach")).toBe(false);
+  });
+});
+
+describe("isSelfPerson", () => {
+  it("matches the viewer's person id or linked auth user", () => {
+    expect(
+      isSelfPerson(viewer({ personId: "person-1" }), {
+        id: "person-1",
+        auth_user_id: null,
+      }),
+    ).toBe(true);
+    expect(
+      isSelfPerson(viewer({ userId: "user-1" }), {
+        id: "person-9",
+        auth_user_id: "user-1",
+      }),
+    ).toBe(true);
+    expect(
+      isSelfPerson(viewer({ personId: "person-1", userId: "user-1" }), {
+        id: "person-2",
+        auth_user_id: "user-2",
+      }),
+    ).toBe(false);
   });
 });
 

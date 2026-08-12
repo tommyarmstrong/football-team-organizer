@@ -40,6 +40,7 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
     memberTeamRoles: {},
     guardianPlayerIds: [],
     selfPlayerIds: [],
+    personId: null,
     visibleTeams: [],
     editableTeamIds: [],
     isManagement: false,
@@ -98,8 +99,16 @@ describe("isPersonVisibleInDirectory", () => {
   it("lets guardians see themselves and linked players only", () => {
     const ctx = viewer({
       userId: "guardian-user",
+      personId: "guardian-person",
       guardianPlayerIds: ["player-1"],
     });
+    expect(
+      isPersonVisibleInDirectory(
+        person({ id: "guardian-person", auth_user_id: null }),
+        ctx,
+        "club-1",
+      ),
+    ).toBe(true);
     expect(
       isPersonVisibleInDirectory(
         person({ auth_user_id: "guardian-user" }),

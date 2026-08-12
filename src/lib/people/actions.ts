@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
-import { canManageClub, getViewerContext } from "@/lib/authz/context";
+import {
+  canManageClub,
+  getViewerContext,
+  isSelfPerson,
+} from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import {
   createCoach,
@@ -118,7 +122,7 @@ export async function updatePersonAction(
   if (!existing) return { error: "Person not found." };
 
   const club = await getPrimaryClub();
-  const isSelf = existing.auth_user_id === ctx.userId;
+  const isSelf = isSelfPerson(ctx, existing);
   const isAdmin = club ? canManageClub(ctx, club.id) : false;
   if (!isSelf && !isAdmin) {
     return { error: "You cannot edit this person." };
