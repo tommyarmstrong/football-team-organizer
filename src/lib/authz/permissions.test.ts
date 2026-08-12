@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  canAccessClubAndPeople,
   canEditPlayer,
   canEditTeam,
   canManageClub,
   canReadTeam,
+  canViewClubTeams,
   canViewPlayerContact,
   hasTeamRole,
   isClubStaff,
+  staffTeamIds,
   viewerRoleLabel,
   type ViewerContext,
 } from "@/lib/authz/context";
@@ -163,6 +166,56 @@ describe("canEditPlayer / canViewPlayerContact", () => {
     expect(
       canViewPlayerContact(viewer(), "player-1", "club-1", ["team-1"]),
     ).toBe(false);
+  });
+});
+
+describe("canAccessClubAndPeople / canViewClubTeams", () => {
+  it("allows club managers, coaches, and guardians", () => {
+    expect(canAccessClubAndPeople(viewer({ isManagement: true }))).toBe(true);
+    expect(canAccessClubAndPeople(viewer({ coachTeamIds: ["team-1"] }))).toBe(
+      true,
+    );
+    expect(
+      canAccessClubAndPeople(viewer({ guardianPlayerIds: ["player-1"] })),
+    ).toBe(true);
+    expect(
+      canAccessClubAndPeople(
+        viewer({ memberTeamRoles: { "team-1": ["guardian_assistant"] } }),
+      ),
+    ).toBe(true);
+    expect(canAccessClubAndPeople(viewer())).toBe(false);
+    expect(
+      canAccessClubAndPeople(
+        viewer({ memberTeamRoles: { "team-1": ["player"] } }),
+      ),
+    ).toBe(false);
+  });
+
+  it("shows the teams card to club managers and club staff, not guardians", () => {
+    const clubTeam = team({ id: "team-1", club_id: "club-1" });
+    expect(
+      canViewClubTeams(viewer({ managementClubIds: ["club-1"] }), "club-1"),
+    ).toBe(true);
+    expect(
+      canViewClubTeams(
+        viewer({ visibleTeams: [clubTeam], coachTeamIds: ["team-1"] }),
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(
+      canViewClubTeams(viewer({ guardianPlayerIds: ["player-1"] }), "club-1"),
+    ).toBe(false);
+  });
+
+  it("collects staff team ids from coach and team-management roles", () => {
+    expect(
+      staffTeamIds(
+        viewer({
+          coachTeamIds: ["team-1", "team-2"],
+          managementTeamIds: ["team-2", "team-3"],
+        }),
+      ),
+    ).toEqual(["team-1", "team-2", "team-3"]);
   });
 });
 

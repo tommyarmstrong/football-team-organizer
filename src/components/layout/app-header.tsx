@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
-import { getViewerContext } from "@/lib/authz/context";
+import { canAccessClubAndPeople, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getActiveTeam, listVisibleTeams } from "@/lib/data/team";
 import { ClubIcon } from "@/components/clubs/club-icon";
@@ -27,7 +27,7 @@ export async function AppHeader() {
     getPrimaryClub(),
   ]);
 
-  const showManagement = Boolean(ctx?.isManagement);
+  const showClubAndPeople = Boolean(ctx && canAccessClubAndPeople(ctx));
   const accountName = ctx ? viewerFullName(ctx) : null;
   const accountEmail = ctx?.email ?? null;
   const activeTeamId = activeTeam?.id ?? null;
@@ -70,7 +70,7 @@ export async function AppHeader() {
           <div className="flex shrink-0 items-center gap-2">
             <div className="md:hidden">
               <MobileNavMenu
-                showManagement={showManagement}
+                showClubAndPeople={showClubAndPeople}
                 name={accountName}
                 email={accountEmail}
               />
@@ -85,7 +85,7 @@ export async function AppHeader() {
 
         <div className="hidden md:block">
           <AppNav
-            showManagement={showManagement}
+            showClubAndPeople={showClubAndPeople}
             teams={teams}
             activeTeamId={activeTeamId}
           />

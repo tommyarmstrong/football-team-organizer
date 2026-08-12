@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import {
+  canAccessClubAndPeople,
   canEditPlayer,
   canManageClub,
   canViewPlayerContact,
   getViewerContext,
-  isClubStaff,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getCoach, getCoachTeams } from "@/lib/data/coaches";
@@ -17,6 +17,7 @@ import {
 import { getPerson } from "@/lib/data/people";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import { getPlayerTeams, listPlayers } from "@/lib/data/players";
+import { isPersonVisibleInDirectory } from "@/lib/people/directory";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
@@ -63,7 +64,6 @@ export default async function PersonDetailPage({
   if (!person) notFound();
 
   const self = person.auth_user_id === ctx.userId;
-  if (!canEdit && !self) redirect("/dashboard");
 
   const player =
     club != null
@@ -162,7 +162,8 @@ export default async function PersonDetailPage({
       player.club_id,
       playerTeams.map((team) => team.team_id),
     );
-  const canEditCoachRole = coach != null && isClubStaff(ctx, coach.club_id);
+  const canEditCoachRole =
+    coach != null && (canManageClub(ctx, coach.club_id) || self);
   const canEditGuardianRole =
     guardian != null && canManageClub(ctx, guardian.club_id);
 
@@ -195,6 +196,28 @@ export default async function PersonDetailPage({
       row.club_id === guardian.club_id &&
       !linkedPlayerIds.has(row.id),
   );
+
+  if (!canEdit && !self) {
+    if (!club || !canAccessClubAndPeople(ctx)) redirect("/dashboard");
+    const linkedPlayerTeamIds = (
+      await Promise.all(
+        guardianPlayerLinks.map((link) => getPlayerTeams(link.player_id)),
+      )
+    ).flatMap((result) => result.data.map((team) => team.team_id));
+    const visible = isPersonVisibleInDirectory(
+      {
+        auth_user_id: person.auth_user_id,
+        roles,
+        playerIds: player ? [player.id] : [],
+        playerTeamIds: playerTeams.map((team) => team.team_id),
+        linkedPlayerIds: guardianPlayerLinks.map((link) => link.player_id),
+        linkedPlayerTeamIds,
+      },
+      ctx,
+      club.id,
+    );
+    if (!visible) redirect("/dashboard");
+  }
 
   const linkedGuardianIds = new Set(
     playerGuardians.map((link) => link.guardian_id),

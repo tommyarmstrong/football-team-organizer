@@ -196,6 +196,27 @@ export function isClubStaff(ctx: ViewerContext, clubId: string): boolean {
   );
 }
 
+/** Teams the viewer coaches or manages at team level. */
+export function staffTeamIds(ctx: ViewerContext): string[] {
+  return [...new Set([...ctx.coachTeamIds, ...ctx.managementTeamIds])];
+}
+
+/**
+ * Club and People pages: club managers, team managers, coaches, and
+ * guardians (including guardian assistants).
+ */
+export function canAccessClubAndPeople(ctx: ViewerContext): boolean {
+  if (ctx.isManagement || ctx.coachTeamIds.length > 0) return true;
+  if (ctx.guardianPlayerIds.length > 0) return true;
+  const roles = Object.values(ctx.memberTeamRoles).flat();
+  return roles.includes("guardian") || roles.includes("guardian_assistant");
+}
+
+/** Teams card on the club page: club managers and club staff (coaches). */
+export function canViewClubTeams(ctx: ViewerContext, clubId: string): boolean {
+  return canManageClub(ctx, clubId) || isClubStaff(ctx, clubId);
+}
+
 /** Can the user edit a player's identity? Management, or a coach of a team the player is on. */
 export function canEditPlayer(
   ctx: ViewerContext,
