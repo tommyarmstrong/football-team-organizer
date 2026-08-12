@@ -207,6 +207,7 @@ export default async function PersonDetailPage({
     ).flatMap((result) => result.data.map((team) => team.team_id));
     const visible = isPersonVisibleInDirectory(
       {
+        id: person.id,
         auth_user_id: person.auth_user_id,
         roles,
         playerIds: player ? [player.id] : [],

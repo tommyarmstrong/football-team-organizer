@@ -49,7 +49,14 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
 }
 
 function person(
-  overrides: Partial<PersonDirectoryVisibility> & { id?: string } = {},
+  overrides: Partial<PersonDirectoryVisibility> & {
+    id?: string;
+    emergency_contact?: {
+      first_name: string;
+      last_name: string;
+      phone: string;
+    } | null;
+  } = {},
 ): PersonDirectoryVisibility & {
   id: string;
   emergency_contact: {
