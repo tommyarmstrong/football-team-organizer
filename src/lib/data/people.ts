@@ -216,36 +216,49 @@ export async function getPerson(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("people")
-    .select(
-      "*, managers(id, club_id, active_role), coaches(id, club_id, active_role), guardians(id, club_id, active_role), players(id, club_id, active_role, position, school, date_of_birth)",
-    )
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: null };
 
-  const { data: invites } = await supabase
-    .from("person_invitations")
-    .select("*")
-    .eq("person_id", id)
-    .is("accepted_at", null)
-    .is("revoked_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  const row = data as Person & {
-    managers: PersonRoleRef[];
-    coaches: PersonRoleRef[];
-    guardians: PersonRoleRef[];
-    players: PersonPlayerRef[];
-  };
+  const [managers, coaches, guardians, players, invites] = await Promise.all([
+    supabase
+      .from("managers")
+      .select("id, club_id, active_role")
+      .eq("person_id", id),
+    supabase
+      .from("coaches")
+      .select("id, club_id, active_role")
+      .eq("person_id", id),
+    supabase
+      .from("guardians")
+      .select("id, club_id, active_role")
+      .eq("person_id", id),
+    supabase
+      .from("players")
+      .select("id, club_id, active_role, position, school, date_of_birth")
+      .eq("person_id", id),
+    supabase
+      .from("person_invitations")
+      .select("*")
+      .eq("person_id", id)
+      .is("accepted_at", null)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
 
   return {
     data: {
-      ...row,
+      ...data,
+      managers: (managers.data ?? []) as PersonRoleRef[],
+      coaches: (coaches.data ?? []) as PersonRoleRef[],
+      guardians: (guardians.data ?? []) as PersonRoleRef[],
+      players: (players.data ?? []) as PersonPlayerRef[],
       outstanding_invitation:
-        (invites?.[0] as PersonInvitation | undefined) ?? null,
+        (invites.data?.[0] as PersonInvitation | undefined) ?? null,
     },
     error: null,
   };
