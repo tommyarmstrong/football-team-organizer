@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { canManageClub, getViewerContext } from "@/lib/authz/context";
+import {
+  canAccessClubAndPeople,
+  canManageClub,
+  getViewerContext,
+} from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { listPeople } from "@/lib/data/people";
+import {
+  directoryDescription,
+  filterPeopleDirectory,
+  redactDirectoryEmergencyContact,
+} from "@/lib/people/directory";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -18,10 +27,10 @@ import {
 
 export default async function PeoplePage() {
   const ctx = await getViewerContext();
-  if (!ctx?.isManagement) redirect("/dashboard");
+  if (!ctx || !canAccessClubAndPeople(ctx)) redirect("/dashboard");
 
   const club = await getPrimaryClub();
-  if (!club || !canManageClub(ctx, club.id)) {
+  if (!club) {
     return (
       <div className="space-y-8">
         <PageHeader title="People" />
@@ -33,16 +42,24 @@ export default async function PeoplePage() {
     );
   }
 
+  const canEdit = canManageClub(ctx, club.id);
   const { data: people, error } = await listPeople();
+  const visiblePeople = error
+    ? []
+    : filterPeopleDirectory(people, ctx, club.id).map((person) =>
+        redactDirectoryEmergencyContact(person, ctx, club.id),
+      );
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="People"
         actions={
-          <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
-            Add person
-          </Link>
+          canEdit ? (
+            <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
+              Add person
+            </Link>
+          ) : undefined
         }
       />
 
@@ -50,19 +67,23 @@ export default async function PeoplePage() {
         <CardHeader>
           <CardTitle>Directory</CardTitle>
           <CardDescription>
-            All players, coaches, guardians, and managers at {club.name}.
+            {directoryDescription(ctx, club.id, club.name)}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {error ? <ErrorBanner message={error} /> : null}
-          {!error && people.length === 0 ? (
+          {!error && visiblePeople.length === 0 ? (
             <EmptyState
               title="No people yet"
-              description="Add a person with an email address to start invite-only onboarding."
+              description={
+                canEdit
+                  ? "Add a person with an email address to start invite-only onboarding."
+                  : "No people are visible with your current access."
+              }
             />
           ) : null}
-          {!error && people.length > 0 ? (
-            <PeopleDirectoryList people={people} />
+          {!error && visiblePeople.length > 0 ? (
+            <PeopleDirectoryList people={visiblePeople} />
           ) : null}
         </CardContent>
       </Card>

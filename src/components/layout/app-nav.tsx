@@ -23,7 +23,7 @@ const BASE_NAV_ITEMS = [
   { href: "/stats", label: "Stats" },
 ] as const;
 
-const MANAGEMENT_NAV_ITEMS = [
+const CLUB_NAV_ITEMS = [
   { href: "/club", label: "Club" },
   { href: "/people", label: "People" },
 ] as const;
@@ -32,21 +32,21 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function getNavItems(showManagement: boolean) {
-  return [...BASE_NAV_ITEMS, ...(showManagement ? MANAGEMENT_NAV_ITEMS : [])];
+function getNavItems(showClubAndPeople: boolean) {
+  return [...BASE_NAV_ITEMS, ...(showClubAndPeople ? CLUB_NAV_ITEMS : [])];
 }
 
 export function AppNav({
-  showManagement = false,
+  showClubAndPeople = false,
   teams = [],
   activeTeamId = null,
 }: {
-  showManagement?: boolean;
+  showClubAndPeople?: boolean;
   teams?: Pick<Team, "id" | "name" | "season_label" | "archived_at">[];
   activeTeamId?: string | null;
 }) {
   const pathname = usePathname();
-  const items = getNavItems(showManagement);
+  const items = getNavItems(showClubAndPeople);
 
   return (
     <nav
@@ -81,17 +81,17 @@ export function AppNav({
 }
 
 export function MobileNavMenu({
-  showManagement = false,
+  showClubAndPeople = false,
   name,
   email,
 }: {
-  showManagement?: boolean;
+  showClubAndPeople?: boolean;
   name: string | null;
   email: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const items = getNavItems(showManagement);
+  const items = getNavItems(showClubAndPeople);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

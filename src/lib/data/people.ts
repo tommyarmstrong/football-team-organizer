@@ -36,6 +36,10 @@ export type PersonDirectoryItem = Person & {
     coach: boolean;
     manager: boolean;
   };
+  playerIds: string[];
+  playerTeamIds: string[];
+  linkedPlayerIds: string[];
+  linkedPlayerTeamIds: string[];
   emergency_contact: {
     first_name: string;
     last_name: string;
@@ -54,10 +58,11 @@ export async function listPeople(): Promise<{
       `*,
       managers(id, active_role),
       coaches(id, active_role),
-      guardians(id, active_role),
+      guardians(id, active_role, player_guardians(player_id)),
       players(
         id,
         active_role,
+        team_players(team_id),
         player_guardians(
           emergency_contact,
           guardian:guardians(
@@ -72,15 +77,23 @@ export async function listPeople(): Promise<{
 
   if (error) return { data: [], error: error.message };
 
-  const rows: PersonDirectoryItem[] = (data ?? []).map((row) => {
+  const playerTeamMap = new Map<string, string[]>();
+  const mapped = (data ?? []).map((row) => {
     const person = row as Person & {
       managers: { id: string; active_role: boolean }[] | null;
       coaches: { id: string; active_role: boolean }[] | null;
-      guardians: { id: string; active_role: boolean }[] | null;
+      guardians:
+        | {
+            id: string;
+            active_role: boolean;
+            player_guardians: { player_id: string }[] | null;
+          }[]
+        | null;
       players:
         | {
             id: string;
             active_role: boolean;
+            team_players: { team_id: string }[] | null;
             player_guardians:
               | {
                   emergency_contact: boolean;
@@ -121,9 +134,33 @@ export async function listPeople(): Promise<{
     };
     const { managers, coaches, guardians, players, ...rest } = person;
 
+    const activePlayers = (players ?? []).filter((r) => r.active_role);
+    const playerIds = activePlayers.map((r) => r.id);
+    const playerTeamIds = [
+      ...new Set(
+        activePlayers.flatMap((r) =>
+          (r.team_players ?? []).map((tp) => tp.team_id),
+        ),
+      ),
+    ];
+    const linkedPlayerIds = [
+      ...new Set(
+        (guardians ?? [])
+          .filter((r) => r.active_role)
+          .flatMap((r) =>
+            (r.player_guardians ?? []).map((link) => link.player_id),
+          ),
+      ),
+    ];
+    for (const player of activePlayers) {
+      playerTeamMap.set(
+        player.id,
+        (player.team_players ?? []).map((tp) => tp.team_id),
+      );
+    }
+
     let emergency_contact: PersonDirectoryItem["emergency_contact"] = null;
-    for (const player of players ?? []) {
-      if (!player.active_role) continue;
+    for (const player of activePlayers) {
       const link = (player.player_guardians ?? []).find(
         (row) => row.emergency_contact,
       );
@@ -146,14 +183,29 @@ export async function listPeople(): Promise<{
     return {
       ...rest,
       roles: {
-        player: (players ?? []).some((r) => r.active_role),
+        player: activePlayers.length > 0,
         guardian: (guardians ?? []).some((r) => r.active_role),
         coach: (coaches ?? []).some((r) => r.active_role),
         manager: (managers ?? []).some((r) => r.active_role),
       },
+      playerIds,
+      playerTeamIds,
+      linkedPlayerIds,
+      linkedPlayerTeamIds: [] as string[],
       emergency_contact,
     };
   });
+
+  const rows: PersonDirectoryItem[] = mapped.map((person) => ({
+    ...person,
+    linkedPlayerTeamIds: [
+      ...new Set(
+        person.linkedPlayerIds.flatMap(
+          (playerId) => playerTeamMap.get(playerId) ?? [],
+        ),
+      ),
+    ],
+  }));
 
   return { data: rows, error: null };
 }

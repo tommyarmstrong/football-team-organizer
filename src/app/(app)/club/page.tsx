@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getViewerContext, canManageClub } from "@/lib/authz/context";
+import {
+  canAccessClubAndPeople,
+  canManageClub,
+  canViewClubTeams,
+  getViewerContext,
+} from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { listVisibleTeams } from "@/lib/data/team";
 import { PageHeader } from "@/components/shared/page-header";
@@ -20,13 +25,13 @@ import {
 
 export default async function ClubPage() {
   const ctx = await getViewerContext();
-  if (!ctx?.isManagement) {
+  if (!ctx || !canAccessClubAndPeople(ctx)) {
     redirect("/dashboard");
   }
 
   const club = await getPrimaryClub();
 
-  if (!club || !canManageClub(ctx, club.id)) {
+  if (!club) {
     return (
       <div className="space-y-8">
         <PageHeader title="Club" />
@@ -38,6 +43,8 @@ export default async function ClubPage() {
     );
   }
 
+  const canEdit = canManageClub(ctx, club.id);
+  const showTeams = canViewClubTeams(ctx, club.id);
   const { data: allTeams, error: teamsError } = await listVisibleTeams();
   const teams = allTeams.filter((t) => t.club_id === club.id);
 
@@ -51,9 +58,11 @@ export default async function ClubPage() {
       <Card>
         <CardHeader>
           <CardTitle>About {club.name}</CardTitle>
-          <CardAction>
-            <EditIconLink href="/club/edit" label="Edit club details" />
-          </CardAction>
+          {canEdit ? (
+            <CardAction>
+              <EditIconLink href="/club/edit" label="Edit club details" />
+            </CardAction>
+          ) : null}
         </CardHeader>
         <CardContent>
           {club.about ? (
@@ -62,32 +71,42 @@ export default async function ClubPage() {
             </p>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No club philosophy yet. Add one when you edit club details.
+              {canEdit
+                ? "No club philosophy yet. Add one when you edit club details."
+                : "No club philosophy yet."}
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Teams</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {teamsError ? <ErrorBanner message={teamsError} /> : null}
-          {!teamsError && teams.length === 0 ? (
-            <EmptyState
-              title="No teams yet"
-              description="Add your first team for this club."
-            />
-          ) : null}
-          {!teamsError && teams.length > 0 ? (
-            <ClubTeamsList teams={teams} />
-          ) : null}
-          <Link href="/teams/new" className={buttonVariants()}>
-            Add team
-          </Link>
-        </CardContent>
-      </Card>
+      {showTeams ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Teams</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {teamsError ? <ErrorBanner message={teamsError} /> : null}
+            {!teamsError && teams.length === 0 ? (
+              <EmptyState
+                title="No teams yet"
+                description={
+                  canEdit
+                    ? "Add your first team for this club."
+                    : "No teams are listed for this club yet."
+                }
+              />
+            ) : null}
+            {!teamsError && teams.length > 0 ? (
+              <ClubTeamsList teams={teams} />
+            ) : null}
+            {canEdit ? (
+              <Link href="/teams/new" className={buttonVariants()}>
+                Add team
+              </Link>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }
