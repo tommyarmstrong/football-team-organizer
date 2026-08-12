@@ -63,9 +63,9 @@ export async function listGuardianAssistants(
 
   const byUser = new Map<string, GuardianWithPerson>();
   for (const g of guardians ?? []) {
-    const mapped = withPersonFields(
-      g as Guardian & { person: Person | Person[] | null },
-    );
+    const row = g as Guardian & { person: Person | Person[] | null };
+    if (!unwrapPerson(row.person)) continue;
+    const mapped = withPersonFields(row);
     if (mapped.user_id) byUser.set(mapped.user_id, mapped);
   }
 
@@ -107,11 +107,15 @@ export async function listGuardianAssistantCandidates(
   if (assistantsError) return { data: [], error: assistantsError.message };
 
   const assigned = new Set((assistants ?? []).map((r) => r.user_id));
-  const mapped = (guardians ?? [])
-    .map((g) =>
-      withPersonFields(g as Guardian & { person: Person | Person[] | null }),
-    )
-    .filter((g) => g.user_id && !assigned.has(g.user_id));
+  const mapped: GuardianWithPerson[] = [];
+  for (const g of guardians ?? []) {
+    const row = g as Guardian & { person: Person | Person[] | null };
+    if (!unwrapPerson(row.person)) continue;
+    const person = withPersonFields(row);
+    if (person.user_id && !assigned.has(person.user_id)) {
+      mapped.push(person);
+    }
+  }
   mapped.sort(
     (a, b) =>
       a.last_name.localeCompare(b.last_name) ||
