@@ -19,6 +19,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 1.1 Authentication & Authorization
 
 **Current State:**
+
 - Invite-only onboarding via Supabase Auth (`inviteUserByEmail`)
 - Email/password authentication (OAuth not yet implemented per docs)
 - Row Level Security (RLS) enabled on all tables with SECURITY DEFINER helpers
@@ -26,6 +27,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 - Service role key required for invite/onboarding operations
 
 **✅ Strengths:**
+
 - **P0 PRIORITY:** RLS policies prevent unauthorized data access at the database level
 - **P0 PRIORITY:** SECURITY DEFINER functions avoid RLS recursion while maintaining security
 - Invite tokens use SHA-256 hashing; raw tokens never stored in database
@@ -37,7 +39,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 1. **P0 PRIORITY — Service Role Key Exposure Risk**
    - **Issue:** `SUPABASE_SERVICE_ROLE_KEY` is required for invite operations (`src/lib/supabase/admin.ts`) but `.env.example` documents it without deployment guidance
    - **Risk:** If exposed to browser or committed to version control, this key grants full database access bypassing all RLS
-   - **Required Action:** 
+   - **Required Action:**
      - Add explicit warning comments in `admin.ts` that this file must NEVER be imported from client components
      - Document service role key rotation procedure in this report (see Required Production Steps)
      - Configure Vercel environment variables for Production/Preview with access restrictions
@@ -68,6 +70,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
      - Document session behavior in user-facing documentation
 
 **✅ No Critical Flaws Found:**
+
 - RLS policies correctly implement role-based access (management → coach → guardian → player)
 - Sensitive player contact details properly restricted via stricter RLS on `player_contacts`
 - Middleware correctly exempts onboarding/auth routes from membership checks
@@ -76,12 +79,14 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 1.2 Data Protection
 
 **Current State:**
+
 - All PII stored in Supabase PostgreSQL
 - Sensitive contact details segregated in `player_contacts` table
 - Email addresses normalized and uniquely indexed on `people` table
 - Phone numbers stored as plain text
 
 **✅ Strengths:**
+
 - **P0 PRIORITY:** RLS prevents cross-club data leakage
 - Field-level access control for sensitive player contacts (emergency contact, medical notes, address)
 - Migration conflict tracking preserves data integrity during schema changes
@@ -115,6 +120,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 1.3 Dependency Security
 
 **Current State:**
+
 - Next.js 16.2.11, React 19.2.4, Supabase JS client 2.110.8
 - No automated dependency scanning in CI
 - Husky pre-commit hooks for linting only
@@ -137,12 +143,14 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 1.4 Infrastructure Security
 
 **Current State:**
+
 - Hosted on Vercel (Next.js optimized)
 - Database on Supabase managed PostgreSQL
 - No custom backend services
 - Environment variables configured per-environment in Vercel
 
 **✅ Strengths:**
+
 - **P0 PRIORITY:** Vercel enforces HTTPS; no HTTP access possible
 - Platform-level DDoS protection via Vercel Edge Network
 - Supabase RLS enforced at database query level (not application layer)
@@ -169,8 +177,9 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 2.1 Target Scale: 5 Teams, 60 Players
 
 **Analysis:**
+
 - **Users:** ~70-80 total users (60 players + 10-15 coaches/managers + guardians)
-- **Data Volume:** 
+- **Data Volume:**
   - 5 teams × 12 players avg = 60 players
   - ~30 matches per team per season = 150 matches/year
   - ~3 goals per match = 450 goals/year
@@ -183,11 +192,13 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 2.2 Database Performance
 
 **Current State:**
+
 - PostgreSQL indexes on all foreign keys and date fields
 - RLS SECURITY DEFINER helpers prevent N+1 query problems
 - No reported performance issues in development
 
 **✅ Strengths:**
+
 - **P0 PRIORITY:** Proper indexing on `team_id`, `club_id`, `player_id`, `match_id`, `date`
 - Unique indexes prevent duplicate shirt numbers, email addresses
 - `people` table merge logic during migration handles deduplication correctly
@@ -208,6 +219,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 2.3 Email Scalability
 
 **Current State:**
+
 - Supabase Auth `inviteUserByEmail()` for initial invites
 - No custom email service; relies on Supabase default transactional email
 - Fallback manual invite URL provided when Supabase email fails
@@ -215,6 +227,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 **✅ Assessment: Adequate for Target Scale**
 
 **Current Limits:**
+
 - Supabase free tier: 2 emails/hour, 30/day (insufficient)
 - Supabase Pro tier: 1,000 emails/hour, 10,000/month (sufficient for 60-80 users)
 
@@ -243,6 +256,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
      - Optional: Implement reminder email at day 5 (requires cron job or Edge Function)
 
 **✅ Invite Scheme Scales for 5 Teams / 60 Players:**
+
 - Initial onboarding: 60 player invites + 15 staff/guardian invites = 75 emails
 - If sent over 3 days: 25 emails/day (well within Pro tier limit)
 - Ongoing invites: ~5-10 per month as players join/leave (trivial load)
@@ -251,12 +265,14 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 2.4 Frontend Performance
 
 **Current State:**
+
 - Next.js App Router with React Server Components
 - Recharts for data visualization (lazy-loaded on `/stats`)
 - No image optimization (no user-uploaded images yet)
 - Tailwind CSS for styling
 
 **✅ Strengths:**
+
 - Server components reduce client-side JS bundle
 - Recharts lazy-loaded to avoid impacting initial page load
 - Static pages cached at edge via Vercel
@@ -279,6 +295,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 3.1 Monitoring & Observability
 
 **Current State:**
+
 - No application performance monitoring (APM)
 - No error tracking service (e.g., Sentry)
 - Vercel dashboard shows deployment status and function logs
@@ -311,6 +328,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 3.2 Backup & Disaster Recovery
 
 **Current State:**
+
 - Supabase manages automatic daily database backups (Pro plan: 7-day retention)
 - No documented restore procedure
 - No application-level backup strategy
@@ -342,6 +360,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 3.3 Deployment Process
 
 **Current State:**
+
 - GitHub → Vercel automatic deployments
 - `main` branch deploys to production
 - PR branches deploy to preview URLs
@@ -349,6 +368,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 - Branch protection requires passing CI before merge
 
 **✅ Strengths:**
+
 - **P0 PRIORITY:** Production deploys blocked by failing CI
 - Preview deployments enable testing before production merge
 - Immutable deployments via Vercel (instant rollback)
@@ -367,6 +387,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### 3.4 User Support & Documentation
 
 **Current State:**
+
 - README covers local development setup
 - `docs/` folder has requirements, data model, onboarding design
 - No user-facing documentation or help system
@@ -605,12 +626,14 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### Current Target: 5 Teams, 60 Players
 
 **Infrastructure Costs (Estimated Monthly):**
+
 - Vercel Pro: $20/seat (1-2 seats) = $20-40
 - Supabase Pro: $25/month (includes 8GB database, 100GB bandwidth, 1M read/write ops)
 - Domain: $10-15/year (~$1/month)
 - **Total: $46-66/month** (can start with free tiers for MVP, upgrade at launch)
 
 **Estimated Load:**
+
 - Concurrent users: 5-10 during peak (match day evenings)
 - Requests per day: 500-1,000 (dashboard views, stats, match entry)
 - Database size: <1GB (60 players × 5 seasons = ~10,000 rows total)
@@ -621,12 +644,14 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### Scale Ceiling Before Re-Architecture
 
 **10× Scale (50 Teams, 600 Players):**
+
 - Database: 10GB data, 100K rows (still within Supabase Pro limits)
 - Concurrent users: 50-100 (no application changes required)
 - Requests per day: 10,000 (Next.js + Vercel Edge scales horizontally)
 - **No code changes required; Supabase Pro + Vercel Pro sufficient**
 
 **100× Scale (500 Teams, 6,000 Players):**
+
 - Database: 100GB data, 1M rows (requires Supabase Team plan)
 - Concurrent users: 500-1,000 (consider CDN caching, read replicas)
 - Requests per day: 100,000+ (requires database query optimization)
@@ -644,25 +669,27 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 
 **Go/No-Go Assessment:**
 
-| Criteria | Status | Blocking? |
-|----------|--------|-----------|
-| **P0 Security** | 🔴 Not Ready | **YES** |
-| **P0 Monitoring** | 🔴 Not Ready | **YES** |
-| **P0 Documentation** | 🔴 Not Ready | **YES** |
-| **P0 Backups** | 🔴 Not Ready | **YES** |
-| **P1 Email** | 🟡 Risky | No (fallback URL) |
-| **P1 Auth** | 🟡 Risky | No (functional) |
-| **Scalability** | ✅ Ready | No |
-| **Functionality** | ✅ Ready | No |
+| Criteria             | Status       | Blocking?         |
+| -------------------- | ------------ | ----------------- |
+| **P0 Security**      | 🔴 Not Ready | **YES**           |
+| **P0 Monitoring**    | 🔴 Not Ready | **YES**           |
+| **P0 Documentation** | 🔴 Not Ready | **YES**           |
+| **P0 Backups**       | 🔴 Not Ready | **YES**           |
+| **P1 Email**         | 🟡 Risky     | No (fallback URL) |
+| **P1 Auth**          | 🟡 Risky     | No (functional)   |
+| **Scalability**      | ✅ Ready     | No                |
+| **Functionality**    | ✅ Ready     | No                |
 
 **Recommendation: DO NOT LAUNCH until P0 items completed.**
 
 **Estimated Effort to Production-Ready:**
+
 - P0 items: 2-3 days (service role security, error tracking, docs, backups)
 - P1 items: 3-4 days (password policy, email testing, monitoring, rate limiting)
 - **Total: 5-7 days to safe production launch**
 
 **Launch Sequence:**
+
 1. Week 1: Complete P0 items + backup restore test
 2. Week 2: Complete P1 items + email deliverability testing
 3. Week 3: Soft launch with 1 pilot club (5-10 users)
@@ -670,6 +697,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 5. Week 5: Full launch to target clubs
 
 **Post-Launch 90-Day Priorities:**
+
 1. Month 1: P2 audit logging, PII anonymization planning
 2. Month 2: Automated dependency scanning, invite reminders
 3. Month 3: Data export feature, performance monitoring
@@ -681,6 +709,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ### Current Implementation
 
 **Mechanism:**
+
 1. Club management creates `people` record with email
 2. Server action `sendPersonInvitation()` calls Supabase `inviteUserByEmail()`
 3. Supabase sends email with magic link to `/auth/callback`
@@ -688,6 +717,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 5. Server links Auth user to `people` record via `auth_user_id`
 
 **Email Volume for Target Scale (5 Teams, 60 Players):**
+
 - Initial onboarding: 60 players + 15 coaches/guardians = **75 invites**
 - Staggered over 3-5 days (realistic roster input time): **15-25 emails/day**
 - Ongoing: 5-10 new players/month = **5-10 emails/month**
@@ -695,23 +725,27 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 - **Total: 75 initial + 20/month ongoing**
 
 **Supabase Email Limits:**
+
 - Free tier: 2/hour, 30/day (**insufficient for initial onboarding**)
 - Pro tier: 1,000/hour, 10,000/month (**sufficient**)
 
 ### Scalability Verdict
 
 **✅ Invite scheme scales adequately for 5 teams, 60 players:**
+
 - Supabase Pro email quota (10,000/month) exceeds requirement by 100×
 - Initial 75-invite burst fits within daily quota if staggered over 3 days
 - Fallback manual invite URL (`acceptUrl`) handles email delivery failures
 - Invite token expiry (7 days) and revocation prevent abuse
 
 **Potential Issues:**
+
 1. **Spam folder delivery:** Mitigated by custom SMTP + SPF/DKIM (P1 task)
 2. **Onboarding abandonment:** Mitigated by resend UI + reminder emails (P2 task)
 3. **Email quota exhaustion:** Non-issue at target scale; monitor via Supabase dashboard
 
 **If Scaling to 50 Teams (600 Players):**
+
 - Initial: 600 invites over 1 week = ~100/day (**still within Pro limits**)
 - Ongoing: 50/month (**trivial**)
 - No architecture changes required until 5,000+ users
@@ -731,11 +765,13 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ## Appendix A: Service Role Key Rotation Procedure
 
 **When to Rotate:**
+
 - Immediately if key is exposed (committed to git, logged, sent to client)
 - Every 90 days as preventive security measure
 - When team member with access leaves organization
 
 **Rotation Steps:**
+
 1. Generate new service role key in Supabase dashboard (Settings → API → Reset Service Role Key)
 2. Update `SUPABASE_SERVICE_ROLE_KEY` in Vercel production environment
 3. Update key in Vercel preview environment
@@ -745,6 +781,7 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 7. Old key invalidated automatically; no further action needed
 
 **Verification:**
+
 - Test invite send in production
 - Check error tracking for auth failures
 - Confirm no server errors in Vercel function logs
@@ -754,11 +791,13 @@ The Football Team Organizer is functionally complete for MVP but requires **crit
 ## Appendix B: Emergency Contact
 
 **For Production Incidents:**
+
 - On-call admin: [to be defined]
 - Vercel support: https://vercel.com/support
 - Supabase support: support@supabase.io (Pro plan includes priority support)
 
 **Incident Response Priorities:**
+
 1. Database outage: Contact Supabase support immediately
 2. Service role key exposure: Rotate key per Appendix A (do not wait)
 3. Mass data deletion: Restore from backup per operations runbook
