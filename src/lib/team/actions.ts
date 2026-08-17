@@ -26,7 +26,12 @@ import {
 } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
-import { parseOptionalInt, parseYesNo, str as formStr } from "@/lib/form-parse";
+import {
+  boolFromCheckbox,
+  parseOptionalInt,
+  parseYesNo,
+  str as formStr,
+} from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import { isValidSeasonLabel, SEASON_FORMAT_HINT } from "@/lib/team/season";
 import {
@@ -337,9 +342,9 @@ export async function unarchiveTeamAction(
 }
 
 /**
- * Archive the current season (if needed) and open a new season with the same
- * team profile. Coaching staff and coach/management access are copied; the
- * squad and matches stay on the previous season record.
+ * Archive the current season (if needed) and open a successor season.
+ * Defaults to migrating squad and coaching staff; matches stay on the
+ * previous season record. Coach/management app access always carries over.
  */
 export async function startNewSeasonAction(
   _prev: ActionState,
@@ -350,14 +355,30 @@ export async function startNewSeasonAction(
   const { team } = gate;
 
   const season_label = str(formData, "season_label");
+  const name = str(formData, "name") || team.name;
+  const display_name = str(formData, "display_name");
+  const ageGroupRaw = str(formData, "age_group") || team.age_group;
+  const migratePlayers = boolFromCheckbox(formData, "migrate_players");
+  const migrateCoaches = boolFromCheckbox(formData, "migrate_coaches");
+
   if (!season_label) {
     return { error: "New season is required." };
   }
   if (!isValidSeasonLabel(season_label)) {
     return { error: SEASON_FORMAT_HINT };
   }
+  if (!(AGE_GROUPS as readonly string[]).includes(ageGroupRaw)) {
+    return { error: "Select a valid age group." };
+  }
 
-  const { data, error } = await startNewTeamSeason(team, season_label);
+  const { data, error } = await startNewTeamSeason(team, {
+    seasonLabel: season_label,
+    name,
+    displayName: display_name || null,
+    ageGroup: ageGroupRaw as AgeGroup,
+    migratePlayers,
+    migrateCoaches,
+  });
   if (error) return { error };
   if (!data) return { error: "Could not start the new season." };
 

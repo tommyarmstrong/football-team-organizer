@@ -8,6 +8,7 @@ import {
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { listVisibleTeams } from "@/lib/data/team";
+import { partitionTeamsByArchiveStatus } from "@/lib/team/season";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -47,6 +48,8 @@ export default async function ClubPage() {
   const showTeams = canViewClubTeams(ctx, club.id);
   const { data: allTeams, error: teamsError } = await listVisibleTeams();
   const teams = allTeams.filter((t) => t.club_id === club.id);
+  const { current: currentTeams, archived: archivedTeams } =
+    partitionTeamsByArchiveStatus(teams);
 
   return (
     <div className="space-y-8">
@@ -80,32 +83,57 @@ export default async function ClubPage() {
       </Card>
 
       {showTeams ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Teams</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {teamsError ? <ErrorBanner message={teamsError} /> : null}
-            {!teamsError && teams.length === 0 ? (
-              <EmptyState
-                title="No teams yet"
-                description={
-                  canEdit
-                    ? "Add your first team for this club."
-                    : "No teams are listed for this club yet."
-                }
-              />
-            ) : null}
-            {!teamsError && teams.length > 0 ? (
-              <ClubTeamsList teams={teams} />
-            ) : null}
-            {canEdit ? (
-              <Link href="/teams/new" className={buttonVariants()}>
-                Add team
-              </Link>
-            ) : null}
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Teams</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {teamsError ? <ErrorBanner message={teamsError} /> : null}
+              {!teamsError && currentTeams.length === 0 ? (
+                <EmptyState
+                  title="No current teams"
+                  description={
+                    canEdit
+                      ? "Add your first team for this club, or open an archived season below."
+                      : "No active teams are listed for this club yet."
+                  }
+                />
+              ) : null}
+              {!teamsError && currentTeams.length > 0 ? (
+                <ClubTeamsList teams={currentTeams} />
+              ) : null}
+              {canEdit ? (
+                <Link href="/teams/new" className={buttonVariants()}>
+                  Add team
+                </Link>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Archived Teams</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {teamsError ? <ErrorBanner message={teamsError} /> : null}
+              {!teamsError && archivedTeams.length === 0 ? (
+                <EmptyState
+                  title="No archived teams"
+                  description="Finished seasons appear here once they are archived."
+                />
+              ) : null}
+              {!teamsError && archivedTeams.length > 0 ? (
+                <ClubTeamsList
+                  teams={archivedTeams}
+                  filterPlaceholder="Filter archived teams by name or season…"
+                  emptyFilterTitle="No archived teams match"
+                  emptyFilterDescription="Try a different name or season, or clear the filter."
+                />
+              ) : null}
+            </CardContent>
+          </Card>
+        </>
       ) : null}
     </div>
   );
