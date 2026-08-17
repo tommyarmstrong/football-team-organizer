@@ -4,7 +4,17 @@ import type { Team } from "@/lib/supabase/database.types";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ClubTeamLink } from "@/components/clubs/club-team-link";
 
-export function ClubTeamsList({ teams }: { teams: Team[] }) {
+export function ClubTeamsList({
+  teams,
+  filterPlaceholder = "Filter teams by name or season…",
+  emptyFilterTitle = "No teams match",
+  emptyFilterDescription = "Try a different name, or clear the filter.",
+}: {
+  teams: Team[];
+  filterPlaceholder?: string;
+  emptyFilterTitle?: string;
+  emptyFilterDescription?: string;
+}) {
   return (
     <FilterablePaginatedList
       items={teams}
@@ -14,12 +24,12 @@ export function ClubTeamsList({ teams }: { teams: Team[] }) {
           team.archived_at ? " archived" : ""
         }`
       }
-      filterPlaceholder="Filter teams by name or season…"
+      filterPlaceholder={filterPlaceholder}
       singularLabel="team"
       pluralLabel="teams"
       defaultPageSize={5}
-      emptyFilterTitle="No teams match"
-      emptyFilterDescription="Try a different name, or clear the filter."
+      emptyFilterTitle={emptyFilterTitle}
+      emptyFilterDescription={emptyFilterDescription}
       renderItem={(team) => <ClubTeamLink team={team} />}
     />
   );

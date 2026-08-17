@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
+import type { AgeGroup } from "@/lib/constants";
 import {
   isTeamArchived,
   isValidSeasonLabel,
@@ -16,6 +17,17 @@ import type {
 
 export type { Team };
 export { isTeamArchived, sortTeamsForDisplay };
+
+export type StartNewTeamSeasonOptions = {
+  seasonLabel: string;
+  name?: string;
+  displayName?: string | null;
+  ageGroup?: AgeGroup;
+  /** Copy squad links (shirt numbers / active) onto the successor. Default true. */
+  migratePlayers?: boolean;
+  /** Copy coaching staff roles onto the successor. Default true. */
+  migrateCoaches?: boolean;
+};
 
 export const ACTIVE_TEAM_COOKIE = "fto_active_team";
 
@@ -123,15 +135,27 @@ export async function unarchiveTeam(
 }
 
 /**
- * Open a new season for the same team identity: optionally archive the source
- * season, create a successor with the same profile, and copy coaching staff +
- * management/coach access. Roster and matches stay on the archived season.
+ * Open a new season: archive the source (if needed), create a successor team,
+ * optionally migrate squad and coaching staff, and always copy coach/management
+ * app access. Matches stay on the archived season record.
  */
 export async function startNewTeamSeason(
   source: Team,
-  seasonLabel: string,
+  options: StartNewTeamSeasonOptions | string,
 ): Promise<{ data: Team | null; error: string | null }> {
-  const season_label = seasonLabel.trim();
+  const opts: StartNewTeamSeasonOptions =
+    typeof options === "string" ? { seasonLabel: options } : options;
+
+  const season_label = opts.seasonLabel.trim();
+  const name = (opts.name ?? source.name).trim();
+  const display_name =
+    opts.displayName === undefined
+      ? source.display_name
+      : opts.displayName?.trim() || null;
+  const age_group = opts.ageGroup ?? source.age_group;
+  const migratePlayers = opts.migratePlayers !== false;
+  const migrateCoaches = opts.migrateCoaches !== false;
+
   if (!season_label) {
     return { data: null, error: "Season is required." };
   }
@@ -144,14 +168,17 @@ export async function startNewTeamSeason(
       error: "Enter a new season label that differs from the current season.",
     };
   }
+  if (!name) {
+    return { data: null, error: "Team name is required." };
+  }
 
   // Create the successor first so a uniqueness failure does not archive the
   // current season without a replacement.
   const created = await createTeam({
     club_id: source.club_id,
-    name: source.name,
-    display_name: source.display_name,
-    age_group: source.age_group,
+    name,
+    display_name,
+    age_group,
     gender: source.gender,
     home_venue_id: source.home_venue_id,
     training_venue_id: source.training_venue_id,
@@ -169,16 +196,35 @@ export async function startNewTeamSeason(
   const [
     { data: coaches, error: coachesError },
     { data: members, error: membersError },
+    { data: players, error: playersError },
   ] = await Promise.all([
-    supabase
-      .from("team_coaches")
-      .select("coach_id, role")
-      .eq("team_id", source.id),
+    migrateCoaches
+      ? supabase
+          .from("team_coaches")
+          .select("coach_id, role")
+          .eq("team_id", source.id)
+      : Promise.resolve({
+          data: [] as { coach_id: string; role: string }[],
+          error: null,
+        }),
     supabase
       .from("team_members")
       .select("user_id, role")
       .eq("team_id", source.id)
       .in("role", ["coach", "management"]),
+    migratePlayers
+      ? supabase
+          .from("team_players")
+          .select("player_id, shirt_number, active")
+          .eq("team_id", source.id)
+      : Promise.resolve({
+          data: [] as {
+            player_id: string;
+            shirt_number: number | null;
+            active: boolean;
+          }[],
+          error: null,
+        }),
   ]);
 
   if (coachesError) {
@@ -186,6 +232,9 @@ export async function startNewTeamSeason(
   }
   if (membersError) {
     return { data: null, error: membersError.message };
+  }
+  if (playersError) {
+    return { data: null, error: playersError.message };
   }
 
   if (coaches && coaches.length > 0) {
@@ -205,6 +254,18 @@ export async function startNewTeamSeason(
         team_id: successorId,
         user_id: row.user_id,
         role: row.role,
+      })),
+    );
+    if (error) return { data: null, error: error.message };
+  }
+
+  if (players && players.length > 0) {
+    const { error } = await supabase.from("team_players").insert(
+      players.map((row) => ({
+        team_id: successorId,
+        player_id: row.player_id,
+        shirt_number: row.shirt_number,
+        active: row.active,
       })),
     );
     if (error) return { data: null, error: error.message };
