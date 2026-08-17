@@ -82,8 +82,8 @@ export default async function EditTeamPage() {
         <CardHeader>
           <CardTitle>Season</CardTitle>
           <CardDescription>
-            Team name and season together identify a season record. Archiving
-            keeps matches, squad, and scorers available as history.
+            Archive a finished season, or continue into the next one with
+            optional squad and coaching staff migration.
           </CardDescription>
         </CardHeader>
         <CardContent>
