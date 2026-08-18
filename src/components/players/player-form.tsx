@@ -7,7 +7,7 @@ import { createPlayerAction, updatePlayerAction } from "@/lib/players/actions";
 import type { PlayerWithPerson } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
@@ -58,14 +58,16 @@ export function PlayerForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="position">Position</Label>
+          <Label htmlFor="position">
+            Position <OptionalHint />
+          </Label>
           <NativeSelect
             id="position"
             name="position"
             defaultValue={player?.position ?? ""}
             disabled={pending}
           >
-            <option value="">Optional</option>
+            <option value="">None</option>
             {PLAYER_POSITIONS.map((pos) => (
               <option key={pos} value={pos}>
                 {pos}
@@ -74,7 +76,9 @@ export function PlayerForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="school">School</Label>
+          <Label htmlFor="school">
+            School <OptionalHint />
+          </Label>
           <Input
             id="school"
             name="school"
@@ -83,7 +87,9 @@ export function PlayerForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date_of_birth">Date of birth</Label>
+          <Label htmlFor="date_of_birth">
+            Date of birth <OptionalHint />
+          </Label>
           <Input
             id="date_of_birth"
             name="date_of_birth"

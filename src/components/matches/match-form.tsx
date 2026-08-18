@@ -22,7 +22,7 @@ import type {
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -92,7 +92,9 @@ export function MatchForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="kickoff_time">Kick-off (optional)</Label>
+          <Label htmlFor="kickoff_time">
+            Kick-off <OptionalHint />
+          </Label>
           <Input
             id="kickoff_time"
             name="kickoff_time"
@@ -118,7 +120,9 @@ export function MatchForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="venue_id">Venue</Label>
+          <Label htmlFor="venue_id">
+            Venue <OptionalHint />
+          </Label>
           <NativeSelect
             id="venue_id"
             name="venue_id"
@@ -134,7 +138,9 @@ export function MatchForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="competition_id">Competition</Label>
+          <Label htmlFor="competition_id">
+            Competition <OptionalHint />
+          </Label>
           <NativeSelect
             id="competition_id"
             name="competition_id"
@@ -196,7 +202,7 @@ export function MatchForm({
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="player_of_the_match_id">
-                      Coach&apos;s player of the match
+                      Coach&apos;s player of the match <OptionalHint />
                     </Label>
                     <NativeSelect
                       id="player_of_the_match_id"
@@ -216,7 +222,7 @@ export function MatchForm({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="players_player_of_the_match_id">
-                      Player&apos;s player of the match
+                      Player&apos;s player of the match <OptionalHint />
                     </Label>
                     <NativeSelect
                       id="players_player_of_the_match_id"
@@ -252,7 +258,9 @@ export function MatchForm({
         ) : null}
 
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="notes">Coach&apos;s notes</Label>
+          <Label htmlFor="notes">
+            Coach&apos;s notes <OptionalHint />
+          </Label>
           <Textarea
             id="notes"
             name="notes"
@@ -261,7 +269,9 @@ export function MatchForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="club_notes">Club notes</Label>
+          <Label htmlFor="club_notes">
+            Club notes <OptionalHint />
+          </Label>
           <Textarea
             id="club_notes"
             name="club_notes"

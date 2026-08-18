@@ -174,7 +174,7 @@ describe("goalScorerLabel", () => {
         is_own_goal: false,
         scorer: null,
       }),
-    ).toBe("Opponent Goal");
+    ).toBe("Goal against");
     expect(
       goalScorerLabel({
         is_opposition: false,

@@ -7,7 +7,7 @@ import { clubIconSrc } from "@/lib/clubs/branding";
 import type { Club } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -53,7 +53,9 @@ export function ClubForm({ club }: { club: Club }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="club-established">Established</Label>
+        <Label htmlFor="club-established">
+          Established <OptionalHint />
+        </Label>
         <Input
           id="club-established"
           name="established"
@@ -69,7 +71,9 @@ export function ClubForm({ club }: { club: Club }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="club-icon">Club icon</Label>
+        <Label htmlFor="club-icon">
+          Club icon <OptionalHint />
+        </Label>
         <div className="flex flex-wrap items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -121,7 +125,9 @@ export function ClubForm({ club }: { club: Club }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="club-colour">Club colours</Label>
+        <Label htmlFor="club-colour">
+          Club colours <OptionalHint />
+        </Label>
         <div className="flex flex-wrap items-center gap-3">
           <input
             id="club-colour"
@@ -177,7 +183,9 @@ export function ClubForm({ club }: { club: Club }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="club-website">Website</Label>
+          <Label htmlFor="club-website">
+            Website <OptionalHint />
+          </Label>
           <Input
             id="club-website"
             name="website"
@@ -192,7 +200,9 @@ export function ClubForm({ club }: { club: Club }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="club-email">Email</Label>
+          <Label htmlFor="club-email">
+            Email <OptionalHint />
+          </Label>
           <Input
             id="club-email"
             name="email"
@@ -205,7 +215,9 @@ export function ClubForm({ club }: { club: Club }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="club-phone">Phone</Label>
+          <Label htmlFor="club-phone">
+            Phone <OptionalHint />
+          </Label>
           <Input
             id="club-phone"
             name="phone"
@@ -220,7 +232,9 @@ export function ClubForm({ club }: { club: Club }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="club-about">About / philosophy</Label>
+        <Label htmlFor="club-about">
+          About / philosophy <OptionalHint />
+        </Label>
         <Textarea
           id="club-about"
           name="about"

@@ -16,7 +16,7 @@ import {
 import type { Team } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SeasonInput } from "@/components/team/season-input";
@@ -145,11 +145,12 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-display-name">Display name</Label>
+                <Label htmlFor="new-display-name">
+                  Display name <OptionalHint />
+                </Label>
                 <Input
                   id="new-display-name"
                   name="display_name"
-                  placeholder="Optional"
                   defaultValue={team.display_name ?? ""}
                   disabled={startPending}
                 />

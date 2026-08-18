@@ -15,7 +15,7 @@ import {
   guardianDisplayName,
   playerDisplayName,
 } from "@/lib/format";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -157,7 +157,9 @@ function EditableCardSection({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`coach_notes-${card.id}`}>Coach notes</Label>
+            <Label htmlFor={`coach_notes-${card.id}`}>
+              Coach notes <OptionalHint />
+            </Label>
             <Textarea
               id={`coach_notes-${card.id}`}
               name="coach_notes"
@@ -167,7 +169,9 @@ function EditableCardSection({
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`referee_notes-${card.id}`}>Referee notes</Label>
+            <Label htmlFor={`referee_notes-${card.id}`}>
+              Referee notes <OptionalHint />
+            </Label>
             <Textarea
               id={`referee_notes-${card.id}`}
               name="referee_notes"
@@ -177,7 +181,9 @@ function EditableCardSection({
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`club_notes-${card.id}`}>Club notes</Label>
+            <Label htmlFor={`club_notes-${card.id}`}>
+              Club notes <OptionalHint />
+            </Label>
             <Textarea
               id={`club_notes-${card.id}`}
               name="club_notes"

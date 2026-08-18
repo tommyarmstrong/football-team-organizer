@@ -1,3 +1,5 @@
+import type { GoalKindValue } from "@/lib/constants";
+
 export function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
 }
@@ -32,11 +34,23 @@ export function parseGoalKind(
   return { error: "Invalid goal type." };
 }
 
-export function goalKindFromFlags(flags: GoalKindFlags): string {
+export function goalKindFromFlags(flags: GoalKindFlags): GoalKindValue {
   if (flags.is_penalty) return "penalty";
   if (flags.is_freekick) return "freekick";
   if (flags.from_setpiece) return "setpiece";
   return "none";
+}
+
+export function goalAssistsAllowed(
+  scorer: { is_opposition: boolean; is_own_goal: boolean },
+  kind: Pick<GoalKindFlags, "is_penalty" | "is_freekick">,
+): boolean {
+  return (
+    !scorer.is_opposition &&
+    !scorer.is_own_goal &&
+    !kind.is_penalty &&
+    !kind.is_freekick
+  );
 }
 
 export function parseOptionalInt(

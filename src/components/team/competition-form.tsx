@@ -23,7 +23,7 @@ import {
 import { labelCompetitionKind } from "@/lib/format";
 import type { Competition, Venue } from "@/lib/supabase/database.types";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -111,7 +111,9 @@ export function CompetitionForm({
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="organizer">Organizer</Label>
+              <Label htmlFor="organizer">
+                Organizer <OptionalHint />
+              </Label>
               <Input
                 id="organizer"
                 name="organizer"
@@ -150,7 +152,9 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="season">Season</Label>
+              <Label htmlFor="season">
+                Season <OptionalHint />
+              </Label>
               <SeasonInput
                 id="season"
                 name="season"
@@ -171,7 +175,9 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age_group">Age group</Label>
+              <Label htmlFor="age_group">
+                Age group <OptionalHint />
+              </Label>
               <NativeSelect
                 id="age_group"
                 name="age_group"
@@ -187,7 +193,9 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender">
+                Gender <OptionalHint />
+              </Label>
               <NativeSelect
                 id="gender"
                 name="gender"
@@ -223,7 +231,9 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="players_per_team">Players per team</Label>
+              <Label htmlFor="players_per_team">
+                Players per team <OptionalHint />
+              </Label>
               <Input
                 id="players_per_team"
                 name="players_per_team"
@@ -253,7 +263,9 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="minutes_per_period">Minutes per period</Label>
+              <Label htmlFor="minutes_per_period">
+                Minutes per period <OptionalHint />
+              </Label>
               <Input
                 id="minutes_per_period"
                 name="minutes_per_period"
@@ -266,7 +278,9 @@ export function CompetitionForm({
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">
+                Notes <OptionalHint />
+              </Label>
               <Textarea
                 id="notes"
                 name="notes"

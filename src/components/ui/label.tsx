@@ -17,4 +17,8 @@ function Label({ className, ...props }: React.ComponentProps<"label">) {
   );
 }
 
-export { Label };
+function OptionalHint() {
+  return <span className="text-muted-foreground">(Optional)</span>;
+}
+
+export { Label, OptionalHint };

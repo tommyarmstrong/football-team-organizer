@@ -8,7 +8,7 @@ import type { PersonPlayerRef } from "@/lib/data/people";
 import type { Person } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -62,7 +62,9 @@ export function PersonForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            Email <OptionalHint />
+          </Label>
           <Input
             id="email"
             name="email"
@@ -72,7 +74,9 @@ export function PersonForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">
+            Phone <OptionalHint />
+          </Label>
           <Input
             id="phone"
             name="phone"
@@ -84,7 +88,9 @@ export function PersonForm({
         {player ? (
           <>
             <div className="space-y-2">
-              <Label htmlFor="date_of_birth">DOB</Label>
+              <Label htmlFor="date_of_birth">
+                DOB <OptionalHint />
+              </Label>
               <Input
                 id="date_of_birth"
                 name="date_of_birth"
@@ -94,7 +100,9 @@ export function PersonForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="position">Position</Label>
+              <Label htmlFor="position">
+                Position <OptionalHint />
+              </Label>
               <NativeSelect
                 id="position"
                 name="position"
@@ -110,7 +118,9 @@ export function PersonForm({
               </NativeSelect>
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="school">School</Label>
+              <Label htmlFor="school">
+                School <OptionalHint />
+              </Label>
               <Input
                 id="school"
                 name="school"

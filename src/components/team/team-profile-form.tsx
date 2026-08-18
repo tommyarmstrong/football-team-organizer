@@ -13,7 +13,7 @@ import type { CoachWithPerson } from "@/lib/data/coaches";
 import type { Team, Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -48,7 +48,9 @@ export function TeamProfileForm({
       />
 
       <div className="space-y-2">
-        <Label htmlFor="team-photo">Team photo</Label>
+        <Label htmlFor="team-photo">
+          Team photo <OptionalHint />
+        </Label>
         <div className="space-y-3">
           {previewSrc && !clearPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +104,7 @@ export function TeamProfileForm({
             disabled={pending}
           />
         </Field>
-        <Field label="Display name" htmlFor="display_name">
+        <Field label="Display name" htmlFor="display_name" optional>
           <Input
             id="display_name"
             name="display_name"
@@ -153,7 +155,7 @@ export function TeamProfileForm({
             disabled={pending}
           />
         </Field>
-        <Field label="Head coach" htmlFor="head_coach_id">
+        <Field label="Head coach" htmlFor="head_coach_id" optional>
           <NativeSelect
             id="head_coach_id"
             name="head_coach_id"
@@ -168,7 +170,7 @@ export function TeamProfileForm({
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Home venue" htmlFor="home_venue_id">
+        <Field label="Home venue" htmlFor="home_venue_id" optional>
           <NativeSelect
             id="home_venue_id"
             name="home_venue_id"
@@ -183,7 +185,7 @@ export function TeamProfileForm({
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Training venue" htmlFor="training_venue_id">
+        <Field label="Training venue" htmlFor="training_venue_id" optional>
           <NativeSelect
             id="training_venue_id"
             name="training_venue_id"
@@ -201,7 +203,9 @@ export function TeamProfileForm({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Training days</legend>
+        <legend className="text-sm font-medium">
+          Training days <OptionalHint />
+        </legend>
         <div className="flex flex-wrap gap-3">
           {TRAINING_DAYS.map((day) => (
             <label
@@ -232,15 +236,20 @@ export function TeamProfileForm({
 function Field({
   label,
   htmlFor,
+  optional,
   children,
 }: {
   label: string;
   htmlFor: string;
+  optional?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={htmlFor}>{label}</Label>
+      <Label htmlFor={htmlFor}>
+        {label}
+        {optional ? <OptionalHint /> : null}
+      </Label>
       {children}
     </div>
   );

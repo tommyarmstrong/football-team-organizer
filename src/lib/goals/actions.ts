@@ -9,7 +9,12 @@ import {
 } from "@/lib/constants";
 import { createGoal, deleteGoal, updateGoal } from "@/lib/data/goals";
 import { createClient } from "@/lib/supabase/server";
-import { parseGoalKind, parseOptionalMinute, str } from "@/lib/form-parse";
+import {
+  goalAssistsAllowed,
+  parseGoalKind,
+  parseOptionalMinute,
+  str,
+} from "@/lib/form-parse";
 
 function revalidateGoal(matchId: string, goalId?: string) {
   revalidatePath(`/matches/${matchId}`);
@@ -71,10 +76,6 @@ function parseScorer(formData: FormData): ParsedScorer | { error: string } {
   return { is_opposition: false, is_own_goal: false, player_id: raw };
 }
 
-function assistsAllowed(scorer: ParsedScorer): boolean {
-  return !scorer.is_opposition && !scorer.is_own_goal;
-}
-
 async function parseGoalFields(
   matchId: string,
   formData: FormData,
@@ -99,7 +100,8 @@ async function parseGoalFields(
   const kind = parseGoalKind(formData);
   if ("error" in kind) return kind;
 
-  const assist_player_id = assistsAllowed(scorer)
+  const allowAssist = goalAssistsAllowed(scorer, kind);
+  const assist_player_id = allowAssist
     ? str(formData, "assist_player_id") || null
     : null;
   const minute = parseOptionalMinute(str(formData, "minute"));
@@ -108,7 +110,7 @@ async function parseGoalFields(
     return { error: minute.error };
   }
   if (
-    assistsAllowed(scorer) &&
+    allowAssist &&
     assist_player_id &&
     assist_player_id === scorer.player_id
   ) {

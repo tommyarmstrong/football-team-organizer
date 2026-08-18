@@ -14,7 +14,7 @@ import { createVenueAction, updateVenueAction } from "@/lib/venues/actions";
 import type { Venue } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
 
@@ -60,7 +60,9 @@ export function VenueForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="address_line1">Address line 1</Label>
+          <Label htmlFor="address_line1">
+            Address line 1 <OptionalHint />
+          </Label>
           <Input
             id="address_line1"
             name="address_line1"
@@ -69,7 +71,9 @@ export function VenueForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="address_line2">Address line 2</Label>
+          <Label htmlFor="address_line2">
+            Address line 2 <OptionalHint />
+          </Label>
           <Input
             id="address_line2"
             name="address_line2"
@@ -78,7 +82,9 @@ export function VenueForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="town_city">Town / city</Label>
+          <Label htmlFor="town_city">
+            Town / city <OptionalHint />
+          </Label>
           <Input
             id="town_city"
             name="town_city"
@@ -87,7 +93,9 @@ export function VenueForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="postcode">Postcode</Label>
+          <Label htmlFor="postcode">
+            Postcode <OptionalHint />
+          </Label>
           <Input
             id="postcode"
             name="postcode"
@@ -96,7 +104,9 @@ export function VenueForm({
           />
         </div>
         <fieldset className="space-y-2 sm:col-span-2">
-          <legend className="text-sm font-medium">Surface</legend>
+          <legend className="text-sm font-medium">
+            Surface <OptionalHint />
+          </legend>
           <div className="flex flex-wrap gap-3">
             {VENUE_SURFACES.map((option) => (
               <label
@@ -138,7 +148,9 @@ export function VenueForm({
           </div>
         </fieldset>
         <fieldset className="space-y-2 sm:col-span-2">
-          <legend className="text-sm font-medium">Amenities</legend>
+          <legend className="text-sm font-medium">
+            Amenities <OptionalHint />
+          </legend>
           <div className="flex flex-wrap gap-3">
             {VENUE_FOOD_AND_DRINKS.map((option) => (
               <label

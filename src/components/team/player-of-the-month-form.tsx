@@ -11,7 +11,7 @@ import type { NamedPlayer } from "@/lib/people/named-player";
 import { playerDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -81,7 +81,9 @@ export function PlayerOfTheMonthForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">
+            Notes <OptionalHint />
+          </Label>
           <Textarea
             id="notes"
             name="notes"

@@ -14,7 +14,7 @@ import type { Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SeasonInput } from "@/components/team/season-input";
@@ -71,7 +71,9 @@ export function CreateTeamForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-team-venue">Home venue</Label>
+          <Label htmlFor="new-team-venue">
+            Home venue <OptionalHint />
+          </Label>
           <NativeSelect
             id="new-team-venue"
             name="home_venue_id"
@@ -86,7 +88,9 @@ export function CreateTeamForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-team-training-venue">Training venue</Label>
+          <Label htmlFor="new-team-training-venue">
+            Training venue <OptionalHint />
+          </Label>
           <NativeSelect
             id="new-team-training-venue"
             name="training_venue_id"
@@ -101,7 +105,9 @@ export function CreateTeamForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new-team-coach">Head coach</Label>
+          <Label htmlFor="new-team-coach">
+            Head coach <OptionalHint />
+          </Label>
           <NativeSelect
             id="new-team-coach"
             name="head_coach_id"
@@ -127,7 +133,9 @@ export function CreateTeamForm({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Training days</legend>
+        <legend className="text-sm font-medium">
+          Training days <OptionalHint />
+        </legend>
         <div className="flex flex-wrap gap-3">
           {TRAINING_DAYS.map((day) => (
             <label

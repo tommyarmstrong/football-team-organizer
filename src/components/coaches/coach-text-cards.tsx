@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { updateCoachTextAction } from "@/lib/coaches/actions";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -36,7 +36,9 @@ export function CoachTextCards({
     <form action={formAction} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Biography</CardTitle>
+          <CardTitle>
+            Biography <OptionalHint />
+          </CardTitle>
           <CardDescription>
             Background, experience, and coaching style.
           </CardDescription>
@@ -60,7 +62,9 @@ export function CoachTextCards({
 
       <Card>
         <CardHeader>
-          <CardTitle>Coaching Philosophy</CardTitle>
+          <CardTitle>
+            Coaching Philosophy <OptionalHint />
+          </CardTitle>
           <CardDescription>
             Playing style, principles, and approach to coaching.
           </CardDescription>

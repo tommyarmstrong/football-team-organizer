@@ -379,7 +379,7 @@ export function matchAllowsEvents(status: MatchStatus): boolean {
 /** Form value for recording a goal scored by the opposition. */
 export const OPPOSITION_SCORER_VALUE = "__opposition__";
 
-export const OPPOSITION_GOAL_LABEL = "Opponent Goal";
+export const OPPOSITION_GOAL_LABEL = "Goal against";
 
 /** Form value for an opposition own goal credited to our team. */
 export const OWN_GOAL_SCORER_VALUE = "__own_goal__";
@@ -396,10 +396,8 @@ export const GOAL_KIND_VALUES = [
 
 export type GoalKindValue = (typeof GOAL_KIND_VALUES)[number];
 
-export const GOAL_KIND_LABELS: Record<
-  Exclude<GoalKindValue, "none">,
-  string
-> = {
+export const GOAL_KIND_LABELS: Record<GoalKindValue, string> = {
+  none: "Open Play",
   penalty: "Penalty",
   freekick: "Direct Free Kick",
   setpiece: "Set Piece",
