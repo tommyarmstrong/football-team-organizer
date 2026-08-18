@@ -26,8 +26,7 @@ async function resolvePeriodFields(
   matchId: string,
   formData: FormData,
 ): Promise<
-  | { period_id: string | null; period: string | null; error?: undefined }
-  | { error: string }
+  { period_id: string | null; period: string | null } | { error: string }
 > {
   const period_id = str(formData, "period_id") || null;
   let period = str(formData, "period") || null;
