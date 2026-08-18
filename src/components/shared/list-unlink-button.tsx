@@ -28,10 +28,13 @@ export function ListUnlinkButton({
   confirmMessage?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(
-    async () => unlinkAction(),
-    INITIAL_ACTION_STATE,
-  );
+  const [state, formAction, pending] = useActionState(async () => {
+    const result = await unlinkAction();
+    if (result.error) {
+      setOpen(true);
+    }
+    return result;
+  }, INITIAL_ACTION_STATE);
 
   if (!confirmMessage) {
     return (
@@ -71,9 +74,10 @@ export function ListUnlinkButton({
       <Dialog
         open={open}
         onOpenChange={(nextOpen) => {
-          if (!pending) {
-            setOpen(nextOpen);
+          if (nextOpen && pending) {
+            return;
           }
+          setOpen(nextOpen);
         }}
       >
         <DialogContent showCloseButton={!pending}>
@@ -96,6 +100,7 @@ export function ListUnlinkButton({
               variant="destructive"
               disabled={pending}
               onClick={() => {
+                setOpen(false);
                 void formAction();
               }}
             >
