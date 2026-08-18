@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   boolFromCheckbox,
+  goalAssistsAllowed,
   goalKindFromFlags,
   parseGoalKind,
   parseOptionalInt,
@@ -112,6 +113,37 @@ describe("goalKindFromFlags", () => {
         from_setpiece: false,
       }),
     ).toBe("none");
+  });
+});
+
+describe("goalAssistsAllowed", () => {
+  const teamScorer = { is_opposition: false, is_own_goal: false };
+
+  it("allows assists for open play and set pieces", () => {
+    expect(
+      goalAssistsAllowed(teamScorer, { is_penalty: false, is_freekick: false }),
+    ).toBe(true);
+  });
+
+  it("blocks assists for penalties, direct free kicks, own goals, and opposition", () => {
+    expect(
+      goalAssistsAllowed(teamScorer, { is_penalty: true, is_freekick: false }),
+    ).toBe(false);
+    expect(
+      goalAssistsAllowed(teamScorer, { is_penalty: false, is_freekick: true }),
+    ).toBe(false);
+    expect(
+      goalAssistsAllowed(
+        { is_opposition: false, is_own_goal: true },
+        { is_penalty: false, is_freekick: false },
+      ),
+    ).toBe(false);
+    expect(
+      goalAssistsAllowed(
+        { is_opposition: true, is_own_goal: false },
+        { is_penalty: false, is_freekick: false },
+      ),
+    ).toBe(false);
   });
 });
 

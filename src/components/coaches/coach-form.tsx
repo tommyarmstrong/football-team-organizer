@@ -6,7 +6,7 @@ import { createCoachAction, updateCoachAction } from "@/lib/coaches/actions";
 import type { CoachWithPerson } from "@/lib/data/coaches";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
@@ -73,7 +73,9 @@ export function CoachForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date_of_birth">Date of birth</Label>
+          <Label htmlFor="date_of_birth">
+            Date of birth <OptionalHint />
+          </Label>
           <Input
             id="date_of_birth"
             name="date_of_birth"
@@ -83,7 +85,9 @@ export function CoachForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">
+            Phone <OptionalHint />
+          </Label>
           <Input
             id="phone"
             name="phone"
@@ -93,7 +97,9 @@ export function CoachForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            Email <OptionalHint />
+          </Label>
           <Input
             id="email"
             name="email"
@@ -105,7 +111,9 @@ export function CoachForm({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Qualifications</legend>
+        <legend className="text-sm font-medium">
+          Qualifications <OptionalHint />
+        </legend>
         <div className="grid gap-2 sm:grid-cols-3">
           <label className="flex min-h-9 items-center gap-2 text-sm">
             <input
@@ -141,7 +149,9 @@ export function CoachForm({
       </fieldset>
 
       <div className="space-y-2">
-        <Label htmlFor="biography">Biography</Label>
+        <Label htmlFor="biography">
+          Biography <OptionalHint />
+        </Label>
         <Textarea
           id="biography"
           name="biography"
@@ -153,7 +163,9 @@ export function CoachForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="philosophy">Philosophy</Label>
+        <Label htmlFor="philosophy">
+          Philosophy <OptionalHint />
+        </Label>
         <Textarea
           id="philosophy"
           name="philosophy"
@@ -165,7 +177,9 @@ export function CoachForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">
+          Notes <OptionalHint />
+        </Label>
         <Textarea
           id="notes"
           name="notes"

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { deleteGoalAction } from "@/lib/goals/actions";
+import { goalAssistsAllowed } from "@/lib/form-parse";
 import {
   formatGoalMinute,
   goalKindLabel,
@@ -113,7 +114,7 @@ export function MatchGoalsSection({
                 >
                   <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
                     <GoalScorerChip goal={goal} />
-                    {goal.assist && !goal.is_own_goal && !goal.is_opposition ? (
+                    {goal.assist && goalAssistsAllowed(goal, goal) ? (
                       <GoalAssistChip player={goal.assist} />
                     ) : null}
                     {kind ? (

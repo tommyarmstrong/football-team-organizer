@@ -13,7 +13,7 @@ import type { Team } from "@/lib/supabase/database.types";
 import type { PlayerTeamMembership } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -194,7 +194,7 @@ function EditMembershipForm({
     >
       <div className="space-y-2 sm:w-36">
         <Label htmlFor={`edit-shirt-${membership.team_player_id}`}>
-          Shirt number
+          Shirt number <OptionalHint />
         </Label>
         <Input
           id={`edit-shirt-${membership.team_player_id}`}
@@ -204,7 +204,6 @@ function EditMembershipForm({
           step={1}
           defaultValue={membership.shirt_number ?? ""}
           disabled={pending}
-          placeholder="Optional"
           className="tabular-nums"
         />
       </div>
@@ -287,7 +286,9 @@ function AddToTeamForm({
         />
       </div>
       <div className="space-y-2 sm:w-36">
-        <Label htmlFor="add-team-shirt">Shirt number</Label>
+        <Label htmlFor="add-team-shirt">
+          Shirt number <OptionalHint />
+        </Label>
         <Input
           id="add-team-shirt"
           name="shirt_number"
@@ -295,7 +296,6 @@ function AddToTeamForm({
           min={1}
           step={1}
           disabled={pending}
-          placeholder="Optional"
           className="tabular-nums"
         />
       </div>

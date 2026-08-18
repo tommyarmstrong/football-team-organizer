@@ -4,26 +4,24 @@ import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   GOAL_KIND_LABELS,
+  GOAL_KIND_VALUES,
   OPPOSITION_GOAL_LABEL,
   OPPOSITION_SCORER_VALUE,
   OWN_GOAL_LABEL,
   OWN_GOAL_SCORER_VALUE,
+  type GoalKindValue,
 } from "@/lib/constants";
 import {
   createGoalAndReturnToMatchAction,
   saveGoalAndReturnToMatchAction,
 } from "@/lib/goals/actions";
-import { goalKindFromFlags } from "@/lib/form-parse";
-import {
-  goalKindLabel,
-  goalScorerLabel,
-  playerDisplayName,
-} from "@/lib/format";
+import { goalAssistsAllowed, goalKindFromFlags } from "@/lib/form-parse";
+import { goalScorerLabel, playerDisplayName } from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -58,11 +56,11 @@ export function MatchGoalEditSection({
         <div className="space-y-1">
           <dt className="text-muted-foreground">Assist</dt>
           <dd className="font-medium">
-            {goal.is_opposition || goal.is_own_goal
-              ? "—"
-              : goal.assist
+            {goalAssistsAllowed(goal, goal)
+              ? goal.assist
                 ? playerDisplayName(goal.assist)
-                : "None"}
+                : "None"
+              : "—"}
           </dd>
         </div>
         <div className="space-y-1">
@@ -77,7 +75,9 @@ export function MatchGoalEditSection({
         </div>
         <div className="space-y-1 sm:col-span-2">
           <dt className="text-muted-foreground">Type</dt>
-          <dd className="font-medium">{goalKindLabel(goal) ?? "None"}</dd>
+          <dd className="font-medium">
+            {GOAL_KIND_LABELS[goalKindFromFlags(goal)]}
+          </dd>
         </div>
       </dl>
     );
@@ -134,9 +134,21 @@ function EditableGoalSection({
   const [scorerValue, setScorerValue] = useState(() =>
     defaultScorerValue(goal),
   );
-  const assistsAllowed =
-    scorerValue !== OPPOSITION_SCORER_VALUE &&
-    scorerValue !== OWN_GOAL_SCORER_VALUE;
+  const [goalKind, setGoalKind] = useState<GoalKindValue>(() =>
+    goalKindFromFlags(
+      goal ?? { is_penalty: false, is_freekick: false, from_setpiece: false },
+    ),
+  );
+  const assistsAllowed = goalAssistsAllowed(
+    {
+      is_opposition: scorerValue === OPPOSITION_SCORER_VALUE,
+      is_own_goal: scorerValue === OWN_GOAL_SCORER_VALUE,
+    },
+    {
+      is_penalty: goalKind === "penalty",
+      is_freekick: goalKind === "freekick",
+    },
+  );
 
   const activePlayers = players.filter((p) => p.active);
   const options = activePlayers.length > 0 ? activePlayers : players;
@@ -147,9 +159,6 @@ function EditableGoalSection({
       (p.id === goal?.player_id || p.id === goal?.assist_player_id),
   );
   const playerOptions = [...options, ...extra];
-  const defaultKind = goalKindFromFlags(
-    goal ?? { is_penalty: false, is_freekick: false, from_setpiece: false },
-  );
 
   return (
     <div className="space-y-6">
@@ -187,7 +196,9 @@ function EditableGoalSection({
             </NativeSelect>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`assist-${fieldId}`}>Assist (optional)</Label>
+            <Label htmlFor={`assist-${fieldId}`}>
+              Assist <OptionalHint />
+            </Label>
             <NativeSelect
               id={`assist-${fieldId}`}
               name="assist_player_id"
@@ -197,9 +208,7 @@ function EditableGoalSection({
               }
               key={assistsAllowed ? "assist-on" : "assist-off"}
             >
-              <option value="">
-                {assistsAllowed ? "None" : "Not available"}
-              </option>
+              <option value="">None</option>
               {assistsAllowed
                 ? playerOptions.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -210,7 +219,9 @@ function EditableGoalSection({
             </NativeSelect>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`minute-${fieldId}`}>Minute</Label>
+            <Label htmlFor={`minute-${fieldId}`}>
+              Minute <OptionalHint />
+            </Label>
             <Input
               id={`minute-${fieldId}`}
               name="minute"
@@ -222,7 +233,9 @@ function EditableGoalSection({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`period-${fieldId}`}>Period</Label>
+            <Label htmlFor={`period-${fieldId}`}>
+              Period <OptionalHint />
+            </Label>
             <NativeSelect
               id={`period-${fieldId}`}
               name="period_id"
@@ -238,52 +251,25 @@ function EditableGoalSection({
             </NativeSelect>
           </div>
           <fieldset className="space-y-2 sm:col-span-2">
-            <legend className="text-sm font-medium">Type (optional)</legend>
+            <legend className="text-sm font-medium">Type</legend>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
-              <label className="flex min-h-9 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="goal_kind"
-                  value="none"
-                  defaultChecked={defaultKind === "none"}
-                  disabled={pending}
-                  className="border-input size-4"
-                />
-                None
-              </label>
-              <label className="flex min-h-9 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="goal_kind"
-                  value="penalty"
-                  defaultChecked={defaultKind === "penalty"}
-                  disabled={pending}
-                  className="border-input size-4"
-                />
-                {GOAL_KIND_LABELS.penalty}
-              </label>
-              <label className="flex min-h-9 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="goal_kind"
-                  value="freekick"
-                  defaultChecked={defaultKind === "freekick"}
-                  disabled={pending}
-                  className="border-input size-4"
-                />
-                {GOAL_KIND_LABELS.freekick}
-              </label>
-              <label className="flex min-h-9 items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="goal_kind"
-                  value="setpiece"
-                  defaultChecked={defaultKind === "setpiece"}
-                  disabled={pending}
-                  className="border-input size-4"
-                />
-                {GOAL_KIND_LABELS.setpiece}
-              </label>
+              {GOAL_KIND_VALUES.map((kind) => (
+                <label
+                  key={kind}
+                  className="flex min-h-9 items-center gap-2 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="goal_kind"
+                    value={kind}
+                    checked={goalKind === kind}
+                    onChange={() => setGoalKind(kind)}
+                    disabled={pending}
+                    className="border-input size-4"
+                  />
+                  {GOAL_KIND_LABELS[kind]}
+                </label>
+              ))}
             </div>
           </fieldset>
         </div>

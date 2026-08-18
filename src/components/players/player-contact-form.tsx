@@ -8,7 +8,7 @@ import type { PlayerGuardianLink } from "@/lib/data/guardians";
 import { guardianDisplayName } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -69,7 +69,9 @@ export function PlayerContactForm({
     <form action={formAction} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">
+            Phone <OptionalHint />
+          </Label>
           <Input
             id="phone"
             name="phone"
@@ -79,7 +81,9 @@ export function PlayerContactForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            Email <OptionalHint />
+          </Label>
           <Input
             id="email"
             name="email"
@@ -89,7 +93,9 @@ export function PlayerContactForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">
+            Address <OptionalHint />
+          </Label>
           <Input
             id="address"
             name="address"
@@ -98,7 +104,9 @@ export function PlayerContactForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="emergency_guardian_id">Emergency contact</Label>
+          <Label htmlFor="emergency_guardian_id">
+            Emergency contact <OptionalHint />
+          </Label>
           <NativeSelect
             id="emergency_guardian_id"
             name="emergency_guardian_id"
@@ -128,7 +136,9 @@ export function PlayerContactForm({
           />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="medical_notes">Medical notes</Label>
+          <Label htmlFor="medical_notes">
+            Medical notes <OptionalHint />
+          </Label>
           <Textarea
             id="medical_notes"
             name="medical_notes"

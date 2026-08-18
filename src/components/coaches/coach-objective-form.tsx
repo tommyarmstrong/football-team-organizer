@@ -15,7 +15,7 @@ import {
 import type { CoachDevelopmentObjective } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -101,7 +101,9 @@ export function CoachObjectiveForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target_date">Target date</Label>
+            <Label htmlFor="target_date">
+              Target date <OptionalHint />
+            </Label>
             <Input
               id="target_date"
               name="target_date"

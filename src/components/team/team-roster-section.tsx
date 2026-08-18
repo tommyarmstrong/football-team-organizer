@@ -12,7 +12,7 @@ import type { PlayerWithPerson } from "@/lib/data/players";
 import type { RosterPlayer } from "@/lib/data/players";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
@@ -140,7 +140,9 @@ function AddRosterPlayerForm({
         />
       </div>
       <div className="space-y-2 sm:w-36">
-        <Label htmlFor="roster-shirt">Shirt number</Label>
+        <Label htmlFor="roster-shirt">
+          Shirt number <OptionalHint />
+        </Label>
         <Input
           id="roster-shirt"
           name="shirt_number"
@@ -148,7 +150,6 @@ function AddRosterPlayerForm({
           min={1}
           step={1}
           disabled={pending}
-          placeholder="Optional"
           className="tabular-nums"
         />
       </div>

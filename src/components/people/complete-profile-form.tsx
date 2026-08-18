@@ -6,7 +6,7 @@ import { completePersonProfileAction } from "@/lib/people/actions";
 import type { Person } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function CompleteProfileForm({ person }: { person: Person }) {
@@ -41,7 +41,9 @@ export function CompleteProfileForm({ person }: { person: Person }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">
+          Phone <OptionalHint />
+        </Label>
         <Input
           id="phone"
           name="phone"

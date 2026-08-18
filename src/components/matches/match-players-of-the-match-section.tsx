@@ -6,7 +6,7 @@ import type { RosterPlayer } from "@/lib/data/players";
 import { playerDisplayName } from "@/lib/format";
 import { updateMatchPlayersOfTheMatchAction } from "@/lib/matches/actions";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
@@ -101,7 +101,7 @@ function PlayersOfTheMatchForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="coach-potm-player">
-            Coach&apos;s player of the match
+            Coach&apos;s player of the match <OptionalHint />
           </Label>
           <SearchableSelect
             id="coach-potm-player"
@@ -115,7 +115,7 @@ function PlayersOfTheMatchForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="players-potm-player">
-            Player&apos;s player of the match
+            Player&apos;s player of the match <OptionalHint />
           </Label>
           <SearchableSelect
             id="players-potm-player"

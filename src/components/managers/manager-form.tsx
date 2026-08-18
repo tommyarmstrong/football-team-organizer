@@ -9,7 +9,7 @@ import {
 import type { ManagerWithPerson } from "@/lib/data/managers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label, OptionalHint } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
@@ -62,7 +62,9 @@ export function ManagerForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">
+            Phone <OptionalHint />
+          </Label>
           <Input
             id="phone"
             name="phone"
@@ -72,7 +74,9 @@ export function ManagerForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            Email <OptionalHint />
+          </Label>
           <Input
             id="email"
             name="email"
@@ -84,7 +88,9 @@ export function ManagerForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">
+          Notes <OptionalHint />
+        </Label>
         <Textarea
           id="notes"
           name="notes"
