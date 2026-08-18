@@ -67,7 +67,11 @@ export default async function NewCoachObjectivePage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CoachObjectiveForm coachId={coach.id} mode="create" />
+          <CoachObjectiveForm
+            coachId={coach.id}
+            personId={person.id}
+            mode="create"
+          />
         </CardContent>
       </Card>
     </div>

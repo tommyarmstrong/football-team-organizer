@@ -16,6 +16,7 @@ function revalidateGoal(matchId: string, goalId?: string) {
   if (goalId) {
     revalidatePath(`/matches/${matchId}/goals/${goalId}`);
   }
+  revalidatePath("/matches");
   revalidatePath("/dashboard");
   revalidatePath("/stats");
   revalidatePath("/club");
@@ -25,8 +26,7 @@ async function resolvePeriodFields(
   matchId: string,
   formData: FormData,
 ): Promise<
-  | { period_id: string | null; period: string | null; error?: undefined }
-  | { error: string }
+  { period_id: string | null; period: string | null } | { error: string }
 > {
   const period_id = str(formData, "period_id") || null;
   let period = str(formData, "period") || null;
@@ -75,46 +75,24 @@ function assistsAllowed(scorer: ParsedScorer): boolean {
   return !scorer.is_opposition && !scorer.is_own_goal;
 }
 
-export async function createGoalAction(
+async function parseGoalFields(
   matchId: string,
-  _prev: ActionState,
   formData: FormData,
-): Promise<ActionState> {
-  const scorer = parseScorer(formData);
-  if ("error" in scorer) return scorer;
-
-  const periodFields = await resolvePeriodFields(matchId, formData);
-  if ("error" in periodFields) {
-    return { error: periodFields.error };
-  }
-
-  const { data, error } = await createGoal({
-    match_id: matchId,
-    player_id: scorer.player_id,
-    assist_player_id: null,
-    is_opposition: scorer.is_opposition,
-    is_own_goal: scorer.is_own_goal,
-    period_id: periodFields.period_id,
-    period: periodFields.period,
-    minute: null,
-    is_penalty: false,
-    is_freekick: false,
-    from_setpiece: false,
-  });
-
-  if (error) return { error };
-  if (!data) return { error: "Could not create goal." };
-
-  revalidateGoal(matchId, data.id);
-  redirect(`/matches/${matchId}/goals/${data.id}`);
-}
-
-export async function saveGoalAndReturnToMatchAction(
-  matchId: string,
-  goalId: string,
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+): Promise<
+  | {
+      player_id: string | null;
+      assist_player_id: string | null;
+      is_opposition: boolean;
+      is_own_goal: boolean;
+      period_id: string | null;
+      period: string | null;
+      minute: number | null;
+      is_penalty: boolean;
+      is_freekick: boolean;
+      from_setpiece: boolean;
+    }
+  | { error: string }
+> {
   const scorer = parseScorer(formData);
   if ("error" in scorer) return scorer;
 
@@ -142,7 +120,7 @@ export async function saveGoalAndReturnToMatchAction(
     return { error: periodFields.error };
   }
 
-  const { error } = await updateGoal(goalId, {
+  return {
     player_id: scorer.player_id,
     assist_player_id,
     is_opposition: scorer.is_opposition,
@@ -153,8 +131,39 @@ export async function saveGoalAndReturnToMatchAction(
     is_penalty: kind.is_penalty,
     is_freekick: kind.is_freekick,
     from_setpiece: kind.from_setpiece,
+  };
+}
+
+export async function createGoalAndReturnToMatchAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = await parseGoalFields(matchId, formData);
+  if ("error" in parsed) return parsed;
+
+  const { data, error } = await createGoal({
+    match_id: matchId,
+    ...parsed,
   });
 
+  if (error) return { error };
+  if (!data) return { error: "Could not create goal." };
+
+  revalidateGoal(matchId, data.id);
+  redirect(`/matches/${matchId}`);
+}
+
+export async function saveGoalAndReturnToMatchAction(
+  matchId: string,
+  goalId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = await parseGoalFields(matchId, formData);
+  if ("error" in parsed) return parsed;
+
+  const { error } = await updateGoal(goalId, parsed);
   if (error) return { error };
 
   revalidateGoal(matchId, goalId);

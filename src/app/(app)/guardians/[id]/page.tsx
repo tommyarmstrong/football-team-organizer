@@ -59,6 +59,11 @@ export default async function GuardianDetailPage({
       <PageHeader
         title={guardianDisplayName(guardian)}
         description={guardian.email ?? guardian.phone ?? "Guardian"}
+        actions={
+          canEdit ? (
+            <DeleteGuardianButton guardianId={guardian.id} />
+          ) : undefined
+        }
       />
 
       {canEdit ? (
@@ -69,9 +74,8 @@ export default async function GuardianDetailPage({
               Update name, contact details, and notes.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <GuardianForm mode="edit" guardian={guardian} />
-            <DeleteGuardianButton guardianId={guardian.id} />
           </CardContent>
         </Card>
       ) : null}

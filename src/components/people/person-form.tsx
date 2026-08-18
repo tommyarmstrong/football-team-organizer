@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function PersonForm({
   person,
@@ -123,19 +124,14 @@ export function PersonForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? "Saving…"
-          : mode === "create"
-            ? "Create person"
-            : "Save person"}
-      </Button>
+      {mode === "edit" && person ? (
+        <FormActions pending={pending} cancelHref={`/people/${person.id}`} />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Create person"}
+        </Button>
+      )}
     </form>
   );
 }

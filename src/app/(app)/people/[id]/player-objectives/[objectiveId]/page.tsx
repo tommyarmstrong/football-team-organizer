@@ -83,6 +83,7 @@ export default async function PlayerObjectiveEditPage({
           {canEdit ? (
             <PlayerObjectiveForm
               playerId={player.id}
+              personId={person.id}
               objective={objective}
               mode="edit"
             />

@@ -91,7 +91,7 @@ export function playerDisplayName(
 ): string {
   const name = `${player.first_name} ${player.last_name}`.trim();
   if (options?.shirtNumber != null) {
-    return `#${options.shirtNumber} ${name}`;
+    return `${options.shirtNumber} ${name}`;
   }
   return name;
 }

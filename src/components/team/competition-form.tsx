@@ -22,13 +22,12 @@ import {
 } from "@/lib/team/actions";
 import { labelCompetitionKind } from "@/lib/format";
 import type { Competition, Venue } from "@/lib/supabase/database.types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
+import { FormActions } from "@/components/shared/form-actions";
 import { SeasonInput } from "@/components/team/season-input";
 import {
   CardAction,
@@ -83,18 +82,15 @@ export function CompetitionForm({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         <CardAction>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {mode === "edit" && competition ? (
-              <DeleteCompetitionButton
-                competitionId={competition.id}
-                competitionName={competition.name}
-                label="Delete competition"
-              />
-            ) : null}
-            <Button type="submit" form={formId} disabled={pending}>
-              {pending ? "Saving…" : "Save"}
-            </Button>
-          </div>
+          <FormActions
+            pending={pending}
+            cancelHref={
+              mode === "edit" && competition
+                ? `/competitions/${competition.id}`
+                : "/team"
+            }
+            form={formId}
+          />
         </CardAction>
       </CardHeader>
 

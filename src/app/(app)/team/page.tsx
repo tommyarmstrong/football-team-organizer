@@ -199,9 +199,6 @@ export default async function TeamPage() {
       <Card>
         <CardHeader>
           <CardTitle>Competitions</CardTitle>
-          <CardDescription>
-            Leagues, cups, and other competitions for {team.season_label}.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {competitions.error ? (

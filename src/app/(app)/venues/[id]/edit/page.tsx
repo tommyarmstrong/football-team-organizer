@@ -4,7 +4,6 @@ import { getViewerContext } from "@/lib/authz/context";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { VenueForm } from "@/components/venues/venue-form";
-import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
 import {
   Card,
   CardContent,
@@ -60,9 +59,8 @@ export default async function EditVenuePage({
           <CardTitle>Venue details</CardTitle>
           <CardDescription>Update name, address, and surface.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <VenueForm mode="edit" venue={venue} />
-          <DeleteVenueButton venueId={venue.id} />
         </CardContent>
       </Card>
     </div>

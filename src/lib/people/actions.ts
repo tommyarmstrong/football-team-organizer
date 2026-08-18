@@ -163,7 +163,7 @@ export async function updatePersonAction(
   }
 
   revalidatePeople(id);
-  return { success: "Person saved." };
+  redirect(`/people/${id}`);
 }
 
 export async function linkRoleToPersonAction(

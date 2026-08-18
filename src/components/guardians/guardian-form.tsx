@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function GuardianForm({
   guardian,
@@ -94,19 +95,17 @@ export function GuardianForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? "Saving…"
-          : mode === "create"
-            ? "Add guardian"
-            : "Save guardian"}
-      </Button>
+      {mode === "edit" && guardian ? (
+        <FormActions
+          pending={pending}
+          cancelHref={`/guardians/${guardian.id}`}
+        />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Add guardian"}
+        </Button>
+      )}
     </form>
   );
 }

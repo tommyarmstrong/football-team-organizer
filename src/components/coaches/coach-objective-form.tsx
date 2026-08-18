@@ -10,7 +10,6 @@ import {
 } from "@/lib/constants";
 import {
   addCoachObjectiveAction,
-  deleteCoachObjectiveAndReturnAction,
   updateCoachObjectiveAction,
 } from "@/lib/coaches/actions";
 import type { CoachDevelopmentObjective } from "@/lib/supabase/database.types";
@@ -20,14 +19,16 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function CoachObjectiveForm({
   coachId,
+  personId,
   objective,
   mode,
 }: {
   coachId: string;
+  personId: string;
   objective?: CoachDevelopmentObjective;
   mode: "create" | "edit";
 }) {
@@ -111,27 +112,15 @@ export function CoachObjectiveForm({
           </div>
         </div>
 
-        <Button type="submit" disabled={pending}>
-          {pending
-            ? mode === "create"
-              ? "Adding…"
-              : "Saving…"
-            : mode === "create"
-              ? "Add objective"
-              : "Save"}
-        </Button>
+        {mode === "edit" ? (
+          <FormActions pending={pending} cancelHref={`/people/${personId}`} />
+        ) : (
+          <Button type="submit" disabled={pending}>
+            {pending ? "Adding…" : "Add objective"}
+          </Button>
+        )}
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
-
-      {mode === "edit" && objective ? (
-        <ListDeleteButton
-          label="Delete objective"
-          confirmMessage="Delete this development objective? This cannot be undone."
-          deleteAction={() =>
-            deleteCoachObjectiveAndReturnAction(coachId, objective.id)
-          }
-        />
-      ) : null}
     </div>
   );
 }
