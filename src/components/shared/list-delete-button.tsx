@@ -1,10 +1,22 @@
 "use client";
 
 import { Trash2Icon } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { ActionState } from "@/lib/action-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+
+const iconButtonClassName =
+  "text-muted-foreground hover:bg-muted hover:text-destructive inline-flex size-11 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50 sm:size-9";
 
 export function ListDeleteButton({
   label,
@@ -15,35 +27,62 @@ export function ListDeleteButton({
   confirmMessage: string;
   deleteAction: () => Promise<ActionState>;
 }) {
+  const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     async () => deleteAction(),
     INITIAL_ACTION_STATE,
   );
 
   return (
-    <form
-      action={formAction}
-      className="shrink-0"
-      onSubmit={(event) => {
-        if (!window.confirm(confirmMessage)) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.error ? (
-        <div className="sr-only" role="alert">
-          <ErrorBanner message={state.error} />
-        </div>
-      ) : null}
+    <>
       <button
-        type="submit"
+        type="button"
         disabled={pending}
         aria-label={label}
         title={label}
-        className="text-muted-foreground hover:bg-muted hover:text-destructive inline-flex size-9 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+        className={iconButtonClassName}
       >
         <Trash2Icon className="size-4" aria-hidden="true" />
       </button>
-    </form>
+
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!pending) {
+            setOpen(nextOpen);
+          }
+        }}
+      >
+        <DialogContent showCloseButton={!pending}>
+          <DialogHeader>
+            <DialogTitle>{label}</DialogTitle>
+            <DialogDescription>{confirmMessage}</DialogDescription>
+          </DialogHeader>
+          {state.error ? <ErrorBanner message={state.error} /> : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                void formAction();
+              }}
+            >
+              {pending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
