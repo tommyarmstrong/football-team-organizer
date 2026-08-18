@@ -28,10 +28,13 @@ export function ListDeleteButton({
   deleteAction: () => Promise<ActionState>;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState(
-    async () => deleteAction(),
-    INITIAL_ACTION_STATE,
-  );
+  const [state, formAction, pending] = useActionState(async () => {
+    const result = await deleteAction();
+    if (result.error) {
+      setOpen(true);
+    }
+    return result;
+  }, INITIAL_ACTION_STATE);
 
   return (
     <>
@@ -50,9 +53,10 @@ export function ListDeleteButton({
       <Dialog
         open={open}
         onOpenChange={(nextOpen) => {
-          if (!pending) {
-            setOpen(nextOpen);
+          if (nextOpen && pending) {
+            return;
           }
+          setOpen(nextOpen);
         }}
       >
         <DialogContent showCloseButton={!pending}>
@@ -75,6 +79,7 @@ export function ListDeleteButton({
               variant="destructive"
               disabled={pending}
               onClick={() => {
+                setOpen(false);
                 void formAction();
               }}
             >
