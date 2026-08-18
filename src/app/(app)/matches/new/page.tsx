@@ -53,7 +53,7 @@ export default async function NewMatchPage() {
       {error ? <ErrorBanner message={error} /> : null}
       {venuesError ? <ErrorBanner message={venuesError} /> : null}
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Fixture details</CardTitle>
           <CardDescription>

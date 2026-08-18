@@ -18,7 +18,6 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import { objectListRowClassName } from "@/components/shared/object-list";
-import { RoleChip } from "@/components/shared/role-chip";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamRosterSection({
@@ -72,7 +71,6 @@ export function TeamRosterSection({
                 <span className="text-muted-foreground shrink-0">
                   {entry.position ?? "No position"}
                 </span>
-                <RoleChip>{entry.active ? "Active" : "Inactive"}</RoleChip>
               </Link>
               {canEdit ? (
                 <div className="flex items-center pr-2">

@@ -9,9 +9,12 @@ import {
   getViewerContext,
 } from "@/lib/authz/context";
 import {
+  DEFAULT_MATCH_PERIODS,
   MATCH_HOME_AWAYS,
   MATCH_STATUSES,
+  isCompetitionPeriods,
   matchAllowsEvents,
+  periodNamesForCompetitionPeriods,
 } from "@/lib/constants";
 import {
   createMatch,
@@ -19,10 +22,17 @@ import {
   getMatch,
   updateMatch,
 } from "@/lib/data/matches";
+import { listMatchPlayers } from "@/lib/data/match-players";
+import { createPeriodsWithStarters } from "@/lib/data/match-periods";
+import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
-import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
+import type {
+  CompetitionPeriods,
+  MatchHomeAway,
+  MatchStatus,
+} from "@/lib/supabase/database.types";
 
 async function parseVenueId(
   formData: FormData,
@@ -39,6 +49,20 @@ async function parseVenueId(
   return { venue_id };
 }
 
+async function defaultStarterPlayerIds(
+  matchId: string,
+  teamId: string,
+): Promise<string[]> {
+  const { data: matchPlayers, error: matchPlayersError } =
+    await listMatchPlayers(matchId);
+  if (!matchPlayersError && matchPlayers.length > 0) {
+    return matchPlayers.map((row) => row.player_id);
+  }
+
+  const { data: roster } = await listRosterForTeam(teamId);
+  return roster.map((player) => player.id);
+}
+
 export async function createMatchAction(
   _prev: ActionState,
   formData: FormData,
@@ -51,6 +75,10 @@ export async function createMatchAction(
   const competition_id = str(formData, "competition_id") || null;
   const notes = str(formData, "notes") || null;
   const club_notes = str(formData, "club_notes") || null;
+  const periodsRaw = str(formData, "periods");
+  const periods: CompetitionPeriods = isCompetitionPeriods(periodsRaw)
+    ? periodsRaw
+    : DEFAULT_MATCH_PERIODS;
 
   if (!opponent_name || !date) {
     return { error: "Opponent and date are required." };
@@ -87,6 +115,17 @@ export async function createMatchAction(
 
   if (error) return { error };
   if (!data) return { error: "Could not create match." };
+
+  const periodNames = periodNamesForCompetitionPeriods(periods);
+  if (periodNames.length > 0) {
+    const starterIds = await defaultStarterPlayerIds(data.id, team.id);
+    const { error: periodsError } = await createPeriodsWithStarters(
+      data.id,
+      periodNames,
+      starterIds,
+    );
+    if (periodsError) return { error: periodsError };
+  }
 
   revalidatePath("/matches");
   revalidatePath("/dashboard");

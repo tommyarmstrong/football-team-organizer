@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { matchPeriodSortOrder } from "@/lib/constants";
 import {
   mapPlayerNameEmbed,
   PLAYER_NAME_EMBED,
@@ -104,6 +105,42 @@ export async function createPeriod(
 
   if (error) return { data: null, error: error.message };
   return { data, error: null };
+}
+
+/** Creates named periods for a match and assigns the same starting players to each. */
+export async function createPeriodsWithStarters(
+  matchId: string,
+  names: readonly string[],
+  starterPlayerIds: string[],
+): Promise<{ error: string | null }> {
+  if (names.length === 0) return { error: null };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("match_periods")
+    .insert(
+      names.map((name) => ({
+        match_id: matchId,
+        name,
+        sort_order: matchPeriodSortOrder(name),
+      })),
+    )
+    .select("id");
+
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) return { error: null };
+
+  const uniqueIds = [...new Set(starterPlayerIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return { error: null };
+
+  const rows: TablesInsert<"match_period_starters">[] = data.flatMap((period) =>
+    uniqueIds.map((player_id) => ({ period_id: period.id, player_id })),
+  );
+
+  const { error: startersError } = await supabase
+    .from("match_period_starters")
+    .insert(rows);
+  return { error: startersError?.message ?? null };
 }
 
 export async function updatePeriod(
