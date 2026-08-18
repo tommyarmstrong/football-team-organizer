@@ -14,7 +14,6 @@ import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import type { RosterPlayer } from "@/lib/data/players";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -307,36 +306,24 @@ function StartersForm({
           All available players selected.
         </p>
       ) : (
-        <form
-          key={selectedIds.slice().sort().join(",")}
-          onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            addPlayer(String(formData.get("player_id") ?? "").trim());
-          }}
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
-        >
-          <div className="min-w-0 flex-1 space-y-2">
-            <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
-            <SearchableSelect
-              id={`add_period_starter_${periodId}`}
-              name="player_id"
-              required
-              disabled={isPending}
-              placeholder="Search players by name…"
-              emptyMessage="No players match that name."
-              options={availablePlayers.map((player) => ({
-                value: player.id,
-                label: playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                }),
-              }))}
-            />
-          </div>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Adding…" : "Add"}
-          </Button>
-        </form>
+        <div className="space-y-2">
+          <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
+          <SearchableSelect
+            key={selectedIds.slice().sort().join(",")}
+            id={`add_period_starter_${periodId}`}
+            name="player_id"
+            disabled={isPending}
+            placeholder="Search players by name…"
+            emptyMessage="No players match that name."
+            options={availablePlayers.map((player) => ({
+              value: player.id,
+              label: playerDisplayName(player, {
+                shirtNumber: player.shirt_number,
+              }),
+            }))}
+            onValueChange={addPlayer}
+          />
+        </div>
       )}
 
       {state.error ? <ErrorBanner message={state.error} /> : null}

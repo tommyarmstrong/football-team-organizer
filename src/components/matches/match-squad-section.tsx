@@ -50,9 +50,6 @@ export function MatchSquadSection({
                   shirtNumber: player.shirt_number,
                 })}
               </span>
-              {!player.active ? (
-                <span className="text-muted-foreground shrink-0">Inactive</span>
-              ) : null}
             </Link>
           </li>
         ))}
@@ -143,11 +140,6 @@ function SquadForm({
                     shirtNumber: player.shirt_number,
                   })}
                 </span>
-                {!player.active ? (
-                  <span className="text-muted-foreground shrink-0">
-                    Inactive
-                  </span>
-                ) : null}
               </Link>
               <div className="flex items-center pr-2">
                 <button

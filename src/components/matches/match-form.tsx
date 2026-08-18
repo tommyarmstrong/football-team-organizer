@@ -3,6 +3,9 @@
 import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
+  COMPETITION_PERIODS,
+  COMPETITION_PERIOD_LABELS,
+  DEFAULT_MATCH_PERIODS,
   MATCH_HOME_AWAYS,
   MATCH_STATUSES,
   matchAllowsEvents,
@@ -15,6 +18,7 @@ import {
 } from "@/lib/format";
 import type {
   Competition,
+  CompetitionPeriods,
   Match,
   MatchStatus,
   Venue,
@@ -59,11 +63,27 @@ export function MatchForm({
   const [status, setStatus] = useState<MatchStatus>(
     match?.status ?? "scheduled",
   );
+  const [competitionId, setCompetitionId] = useState(
+    match?.competition_id ?? "",
+  );
+  const [periods, setPeriods] = useState<CompetitionPeriods>(
+    DEFAULT_MATCH_PERIODS,
+  );
   const showEvents = matchAllowsEvents(status);
+
+  function handleCompetitionChange(nextId: string) {
+    setCompetitionId(nextId);
+    if (!nextId) {
+      setPeriods(DEFAULT_MATCH_PERIODS);
+      return;
+    }
+    const competition = competitions.find((c) => c.id === nextId);
+    setPeriods(competition?.periods ?? DEFAULT_MATCH_PERIODS);
+  }
 
   return (
     <form action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="opponent_name">
             Opponent <span className="text-muted-foreground">(required)</span>
@@ -77,31 +97,33 @@ export function MatchForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="date">
-            Date <span className="text-muted-foreground">(required)</span>
-          </Label>
-          <Input
-            id="date"
-            name="date"
-            type="date"
-            required
-            aria-required="true"
-            defaultValue={match?.date}
-            disabled={pending}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="kickoff_time">
-            Kick-off <OptionalHint />
-          </Label>
-          <Input
-            id="kickoff_time"
-            name="kickoff_time"
-            type="time"
-            defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
-            disabled={pending}
-          />
+        <div className="grid min-w-0 gap-4 sm:col-span-2 lg:grid-cols-2">
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="date">
+              Date <span className="text-muted-foreground">(required)</span>
+            </Label>
+            <Input
+              id="date"
+              name="date"
+              type="date"
+              required
+              aria-required="true"
+              defaultValue={match?.date}
+              disabled={pending}
+            />
+          </div>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="kickoff_time">
+              Kick-off <OptionalHint />
+            </Label>
+            <Input
+              id="kickoff_time"
+              name="kickoff_time"
+              type="time"
+              defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
+              disabled={pending}
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="home_away">Home / away</Label>
@@ -144,7 +166,8 @@ export function MatchForm({
           <NativeSelect
             id="competition_id"
             name="competition_id"
-            defaultValue={match?.competition_id ?? ""}
+            value={competitionId}
+            onChange={(e) => handleCompetitionChange(e.target.value)}
             disabled={pending}
           >
             <option value="">None</option>
@@ -155,6 +178,25 @@ export function MatchForm({
             ))}
           </NativeSelect>
         </div>
+
+        {mode === "create" ? (
+          <div className="space-y-2">
+            <Label htmlFor="periods">Periods</Label>
+            <NativeSelect
+              id="periods"
+              name="periods"
+              value={periods}
+              onChange={(e) => setPeriods(e.target.value as CompetitionPeriods)}
+              disabled={pending}
+            >
+              {COMPETITION_PERIODS.map((value) => (
+                <option key={value} value={value}>
+                  {COMPETITION_PERIOD_LABELS[value]}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+        ) : null}
 
         {mode === "edit" ? (
           <div className="space-y-2">
@@ -252,8 +294,8 @@ export function MatchForm({
           )
         ) : showEvents ? (
           <p className="text-muted-foreground text-sm sm:col-span-2">
-            After you create this fixture, you can record goals, cards, and
-            periods on the match page.
+            After you create this fixture, you can record goals and cards on the
+            match page.
           </p>
         ) : null}
 

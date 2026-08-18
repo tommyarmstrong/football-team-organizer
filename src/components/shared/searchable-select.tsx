@@ -21,6 +21,7 @@ export function SearchableSelect({
   defaultValue,
   className,
   "aria-label": ariaLabel,
+  onValueChange,
 }: {
   id?: string;
   name: string;
@@ -32,6 +33,7 @@ export function SearchableSelect({
   defaultValue?: string;
   className?: string;
   "aria-label"?: string;
+  onValueChange?: (value: string) => void;
 }) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -51,6 +53,9 @@ export function SearchableSelect({
         itemToStringLabel={(item) => item.label}
         itemToStringValue={(item) => item.value}
         isItemEqualToValue={(a, b) => a.value === b.value}
+        onValueChange={(item) => {
+          if (item) onValueChange?.(item.value);
+        }}
       >
         <Combobox.InputGroup className="border-input focus-within:border-ring focus-within:ring-ring/50 relative flex h-8 w-full min-w-0 items-center rounded-lg border bg-transparent transition-colors focus-within:ring-3 has-disabled:cursor-not-allowed has-disabled:opacity-50">
           <Combobox.Input

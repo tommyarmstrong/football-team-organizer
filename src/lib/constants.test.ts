@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  isCompetitionPeriods,
   isMatchPeriodName,
   matchAllowsEvents,
   matchPeriodSortOrder,
+  periodNamesForCompetitionPeriods,
 } from "@/lib/constants";
 
 describe("isMatchPeriodName", () => {
@@ -17,6 +19,19 @@ describe("isMatchPeriodName", () => {
   });
 });
 
+describe("isCompetitionPeriods", () => {
+  it("accepts competition period values", () => {
+    expect(isCompetitionPeriods("1")).toBe(true);
+    expect(isCompetitionPeriods("4")).toBe(true);
+    expect(isCompetitionPeriods("other")).toBe(true);
+  });
+
+  it("rejects unknown values", () => {
+    expect(isCompetitionPeriods("3")).toBe(false);
+    expect(isCompetitionPeriods("")).toBe(false);
+  });
+});
+
 describe("matchPeriodSortOrder", () => {
   it("returns the configured rank for known periods", () => {
     expect(matchPeriodSortOrder("Quarter 1")).toBe(10);
@@ -26,6 +41,25 @@ describe("matchPeriodSortOrder", () => {
 
   it("sorts unknown custom names after known periods", () => {
     expect(matchPeriodSortOrder("Custom period")).toBe(999);
+  });
+});
+
+describe("periodNamesForCompetitionPeriods", () => {
+  it("maps competition period counts to named match periods", () => {
+    expect(periodNamesForCompetitionPeriods("1")).toEqual([
+      "Single period match",
+    ]);
+    expect(periodNamesForCompetitionPeriods("2")).toEqual([
+      "First half",
+      "Second half",
+    ]);
+    expect(periodNamesForCompetitionPeriods("4")).toEqual([
+      "Quarter 1",
+      "Quarter 2",
+      "Quarter 3",
+      "Quarter 4",
+    ]);
+    expect(periodNamesForCompetitionPeriods("other")).toEqual([]);
   });
 });
 

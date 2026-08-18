@@ -96,7 +96,7 @@ export default async function EditMatchPage({
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Match details</CardTitle>
           <CardDescription>

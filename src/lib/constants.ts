@@ -137,6 +137,9 @@ export const COMPETITION_PERIOD_LABELS: Record<CompetitionPeriods, string> = {
 
 export const DEFAULT_COMPETITION_PERIODS: CompetitionPeriods = "2";
 
+/** Default period count when creating a match with no competition selected. */
+export const DEFAULT_MATCH_PERIODS: CompetitionPeriods = "4";
+
 export const COMPETITION_RESULTS: CompetitionResult[] = [
   "champions",
   "runner_up",
@@ -364,6 +367,28 @@ export const MATCH_PERIOD_SORT_ORDER: Record<MatchPeriodName, number> = {
 
 export function isMatchPeriodName(value: string): value is MatchPeriodName {
   return (MATCH_PERIOD_NAMES as readonly string[]).includes(value);
+}
+
+export function isCompetitionPeriods(
+  value: string,
+): value is CompetitionPeriods {
+  return (COMPETITION_PERIODS as readonly string[]).includes(value);
+}
+
+/** Named periods created for a match from a competition-style period count. */
+export function periodNamesForCompetitionPeriods(
+  periods: CompetitionPeriods,
+): MatchPeriodName[] {
+  switch (periods) {
+    case "1":
+      return ["Single period match"];
+    case "2":
+      return ["First half", "Second half"];
+    case "4":
+      return ["Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"];
+    case "other":
+      return [];
+  }
 }
 
 export function matchPeriodSortOrder(name: string): number {
