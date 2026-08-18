@@ -10,7 +10,7 @@ import {
   OWN_GOAL_SCORER_VALUE,
 } from "@/lib/constants";
 import {
-  deleteGoalAndReturnToMatchAction,
+  createGoalAndReturnToMatchAction,
   saveGoalAndReturnToMatchAction,
 } from "@/lib/goals/actions";
 import { goalKindFromFlags } from "@/lib/form-parse";
@@ -22,12 +22,11 @@ import {
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import type { RosterPlayer } from "@/lib/data/players";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function MatchGoalEditSection({
   matchId,
@@ -37,16 +36,19 @@ export function MatchGoalEditSection({
   teamName,
   opponentName,
   canEdit = true,
+  defaultPeriodId = null,
 }: {
   matchId: string;
-  goal: GoalWithPlayers;
+  goal?: GoalWithPlayers | null;
   players: RosterPlayer[];
   periods: MatchPeriodWithStarters[];
   teamName: string;
   opponentName: string;
   canEdit?: boolean;
+  defaultPeriodId?: string | null;
 }) {
   if (!canEdit) {
+    if (!goal) return null;
     return (
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div className="space-y-1">
@@ -84,16 +86,18 @@ export function MatchGoalEditSection({
   return (
     <EditableGoalSection
       matchId={matchId}
-      goal={goal}
+      goal={goal ?? null}
       players={players}
       periods={periods}
       teamName={teamName}
       opponentName={opponentName}
+      defaultPeriodId={defaultPeriodId}
     />
   );
 }
 
-function defaultScorerValue(goal: GoalWithPlayers): string {
+function defaultScorerValue(goal: GoalWithPlayers | null): string {
+  if (!goal) return "";
   if (goal.is_own_goal) return OWN_GOAL_SCORER_VALUE;
   if (goal.is_opposition) return OPPOSITION_SCORER_VALUE;
   return goal.player_id ?? "";
@@ -106,16 +110,22 @@ function EditableGoalSection({
   periods,
   teamName,
   opponentName,
+  defaultPeriodId,
 }: {
   matchId: string;
-  goal: GoalWithPlayers;
+  goal: GoalWithPlayers | null;
   players: RosterPlayer[];
   periods: MatchPeriodWithStarters[];
   teamName: string;
   opponentName: string;
+  defaultPeriodId: string | null;
 }) {
-  const formId = `goal-details-${goal.id}`;
-  const bound = saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id);
+  const fieldId = goal?.id ?? "new";
+  const formId = `goal-details-${fieldId}`;
+  const cancelHref = `/matches/${matchId}`;
+  const bound = goal
+    ? saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id)
+    : createGoalAndReturnToMatchAction.bind(null, matchId);
   const [state, formAction, pending] = useActionState(
     bound,
     INITIAL_ACTION_STATE,
@@ -134,21 +144,23 @@ function EditableGoalSection({
   const extra = players.filter(
     (p) =>
       !optionIds.has(p.id) &&
-      (p.id === goal.player_id || p.id === goal.assist_player_id),
+      (p.id === goal?.player_id || p.id === goal?.assist_player_id),
   );
   const playerOptions = [...options, ...extra];
-  const defaultKind = goalKindFromFlags(goal);
+  const defaultKind = goalKindFromFlags(
+    goal ?? { is_penalty: false, is_freekick: false, from_setpiece: false },
+  );
 
   return (
     <div className="space-y-6">
       <form id={formId} action={formAction} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor={`player_id-${goal.id}`}>
+            <Label htmlFor={`player_id-${fieldId}`}>
               Scorer <span className="text-muted-foreground">(required)</span>
             </Label>
             <NativeSelect
-              id={`player_id-${goal.id}`}
+              id={`player_id-${fieldId}`}
               name="player_id"
               required
               disabled={pending}
@@ -175,12 +187,14 @@ function EditableGoalSection({
             </NativeSelect>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`assist-${goal.id}`}>Assist (optional)</Label>
+            <Label htmlFor={`assist-${fieldId}`}>Assist (optional)</Label>
             <NativeSelect
-              id={`assist-${goal.id}`}
+              id={`assist-${fieldId}`}
               name="assist_player_id"
               disabled={pending || !assistsAllowed}
-              defaultValue={assistsAllowed ? (goal.assist_player_id ?? "") : ""}
+              defaultValue={
+                assistsAllowed ? (goal?.assist_player_id ?? "") : ""
+              }
               key={assistsAllowed ? "assist-on" : "assist-off"}
             >
               <option value="">
@@ -196,24 +210,24 @@ function EditableGoalSection({
             </NativeSelect>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`minute-${goal.id}`}>Minute</Label>
+            <Label htmlFor={`minute-${fieldId}`}>Minute</Label>
             <Input
-              id={`minute-${goal.id}`}
+              id={`minute-${fieldId}`}
               name="minute"
               type="number"
               min={0}
               max={120}
-              defaultValue={goal.minute ?? ""}
+              defaultValue={goal?.minute ?? ""}
               disabled={pending}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`period-${goal.id}`}>Period</Label>
+            <Label htmlFor={`period-${fieldId}`}>Period</Label>
             <NativeSelect
-              id={`period-${goal.id}`}
+              id={`period-${fieldId}`}
               name="period_id"
               disabled={pending}
-              defaultValue={goal.period_id ?? ""}
+              defaultValue={goal?.period_id ?? defaultPeriodId ?? ""}
             >
               <option value="">None</option>
               {periods.map((period) => (
@@ -276,18 +290,7 @@ function EditableGoalSection({
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </Button>
-        <ListDeleteButton
-          label="Remove goal"
-          confirmMessage="Remove this goal?"
-          deleteAction={() =>
-            deleteGoalAndReturnToMatchAction(matchId, goal.id)
-          }
-        />
-      </div>
+      <FormActions pending={pending} cancelHref={cancelHref} form={formId} />
     </div>
   );
 }

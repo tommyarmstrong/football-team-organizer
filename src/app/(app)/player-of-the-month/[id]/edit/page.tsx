@@ -7,7 +7,6 @@ import { formatAwardMonth, playerDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PlayerOfTheMonthForm } from "@/components/team/player-of-the-month-form";
-import { DeletePlayerOfTheMonthButton } from "@/components/team/delete-player-of-the-month-button";
 import {
   Card,
   CardContent,
@@ -77,10 +76,6 @@ export default async function EditPlayerOfTheMonthPage({
         </CardHeader>
         <CardContent className="space-y-4">
           <PlayerOfTheMonthForm mode="edit" award={award} players={players} />
-          <DeletePlayerOfTheMonthButton
-            awardId={award.id}
-            playerName={playerDisplayName(award.player)}
-          />
         </CardContent>
       </Card>
     </div>

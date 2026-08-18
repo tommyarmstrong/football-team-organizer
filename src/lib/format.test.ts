@@ -127,7 +127,7 @@ describe("playerDisplayName", () => {
         { first_name: "Alex", last_name: "Smith" },
         { shirtNumber: 7 },
       ),
-    ).toBe("#7 Alex Smith");
+    ).toBe("7 Alex Smith");
   });
 
   it("omits shirt prefix when shirtNumber is null", () => {

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 function monthInputValue(month: string | null | undefined): string {
   if (!month) return "";
@@ -93,13 +94,13 @@ export function PlayerOfTheMonthForm({
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? "Saving…"
-          : mode === "create"
-            ? "Add player of the month"
-            : "Save"}
-      </Button>
+      {mode === "edit" ? (
+        <FormActions pending={pending} cancelHref="/team" />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Add player of the month"}
+        </Button>
+      )}
     </form>
   );
 }

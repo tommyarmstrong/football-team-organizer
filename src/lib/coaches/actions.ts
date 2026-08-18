@@ -83,8 +83,9 @@ export async function updateCoachTextAction(
   const personId = await revalidatePersonForCoach(id);
   if (personId) {
     revalidatePath(`/people/${personId}/edit`);
+    redirect(`/people/${personId}`);
   }
-  return { success: "Coach profile saved." };
+  redirect("/people");
 }
 
 export async function deleteCoachAction(id: string): Promise<ActionState> {

@@ -139,8 +139,8 @@ function AddRosterPlayerForm({
           }))}
         />
       </div>
-      <div className="space-y-2 sm:w-24">
-        <Label htmlFor="roster-shirt">Shirt #</Label>
+      <div className="space-y-2 sm:w-36">
+        <Label htmlFor="roster-shirt">Shirt number</Label>
         <Input
           id="roster-shirt"
           name="shirt_number"

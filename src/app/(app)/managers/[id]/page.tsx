@@ -43,6 +43,9 @@ export default async function ManagerDetailPage({
       <PageHeader
         title={managerDisplayName(manager)}
         description={manager.email ?? manager.phone ?? "Manager"}
+        actions={
+          canEdit ? <DeleteManagerButton managerId={manager.id} /> : undefined
+        }
       />
 
       {canEdit ? (
@@ -53,9 +56,8 @@ export default async function ManagerDetailPage({
               Update name, contact details, and notes.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <ManagerForm mode="edit" manager={manager} />
-            <DeleteManagerButton managerId={manager.id} />
           </CardContent>
         </Card>
       ) : (

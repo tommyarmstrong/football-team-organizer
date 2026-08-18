@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { updateCoachTextAction } from "@/lib/coaches/actions";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 import {
   Card,
   CardContent,
@@ -17,10 +17,12 @@ import {
 
 export function CoachTextCards({
   coachId,
+  personId,
   biography,
   philosophy,
 }: {
   coachId: string;
+  personId: string;
   biography: string | null;
   philosophy: string | null;
 }) {
@@ -81,15 +83,8 @@ export function CoachTextCards({
       </Card>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save coach profile"}
-      </Button>
+      <FormActions pending={pending} cancelHref={`/people/${personId}`} />
     </form>
   );
 }

@@ -75,7 +75,7 @@ export async function updateGuardianAction(
   if (error) return { error };
 
   await revalidateGuardian(id);
-  return { success: "Guardian saved." };
+  redirect(`/guardians/${id}`);
 }
 
 export async function deleteGuardianAction(id: string): Promise<ActionState> {

@@ -167,7 +167,7 @@ export async function updateMatchAction(
   revalidatePath("/dashboard");
   revalidatePath("/stats");
   revalidatePath("/club");
-  return { success: "Match saved." };
+  redirect(`/matches/${id}`);
 }
 
 export async function updateMatchPlayersOfTheMatchAction(

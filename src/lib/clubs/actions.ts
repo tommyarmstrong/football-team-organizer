@@ -146,5 +146,5 @@ export async function updateClubAction(
   revalidatePath("/club");
   revalidatePath("/club/edit");
   revalidatePath("/", "layout");
-  return { success: "Club saved." };
+  redirect("/club");
 }

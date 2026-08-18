@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function ManagerForm({
   manager,
@@ -94,19 +95,14 @@ export function ManagerForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? "Saving…"
-          : mode === "create"
-            ? "Add manager"
-            : "Save manager"}
-      </Button>
+      {mode === "edit" && manager ? (
+        <FormActions pending={pending} cancelHref={`/managers/${manager.id}`} />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Add manager"}
+        </Button>
+      )}
     </form>
   );
 }

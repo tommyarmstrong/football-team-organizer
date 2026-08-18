@@ -1,11 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getViewerContext, canEditMatchDay } from "@/lib/authz/context";
-import { getGoal } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
-import { goalScorerLabel } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
@@ -17,30 +15,35 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function MatchGoalEditPage({
+export default async function NewMatchGoalPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ id: string; goalId: string }>;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ period_id?: string }>;
 }) {
-  const { id: matchId, goalId } = await params;
+  const { id: matchId } = await params;
+  const { period_id: periodId } = await searchParams;
   const ctx = await getViewerContext();
-  const [{ data: match, error: matchError }, { data: goal, error: goalError }] =
-    await Promise.all([getMatch(matchId), getGoal(goalId)]);
+  const { data: match, error: matchError } = await getMatch(matchId);
 
-  if (matchError || goalError) {
+  if (matchError) {
     return (
       <div className="space-y-4">
         <PageHeader title="Goal" />
-        <ErrorBanner message={matchError ?? goalError ?? "Unknown error"} />
+        <ErrorBanner message={matchError} />
       </div>
     );
   }
 
-  if (!match || !goal || !ctx || goal.match_id !== match.id) {
+  if (!match || !ctx) {
     notFound();
   }
 
-  const canEdit = canEditMatchDay(ctx, match.team_id);
+  if (!canEditMatchDay(ctx, match.team_id)) {
+    redirect(`/matches/${match.id}`);
+  }
+
   const teamName =
     ctx.visibleTeams.find((t) => t.id === match.team_id)?.name ?? "Our team";
 
@@ -57,13 +60,13 @@ export default async function MatchGoalEditPage({
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
   const hasMatchSquad = matchSquadIds.size > 0;
   const eventPlayers = hasMatchSquad
-    ? players.filter(
-        (p) =>
-          matchSquadIds.has(p.id) ||
-          p.id === goal.player_id ||
-          p.id === goal.assist_player_id,
-      )
+    ? players.filter((p) => matchSquadIds.has(p.id))
     : players;
+
+  const defaultPeriodId =
+    periodId && periods.some((period) => period.id === periodId)
+      ? periodId
+      : null;
 
   const loadErrors = [playersError, matchPlayersError, periodsError]
     .filter(Boolean)
@@ -71,30 +74,27 @@ export default async function MatchGoalEditPage({
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={`⚽ ${goalScorerLabel(goal)}`}
-        description={`vs ${match.opponent_name}`}
-      />
+      <PageHeader title="Add goal" description={`vs ${match.opponent_name}`} />
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit goal</CardTitle>
+          <CardTitle>Goal details</CardTitle>
           <CardDescription>
-            Update the scorer, assist, minute, period, and flags. Use Save to
-            save and return, or Cancel to discard changes.
+            Choose the scorer and other details. Use Save to add the goal and
+            return.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <MatchGoalEditSection
             matchId={match.id}
-            goal={goal}
             players={eventPlayers}
             periods={periods}
             teamName={teamName}
             opponentName={match.opponent_name}
-            canEdit={canEdit}
+            canEdit
+            defaultPeriodId={defaultPeriodId}
           />
         </CardContent>
       </Card>

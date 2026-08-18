@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import {
-  deleteCardAndReturnToMatchAction,
-  saveCardAndReturnToMatchAction,
-} from "@/lib/cards/actions";
+import { saveCardAndReturnToMatchAction } from "@/lib/cards/actions";
 import {
   CARD_TYPE_EMOJIS,
   CARD_TYPE_LABELS,
@@ -18,12 +15,11 @@ import {
   guardianDisplayName,
   playerDisplayName,
 } from "@/lib/format";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { FormActions } from "@/components/shared/form-actions";
 
 function cardPersonLabel(card: CardWithPerson): string {
   if (card.player) return playerDisplayName(card.player);
@@ -194,18 +190,11 @@ function EditableCardSection({
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </Button>
-        <ListDeleteButton
-          label="Remove card"
-          confirmMessage="Remove this card?"
-          deleteAction={() =>
-            deleteCardAndReturnToMatchAction(matchId, card.id)
-          }
-        />
-      </div>
+      <FormActions
+        pending={pending}
+        cancelHref={`/matches/${matchId}`}
+        form={formId}
+      />
     </div>
   );
 }

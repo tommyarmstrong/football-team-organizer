@@ -42,8 +42,6 @@ export default async function MatchPeriodEditPage({
   }
 
   const canEdit = canEditMatchDay(ctx, match.team_id);
-  const teamName =
-    ctx.visibleTeams.find((t) => t.id === match.team_id)?.name ?? "Our team";
 
   const [
     { data: goals, error: goalsError },
@@ -89,8 +87,6 @@ export default async function MatchPeriodEditPage({
             period={period}
             goals={periodGoals}
             squadPlayers={eventPlayers}
-            teamName={teamName}
-            opponentName={match.opponent_name}
             canEdit={canEdit}
           />
         </CardContent>

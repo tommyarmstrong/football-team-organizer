@@ -10,7 +10,6 @@ import {
 } from "@/lib/constants";
 import {
   addPlayerObjectiveAction,
-  deletePlayerObjectiveAndReturnAction,
   updatePlayerObjectiveAction,
 } from "@/lib/players/actions";
 import type { PlayerDevelopmentObjective } from "@/lib/supabase/database.types";
@@ -19,14 +18,16 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function PlayerObjectiveForm({
   playerId,
+  personId,
   objective,
   mode,
 }: {
   playerId: string;
+  personId: string;
   objective?: PlayerDevelopmentObjective;
   mode: "create" | "edit";
 }) {
@@ -99,27 +100,15 @@ export function PlayerObjectiveForm({
           </div>
         </div>
 
-        <Button type="submit" disabled={pending}>
-          {pending
-            ? mode === "create"
-              ? "Adding…"
-              : "Saving…"
-            : mode === "create"
-              ? "Add objective"
-              : "Save"}
-        </Button>
+        {mode === "edit" ? (
+          <FormActions pending={pending} cancelHref={`/people/${personId}`} />
+        ) : (
+          <Button type="submit" disabled={pending}>
+            {pending ? "Adding…" : "Add objective"}
+          </Button>
+        )}
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
-
-      {mode === "edit" && objective ? (
-        <ListDeleteButton
-          label="Delete objective"
-          confirmMessage="Delete this development objective? This cannot be undone."
-          deleteAction={() =>
-            deletePlayerObjectiveAndReturnAction(playerId, objective.id)
-          }
-        />
-      ) : null}
     </div>
   );
 }

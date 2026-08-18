@@ -12,11 +12,11 @@ import { updateTeamAction } from "@/lib/team/actions";
 import type { CoachWithPerson } from "@/lib/data/coaches";
 import type { Team, Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 import { SeasonInput } from "@/components/team/season-input";
 
 export function TeamProfileForm({
@@ -224,9 +224,7 @@ export function TeamProfileForm({
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save"}
-      </Button>
+      <FormActions pending={pending} cancelHref="/team" />
     </form>
   );
 }

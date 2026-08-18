@@ -79,7 +79,11 @@ export default async function NewPlayerObjectivePage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PlayerObjectiveForm playerId={player.id} mode="create" />
+          <PlayerObjectiveForm
+            playerId={player.id}
+            personId={person.id}
+            mode="create"
+          />
         </CardContent>
       </Card>
     </div>

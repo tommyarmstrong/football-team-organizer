@@ -154,9 +154,6 @@ export default async function MatchDetailPage({
             <MatchGoalsSection
               matchId={match.id}
               goals={goals}
-              players={eventPlayers}
-              teamName={teamName}
-              opponentName={opponentName}
               canEdit={canEdit}
             />
           </CollapsibleCard>

@@ -6,7 +6,6 @@ import { useActionState, useState, useTransition } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { MATCH_PERIOD_NAMES, isMatchPeriodName } from "@/lib/constants";
 import {
-  deletePeriodAndReturnToMatchAction,
   savePeriodAndReturnToMatchAction,
   savePeriodStartersAction,
 } from "@/lib/match-periods/actions";
@@ -20,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { FormActions } from "@/components/shared/form-actions";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -32,16 +31,12 @@ export function MatchPeriodEditSection({
   period,
   goals,
   squadPlayers,
-  teamName,
-  opponentName,
   canEdit = true,
 }: {
   matchId: string;
   period: MatchPeriodWithStarters;
   goals: GoalWithPlayers[];
   squadPlayers: RosterPlayer[];
-  teamName: string;
-  opponentName: string;
   canEdit?: boolean;
 }) {
   if (!canEdit) {
@@ -62,9 +57,6 @@ export function MatchPeriodEditSection({
           <MatchGoalsSection
             matchId={matchId}
             goals={goals}
-            players={squadPlayers}
-            teamName={teamName}
-            opponentName={opponentName}
             canEdit={false}
             periodId={period.id}
           />
@@ -79,8 +71,6 @@ export function MatchPeriodEditSection({
       period={period}
       goals={goals}
       squadPlayers={squadPlayers}
-      teamName={teamName}
-      opponentName={opponentName}
     />
   );
 }
@@ -90,15 +80,11 @@ function EditablePeriodSection({
   period,
   goals,
   squadPlayers,
-  teamName,
-  opponentName,
 }: {
   matchId: string;
   period: MatchPeriodWithStarters;
   goals: GoalWithPlayers[];
   squadPlayers: RosterPlayer[];
-  teamName: string;
-  opponentName: string;
 }) {
   const formId = `period-details-${period.id}`;
   const bound = savePeriodAndReturnToMatchAction.bind(null, matchId, period.id);
@@ -149,25 +135,15 @@ function EditablePeriodSection({
         <MatchGoalsSection
           matchId={matchId}
           goals={goals}
-          players={squadPlayers}
-          teamName={teamName}
-          opponentName={opponentName}
           canEdit
           periodId={period.id}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" form={formId} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </Button>
-        <ListDeleteButton
-          label="Remove period"
-          confirmMessage="Remove this period? Goals linked to it will keep their text label but lose the period link."
-          deleteAction={() =>
-            deletePeriodAndReturnToMatchAction(matchId, period.id)
-          }
-        />
-      </div>
+      <FormActions
+        pending={pending}
+        cancelHref={`/matches/${matchId}`}
+        form={formId}
+      />
     </div>
   );
 }

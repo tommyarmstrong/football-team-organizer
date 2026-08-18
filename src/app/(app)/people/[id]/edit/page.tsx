@@ -87,6 +87,7 @@ export default async function EditPersonPage({
       {coachRecord && (canEdit || self) ? (
         <CoachTextCards
           coachId={coachRecord.id}
+          personId={person.id}
           biography={coachRecord.biography}
           philosophy={coachRecord.philosophy}
         />

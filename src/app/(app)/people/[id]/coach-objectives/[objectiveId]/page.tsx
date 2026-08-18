@@ -78,6 +78,7 @@ export default async function CoachObjectiveEditPage({
           {canEdit ? (
             <CoachObjectiveForm
               coachId={coach.id}
+              personId={person.id}
               objective={objective}
               mode="edit"
             />

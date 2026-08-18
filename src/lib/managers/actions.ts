@@ -67,7 +67,7 @@ export async function updateManagerAction(
   if (error) return { error };
 
   revalidateManager(id);
-  return { success: "Manager saved." };
+  redirect(`/managers/${id}`);
 }
 
 export async function deleteManagerAction(id: string): Promise<ActionState> {

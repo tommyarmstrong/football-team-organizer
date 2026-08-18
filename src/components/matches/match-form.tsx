@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function MatchForm({
   mode,
@@ -271,19 +272,14 @@ export function MatchForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {mode === "edit" && state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending
-          ? "Saving…"
-          : mode === "create"
-            ? "Create fixture"
-            : "Save match"}
-      </Button>
+      {mode === "edit" && match ? (
+        <FormActions pending={pending} cancelHref={`/matches/${match.id}`} />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Create fixture"}
+        </Button>
+      )}
     </form>
   );
 }

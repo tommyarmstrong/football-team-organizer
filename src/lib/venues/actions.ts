@@ -84,7 +84,7 @@ export async function updateVenueAction(
   if (error) return { error };
 
   revalidateVenue(id);
-  return { success: "Venue saved." };
+  redirect(`/venues/${id}`);
 }
 
 export async function deleteVenueAction(id: string): Promise<ActionState> {

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 const DEFAULT_PICKER_COLOUR = "#1B4D3E";
 
@@ -231,15 +232,8 @@ export function ClubForm({ club }: { club: Club }) {
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save club"}
-      </Button>
+      <FormActions pending={pending} cancelHref="/club" />
     </form>
   );
 }

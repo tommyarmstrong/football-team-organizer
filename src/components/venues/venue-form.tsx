@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 
 export function VenueForm({
   venue,
@@ -160,15 +161,14 @@ export function VenueForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : mode === "create" ? "Add venue" : "Save venue"}
-      </Button>
+      {mode === "edit" && venue ? (
+        <FormActions pending={pending} cancelHref={`/venues/${venue.id}`} />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Add venue"}
+        </Button>
+      )}
     </form>
   );
 }

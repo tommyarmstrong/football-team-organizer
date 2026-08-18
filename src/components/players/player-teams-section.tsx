@@ -80,7 +80,7 @@ function MembershipChips({ membership }: { membership: PlayerTeamMembership }) {
   return (
     <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
       {membership.shirt_number != null ? (
-        <RoleChip>#{membership.shirt_number}</RoleChip>
+        <RoleChip>{membership.shirt_number}</RoleChip>
       ) : null}
       <RoleChip>{membership.active ? "Active" : "Inactive"}</RoleChip>
     </span>
@@ -192,9 +192,9 @@ function EditMembershipForm({
       action={formAction}
       className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
     >
-      <div className="space-y-2 sm:w-24">
+      <div className="space-y-2 sm:w-36">
         <Label htmlFor={`edit-shirt-${membership.team_player_id}`}>
-          Shirt #
+          Shirt number
         </Label>
         <Input
           id={`edit-shirt-${membership.team_player_id}`}
@@ -286,8 +286,8 @@ function AddToTeamForm({
           }))}
         />
       </div>
-      <div className="space-y-2 sm:w-24">
-        <Label htmlFor="add-team-shirt">Shirt #</Label>
+      <div className="space-y-2 sm:w-36">
+        <Label htmlFor="add-team-shirt">Shirt number</Label>
         <Input
           id="add-team-shirt"
           name="shirt_number"

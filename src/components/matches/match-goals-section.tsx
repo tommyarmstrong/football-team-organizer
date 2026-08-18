@@ -1,15 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import {
-  OPPOSITION_GOAL_LABEL,
-  OPPOSITION_SCORER_VALUE,
-  OWN_GOAL_LABEL,
-  OWN_GOAL_SCORER_VALUE,
-} from "@/lib/constants";
-import { createGoalAction, deleteGoalAction } from "@/lib/goals/actions";
+import { deleteGoalAction } from "@/lib/goals/actions";
 import {
   formatGoalMinute,
   goalKindLabel,
@@ -17,18 +9,14 @@ import {
   playerDisplayName,
 } from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
-import type { RosterPlayer } from "@/lib/data/players";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function goalChipClassName(
   isOpposition: boolean,
@@ -79,17 +67,11 @@ export function GoalAssistChip({
 export function MatchGoalsSection({
   matchId,
   goals,
-  players,
-  teamName,
-  opponentName,
   canEdit = true,
   periodId = null,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
-  players: RosterPlayer[];
-  teamName: string;
-  opponentName: string;
   canEdit?: boolean;
   /** When set, new goals are linked to this period. */
   periodId?: string | null;
@@ -103,6 +85,10 @@ export function MatchGoalsSection({
     );
   }
 
+  const addHref = periodId
+    ? `/matches/${matchId}/goals/new?period_id=${periodId}`
+    : `/matches/${matchId}/goals/new`;
+
   return (
     <div className="space-y-4">
       {goals.length === 0 ? (
@@ -110,8 +96,8 @@ export function MatchGoalsSection({
           title="No goals recorded"
           description={
             periodId
-              ? "Add a goal below for this period."
-              : "Add a goal below, then set details on the goal page."
+              ? "Add a goal for this period."
+              : "Add a goal, then set the scorer and other details."
           }
         />
       ) : (
@@ -163,86 +149,10 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <AddGoalForm
-          matchId={matchId}
-          players={players}
-          teamName={teamName}
-          opponentName={opponentName}
-          periodId={periodId}
-        />
+        <Link href={addHref} className={buttonVariants()}>
+          Add
+        </Link>
       ) : null}
     </div>
-  );
-}
-
-function AddGoalForm({
-  matchId,
-  players,
-  teamName,
-  opponentName,
-  periodId,
-}: {
-  matchId: string;
-  players: RosterPlayer[];
-  teamName: string;
-  opponentName: string;
-  periodId: string | null;
-}) {
-  const bound = createGoalAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
-    bound,
-    INITIAL_ACTION_STATE,
-  );
-
-  const activePlayers = players.filter((p) => p.active);
-  const playerOptions = activePlayers.length > 0 ? activePlayers : players;
-
-  return (
-    <form
-      key={state.success ?? "idle"}
-      action={formAction}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
-    >
-      {periodId ? (
-        <input type="hidden" name="period_id" value={periodId} />
-      ) : null}
-      <div className="min-w-0 flex-1 space-y-2">
-        <Label htmlFor={`add-goal-player-${periodId ?? "match"}`}>
-          Add goal
-        </Label>
-        <SearchableSelect
-          id={`add-goal-player-${periodId ?? "match"}`}
-          name="player_id"
-          required
-          disabled={pending}
-          placeholder="Search scorers by name…"
-          emptyMessage="No scorers match that name."
-          options={[
-            ...playerOptions.map((player) => ({
-              value: player.id,
-              label: `${playerDisplayName(player, {
-                shirtNumber: player.shirt_number,
-              })}${!player.active ? " (inactive)" : ""}`,
-            })),
-            {
-              value: OWN_GOAL_SCORER_VALUE,
-              label: `${teamName}: ${OWN_GOAL_LABEL}`,
-            },
-            {
-              value: OPPOSITION_SCORER_VALUE,
-              label: `${opponentName || "Opposition"}: ${OPPOSITION_GOAL_LABEL}`,
-            },
-          ]}
-        />
-      </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add"}
-      </Button>
-      {state.error ? (
-        <div className="w-full sm:basis-full">
-          <ErrorBanner message={state.error} />
-        </div>
-      ) : null}
-    </form>
   );
 }
