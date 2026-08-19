@@ -19,8 +19,7 @@ import {
 } from "@/lib/data/members";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listVenues } from "@/lib/data/venues";
-import { teamDisplayName } from "@/lib/format";
-import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
+import { formatTrainingDays, teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -250,9 +249,4 @@ export default async function TeamPage() {
       </Section>
     </div>
   );
-}
-
-function formatTrainingDays(days: string[] | null): string {
-  if (!days || days.length === 0) return "—";
-  return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDay] ?? d).join(", ");
 }

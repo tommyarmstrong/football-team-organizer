@@ -12,6 +12,8 @@ import {
   PLAYER_OBJECTIVE_STATUS_LABELS,
   PLAYER_OBJECTIVE_TYPE_LABELS,
   TEAM_GENDER_LABELS,
+  TRAINING_DAY_LABELS,
+  type TrainingDay,
   VENUE_FOOD_AND_DRINK_LABELS,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
@@ -83,6 +85,40 @@ export function formatKickoffTime(time: string | null): string | null {
   if (!time) return null;
   // Postgres `time` may include seconds; show HH:MM
   return time.slice(0, 5);
+}
+
+/** Date and kickoff on one line, e.g. "Sun 15 Mar 2026 · 14:30". */
+export function formatMatchDateTime(
+  date: string,
+  kickoffTime: string | null,
+): string {
+  return [formatMatchDate(date), formatKickoffTime(kickoffTime)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * Shared match summary lines used on the matches list, match page, and
+ * dashboard: competition, then date and time, then venue — each optional
+ * except date/time.
+ */
+export function matchSummaryLines(match: {
+  competitionName?: string | null;
+  date: string;
+  kickoffTime: string | null;
+  venueName?: string | null;
+}): {
+  competition: string | null;
+  dateTime: string;
+  venue: string | null;
+} {
+  const competition = match.competitionName?.trim() || null;
+  const venue = match.venueName?.trim() || null;
+  return {
+    competition,
+    dateTime: formatMatchDateTime(match.date, match.kickoffTime),
+    venue,
+  };
 }
 
 export function playerDisplayName(
@@ -321,6 +357,39 @@ export function teamDisplayName(team: {
 }): string {
   const display = team.display_name?.trim();
   return display || team.name;
+}
+
+/** Club, gender, age group, and season for the team page header. */
+export function formatTeamHeaderSummary({
+  clubName,
+  gender,
+  ageGroup,
+  seasonLabel,
+  archived = false,
+}: {
+  clubName: string;
+  gender: TeamGender;
+  ageGroup: string;
+  seasonLabel: string;
+  archived?: boolean;
+}): string {
+  const summary = [clubName, labelGender(gender), ageGroup, seasonLabel]
+    .filter(Boolean)
+    .join(" · ");
+  return archived ? `${summary} · Archived` : summary;
+}
+
+export function formatTrainingDays(days: string[] | null): string {
+  if (!days || days.length === 0) return "—";
+  return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDay] ?? d).join(", ");
+}
+
+export function formatCountLabel(
+  count: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 export function formatAwardMonth(month: string): string {

@@ -3,11 +3,10 @@ import type { CardWithPerson } from "@/lib/data/cards";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import {
   coachDisplayName,
-  formatKickoffTime,
-  formatMatchDate,
   goalScorerLabel,
   guardianDisplayName,
   labelMatchStatus,
+  matchSummaryLines,
   playerDisplayName,
 } from "@/lib/format";
 import type { CardType, MatchStatus } from "@/lib/supabase/database.types";
@@ -66,11 +65,12 @@ export function MatchHeaderMeta({
   goals: GoalWithPlayers[];
   cards: CardWithPerson[];
 }) {
-  const kickoff = formatKickoffTime(kickoffTime);
-  const dateTime = kickoff
-    ? `${formatMatchDate(date)} · ${kickoff}`
-    : formatMatchDate(date);
-  const venue = venueName ?? "Unknown";
+  const meta = matchSummaryLines({
+    competitionName,
+    date,
+    kickoffTime,
+    venueName: venueName ?? "Unknown",
+  });
 
   const showCancelledOrPostponed =
     status === "cancelled" || status === "postponed";
@@ -84,11 +84,11 @@ export function MatchHeaderMeta({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        {competitionName ? (
-          <p className="font-bold">{competitionName}</p>
+        {meta.competition ? (
+          <p className="font-bold">{meta.competition}</p>
         ) : null}
-        <p>{dateTime}</p>
-        <p>{venue}</p>
+        <p>{meta.dateTime}</p>
+        {meta.venue ? <p>{meta.venue}</p> : null}
         {showCancelledOrPostponed ? (
           <p className="text-destructive font-medium">
             {labelMatchStatus(status)}

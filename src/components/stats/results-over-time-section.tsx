@@ -11,15 +11,9 @@ import {
 } from "@/lib/stats/competition-filters";
 import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
 import { ResultsOverTimeChart } from "@/components/stats/stats-charts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Section } from "@/components/shared/section";
 
-export function ResultsOverTimeCard({
+export function ResultsOverTimeSection({
   data,
   competitions,
 }: {
@@ -43,12 +37,11 @@ export function ResultsOverTimeCard({
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Results over time</CardTitle>
-        <CardDescription>Goals for vs against by match</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Section
+      title="Results over time"
+      description="Goals for vs against by match"
+    >
+      <div className="space-y-4">
         {data.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -74,7 +67,7 @@ export function ResultsOverTimeCard({
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </Section>
   );
 }

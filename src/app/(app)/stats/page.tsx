@@ -7,23 +7,19 @@ import {
   getMatchesPlayedByPlayerStats,
   getPlayerOfTheMatchByPlayerStats,
   getResultsOverTime,
+  type PlayerCountPoint,
 } from "@/lib/data/stats";
 import { teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { Skeleton } from "@/components/shared/skeleton";
 import { FormStrip } from "@/components/stats/form-strip";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
-const GoalsCard = dynamic(
-  () => import("@/components/stats/goals-card").then((mod) => mod.GoalsCard),
+const GoalsSection = dynamic(
+  () =>
+    import("@/components/stats/goals-section").then((mod) => mod.GoalsSection),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
@@ -39,10 +35,10 @@ const PlayerCountChart = dynamic(
   },
 );
 
-const ResultsOverTimeCard = dynamic(
+const ResultsOverTimeSection = dynamic(
   () =>
-    import("@/components/stats/results-over-time-card").then(
-      (mod) => mod.ResultsOverTimeCard,
+    import("@/components/stats/results-over-time-section").then(
+      (mod) => mod.ResultsOverTimeSection,
     ),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
@@ -101,97 +97,95 @@ export default async function StatsPage() {
 
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Form</CardTitle>
-          <CardDescription>
-            Most recent 8 played matches (oldest → newest)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {results.form.length === 0 ? (
-            <EmptyState
-              title="No played matches"
-              description="Form appears after you record results."
-            />
-          ) : (
-            <FormStrip form={results.form} />
-          )}
-        </CardContent>
-      </Card>
+      <Section
+        title="Form"
+        description="Most recent 8 played matches (oldest → newest)"
+      >
+        {results.form.length === 0 ? (
+          <EmptyState
+            title="No played matches"
+            description="Form appears after you record results."
+          />
+        ) : (
+          <FormStrip form={results.form} />
+        )}
+      </Section>
 
-      <ResultsOverTimeCard
+      <ResultsOverTimeSection
         data={results.data}
         competitions={competitionOptions}
       />
 
-      <GoalsCard data={goalsByPlayer.data} competitions={competitionOptions} />
+      <GoalsSection
+        data={goalsByPlayer.data}
+        competitions={competitionOptions}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Assists by player</CardTitle>
-          <CardDescription>Assists recorded on our goals</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {assistsByPlayer.data.length === 0 ? (
-            <EmptyState
-              title="No assists yet"
-              description="Add assists on match detail pages to populate this chart."
-            />
-          ) : (
-            <PlayerCountChart
-              data={assistsByPlayer.data}
-              metricLabel="Assists"
-              perGameLabel="Assists per game"
-              ariaTitle="assists by player"
-            />
-          )}
-        </CardContent>
-      </Card>
+      <PlayerCountSection
+        title="Assists by player"
+        description="Assists recorded on our goals"
+        emptyTitle="No assists yet"
+        emptyDescription="Add assists on match detail pages to populate this chart."
+        data={assistsByPlayer.data}
+        metricLabel="Assists"
+        perGameLabel="Assists per game"
+        ariaTitle="assists by player"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player of the match by player</CardTitle>
-          <CardDescription>
-            Coach and players&apos; awards on played matches
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {potmByPlayer.data.length === 0 ? (
-            <EmptyState
-              title="No awards yet"
-              description="Select players of the match on fixtures to populate this chart."
-            />
-          ) : (
-            <PlayerCountChart
-              data={potmByPlayer.data}
-              metricLabel="Awards"
-              ariaTitle="player of the match by player"
-            />
-          )}
-        </CardContent>
-      </Card>
+      <PlayerCountSection
+        title="Player of the match by player"
+        description="Coach and players' awards on played matches"
+        emptyTitle="No awards yet"
+        emptyDescription="Select players of the match on fixtures to populate this chart."
+        data={potmByPlayer.data}
+        metricLabel="Awards"
+        ariaTitle="player of the match by player"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Matches played by player</CardTitle>
-          <CardDescription>Appearances in match-day squads</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {matchesPlayed.data.length === 0 ? (
-            <EmptyState
-              title="No squad appearances yet"
-              description="Add match-day squads to populate this chart."
-            />
-          ) : (
-            <PlayerCountChart
-              data={matchesPlayed.data}
-              metricLabel="Matches"
-              ariaTitle="matches played by player"
-            />
-          )}
-        </CardContent>
-      </Card>
+      <PlayerCountSection
+        title="Matches played by player"
+        description="Appearances in match-day squads"
+        emptyTitle="No squad appearances yet"
+        emptyDescription="Add match-day squads to populate this chart."
+        data={matchesPlayed.data}
+        metricLabel="Matches"
+        ariaTitle="matches played by player"
+      />
     </div>
+  );
+}
+
+function PlayerCountSection({
+  title,
+  description,
+  emptyTitle,
+  emptyDescription,
+  data,
+  metricLabel,
+  perGameLabel,
+  ariaTitle,
+}: {
+  title: string;
+  description: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  data: PlayerCountPoint[];
+  metricLabel: string;
+  perGameLabel?: string;
+  ariaTitle: string;
+}) {
+  return (
+    <Section title={title} description={description}>
+      {data.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
+        <PlayerCountChart
+          data={data}
+          metricLabel={metricLabel}
+          perGameLabel={perGameLabel}
+          ariaTitle={ariaTitle}
+        />
+      )}
+    </Section>
   );
 }

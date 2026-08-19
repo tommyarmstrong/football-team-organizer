@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { getVisiblePageNumbers } from "@/components/shared/filterable-paginated-list";
-import { objectListRowClassName } from "@/components/shared/object-list";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 
 describe("getVisiblePageNumbers", () => {
   it("lists every page when there are few pages", () => {
@@ -36,6 +39,14 @@ describe("getVisiblePageNumbers", () => {
 
   it("lists exactly seven pages without ellipses", () => {
     expect(getVisiblePageNumbers(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+});
+
+describe("objectListClassName", () => {
+  it("is a bordered list shell without card chrome", () => {
+    expect(objectListClassName).toContain("rounded-xl");
+    expect(objectListClassName).toContain("border");
+    expect(objectListClassName).toContain("divide-y");
   });
 });
 

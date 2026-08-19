@@ -27,14 +27,8 @@ import {
 } from "@/lib/stats/competition-filters";
 import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Section } from "@/components/shared/section";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 function FilterButton({
   label,
@@ -58,7 +52,7 @@ function FilterButton({
   );
 }
 
-export function GoalsCard({
+export function GoalsSection({
   data,
   competitions,
 }: {
@@ -83,12 +77,8 @@ export function GoalsCard({
     .join("; ");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Goals</CardTitle>
-        <CardDescription>Our goals in played matches</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Section title="Goals" description="Our goals in played matches">
+      <div className="space-y-4">
         {data.length === 0 ? (
           <EmptyState
             title="No goals yet"
@@ -247,7 +237,7 @@ export function GoalsCard({
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </Section>
   );
 }

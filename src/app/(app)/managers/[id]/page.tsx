@@ -3,6 +3,7 @@ import { getManager } from "@/lib/data/managers";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { managerDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { ManagerForm } from "@/components/managers/manager-form";
 import { DeleteManagerButton } from "@/components/managers/delete-manager-button";
@@ -61,23 +62,18 @@ export default async function ManagerDetailPage({
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <div className="space-y-1">
-                <dt className="text-muted-foreground">Phone</dt>
-                <dd className="font-medium">{manager.phone ?? "—"}</dd>
-              </div>
-              <div className="space-y-1">
-                <dt className="text-muted-foreground">Email</dt>
-                <dd className="font-medium">{manager.email ?? "—"}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
+        <Section title="Profile">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="space-y-1">
+              <dt className="text-muted-foreground">Phone</dt>
+              <dd className="font-medium">{manager.phone ?? "—"}</dd>
+            </div>
+            <div className="space-y-1">
+              <dt className="text-muted-foreground">Email</dt>
+              <dd className="font-medium">{manager.email ?? "—"}</dd>
+            </div>
+          </dl>
+        </Section>
       )}
     </div>
   );

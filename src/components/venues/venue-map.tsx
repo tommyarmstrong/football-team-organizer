@@ -1,11 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Section } from "@/components/shared/section";
 import {
   googleMapsEmbedUrl,
   googleMapsSearchUrl,
@@ -21,12 +15,11 @@ export function VenueMap({ venue }: { venue: Venue }) {
   const embedSrc = googleMapsEmbedUrl(query);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Location</CardTitle>
-        <CardDescription>Map for this venue from Google Maps.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Section
+      title="Location"
+      description="Map for this venue from Google Maps."
+    >
+      <div className="space-y-4">
         <div className="border-border aspect-video overflow-hidden rounded-lg border">
           <iframe
             title={`Map of ${venue.name}`}
@@ -45,7 +38,7 @@ export function VenueMap({ venue }: { venue: Venue }) {
         >
           Open in Google Maps
         </a>
-      </CardContent>
-    </Card>
+      </div>
+    </Section>
   );
 }

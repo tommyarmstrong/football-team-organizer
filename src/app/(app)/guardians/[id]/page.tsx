@@ -4,6 +4,7 @@ import { listPlayers } from "@/lib/data/players";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { GuardianForm } from "@/components/guardians/guardian-form";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
@@ -80,22 +81,17 @@ export default async function GuardianDetailPage({
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player relationships</CardTitle>
-          <CardDescription>
-            Relationships between this guardian and players at the club.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <GuardianPlayersSection
-            guardianId={guardian.id}
-            links={links}
-            availablePlayers={availablePlayers}
-            canEdit={canEdit}
-          />
-        </CardContent>
-      </Card>
+      <Section
+        title="Player relationships"
+        description="Relationships between this guardian and players at the club."
+      >
+        <GuardianPlayersSection
+          guardianId={guardian.id}
+          links={links}
+          availablePlayers={availablePlayers}
+          canEdit={canEdit}
+        />
+      </Section>
     </div>
   );
 }

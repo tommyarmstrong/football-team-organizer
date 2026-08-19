@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { labelGender } from "@/lib/format";
+import { formatTeamHeaderSummary } from "@/lib/format";
 import type { TeamGender } from "@/lib/supabase/database.types";
 
 export function TeamHeaderMeta({
@@ -23,16 +23,17 @@ export function TeamHeaderMeta({
   trainingVenue: { id: string; name: string } | null;
   trainingDaysLabel: string;
 }) {
-  const summaryLine = [clubName, labelGender(gender), ageGroup, seasonLabel]
-    .filter(Boolean)
-    .join(" · ");
+  const summaryLine = formatTeamHeaderSummary({
+    clubName,
+    gender,
+    ageGroup,
+    seasonLabel,
+    archived,
+  });
 
   return (
     <div className="space-y-1">
-      <p>
-        {summaryLine}
-        {archived ? " · Archived" : ""}
-      </p>
+      <p>{summaryLine}</p>
       <p>Head coach: {headCoachName ?? "—"}</p>
       <p>
         Home venue:{" "}
