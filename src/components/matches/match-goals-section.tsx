@@ -24,8 +24,10 @@ export function goalChipClassName(
   className?: string,
 ): string {
   return cn(
-    "bg-background inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-medium",
-    isOpposition ? "border-red-500/80" : "border-emerald-600/80",
+    "bg-background inline-flex max-w-full min-w-0 items-center gap-1 overflow-hidden rounded-lg border px-2 py-0.5 text-xs font-medium",
+    isOpposition
+      ? "border-red-600 text-red-800 dark:text-red-200"
+      : "border-green-600 text-green-800 dark:text-green-200",
     className,
   );
 }
@@ -53,12 +55,7 @@ export function GoalAssistChip({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "bg-background inline-flex items-center gap-1.5 rounded-lg border border-amber-400/90 px-2.5 py-1 font-medium",
-        className,
-      )}
-    >
+    <span className={goalChipClassName(false, className)}>
       <span aria-hidden="true">🤝</span>
       <span className="truncate">{playerDisplayName(player)}</span>
     </span>
@@ -106,33 +103,26 @@ export function MatchGoalsSection({
           {goals.map((goal) => {
             const kind = goalKindLabel(goal);
             const minuteLabel = formatGoalMinute(goal.minute);
+            const meta = [minuteLabel, kind, goal.period].filter(Boolean);
             return (
               <li key={goal.id} className="flex items-stretch">
                 <Link
                   href={`/matches/${matchId}/goals/${goal.id}`}
-                  className={objectListRowClassName()}
+                  className={objectListRowClassName("items-start")}
                 >
-                  <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-                    <GoalScorerChip goal={goal} />
-                    {goal.assist && goalAssistsAllowed(goal, goal) ? (
-                      <GoalAssistChip player={goal.assist} />
-                    ) : null}
-                    {kind ? (
-                      <span className="text-muted-foreground shrink-0 text-xs font-medium">
-                        {kind}
-                      </span>
-                    ) : null}
-                    {minuteLabel ? (
-                      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                        {minuteLabel}
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      <GoalScorerChip goal={goal} />
+                      {goal.assist && goalAssistsAllowed(goal, goal) ? (
+                        <GoalAssistChip player={goal.assist} />
+                      ) : null}
+                    </span>
+                    {meta.length > 0 ? (
+                      <span className="text-muted-foreground text-xs tabular-nums">
+                        {meta.join(" · ")}
                       </span>
                     ) : null}
                   </span>
-                  {goal.period ? (
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                      {goal.period}
-                    </span>
-                  ) : null}
                 </Link>
                 {canEdit ? (
                   <div className="flex items-center pr-2">

@@ -12,45 +12,6 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 50, 100] as const;
 
 export type ListPageSize = (typeof PAGE_SIZE_OPTIONS)[number] | "all";
 
-/** Build a compact page button window, e.g. [1, 2, 3, 4, "ellipsis", 12]. */
-export function getVisiblePageNumbers(
-  currentPage: number,
-  totalPages: number,
-): Array<number | "ellipsis"> {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-
-  const pages = new Set<number>();
-  pages.add(1);
-  pages.add(totalPages);
-  for (let p = currentPage - 1; p <= currentPage + 1; p++) {
-    if (p >= 1 && p <= totalPages) pages.add(p);
-  }
-  if (currentPage <= 3) {
-    pages.add(2);
-    pages.add(3);
-    pages.add(4);
-  }
-  if (currentPage >= totalPages - 2) {
-    pages.add(totalPages - 3);
-    pages.add(totalPages - 2);
-    pages.add(totalPages - 1);
-  }
-
-  const sorted = [...pages].sort((a, b) => a - b);
-  const result: Array<number | "ellipsis"> = [];
-  for (let i = 0; i < sorted.length; i++) {
-    const page = sorted[i]!;
-    const prev = sorted[i - 1];
-    if (prev !== undefined && page - prev > 1) {
-      result.push("ellipsis");
-    }
-    result.push(page);
-  }
-  return result;
-}
-
 export function FilterablePaginatedList<T>({
   items,
   getSearchText,
@@ -100,9 +61,6 @@ export function FilterablePaginatedList<T>({
   const startIndex = total === 0 ? 0 : (currentPage - 1) * size;
   const pageItems = filtered.slice(startIndex, startIndex + size);
   const showPagination = pageSize !== "all" && totalPages > 1;
-  const pageNumbers = showPagination
-    ? getVisiblePageNumbers(currentPage, totalPages)
-    : [];
   const totalNoun = total === 1 ? singularLabel : pluralLabel;
 
   function handleFilterChange(value: string) {
@@ -176,7 +134,7 @@ export function FilterablePaginatedList<T>({
 
             {showPagination ? (
               <nav
-                className="flex flex-wrap items-center justify-center gap-1 sm:justify-end"
+                className="flex items-center justify-between gap-3 sm:justify-end"
                 aria-label="Pagination"
               >
                 <Button
@@ -188,30 +146,27 @@ export function FilterablePaginatedList<T>({
                 >
                   Previous
                 </Button>
-                {pageNumbers.map((entry, index) =>
-                  entry === "ellipsis" ? (
-                    <span
-                      key={`ellipsis-${index}`}
-                      className="px-1.5 tabular-nums"
-                      aria-hidden
-                    >
-                      …
-                    </span>
-                  ) : (
-                    <Button
-                      key={entry}
-                      type="button"
-                      variant={entry === currentPage ? "default" : "outline"}
-                      size="sm"
-                      aria-current={entry === currentPage ? "page" : undefined}
-                      aria-label={`Page ${entry}`}
-                      onClick={() => setPage(entry)}
-                      className="min-w-8 px-2 tabular-nums"
-                    >
-                      {entry}
-                    </Button>
-                  ),
-                )}
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={`${idPrefix}-page`} className="sr-only">
+                    Page
+                  </Label>
+                  <NativeSelect
+                    id={`${idPrefix}-page`}
+                    className="w-auto min-w-16"
+                    value={String(currentPage)}
+                    onChange={(event) => setPage(Number(event.target.value))}
+                    aria-label="Page"
+                  >
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (pageNumber) => (
+                        <option key={pageNumber} value={pageNumber}>
+                          {pageNumber}
+                        </option>
+                      ),
+                    )}
+                  </NativeSelect>
+                  <span className="tabular-nums">of {totalPages}</span>
+                </div>
                 <Button
                   type="button"
                   variant="outline"

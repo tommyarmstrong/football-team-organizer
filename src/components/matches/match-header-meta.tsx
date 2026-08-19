@@ -1,9 +1,8 @@
+import Link from "next/link";
 import { CARD_TYPE_EMOJIS } from "@/lib/constants";
 import type { CardWithPerson } from "@/lib/data/cards";
-import type { GoalWithPlayers } from "@/lib/data/goals";
 import {
   coachDisplayName,
-  goalScorerLabel,
   guardianDisplayName,
   labelMatchStatus,
   matchSummaryLines,
@@ -50,19 +49,19 @@ export function MatchHeaderMeta({
   date,
   kickoffTime,
   venueName,
+  venueId,
   competitionName,
   status,
   matchDaySquadCount,
-  goals,
   cards,
 }: {
   date: string;
   kickoffTime: string | null;
   venueName: string | null;
+  venueId: string | null;
   competitionName?: string | null;
   status: MatchStatus;
   matchDaySquadCount: number;
-  goals: GoalWithPlayers[];
   cards: CardWithPerson[];
 }) {
   const meta = matchSummaryLines({
@@ -75,10 +74,6 @@ export function MatchHeaderMeta({
   const showCancelledOrPostponed =
     status === "cancelled" || status === "postponed";
   const showMatchExtras = !showCancelledOrPostponed;
-
-  const ourGoals = showMatchExtras
-    ? goals.filter((goal) => !goal.is_opposition)
-    : [];
   const visibleCards = showMatchExtras ? cards : [];
 
   return (
@@ -88,7 +83,20 @@ export function MatchHeaderMeta({
           <p className="font-bold">{meta.competition}</p>
         ) : null}
         <p>{meta.dateTime}</p>
-        {meta.venue ? <p>{meta.venue}</p> : null}
+        {meta.venue ? (
+          <p>
+            {venueId ? (
+              <Link
+                href={`/venues/${venueId}`}
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                {meta.venue}
+              </Link>
+            ) : (
+              meta.venue
+            )}
+          </p>
+        ) : null}
         {showCancelledOrPostponed ? (
           <p className="text-destructive font-medium">
             {labelMatchStatus(status)}
@@ -96,20 +104,6 @@ export function MatchHeaderMeta({
         ) : null}
         {showMatchExtras ? <p>Match day squad: {matchDaySquadCount}</p> : null}
       </div>
-
-      {ourGoals.length > 0 ? (
-        <ul className="flex flex-wrap gap-2" aria-label="Goal scorers">
-          {ourGoals.map((goal) => (
-            <li
-              key={goal.id}
-              className={`${chipBaseClassName} border-green-600 text-green-800 dark:text-green-200`}
-            >
-              <span aria-hidden="true">⚽</span>
-              <span className="truncate">{goalScorerLabel(goal)}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
 
       {visibleCards.length > 0 ? (
         <ul className="flex flex-wrap gap-2" aria-label="Cards">

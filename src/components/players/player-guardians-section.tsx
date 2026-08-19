@@ -76,12 +76,12 @@ export function PlayerGuardiansSection({
               <li key={link.player_guardian_id}>
                 <Link
                   href={guardianHref(link)}
-                  className={objectListRowClassName()}
+                  className={objectListRowClassName("items-start")}
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 space-y-1.5">
                     <p className="font-medium">{guardianDisplayName(link)}</p>
+                    <LinkChips link={link} />
                   </div>
-                  <LinkChips link={link} />
                 </Link>
               </li>
             ),
@@ -101,7 +101,7 @@ export function PlayerGuardiansSection({
 
 function LinkChips({ link }: { link: PlayerGuardianLink }) {
   return (
-    <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
       <RoleChip>{GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}</RoleChip>
       {link.legal_guardian ? <RoleChip>Legal guardian</RoleChip> : null}
       {link.emergency_contact ? <RoleChip>Emergency contact</RoleChip> : null}
@@ -157,9 +157,14 @@ function PlayerGuardianLinkRow({
 
   return (
     <li className="flex items-stretch">
-      <Link href={guardianHref(link)} className={objectListRowClassName()}>
-        <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
-        <LinkChips link={link} />
+      <Link
+        href={guardianHref(link)}
+        className={objectListRowClassName("items-start")}
+      >
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <p className="font-medium">{name}</p>
+          <LinkChips link={link} />
+        </div>
       </Link>
       <div className="flex items-center gap-1 pr-2">
         <EditIconButton

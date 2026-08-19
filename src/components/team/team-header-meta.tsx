@@ -15,6 +15,7 @@ export function TeamHeaderMeta({
   seasonLabel,
   archived,
   headCoachName,
+  headCoachPersonId,
   homeVenue,
   trainingVenue,
   trainingDaysLabel,
@@ -25,6 +26,7 @@ export function TeamHeaderMeta({
   seasonLabel: string;
   archived: boolean;
   headCoachName: string | null;
+  headCoachPersonId: string | null;
   homeVenue: { id: string; name: string } | null;
   trainingVenue: { id: string; name: string } | null;
   trainingDaysLabel: string;
@@ -45,7 +47,19 @@ export function TeamHeaderMeta({
       </p>
       <p className="flex items-start gap-2">
         <UserIcon className="text-primary mt-0.5 size-4 shrink-0" />
-        <span>Head coach: {headCoachName ?? "—"}</span>
+        <span>
+          Head coach:{" "}
+          {headCoachName && headCoachPersonId ? (
+            <Link
+              href={`/people/${headCoachPersonId}`}
+              className="text-foreground font-bold underline-offset-2 hover:underline"
+            >
+              {headCoachName}
+            </Link>
+          ) : (
+            (headCoachName ?? "—")
+          )}
+        </span>
       </p>
       <p className="flex items-start gap-2">
         <MapPinIcon className="text-primary mt-0.5 size-4 shrink-0" />

@@ -33,18 +33,17 @@ function parseCardType(formData: FormData): CardType | { error: string } {
   return type;
 }
 
-export async function createCardAction(
+function parseCardForm(
   matchId: string,
-  _prev: ActionState,
   formData: FormData,
-): Promise<ActionState> {
+): TablesInsert<"cards"> | { error: string } {
   const player_id = parsePlayerId(formData);
   if (typeof player_id === "object") return player_id;
 
   const type = parseCardType(formData);
   if (typeof type === "object") return type;
 
-  const input: TablesInsert<"cards"> = {
+  return {
     match_id: matchId,
     type,
     player_id,
@@ -54,13 +53,22 @@ export async function createCardAction(
     referee_notes: str(formData, "referee_notes") || null,
     club_notes: str(formData, "club_notes") || null,
   };
+}
 
-  const { data, error } = await createCard(input);
+export async function createCardAndReturnToMatchAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = parseCardForm(matchId, formData);
+  if ("error" in parsed) return parsed;
+
+  const { data, error } = await createCard(parsed);
   if (error) return { error };
   if (!data) return { error: "Could not create card." };
 
   revalidateCard(matchId, data.id);
-  redirect(`/matches/${matchId}/cards/${data.id}`);
+  redirect(`/matches/${matchId}`);
 }
 
 export async function saveCardAndReturnToMatchAction(
