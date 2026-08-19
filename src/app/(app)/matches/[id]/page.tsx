@@ -130,10 +130,10 @@ export default async function MatchDetailPage({
             date={match.date}
             kickoffTime={match.kickoff_time}
             venueName={match.venue?.name ?? null}
+            venueId={match.venue?.id ?? null}
             competitionName={match.competition?.name ?? null}
             status={match.status}
             matchDaySquadCount={matchSquadIds.size}
-            goals={goals}
             cards={cards}
           />
         }
@@ -215,7 +215,6 @@ export default async function MatchDetailPage({
             <MatchCardsSection
               matchId={match.id}
               cards={cards}
-              players={eventPlayers}
               canEdit={canEdit}
             />
           </Section>

@@ -65,11 +65,7 @@ export function MatchPeriodsSection({
                   {periodGoals.length > 0 ? (
                     <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                       {periodGoals.map((goal) => (
-                        <GoalScorerChip
-                          key={goal.id}
-                          goal={goal}
-                          className="gap-1 px-2 py-0.5 text-xs"
-                        />
+                        <GoalScorerChip key={goal.id} goal={goal} />
                       ))}
                     </span>
                   ) : (

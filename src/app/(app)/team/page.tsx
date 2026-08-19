@@ -146,6 +146,7 @@ export default async function TeamPage() {
             seasonLabel={team.season_label}
             archived={archived}
             headCoachName={headCoach?.name ?? null}
+            headCoachPersonId={headCoach?.person_id ?? null}
             homeVenue={homeVenue}
             trainingVenue={trainingVenue}
             trainingDaysLabel={trainingDaysLabel}

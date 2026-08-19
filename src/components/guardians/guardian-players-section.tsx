@@ -127,26 +127,26 @@ function GuardianPlayerLinkRow({
     <li className="flex items-stretch">
       <Link
         href={`/people/${link.player_person_id}`}
-        className={objectListRowClassName()}
+        className={objectListRowClassName("items-start")}
       >
-        <span className="min-w-0 flex-1 truncate font-medium">
-          {playerName}
-        </span>
-        <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
-            {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <span className="font-medium">{playerName}</span>
+          <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+              {GUARDIAN_RELATIONSHIP_LABELS[link.relationship]}
+            </span>
+            {link.legal_guardian ? (
+              <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+                Legal guardian
+              </span>
+            ) : null}
+            {link.emergency_contact ? (
+              <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
+                Emergency contact
+              </span>
+            ) : null}
           </span>
-          {link.legal_guardian ? (
-            <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
-              Legal guardian
-            </span>
-          ) : null}
-          {link.emergency_contact ? (
-            <span className="border-border bg-background inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium">
-              Emergency contact
-            </span>
-          ) : null}
-        </span>
+        </div>
       </Link>
       {canEdit ? (
         <div className="flex items-center gap-1 pr-2">

@@ -2,7 +2,10 @@
 
 import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { saveCardAndReturnToMatchAction } from "@/lib/cards/actions";
+import {
+  createCardAndReturnToMatchAction,
+  saveCardAndReturnToMatchAction,
+} from "@/lib/cards/actions";
 import {
   CARD_TYPE_EMOJIS,
   CARD_TYPE_LABELS,
@@ -35,11 +38,12 @@ export function MatchCardEditSection({
   canEdit = true,
 }: {
   matchId: string;
-  card: CardWithPerson;
+  card?: CardWithPerson | null;
   players: RosterPlayer[];
   canEdit?: boolean;
 }) {
   if (!canEdit) {
+    if (!card) return null;
     return (
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div className="space-y-1">
@@ -82,7 +86,11 @@ export function MatchCardEditSection({
   }
 
   return (
-    <EditableCardSection matchId={matchId} card={card} players={players} />
+    <EditableCardSection
+      matchId={matchId}
+      card={card ?? null}
+      players={players}
+    />
   );
 }
 
@@ -92,11 +100,14 @@ function EditableCardSection({
   players,
 }: {
   matchId: string;
-  card: CardWithPerson;
+  card: CardWithPerson | null;
   players: RosterPlayer[];
 }) {
-  const formId = `card-details-${card.id}`;
-  const bound = saveCardAndReturnToMatchAction.bind(null, matchId, card.id);
+  const fieldId = card?.id ?? "new";
+  const formId = `card-details-${fieldId}`;
+  const bound = card
+    ? saveCardAndReturnToMatchAction.bind(null, matchId, card.id)
+    : createCardAndReturnToMatchAction.bind(null, matchId);
   const [state, formAction, pending] = useActionState(
     bound,
     INITIAL_ACTION_STATE,
@@ -106,7 +117,7 @@ function EditableCardSection({
   const options = activePlayers.length > 0 ? activePlayers : players;
   const optionIds = new Set(options.map((p) => p.id));
   const extra = players.filter(
-    (p) => !optionIds.has(p.id) && p.id === card.player_id,
+    (p) => !optionIds.has(p.id) && p.id === card?.player_id,
   );
   const playerOptions = [...options, ...extra];
 
@@ -115,15 +126,15 @@ function EditableCardSection({
       <form id={formId} action={formAction} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`player_id-${card.id}`}>
+            <Label htmlFor={`player_id-${fieldId}`}>
               Player <span className="text-muted-foreground">(required)</span>
             </Label>
             <NativeSelect
-              id={`player_id-${card.id}`}
+              id={`player_id-${fieldId}`}
               name="player_id"
               required
               disabled={pending}
-              defaultValue={card.player_id ?? ""}
+              defaultValue={card?.player_id ?? ""}
             >
               <option value="" disabled>
                 Select player
@@ -138,15 +149,15 @@ function EditableCardSection({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`type-${card.id}`}>
+            <Label htmlFor={`type-${fieldId}`}>
               Type <span className="text-muted-foreground">(required)</span>
             </Label>
             <NativeSelect
-              id={`type-${card.id}`}
+              id={`type-${fieldId}`}
               name="type"
               required
               disabled={pending}
-              defaultValue={card.type}
+              defaultValue={card?.type ?? "yellow_1st"}
             >
               {CARD_TYPES.map((type) => (
                 <option key={type} value={type}>
@@ -157,38 +168,38 @@ function EditableCardSection({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`coach_notes-${card.id}`}>
+            <Label htmlFor={`coach_notes-${fieldId}`}>
               Coach notes <OptionalHint />
             </Label>
             <Textarea
-              id={`coach_notes-${card.id}`}
+              id={`coach_notes-${fieldId}`}
               name="coach_notes"
               rows={2}
-              defaultValue={card.coach_notes ?? ""}
+              defaultValue={card?.coach_notes ?? ""}
               disabled={pending}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`referee_notes-${card.id}`}>
+            <Label htmlFor={`referee_notes-${fieldId}`}>
               Referee notes <OptionalHint />
             </Label>
             <Textarea
-              id={`referee_notes-${card.id}`}
+              id={`referee_notes-${fieldId}`}
               name="referee_notes"
               rows={2}
-              defaultValue={card.referee_notes ?? ""}
+              defaultValue={card?.referee_notes ?? ""}
               disabled={pending}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor={`club_notes-${card.id}`}>
+            <Label htmlFor={`club_notes-${fieldId}`}>
               Club notes <OptionalHint />
             </Label>
             <Textarea
-              id={`club_notes-${card.id}`}
+              id={`club_notes-${fieldId}`}
               name="club_notes"
               rows={2}
-              defaultValue={card.club_notes ?? ""}
+              defaultValue={card?.club_notes ?? ""}
               disabled={pending}
             />
           </div>
