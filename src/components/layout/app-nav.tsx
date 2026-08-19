@@ -1,39 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Building2Icon,
+  ChartColumnIcon,
+  EllipsisIcon,
+  GoalIcon,
+  HouseIcon,
+  MapPinIcon,
+  ShirtIcon,
+  UsersIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { AccountDetails, SignOutLink } from "@/components/layout/user-menu";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
 import type { Team } from "@/lib/supabase/database.types";
 
-const BASE_NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/team", label: "Team" },
-  { href: "/venues", label: "Venues" },
-  { href: "/matches", label: "Matches" },
-  { href: "/stats", label: "Stats" },
-] as const;
+export type NavItem = {
+  href: string;
+  label: string;
+  shortLabel?: string;
+  icon: ComponentType<{ className?: string }>;
+};
 
-const CLUB_NAV_ITEMS = [
-  { href: "/club", label: "Club" },
-  { href: "/people", label: "People" },
-] as const;
+export const PRIMARY_NAV_ITEMS: NavItem[] = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    shortLabel: "Home",
+    icon: HouseIcon,
+  },
+  { href: "/team", label: "Team", icon: ShirtIcon },
+  { href: "/matches", label: "Matches", icon: GoalIcon },
+  { href: "/stats", label: "Stats", icon: ChartColumnIcon },
+];
 
-function isActivePath(pathname: string, href: string) {
+export const MORE_NAV_ITEMS: NavItem[] = [
+  { href: "/venues", label: "Venues", icon: MapPinIcon },
+];
+
+export const CLUB_NAV_ITEMS: NavItem[] = [
+  { href: "/club", label: "Club", icon: Building2Icon },
+  { href: "/people", label: "People", icon: UsersIcon },
+];
+
+export function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function getNavItems(showClubAndPeople: boolean) {
-  return [...BASE_NAV_ITEMS, ...(showClubAndPeople ? CLUB_NAV_ITEMS : [])];
+export function getMoreNavItems(showClubAndPeople: boolean) {
+  return [...MORE_NAV_ITEMS, ...(showClubAndPeople ? CLUB_NAV_ITEMS : [])];
+}
+
+export function getDesktopNavItems(showClubAndPeople: boolean) {
+  return [
+    ...PRIMARY_NAV_ITEMS,
+    ...MORE_NAV_ITEMS,
+    ...(showClubAndPeople ? CLUB_NAV_ITEMS : []),
+  ];
+}
+
+function isMoreSectionActive(pathname: string, showClubAndPeople: boolean) {
+  return getMoreNavItems(showClubAndPeople).some((item) =>
+    isActivePath(pathname, item.href),
+  );
 }
 
 export function AppNav({
@@ -46,7 +78,7 @@ export function AppNav({
   activeTeamId?: string | null;
 }) {
   const pathname = usePathname();
-  const items = getNavItems(showClubAndPeople);
+  const items = getDesktopNavItems(showClubAndPeople);
 
   return (
     <nav
@@ -55,18 +87,20 @@ export function AppNav({
     >
       {items.map((item) => {
         const active = isActivePath(pathname, item.href);
+        const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "focus-visible:ring-ring inline-flex min-h-9 items-center rounded-md px-2.5 py-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none",
+              "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
               active
-                ? "text-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-header-foreground/15 text-header-foreground"
+                : "text-header-foreground/70 hover:bg-header-foreground/10 hover:text-header-foreground",
             )}
           >
+            <Icon className="size-4 shrink-0" />
             {item.label}
           </Link>
         );
@@ -74,13 +108,13 @@ export function AppNav({
       <TeamSwitcher
         teams={teams}
         activeTeamId={activeTeamId}
-        triggerClassName="min-h-9 rounded-md px-2.5 py-1.5"
+        triggerClassName="min-h-9 rounded-full px-3 py-1.5 text-header-foreground/80 hover:text-header-foreground"
       />
     </nav>
   );
 }
 
-export function MobileNavMenu({
+export function MobileTabBar({
   showClubAndPeople = false,
   name,
   email,
@@ -90,58 +124,93 @@ export function MobileNavMenu({
   email: string | null;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const items = getNavItems(showClubAndPeople);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreItems = getMoreNavItems(showClubAndPeople);
+  const moreActive = isMoreSectionActive(pathname, showClubAndPeople);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label="Menu"
-          />
-        }
-      >
-        <MenuIcon />
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={6}
-        className="w-64 max-w-[calc(100vw-2rem)] gap-0 p-1.5"
-      >
-        <div className="border-border border-b px-2 py-2.5">
-          <AccountDetails name={name} email={email} />
-        </div>
-
-        <nav aria-label="Main" className="flex flex-col gap-0.5 py-1.5 text-sm">
-          {items.map((item) => {
-            const active = isActivePath(pathname, item.href);
-            return (
+    <nav
+      aria-label="Main"
+      className="border-header/20 bg-header text-header-foreground fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      <ul className="grid grid-cols-5">
+        {PRIMARY_NAV_ITEMS.map((item) => {
+          const active = isActivePath(pathname, item.href);
+          const Icon = item.icon;
+          return (
+            <li key={item.href}>
               <Link
-                key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                onClick={() => setOpen(false)}
+                onClick={() => setMoreOpen(false)}
                 className={cn(
-                  "focus-visible:ring-ring inline-flex min-h-9 items-center rounded-md px-2.5 py-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-semibold tracking-wide",
                   active
-                    ? "bg-muted text-foreground font-medium"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    ? "text-pitch-lime"
+                    : "text-header-foreground/70 hover:text-header-foreground",
                 )}
               >
-                {item.label}
+                <Icon className="size-5" />
+                {item.shortLabel ?? item.label}
               </Link>
-            );
-          })}
-        </nav>
+            </li>
+          );
+        })}
+        <li>
+          <button
+            type="button"
+            aria-expanded={moreOpen}
+            aria-current={moreActive ? "true" : undefined}
+            onClick={() => setMoreOpen((open) => !open)}
+            className={cn(
+              "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-semibold tracking-wide",
+              moreOpen || moreActive
+                ? "text-pitch-lime"
+                : "text-header-foreground/70 hover:text-header-foreground",
+            )}
+          >
+            <EllipsisIcon className="size-5" />
+            More
+          </button>
+        </li>
+      </ul>
 
-        <div className="border-border border-t px-1.5 pt-1.5">
-          <SignOutLink className="h-9 w-full justify-start px-2.5" />
+      {moreOpen ? (
+        <div className="border-header-foreground/15 bg-header absolute inset-x-0 bottom-full border-t px-3 pt-3 pb-2 shadow-[0_-12px_40px_rgba(0,0,0,0.18)]">
+          <div className="mx-auto max-w-5xl">
+            <div className="border-header-foreground/15 mb-2 border-b px-1 pb-2">
+              <AccountDetails name={name} email={email} />
+            </div>
+            <ul className="grid grid-cols-2 gap-1 pb-1">
+              {moreItems.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      onClick={() => setMoreOpen(false)}
+                      className={cn(
+                        "flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium",
+                        active
+                          ? "bg-header-foreground/15 text-pitch-lime"
+                          : "text-header-foreground/85 hover:bg-header-foreground/10",
+                      )}
+                    >
+                      <Icon className="size-4 shrink-0" />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-header-foreground/15 mt-1 border-t pt-1">
+              <SignOutLink className="text-header-foreground h-10 w-full justify-start px-3" />
+            </div>
+          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      ) : null}
+    </nav>
   );
 }

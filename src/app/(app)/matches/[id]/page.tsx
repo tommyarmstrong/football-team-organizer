@@ -16,6 +16,7 @@ import {
   scoreFromGoals,
   teamDisplayName,
 } from "@/lib/format";
+import { MatchScoreboard } from "@/components/matches/match-scoreboard";
 import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
@@ -107,14 +108,22 @@ export default async function MatchDetailPage({
     <div className="space-y-8">
       <PageHeader
         title={
-          match.status === "in_progress" ? (
-            <span className="inline-flex items-center gap-2.5">
-              <span>{titleText}</span>
-              <LiveIndicator />
-            </span>
-          ) : (
-            titleText
-          )
+          <span className="block space-y-3">
+            <span className="sr-only">{titleText}</span>
+            <MatchScoreboard
+              teamName={teamName}
+              opponentName={opponentName}
+              homeAway={match.home_away}
+              status={match.status}
+              goalsFor={goalsFor}
+              goalsAgainst={goalsAgainst}
+            />
+            {match.status === "in_progress" ? (
+              <span className="flex justify-center">
+                <LiveIndicator />
+              </span>
+            ) : null}
+          </span>
         }
         description={
           <MatchHeaderMeta

@@ -44,7 +44,7 @@ describe("getVisiblePageNumbers", () => {
 
 describe("objectListClassName", () => {
   it("is a bordered list shell without card chrome", () => {
-    expect(objectListClassName).toContain("rounded-xl");
+    expect(objectListClassName).toContain("rounded-2xl");
     expect(objectListClassName).toContain("border");
     expect(objectListClassName).toContain("divide-y");
   });

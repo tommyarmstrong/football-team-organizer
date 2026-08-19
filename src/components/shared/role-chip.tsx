@@ -14,7 +14,7 @@ export function RoleChip({
   return (
     <span
       className={cn(
-        "border-border bg-background inline-flex max-w-full items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium",
+        "border-border bg-card inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold",
         className,
       )}
     >
@@ -30,6 +30,13 @@ const ROLE_LABELS: Record<PersonRoleKind, string> = {
   manager: "Manager",
 };
 
+const ROLE_CHIP_CLASS: Record<PersonRoleKind, string> = {
+  player: "border-primary/30 bg-primary/10 text-primary",
+  guardian: "border-chart-3/40 bg-chart-3/10 text-chart-3",
+  coach: "border-chart-2/50 bg-chart-2/15 text-draw-foreground",
+  manager: "border-chart-5/40 bg-chart-5/10 text-chart-5",
+};
+
 export function PersonRoleChips({
   roles,
 }: {
@@ -42,7 +49,9 @@ export function PersonRoleChips({
     <ul className="flex flex-wrap gap-1.5" aria-label="Roles">
       {active.map((role) => (
         <li key={role}>
-          <RoleChip>{ROLE_LABELS[role]}</RoleChip>
+          <RoleChip className={ROLE_CHIP_CLASS[role]}>
+            {ROLE_LABELS[role]}
+          </RoleChip>
         </li>
       ))}
     </ul>

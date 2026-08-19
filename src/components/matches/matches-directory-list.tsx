@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { matchAllowsEvents } from "@/lib/constants";
 import type { MatchWithRelations } from "@/lib/data/matches";
-import {
-  formatMatchTitle,
-  labelMatchStatus,
-  matchSummaryLines,
-} from "@/lib/format";
+import { labelMatchStatus, matchSummaryLines } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
+import { MatchScoreboard } from "@/components/matches/match-scoreboard";
 
 export function MatchesDirectoryList({
   matches,
@@ -39,14 +36,6 @@ export function MatchesDirectoryList({
       emptyFilterTitle="No fixtures match"
       emptyFilterDescription="Try a different opponent, venue, or competition."
       renderItem={(match) => {
-        const title = formatMatchTitle(
-          teamName,
-          match.opponent_name,
-          match.home_away,
-          match.status,
-          match.goals_for,
-          match.goals_against,
-        );
         const meta = matchSummaryLines({
           competitionName: match.competition?.name,
           date: match.date,
@@ -57,20 +46,32 @@ export function MatchesDirectoryList({
         return (
           <Link
             href={`/matches/${match.id}`}
-            className={objectListRowClassName("flex-col items-stretch gap-1")}
+            className={objectListRowClassName("flex-col items-stretch gap-2")}
           >
-            <p className="font-bold">{title}</p>
+            <MatchScoreboard
+              teamName={teamName}
+              opponentName={match.opponent_name}
+              homeAway={match.home_away}
+              status={match.status}
+              goalsFor={match.goals_for}
+              goalsAgainst={match.goals_against}
+              compact
+            />
             {meta.competition ? (
-              <p className="text-muted-foreground text-sm font-bold">
+              <p className="text-primary text-center text-sm font-bold">
                 {meta.competition}
               </p>
             ) : null}
-            <p className="text-muted-foreground text-sm">{meta.dateTime}</p>
+            <p className="text-muted-foreground text-center text-sm">
+              {meta.dateTime}
+            </p>
             {meta.venue ? (
-              <p className="text-muted-foreground text-sm">{meta.venue}</p>
+              <p className="text-muted-foreground text-center text-sm">
+                {meta.venue}
+              </p>
             ) : null}
             {!matchAllowsEvents(match.status) ? (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-center text-sm">
                 {labelMatchStatus(match.status)}
               </p>
             ) : null}

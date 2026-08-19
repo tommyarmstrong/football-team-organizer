@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { PersonDirectoryItem } from "@/lib/data/people";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
+import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import { PersonRoleChips } from "@/components/shared/role-chip";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -70,6 +71,7 @@ export function PeopleDirectoryList({
             href={`/people/${person.id}`}
             className={objectListRowClassName("cursor-pointer")}
           >
+            <InitialsAvatar name={displayName(person)} />
             <div className="min-w-0 flex-1 space-y-1.5">
               <p className="font-medium">{displayName(person)}</p>
               {loginLine ? (

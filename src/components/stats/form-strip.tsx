@@ -4,6 +4,12 @@ const RESULT_LABELS = {
   L: "Loss",
 } as const;
 
+const RESULT_CLASS = {
+  W: "bg-win text-win-foreground",
+  D: "bg-draw text-draw-foreground",
+  L: "bg-loss text-loss-foreground",
+} as const;
+
 export function FormStrip({ form }: { form: Array<"W" | "D" | "L"> }) {
   return (
     <ul
@@ -15,13 +21,7 @@ export function FormStrip({ form }: { form: Array<"W" | "D" | "L"> }) {
       {form.map((letter, i) => (
         <li key={`${letter}-${i}`}>
           <span
-            className={
-              letter === "W"
-                ? "bg-foreground text-background inline-flex size-9 items-center justify-center rounded-md text-xs font-semibold"
-                : letter === "D"
-                  ? "bg-muted text-foreground ring-border inline-flex size-9 items-center justify-center rounded-md text-xs font-semibold ring-1 ring-inset"
-                  : "border-border text-muted-foreground inline-flex size-9 items-center justify-center rounded-md border text-xs font-semibold"
-            }
+            className={`${RESULT_CLASS[letter]} inline-flex size-9 items-center justify-center rounded-lg text-xs font-bold shadow-sm`}
             aria-label={RESULT_LABELS[letter]}
           >
             <span aria-hidden>{letter}</span>

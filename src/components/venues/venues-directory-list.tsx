@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MapPinIcon } from "lucide-react";
 import type { Venue } from "@/lib/data/venues";
 import { formatVenueAddress } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
@@ -27,6 +28,9 @@ export function VenuesDirectoryList({ venues }: { venues: Venue[] }) {
             href={`/venues/${venue.id}`}
             className={objectListRowClassName()}
           >
+            <span className="bg-primary/10 text-primary inline-flex size-10 shrink-0 items-center justify-center rounded-xl">
+              <MapPinIcon className="size-4" />
+            </span>
             <div className="min-w-0 flex-1">
               <p className="font-medium">{venue.name}</p>
               <p className="text-muted-foreground text-sm">

@@ -21,7 +21,9 @@ export function Section({
     <section className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <h2 className="font-display text-xl tracking-tight sm:text-2xl">
+            {title}
+          </h2>
           {description ? (
             <div className="text-muted-foreground text-sm">{description}</div>
           ) : null}

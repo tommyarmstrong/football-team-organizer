@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  CalendarDaysIcon,
+  MapPinIcon,
+  ShirtIcon,
+  UserIcon,
+} from "lucide-react";
 import { formatTeamHeaderSummary } from "@/lib/format";
 import type { TeamGender } from "@/lib/supabase/database.types";
 
@@ -32,36 +38,51 @@ export function TeamHeaderMeta({
   });
 
   return (
-    <div className="space-y-1">
-      <p>{summaryLine}</p>
-      <p>Head coach: {headCoachName ?? "—"}</p>
-      <p>
-        Home venue:{" "}
-        {homeVenue ? (
-          <Link
-            href={`/venues/${homeVenue.id}`}
-            className="text-foreground underline-offset-2 hover:underline"
-          >
-            {homeVenue.name}
-          </Link>
-        ) : (
-          "—"
-        )}
+    <div className="space-y-2.5">
+      <p className="flex items-start gap-2">
+        <ShirtIcon className="text-primary mt-0.5 size-4 shrink-0" />
+        <span>{summaryLine}</span>
       </p>
-      <p>
-        Training venue:{" "}
-        {trainingVenue ? (
-          <Link
-            href={`/venues/${trainingVenue.id}`}
-            className="text-foreground underline-offset-2 hover:underline"
-          >
-            {trainingVenue.name}
-          </Link>
-        ) : (
-          "—"
-        )}
+      <p className="flex items-start gap-2">
+        <UserIcon className="text-primary mt-0.5 size-4 shrink-0" />
+        <span>Head coach: {headCoachName ?? "—"}</span>
       </p>
-      <p>Training days: {trainingDaysLabel}</p>
+      <p className="flex items-start gap-2">
+        <MapPinIcon className="text-primary mt-0.5 size-4 shrink-0" />
+        <span>
+          Home venue:{" "}
+          {homeVenue ? (
+            <Link
+              href={`/venues/${homeVenue.id}`}
+              className="text-foreground underline-offset-2 hover:underline"
+            >
+              {homeVenue.name}
+            </Link>
+          ) : (
+            "—"
+          )}
+        </span>
+      </p>
+      <p className="flex items-start gap-2">
+        <MapPinIcon className="text-primary mt-0.5 size-4 shrink-0" />
+        <span>
+          Training venue:{" "}
+          {trainingVenue ? (
+            <Link
+              href={`/venues/${trainingVenue.id}`}
+              className="text-foreground underline-offset-2 hover:underline"
+            >
+              {trainingVenue.name}
+            </Link>
+          ) : (
+            "—"
+          )}
+        </span>
+      </p>
+      <p className="flex items-start gap-2">
+        <CalendarDaysIcon className="text-primary mt-0.5 size-4 shrink-0" />
+        <span>Training days: {trainingDaysLabel}</span>
+      </p>
     </div>
   );
 }

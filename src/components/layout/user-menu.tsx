@@ -26,7 +26,7 @@ export function AccountDetails({
     <div className="flex flex-col gap-0.5 px-0.5">
       <p className="truncate text-sm font-medium">{title}</p>
       {showEmailUnderName ? (
-        <p className="text-muted-foreground truncate text-sm">{email}</p>
+        <p className="truncate text-sm opacity-70">{email}</p>
       ) : null}
     </div>
   );

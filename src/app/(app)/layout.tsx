@@ -21,7 +21,7 @@ export default async function AppLayout({
       }
     >
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-8">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:px-6 md:py-8 md:pb-8">
         {children}
       </main>
     </div>

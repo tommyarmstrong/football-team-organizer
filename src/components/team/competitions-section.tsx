@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrophyIcon } from "lucide-react";
 import type { Competition } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
@@ -36,6 +37,9 @@ export function CompetitionsSection({
                 href={`/competitions/${competition.id}`}
                 className={objectListRowClassName()}
               >
+                <span className="bg-draw/20 text-draw-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-xl">
+                  <TrophyIcon className="size-4" />
+                </span>
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {competition.name}
                 </span>

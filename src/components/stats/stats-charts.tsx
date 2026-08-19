@@ -53,7 +53,7 @@ export function PlayerCountChart({
             <Bar
               dataKey="count"
               name={metricLabel}
-              fill="var(--color-foreground)"
+              fill="var(--color-chart-1)"
               radius={4}
             />
           </BarChart>
@@ -162,7 +162,7 @@ export function ResultsOverTimeChart({
               type="monotone"
               dataKey="goalsFor"
               name="Goals for"
-              stroke="var(--color-foreground)"
+              stroke="var(--color-chart-1)"
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -170,7 +170,7 @@ export function ResultsOverTimeChart({
               type="monotone"
               dataKey="goalsAgainst"
               name="Goals against"
-              stroke="var(--color-chart-2)"
+              stroke="var(--color-chart-4)"
               strokeWidth={2}
               strokeDasharray="4 4"
               dot={{ r: 3 }}

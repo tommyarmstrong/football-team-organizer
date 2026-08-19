@@ -111,7 +111,7 @@ export function AcceptInvitationForm({
       </form>
 
       <div className="relative py-2 text-center text-sm">
-        <span className="text-muted-foreground bg-background relative z-10 px-2">
+        <span className="text-muted-foreground bg-card relative z-10 px-2">
           or
         </span>
         <div className="border-border absolute inset-x-0 top-1/2 border-t" />
@@ -219,7 +219,7 @@ export function LoginFormWithGoogle() {
       </form>
 
       <div className="relative py-2 text-center text-sm">
-        <span className="text-muted-foreground bg-background relative z-10 px-2">
+        <span className="text-muted-foreground bg-card relative z-10 px-2">
           or
         </span>
         <div className="border-border absolute inset-x-0 top-1/2 border-t" />
