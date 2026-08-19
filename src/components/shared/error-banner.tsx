@@ -11,7 +11,7 @@ export function ErrorBanner({
     <div
       role="alert"
       className={cn(
-        "border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm",
+        "border-destructive/30 bg-destructive/10 text-destructive rounded-xl border px-3 py-2 text-sm",
         className,
       )}
     >

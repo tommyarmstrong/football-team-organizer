@@ -5,6 +5,7 @@ import type { CoachWithTeams } from "@/lib/data/coaches";
 import { coachDisplayName, formatShortDate } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
+import { InitialsAvatar } from "@/components/shared/initials-avatar";
 
 function qualificationSummary(coach: {
   dbs_checked: boolean;
@@ -41,7 +42,8 @@ export function CoachesDirectoryList({
           href={`/people/${coach.person_id}`}
           className={objectListRowClassName("justify-between")}
         >
-          <div className="min-w-0">
+          <InitialsAvatar name={coachDisplayName(coach)} />
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{coachDisplayName(coach)}</p>
             <p className="text-muted-foreground text-sm">
               Joined {formatShortDate(coach.joined_date)} ·{" "}

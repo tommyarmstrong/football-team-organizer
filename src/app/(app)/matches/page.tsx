@@ -64,8 +64,8 @@ export default async function MatchesPage({
             className={cn(
               "focus-visible:ring-ring inline-flex min-h-9 items-center rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
               filter === item.value
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:text-foreground",
             )}
           >
             {item.label}

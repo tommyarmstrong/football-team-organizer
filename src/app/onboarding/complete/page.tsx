@@ -1,16 +1,9 @@
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AuthShell } from "@/components/brand/auth-shell";
 import { CompleteProfileForm } from "@/components/people/complete-profile-form";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { getViewerContext } from "@/lib/authz/context";
 import { getPersonByAuthUserId } from "@/lib/data/people";
-import { APP_NAME } from "@/lib/constants";
 
 export default async function CompleteOnboardingPage() {
   const ctx = await getViewerContext();
@@ -19,9 +12,9 @@ export default async function CompleteOnboardingPage() {
   const { data: person, error } = await getPersonByAuthUserId(ctx.userId);
   if (error) {
     return (
-      <div className="bg-background flex flex-1 items-center justify-center px-6 py-16">
+      <AuthShell title="Could not load profile">
         <ErrorBanner message={error} />
-      </div>
+      </AuthShell>
     );
   }
   if (!person) {
@@ -29,18 +22,11 @@ export default async function CompleteOnboardingPage() {
   }
 
   return (
-    <div className="bg-background flex flex-1 items-center justify-center px-6 py-16">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{APP_NAME}</CardTitle>
-          <CardDescription>
-            Confirm your details and add a phone number if it is missing.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CompleteProfileForm person={person} />
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell
+      title="Complete your profile"
+      description="Confirm your details and add a phone number if it is missing."
+    >
+      <CompleteProfileForm person={person} />
+    </AuthShell>
   );
 }

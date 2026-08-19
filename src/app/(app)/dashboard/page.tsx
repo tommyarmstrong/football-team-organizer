@@ -20,19 +20,22 @@ import {
 import {
   formatAwardMonth,
   formatCountLabel,
-  formatMatchTitle,
   matchSummaryLines,
   playerDisplayName,
   teamDisplayName,
 } from "@/lib/format";
+import { PitchGraphic } from "@/components/brand/pitch-graphic";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { RankBadge } from "@/components/shared/rank-badge";
+import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { MatchScoreboard } from "@/components/matches/match-scoreboard";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -83,10 +86,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Dashboard"
-        description={`${displayName} · ${team.season_label}`}
-      />
+      <div className="bg-pitch-deep text-header-foreground relative overflow-hidden rounded-3xl px-5 py-6 shadow-md sm:px-7 sm:py-8">
+        <PitchGraphic className="pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto opacity-20 sm:h-56" />
+        <p className="text-pitch-lime relative text-xs font-semibold tracking-[0.22em] uppercase">
+          Dashboard
+        </p>
+        <h1 className="font-display relative mt-1 text-3xl leading-none tracking-tight sm:text-4xl">
+          {displayName}
+        </h1>
+        <p className="relative mt-1.5 text-sm text-white/75">
+          {team.season_label}
+        </p>
+      </div>
 
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
 
@@ -229,26 +240,28 @@ function FixtureSection({
     <Section title={title}>
       <Link
         href={`/matches/${match.id}`}
-        className="block space-y-1 transition-opacity hover:opacity-80"
+        className="bg-card ring-foreground/10 block space-y-3 rounded-2xl p-4 shadow-sm ring-1 transition-opacity hover:opacity-80"
       >
-        <p className="text-lg font-medium">
-          {formatMatchTitle(
-            teamName,
-            match.opponent_name,
-            match.home_away,
-            match.status,
-            match.goals_for,
-            match.goals_against,
-          )}
-        </p>
+        <MatchScoreboard
+          teamName={teamName}
+          opponentName={match.opponent_name}
+          homeAway={match.home_away}
+          status={match.status}
+          goalsFor={match.goals_for}
+          goalsAgainst={match.goals_against}
+        />
         {meta.competition ? (
-          <p className="text-muted-foreground text-sm font-bold">
+          <p className="text-primary text-center text-sm font-bold">
             {meta.competition}
           </p>
         ) : null}
-        <p className="text-muted-foreground text-sm">{meta.dateTime}</p>
+        <p className="text-muted-foreground text-center text-sm">
+          {meta.dateTime}
+        </p>
         {meta.venue ? (
-          <p className="text-muted-foreground text-sm">{meta.venue}</p>
+          <p className="text-muted-foreground text-center text-sm">
+            {meta.venue}
+          </p>
         ) : null}
       </Link>
     </Section>
@@ -284,13 +297,14 @@ function LeaderboardSection({
                 href={`/people/${row.personId}`}
                 className={objectListRowClassName("justify-between")}
               >
-                <span className="flex items-center gap-3">
-                  <span className="text-muted-foreground w-5 text-sm">
-                    {row.rank ?? index + 1}
-                  </span>
-                  <span className="font-medium">{row.name}</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  <RankBadge rank={row.rank ?? index + 1} />
+                  <InitialsAvatar name={row.name} className="size-8" />
+                  <span className="truncate font-medium">{row.name}</span>
                 </span>
-                <span className="text-sm tabular-nums">{row.valueLabel}</span>
+                <span className="text-primary text-sm font-semibold tabular-nums">
+                  {row.valueLabel}
+                </span>
               </Link>
             </li>
           ))}

@@ -1,15 +1,8 @@
 import { Suspense } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AuthShell } from "@/components/brand/auth-shell";
 import { AcceptInvitationForm } from "@/components/auth/login-form";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { loadInvitationByToken } from "@/lib/people/invitations";
-import { APP_NAME } from "@/lib/constants";
 
 async function AcceptInvitationContent({ token }: { token: string }) {
   let personEmail: string | null = null;
@@ -54,26 +47,19 @@ export default async function AcceptInvitationPage({
   const { token } = await searchParams;
 
   return (
-    <div className="bg-background flex flex-1 items-center justify-center px-6 py-16">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>{APP_NAME}</CardTitle>
-          <CardDescription>Accept your invitation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!token ? (
-            <ErrorBanner message="Missing invitation token." />
-          ) : (
-            <Suspense
-              fallback={
-                <p className="text-muted-foreground text-sm">Loading…</p>
-              }
-            >
-              <AcceptInvitationContent token={token} />
-            </Suspense>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell
+      title="Accept invitation"
+      description="Create an account so you can follow your team."
+    >
+      {!token ? (
+        <ErrorBanner message="Missing invitation token." />
+      ) : (
+        <Suspense
+          fallback={<p className="text-muted-foreground text-sm">Loading…</p>}
+        >
+          <AcceptInvitationContent token={token} />
+        </Suspense>
+      )}
+    </AuthShell>
   );
 }
