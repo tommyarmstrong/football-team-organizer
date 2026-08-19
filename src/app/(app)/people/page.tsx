@@ -17,13 +17,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { PeopleDirectoryList } from "@/components/people/people-directory-list";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function PeoplePage() {
   const ctx = await getViewerContext();
@@ -54,6 +47,7 @@ export default async function PeoplePage() {
     <div className="space-y-8">
       <PageHeader
         title="People"
+        description={directoryDescription(ctx, club.id, club.name)}
         actions={
           canEdit ? (
             <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
@@ -63,30 +57,20 @@ export default async function PeoplePage() {
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Directory</CardTitle>
-          <CardDescription>
-            {directoryDescription(ctx, club.id, club.name)}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {error ? <ErrorBanner message={error} /> : null}
-          {!error && visiblePeople.length === 0 ? (
-            <EmptyState
-              title="No people yet"
-              description={
-                canEdit
-                  ? "Add a person with an email address to start invite-only onboarding."
-                  : "No people are visible with your current access."
-              }
-            />
-          ) : null}
-          {!error && visiblePeople.length > 0 ? (
-            <PeopleDirectoryList people={visiblePeople} />
-          ) : null}
-        </CardContent>
-      </Card>
+      {error ? <ErrorBanner message={error} /> : null}
+      {!error && visiblePeople.length === 0 ? (
+        <EmptyState
+          title="No people yet"
+          description={
+            canEdit
+              ? "Add a person with an email address to start invite-only onboarding."
+              : "No people are visible with your current access."
+          }
+        />
+      ) : null}
+      {!error && visiblePeople.length > 0 ? (
+        <PeopleDirectoryList people={visiblePeople} />
+      ) : null}
     </div>
   );
 }

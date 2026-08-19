@@ -71,7 +71,6 @@ export function MatchHeaderMeta({
     ? `${formatMatchDate(date)} · ${kickoff}`
     : formatMatchDate(date);
   const venue = venueName ?? "Unknown";
-  const dateTimeVenueLine = `${dateTime} . ${venue}`;
 
   const showCancelledOrPostponed =
     status === "cancelled" || status === "postponed";
@@ -88,7 +87,8 @@ export function MatchHeaderMeta({
         {competitionName ? (
           <p className="font-bold">{competitionName}</p>
         ) : null}
-        <p>{dateTimeVenueLine}</p>
+        <p>{dateTime}</p>
+        <p>{venue}</p>
         {showCancelledOrPostponed ? (
           <p className="text-destructive font-medium">
             {labelMatchStatus(status)}

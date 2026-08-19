@@ -18,8 +18,8 @@ import {
 } from "@/lib/format";
 import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { CollapsibleCard } from "@/components/shared/collapsible-card";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
@@ -149,16 +149,16 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <>
-          <CollapsibleCard title="Goals">
+          <Section title="Goals">
             {goalsError ? <ErrorBanner message={goalsError} /> : null}
             <MatchGoalsSection
               matchId={match.id}
               goals={goals}
               canEdit={canEdit}
             />
-          </CollapsibleCard>
+          </Section>
 
-          <CollapsibleCard title="Periods">
+          <Section title="Periods">
             {periodsError ? <ErrorBanner message={periodsError} /> : null}
             <MatchPeriodsSection
               matchId={match.id}
@@ -166,7 +166,7 @@ export default async function MatchDetailPage({
               goals={goals}
               canEdit={canEdit}
             />
-          </CollapsibleCard>
+          </Section>
         </>
       ) : (
         <p className="text-muted-foreground text-sm">
@@ -179,19 +179,19 @@ export default async function MatchDetailPage({
       )}
 
       {!isCancelledOrPostponed ? (
-        <CollapsibleCard title="Match-day squad">
+        <Section title="Match-day squad">
           <MatchSquadSection
             matchId={match.id}
             roster={players}
             selectedPlayerIds={[...matchSquadIds]}
             canEdit={canEdit}
           />
-        </CollapsibleCard>
+        </Section>
       ) : null}
 
       {allowsEvents ? (
         <>
-          <CollapsibleCard title="Players of the match">
+          <Section title="Players of the match">
             <MatchPlayersOfTheMatchSection
               matchId={match.id}
               players={eventPlayers}
@@ -199,9 +199,9 @@ export default async function MatchDetailPage({
               playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
               canEdit={canEditPlayerOfTheMatch}
             />
-          </CollapsibleCard>
+          </Section>
 
-          <CollapsibleCard title="Cards">
+          <Section title="Cards">
             {cardsError ? <ErrorBanner message={cardsError} /> : null}
             <MatchCardsSection
               matchId={match.id}
@@ -209,7 +209,7 @@ export default async function MatchDetailPage({
               players={eventPlayers}
               canEdit={canEdit}
             />
-          </CollapsibleCard>
+          </Section>
         </>
       ) : null}
     </div>

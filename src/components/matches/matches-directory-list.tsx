@@ -62,7 +62,7 @@ export function MatchesDirectoryList({
           >
             <p className="font-bold">{title}</p>
             {match.competition ? (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-sm font-bold">
                 {match.competition.name}
               </p>
             ) : null}

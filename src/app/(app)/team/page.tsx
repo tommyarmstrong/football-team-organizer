@@ -19,15 +19,17 @@ import {
 } from "@/lib/data/members";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listVenues } from "@/lib/data/venues";
-import { labelGender, teamDisplayName } from "@/lib/format";
+import { teamDisplayName } from "@/lib/format";
 import { TRAINING_DAY_LABELS, type TrainingDay } from "@/lib/constants";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { PlayerOfTheMonthSection } from "@/components/team/player-of-the-month-section";
+import { TeamHeaderMeta } from "@/components/team/team-header-meta";
 import { TeamRosterSection } from "@/components/team/team-roster-section";
 import { TeamStaffSection } from "@/components/team/team-staff-section";
 import { GuardianAssistantsSection } from "@/components/team/guardian-assistants-section";
@@ -137,9 +139,24 @@ export default async function TeamPage() {
     <div className="space-y-8">
       <PageHeader
         title={teamDisplayName(team)}
-        description={`${club?.name ?? ""} · ${labelGender(team.gender)} · ${team.age_group} · ${team.season_label}${
-          archived ? " · Archived" : ""
-        }`}
+        description={
+          <TeamHeaderMeta
+            clubName={club?.name ?? ""}
+            gender={team.gender}
+            ageGroup={team.age_group}
+            seasonLabel={team.season_label}
+            archived={archived}
+            headCoachName={headCoach?.name ?? null}
+            homeVenue={homeVenue}
+            trainingVenue={trainingVenue}
+            trainingDaysLabel={trainingDaysLabel}
+          />
+        }
+        actions={
+          canEdit ? (
+            <EditIconLink href="/team/edit" label="Edit team" />
+          ) : undefined
+        }
       />
 
       {archived ? (
@@ -168,123 +185,69 @@ export default async function TeamPage() {
         />
       ) : null}
 
-      <Card>
-        <CardContent>
-          <div className="flex items-start gap-2">
-            <dl className="grid min-w-0 flex-1 gap-3 text-sm">
-              <ReadOnly label="Head coach" value={headCoach?.name ?? "—"} />
-              <ReadOnly
-                label="Home venue"
-                value={homeVenue?.name ?? "—"}
-                href={homeVenue ? `/venues/${homeVenue.id}` : null}
-              />
-              <ReadOnly
-                label="Training venue"
-                value={trainingVenue?.name ?? "—"}
-                href={trainingVenue ? `/venues/${trainingVenue.id}` : null}
-              />
-              <ReadOnly label="Training days" value={trainingDaysLabel} />
-            </dl>
-            {canEdit ? (
-              <EditIconLink
-                href="/team/edit"
-                label="Edit team"
-                className="-mt-1 -mr-1"
-              />
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Competitions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {competitions.error ? (
-            <ErrorBanner message={competitions.error} />
-          ) : (
-            <CompetitionsSection
-              key={team.id}
-              competitions={competitions.data}
-              canEdit={canEdit}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Squad</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {rosterError ? (
-            <ErrorBanner message={rosterError} />
-          ) : (
-            <TeamRosterSection
-              key={team.id}
-              teamId={team.id}
-              roster={roster}
-              candidates={playerCandidates}
-              canEdit={canEdit}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Coaching staff</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {teamCoachesError ? (
-            <ErrorBanner message={teamCoachesError} />
-          ) : (
-            <TeamStaffSection
-              key={team.id}
-              teamId={team.id}
-              assigned={teamCoaches}
-              candidates={coachCandidates}
-              canEdit={canEdit}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Guardian assistants</CardTitle>
-          <CardDescription>
-            Guardians who can add fixtures and record match-day squad, periods,
-            goals, assists, and cards. They cannot set player of the match.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <GuardianAssistantsSection
+      <Section title="Competitions">
+        {competitions.error ? (
+          <ErrorBanner message={competitions.error} />
+        ) : (
+          <CompetitionsSection
             key={team.id}
-            teamId={team.id}
-            assistants={assistants}
-            candidates={assistantCandidates}
+            competitions={competitions.data}
             canEdit={canEdit}
           />
-        </CardContent>
-      </Card>
+        )}
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player of the month</CardTitle>
-          <CardDescription>
-            Monthly awards for standout players this season.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {potmError ? (
-            <ErrorBanner message={potmError} />
-          ) : (
-            <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
-          )}
-        </CardContent>
-      </Card>
+      <Section title="Squad">
+        {rosterError ? (
+          <ErrorBanner message={rosterError} />
+        ) : (
+          <TeamRosterSection
+            key={team.id}
+            teamId={team.id}
+            roster={roster}
+            candidates={playerCandidates}
+            canEdit={canEdit}
+          />
+        )}
+      </Section>
+
+      <Section title="Coaching staff">
+        {teamCoachesError ? (
+          <ErrorBanner message={teamCoachesError} />
+        ) : (
+          <TeamStaffSection
+            key={team.id}
+            teamId={team.id}
+            assigned={teamCoaches}
+            candidates={coachCandidates}
+            canEdit={canEdit}
+          />
+        )}
+      </Section>
+
+      <Section
+        title="Guardian assistants"
+        description="Guardians who can add fixtures and record match-day squad, periods, goals, assists, and cards. They cannot set player of the match."
+      >
+        <GuardianAssistantsSection
+          key={team.id}
+          teamId={team.id}
+          assistants={assistants}
+          candidates={assistantCandidates}
+          canEdit={canEdit}
+        />
+      </Section>
+
+      <Section
+        title="Player of the month"
+        description="Monthly awards for standout players this season."
+      >
+        {potmError ? (
+          <ErrorBanner message={potmError} />
+        ) : (
+          <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
+        )}
+      </Section>
     </div>
   );
 }
@@ -292,32 +255,4 @@ export default async function TeamPage() {
 function formatTrainingDays(days: string[] | null): string {
   if (!days || days.length === 0) return "—";
   return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDay] ?? d).join(", ");
-}
-
-function ReadOnly({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href?: string | null;
-}) {
-  return (
-    <div className="space-y-1">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium">
-        {href ? (
-          <Link
-            href={href}
-            className="hover:text-foreground underline-offset-4 hover:underline"
-          >
-            {value}
-          </Link>
-        ) : (
-          value
-        )}
-      </dd>
-    </div>
-  );
 }

@@ -22,6 +22,7 @@ import { isPersonVisibleInDirectory } from "@/lib/people/directory";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { DeletePersonButton } from "@/components/people/delete-person-button";
@@ -33,13 +34,6 @@ import { PlayerObjectivesSection } from "@/components/players/player-objectives-
 import { CoachObjectivesSection } from "@/components/coaches/coach-objectives-section";
 import { PlayerGuardiansSection } from "@/components/players/player-guardians-section";
 import { GuardianPlayersSection } from "@/components/guardians/guardian-players-section";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function PersonDetailPage({
   params,
@@ -274,168 +268,122 @@ export default async function PersonDetailPage({
       />
 
       {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Biography</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {coachRecord?.biography ? (
-              <p className="text-sm whitespace-pre-wrap">
-                {coachRecord.biography}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No biography recorded.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <Section title="Biography">
+          {coachRecord?.biography ? (
+            <p className="text-sm whitespace-pre-wrap">
+              {coachRecord.biography}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No biography recorded.
+            </p>
+          )}
+        </Section>
       ) : null}
 
       {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Coaching Philosophy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {coachRecord?.philosophy ? (
-              <p className="text-sm whitespace-pre-wrap">
-                {coachRecord.philosophy}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No philosophy recorded.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <Section title="Coaching philosophy">
+          {coachRecord?.philosophy ? (
+            <p className="text-sm whitespace-pre-wrap">
+              {coachRecord.philosophy}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No philosophy recorded.
+            </p>
+          )}
+        </Section>
       ) : null}
 
       {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Coach Teams</CardTitle>
-            <CardDescription>This coach&apos;s teams</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CoachTeamsSection
-              coachId={coach.id}
-              memberships={coachTeams}
-              availableTeams={availableCoachTeams}
-              canEdit={canEditCoachRole}
-            />
-          </CardContent>
-        </Card>
+        <Section title="Coach teams" description="This coach's teams">
+          <CoachTeamsSection
+            coachId={coach.id}
+            memberships={coachTeams}
+            availableTeams={availableCoachTeams}
+            canEdit={canEditCoachRole}
+          />
+        </Section>
       ) : null}
 
       {coach ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Coaching Development</CardTitle>
-            <CardDescription>
-              Optional goals for this coach&apos;s development.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CoachObjectivesSection
-              personId={person.id}
-              coachId={coach.id}
-              objectives={coachObjectives}
-              canEdit={canEditCoachRole}
-            />
-          </CardContent>
-        </Card>
+        <Section
+          title="Coaching development"
+          description="Optional goals for this coach's development."
+        >
+          <CoachObjectivesSection
+            personId={person.id}
+            coachId={coach.id}
+            objectives={coachObjectives}
+            canEdit={canEditCoachRole}
+          />
+        </Section>
       ) : null}
 
       {player ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Player Teams</CardTitle>
-            <CardDescription>This player&apos;s teams</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PlayerTeamsSection
+        <Section title="Player teams" description="This player's teams">
+          <PlayerTeamsSection
+            playerId={player.id}
+            memberships={playerTeams}
+            availableTeams={availablePlayerTeams}
+            canEdit={canEditPlayerRole}
+          />
+        </Section>
+      ) : null}
+
+      {player ? (
+        <Section
+          title="Player development"
+          description="For younger children it is usually recommended that objectives are limited to no more than one or two items, which they can focus on, rather than being overwhelmed by information."
+        >
+          {playerObjectivesError ? (
+            <ErrorBanner message={playerObjectivesError} />
+          ) : (
+            <PlayerObjectivesSection
+              personId={person.id}
               playerId={player.id}
-              memberships={playerTeams}
-              availableTeams={availablePlayerTeams}
+              objectives={playerObjectives}
               canEdit={canEditPlayerRole}
             />
-          </CardContent>
-        </Card>
+          )}
+        </Section>
       ) : null}
 
       {player ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Player Development</CardTitle>
-            <CardDescription>
-              For younger children it is usually recommended that objectives are
-              limited to no more than one or two items, which they can focus on,
-              rather than being overwhelmed by information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {playerObjectivesError ? (
-              <ErrorBanner message={playerObjectivesError} />
-            ) : (
-              <PlayerObjectivesSection
-                personId={person.id}
-                playerId={player.id}
-                objectives={playerObjectives}
-                canEdit={canEditPlayerRole}
-              />
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {player ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Guardian Relationships</CardTitle>
-            <CardDescription>This person&apos;s guardians</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PlayerGuardiansSection
-              playerId={player.id}
-              links={playerGuardians}
-              availableGuardians={availableGuardians}
-              canEdit={canEditPlayerRole || canEdit}
-            />
-          </CardContent>
-        </Card>
+        <Section
+          title="Guardian relationships"
+          description="This person's guardians"
+        >
+          <PlayerGuardiansSection
+            playerId={player.id}
+            links={playerGuardians}
+            availableGuardians={availableGuardians}
+            canEdit={canEditPlayerRole || canEdit}
+          />
+        </Section>
       ) : null}
 
       {guardian ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Player Relationships</CardTitle>
-            <CardDescription>This person&apos;s players</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <GuardianPlayersSection
-              guardianId={guardian.id}
-              links={guardianPlayerLinks}
-              availablePlayers={availablePlayers}
-              canEdit={canEditGuardianRole}
-            />
-          </CardContent>
-        </Card>
+        <Section
+          title="Player relationships"
+          description="This person's players"
+        >
+          <GuardianPlayersSection
+            guardianId={guardian.id}
+            links={guardianPlayerLinks}
+            availablePlayers={availablePlayers}
+            canEdit={canEditGuardianRole}
+          />
+        </Section>
       ) : null}
 
       {canEdit && (roles.coach || roles.guardian || roles.manager) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Login Account</CardTitle>
-            <CardDescription>
-              Coaches, Guardians and Managers must create login accounts via an
-              invite to their email address.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PersonInvitationPanel person={person} />
-          </CardContent>
-        </Card>
+        <Section
+          title="Login account"
+          description="Coaches, Guardians and Managers must create login accounts via an invite to their email address."
+        >
+          <PersonInvitationPanel person={person} />
+        </Section>
       ) : null}
     </div>
   );
