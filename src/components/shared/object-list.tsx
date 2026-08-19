@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Bordered list shell for object rows inside cards. */
+/** Bordered list shell for object rows under a page section heading. */
 export const objectListClassName =
   "divide-border border-border divide-y rounded-xl border";
 

@@ -1,10 +1,15 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   canEditActiveMatchDay,
   canEditActiveTeam,
   getCurrentTeam,
 } from "@/lib/data/team";
-import { getLastResult, getNextFixture } from "@/lib/data/matches";
+import {
+  getLastResult,
+  getNextFixture,
+  type MatchWithRelations,
+} from "@/lib/data/matches";
 import { listCompetitions } from "@/lib/data/competitions";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import {
@@ -14,25 +19,22 @@ import {
 } from "@/lib/data/stats";
 import {
   formatAwardMonth,
-  formatKickoffTime,
-  formatMatchDate,
+  formatCountLabel,
   formatMatchTitle,
-  labelHomeAway,
+  matchSummaryLines,
   playerDisplayName,
   teamDisplayName,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import {
+  objectListClassName,
+  objectListRowClassName,
+} from "@/components/shared/object-list";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function DashboardPage() {
   const team = await getCurrentTeam();
@@ -88,165 +90,63 @@ export default async function DashboardPage() {
 
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Next fixture</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {next.data ? (
+      <div className="grid gap-8 sm:grid-cols-2">
+        <FixtureSection
+          title="Next fixture"
+          teamName={displayName}
+          match={next.data}
+          emptyTitle="No upcoming fixture"
+          emptyDescription="Schedule the next match."
+          emptyAction={
+            canEditMatch ? (
               <Link
-                href={`/matches/${next.data.id}`}
-                className="block space-y-1 transition-opacity hover:opacity-80"
+                href="/matches/new"
+                className={buttonVariants({ size: "sm" })}
               >
-                <p className="text-lg font-medium">{next.data.opponent_name}</p>
-                <p className="text-muted-foreground text-sm">
-                  {formatMatchDate(next.data.date)}
-                  {formatKickoffTime(next.data.kickoff_time)
-                    ? ` · ${formatKickoffTime(next.data.kickoff_time)}`
-                    : ""}
-                  {" · "}
-                  {labelHomeAway(next.data.home_away)}
-                </p>
-                {next.data.venue ? (
-                  <p className="text-muted-foreground text-sm">
-                    {next.data.venue.name}
-                  </p>
-                ) : null}
-                {next.data.competition ? (
-                  <p className="text-muted-foreground text-sm">
-                    {next.data.competition.name}
-                  </p>
-                ) : null}
+                New fixture
               </Link>
-            ) : (
-              <EmptyState
-                title="No upcoming fixture"
-                description="Schedule the next match."
-                action={
-                  canEditMatch ? (
-                    <Link
-                      href="/matches/new"
-                      className={buttonVariants({ size: "sm" })}
-                    >
-                      New fixture
-                    </Link>
-                  ) : undefined
-                }
-              />
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Last result</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {last.data ? (
-              <Link
-                href={`/matches/${last.data.id}`}
-                className="block space-y-1 transition-opacity hover:opacity-80"
-              >
-                <p className="font-bold">
-                  {formatMatchTitle(
-                    displayName,
-                    last.data.opponent_name,
-                    last.data.home_away,
-                    last.data.status,
-                    last.data.goals_for,
-                    last.data.goals_against,
-                  )}
-                </p>
-                {last.data.competition ? (
-                  <p className="text-muted-foreground text-sm">
-                    {last.data.competition.name}
-                  </p>
-                ) : null}
-                {(last.data.date || last.data.kickoff_time) && (
-                  <p className="text-muted-foreground text-sm">
-                    {[
-                      formatMatchDate(last.data.date),
-                      formatKickoffTime(last.data.kickoff_time),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                )}
-                {last.data.venue ? (
-                  <p className="text-muted-foreground text-sm">
-                    {last.data.venue.name}
-                  </p>
-                ) : null}
-              </Link>
-            ) : (
-              <EmptyState
-                title="No results yet"
-                description="Played matches will show here."
-              />
-            )}
-          </CardContent>
-        </Card>
+        <FixtureSection
+          title="Last result"
+          teamName={displayName}
+          match={last.data}
+          emptyTitle="No results yet"
+          emptyDescription="Played matches will show here."
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Competitions</CardTitle>
-          <CardDescription>
-            Leagues, cups, and other competitions for {team.season_label}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {competitions.error ? (
-            <ErrorBanner message={competitions.error} />
-          ) : (
-            <CompetitionsSection
-              key={team.id}
-              competitions={competitions.data}
-              canEdit={canEditTeam}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <Section
+        title="Competitions"
+        description={`Leagues, cups, and other competitions for ${team.season_label}.`}
+      >
+        {competitions.error ? (
+          <ErrorBanner message={competitions.error} />
+        ) : (
+          <CompetitionsSection
+            key={team.id}
+            competitions={competitions.data}
+            canEdit={canEditTeam}
+          />
+        )}
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player of the month</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {potMonth.data.length === 0 ? (
-            <EmptyState
-              title="No monthly awards yet"
-              description="Add player of the month awards from the Team page."
-            />
-          ) : (
-            <ol className="divide-border border-border divide-y rounded-xl border">
-              {potMonth.data.map((award, index) => (
-                <li key={award.id}>
-                  <Link
-                    href={`/people/${award.player.person_id}`}
-                    className="hover:bg-muted/50 flex items-center justify-between gap-3 px-4 py-3 transition-colors"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="text-muted-foreground w-5 text-sm">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium">
-                        {playerDisplayName(award.player)}
-                      </span>
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {formatAwardMonth(award.month)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardContent>
-      </Card>
+      <LeaderboardSection
+        title="Player of the month"
+        emptyTitle="No monthly awards yet"
+        emptyDescription="Add player of the month awards from the Team page."
+        rows={potMonth.data.map((award, index) => ({
+          id: award.id,
+          personId: award.player.person_id,
+          name: playerDisplayName(award.player),
+          valueLabel: formatAwardMonth(award.month),
+          rank: index + 1,
+        }))}
+      />
 
-      <LeaderboardCard
+      <LeaderboardSection
         title="Top scorers"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
@@ -256,11 +156,11 @@ export default async function DashboardPage() {
           name: playerDisplayName(row.player, {
             shirtNumber: row.player.shirt_number,
           }),
-          valueLabel: `${row.goals} ${row.goals === 1 ? "goal" : "goals"}`,
+          valueLabel: formatCountLabel(row.goals, "goal", "goals"),
         }))}
       />
 
-      <LeaderboardCard
+      <LeaderboardSection
         title="Most assists"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
@@ -270,11 +170,11 @@ export default async function DashboardPage() {
           name: playerDisplayName(row.player, {
             shirtNumber: row.player.shirt_number,
           }),
-          valueLabel: `${row.count} ${row.count === 1 ? "assist" : "assists"}`,
+          valueLabel: formatCountLabel(row.count, "assist", "assists"),
         }))}
       />
 
-      <LeaderboardCard
+      <LeaderboardSection
         title="Player of the match"
         emptyTitle="No awards yet"
         emptyDescription="Select players of the match on played fixtures."
@@ -284,14 +184,78 @@ export default async function DashboardPage() {
           name: playerDisplayName(row.player, {
             shirtNumber: row.player.shirt_number,
           }),
-          valueLabel: `${row.count} ${row.count === 1 ? "award" : "awards"}`,
+          valueLabel: formatCountLabel(row.count, "award", "awards"),
         }))}
       />
     </div>
   );
 }
 
-function LeaderboardCard({
+function FixtureSection({
+  title,
+  teamName,
+  match,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
+}: {
+  title: string;
+  teamName: string;
+  match: MatchWithRelations | null;
+  emptyTitle: string;
+  emptyDescription: string;
+  emptyAction?: ReactNode;
+}) {
+  if (!match) {
+    return (
+      <Section title={title}>
+        <EmptyState
+          title={emptyTitle}
+          description={emptyDescription}
+          action={emptyAction}
+        />
+      </Section>
+    );
+  }
+
+  const meta = matchSummaryLines({
+    competitionName: match.competition?.name,
+    date: match.date,
+    kickoffTime: match.kickoff_time,
+    venueName: match.venue?.name,
+  });
+
+  return (
+    <Section title={title}>
+      <Link
+        href={`/matches/${match.id}`}
+        className="block space-y-1 transition-opacity hover:opacity-80"
+      >
+        <p className="text-lg font-medium">
+          {formatMatchTitle(
+            teamName,
+            match.opponent_name,
+            match.home_away,
+            match.status,
+            match.goals_for,
+            match.goals_against,
+          )}
+        </p>
+        {meta.competition ? (
+          <p className="text-muted-foreground text-sm font-bold">
+            {meta.competition}
+          </p>
+        ) : null}
+        <p className="text-muted-foreground text-sm">{meta.dateTime}</p>
+        {meta.venue ? (
+          <p className="text-muted-foreground text-sm">{meta.venue}</p>
+        ) : null}
+      </Link>
+    </Section>
+  );
+}
+
+function LeaderboardSection({
   title,
   emptyTitle,
   emptyDescription,
@@ -305,37 +269,33 @@ function LeaderboardCard({
     personId: string;
     name: string;
     valueLabel: string;
+    rank?: number;
   }>;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {rows.length === 0 ? (
-          <EmptyState title={emptyTitle} description={emptyDescription} />
-        ) : (
-          <ol className="divide-border border-border divide-y rounded-xl border">
-            {rows.map((row, index) => (
-              <li key={row.id}>
-                <Link
-                  href={`/people/${row.personId}`}
-                  className="hover:bg-muted/50 flex items-center justify-between gap-3 px-4 py-3 transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-muted-foreground w-5 text-sm">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{row.name}</span>
+    <Section title={title}>
+      {rows.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
+        <ol className={objectListClassName}>
+          {rows.map((row, index) => (
+            <li key={row.id}>
+              <Link
+                href={`/people/${row.personId}`}
+                className={objectListRowClassName("justify-between")}
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-muted-foreground w-5 text-sm">
+                    {row.rank ?? index + 1}
                   </span>
-                  <span className="text-sm tabular-nums">{row.valueLabel}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardContent>
-    </Card>
+                  <span className="font-medium">{row.name}</span>
+                </span>
+                <span className="text-sm tabular-nums">{row.valueLabel}</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Section>
   );
 }

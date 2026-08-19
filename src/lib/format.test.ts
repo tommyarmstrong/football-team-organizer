@@ -3,14 +3,18 @@ import {
   coachDisplayName,
   formatAge,
   formatAwardMonth,
+  formatCountLabel,
   formatGoalMinute,
   formatHomeFirstScore,
   formatKickoffTime,
   formatMatchDate,
+  formatMatchDateTime,
   formatMatchTitle,
   formatMatchVersusTitle,
   formatScore,
   formatShortDate,
+  formatTeamHeaderSummary,
+  formatTrainingDays,
   formatVenueAddress,
   formatVenueFoodAndDrink,
   formatVenueSurface,
@@ -32,6 +36,7 @@ import {
   labelVenueFoodAndDrink,
   labelVenueSurface,
   managerDisplayName,
+  matchSummaryLines,
   playerDisplayName,
   resultLetter,
   scoreFromGoals,
@@ -111,6 +116,53 @@ describe("formatKickoffTime", () => {
   it("truncates seconds to HH:MM", () => {
     expect(formatKickoffTime("14:30:00")).toBe("14:30");
     expect(formatKickoffTime("09:05")).toBe("09:05");
+  });
+});
+
+describe("formatMatchDateTime", () => {
+  it("joins date and kickoff with a middle dot", () => {
+    const date = formatMatchDate("2026-03-15");
+    expect(formatMatchDateTime("2026-03-15", "14:30:00")).toBe(
+      `${date} · 14:30`,
+    );
+  });
+
+  it("returns only the date when kickoff is missing", () => {
+    expect(formatMatchDateTime("2026-03-15", null)).toBe(
+      formatMatchDate("2026-03-15"),
+    );
+  });
+});
+
+describe("matchSummaryLines", () => {
+  it("returns competition, date/time, and venue as separate lines", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        venueName: "Wembley",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      venue: "Wembley",
+    });
+  });
+
+  it("omits blank competition and venue so callers skip those lines", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "  ",
+        date: "2026-03-15",
+        kickoffTime: null,
+        venueName: null,
+      }),
+    ).toEqual({
+      competition: null,
+      dateTime: formatMatchDate("2026-03-15"),
+      venue: null,
+    });
   });
 });
 
@@ -448,5 +500,56 @@ describe("teamDisplayName", () => {
     expect(
       teamDisplayName({ name: "U11 Boys Blues", display_name: "  " }),
     ).toBe("U11 Boys Blues");
+  });
+});
+
+describe("formatTeamHeaderSummary", () => {
+  it("joins club, gender, age group, and season", () => {
+    expect(
+      formatTeamHeaderSummary({
+        clubName: "Arsenal",
+        gender: "boys",
+        ageGroup: "U11",
+        seasonLabel: "2025/26",
+      }),
+    ).toBe("Arsenal · Boys · U11 · 2025/26");
+  });
+
+  it("appends Archived for historic seasons", () => {
+    expect(
+      formatTeamHeaderSummary({
+        clubName: "Arsenal",
+        gender: "girls",
+        ageGroup: "U10",
+        seasonLabel: "2024/25",
+        archived: true,
+      }),
+    ).toBe("Arsenal · Girls · U10 · 2024/25 · Archived");
+  });
+});
+
+describe("formatTrainingDays", () => {
+  it("returns an em dash when empty", () => {
+    expect(formatTrainingDays(null)).toBe("—");
+    expect(formatTrainingDays([])).toBe("—");
+  });
+
+  it("joins labelled weekdays", () => {
+    expect(formatTrainingDays(["tue", "thu"])).toBe("Tue, Thu");
+  });
+
+  it("passes through unknown day codes", () => {
+    expect(formatTrainingDays(["tue", "game-day"])).toBe("Tue, game-day");
+  });
+});
+
+describe("formatCountLabel", () => {
+  it("uses the singular noun for one", () => {
+    expect(formatCountLabel(1, "goal", "goals")).toBe("1 goal");
+  });
+
+  it("uses the plural noun otherwise", () => {
+    expect(formatCountLabel(0, "goal", "goals")).toBe("0 goals");
+    expect(formatCountLabel(4, "assist", "assists")).toBe("4 assists");
   });
 });
