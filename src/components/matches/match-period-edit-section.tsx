@@ -97,30 +97,37 @@ function EditablePeriodSection({
     <div className="space-y-6">
       <form id={formId} action={formAction} className="space-y-2">
         <Label htmlFor={`period-name-${period.id}`}>Period</Label>
-        <NativeSelect
-          id={`period-name-${period.id}`}
-          name="name"
-          required
-          disabled={pending}
-          defaultValue={knownName ? period.name : ""}
-        >
-          {!knownName ? (
-            <option value="" disabled>
-              Select period type…
-            </option>
-          ) : null}
-          {MATCH_PERIOD_NAMES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </NativeSelect>
-        {!knownName ? (
-          <p className="text-muted-foreground text-sm">
-            “{period.name}” is an old label — choose a period type before going
-            back.
-          </p>
-        ) : null}
+        {knownName ? (
+          <>
+            <p id={`period-name-${period.id}`} className="font-medium">
+              {period.name}
+            </p>
+            <input type="hidden" name="name" value={period.name} />
+          </>
+        ) : (
+          <>
+            <NativeSelect
+              id={`period-name-${period.id}`}
+              name="name"
+              required
+              disabled={pending}
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Select period type…
+              </option>
+              {MATCH_PERIOD_NAMES.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </NativeSelect>
+            <p className="text-muted-foreground text-sm">
+              “{period.name}” is an old label — choose a period type before
+              going back.
+            </p>
+          </>
+        )}
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
       <PeriodStarters
@@ -134,7 +141,7 @@ function EditablePeriodSection({
         <MatchGoalsSection
           matchId={matchId}
           goals={goals}
-          canEdit
+          canEdit={false}
           periodId={period.id}
         />
       </div>
@@ -230,10 +237,6 @@ function StartersForm({
   );
   const [pending, startTransition] = useTransition();
   const [selectedIds, setSelectedIds] = useState(selectedPlayerIds);
-
-  const selected = new Set(selectedIds);
-  const selectedPlayers = squadPlayers.filter((p) => selected.has(p.id));
-  const availablePlayers = squadPlayers.filter((p) => !selected.has(p.id));
   const isPending = pending || actionPending;
 
   function persist(nextIds: string[]) {
@@ -247,13 +250,51 @@ function StartersForm({
     });
   }
 
+  return (
+    <div className="space-y-4">
+      <PeriodStartersFields
+        idPrefix={`period_${periodId}`}
+        squadPlayers={squadPlayers}
+        selectedIds={selectedIds}
+        disabled={isPending}
+        onSelectedIdsChange={persist}
+      />
+      {state.error ? <ErrorBanner message={state.error} /> : null}
+      {state.success ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          {state.success}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function PeriodStartersFields({
+  idPrefix,
+  squadPlayers,
+  selectedIds,
+  onSelectedIdsChange,
+  disabled = false,
+  inputName,
+}: {
+  idPrefix: string;
+  squadPlayers: RosterPlayer[];
+  selectedIds: string[];
+  onSelectedIdsChange: (nextIds: string[]) => void;
+  disabled?: boolean;
+  inputName?: string;
+}) {
+  const selected = new Set(selectedIds);
+  const selectedPlayers = squadPlayers.filter((p) => selected.has(p.id));
+  const availablePlayers = squadPlayers.filter((p) => !selected.has(p.id));
+
   function addPlayer(playerId: string) {
     if (!playerId || selected.has(playerId)) return;
-    persist([...selectedIds, playerId]);
+    onSelectedIdsChange([...selectedIds, playerId]);
   }
 
   function removePlayer(playerId: string) {
-    persist(selectedIds.filter((id) => id !== playerId));
+    onSelectedIdsChange(selectedIds.filter((id) => id !== playerId));
   }
 
   return (
@@ -265,6 +306,12 @@ function StartersForm({
           player to deselect them, or add them back below.
         </p>
       </div>
+
+      {inputName
+        ? selectedIds.map((id) => (
+            <input key={id} type="hidden" name={inputName} value={id} />
+          ))
+        : null}
 
       {selectedPlayers.length === 0 ? (
         <p className="text-muted-foreground text-sm">
@@ -288,7 +335,7 @@ function StartersForm({
                 <button
                   type="button"
                   onClick={() => removePlayer(player.id)}
-                  disabled={isPending}
+                  disabled={disabled}
                   aria-label={`Remove ${playerDisplayName(player)} from starting players`}
                   title={`Remove ${playerDisplayName(player)} from starting players`}
                   className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-9 items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
@@ -307,12 +354,12 @@ function StartersForm({
         </p>
       ) : (
         <div className="space-y-2">
-          <Label htmlFor={`add_period_starter_${periodId}`}>Add player</Label>
+          <Label htmlFor={`add_period_starter_${idPrefix}`}>Add player</Label>
           <SearchableSelect
             key={selectedIds.slice().sort().join(",")}
-            id={`add_period_starter_${periodId}`}
-            name="player_id"
-            disabled={isPending}
+            id={`add_period_starter_${idPrefix}`}
+            name={`${idPrefix}_add_player`}
+            disabled={disabled}
             placeholder="Search players by name…"
             emptyMessage="No players match that name."
             options={availablePlayers.map((player) => ({
@@ -325,13 +372,6 @@ function StartersForm({
           />
         </div>
       )}
-
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
     </div>
   );
 }

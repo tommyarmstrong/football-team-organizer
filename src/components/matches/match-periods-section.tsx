@@ -1,26 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { MATCH_PERIOD_NAMES } from "@/lib/constants";
-import {
-  createPeriodAction,
-  deletePeriodAction,
-} from "@/lib/match-periods/actions";
+import { availableExtraTimeOrPenaltyPeriodNames } from "@/lib/constants";
+import { deletePeriodAction } from "@/lib/match-periods/actions";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { MatchPeriodWithStarters } from "@/lib/data/match-periods";
 import { GoalScorerChip } from "@/components/matches/match-goals-section";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ErrorBanner } from "@/components/shared/error-banner";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function MatchPeriodsSection({
   matchId,
@@ -33,6 +25,11 @@ export function MatchPeriodsSection({
   goals: GoalWithPlayers[];
   canEdit?: boolean;
 }) {
+  const canAddExtraTime =
+    canEdit &&
+    availableExtraTimeOrPenaltyPeriodNames(periods.map((period) => period.name))
+      .length > 0;
+
   if (!canEdit && periods.length === 0) {
     return (
       <EmptyState
@@ -47,7 +44,7 @@ export function MatchPeriodsSection({
       {periods.length === 0 ? (
         <EmptyState
           title="No periods yet"
-          description="Add a period below, then set starting players and goals on the period page."
+          description="Regulation periods are added when the fixture is created. Add extra time or penalties if the match needs them."
         />
       ) : (
         <ul className={objectListClassName}>
@@ -91,47 +88,14 @@ export function MatchPeriodsSection({
         </ul>
       )}
 
-      {canEdit ? <AddPeriodForm matchId={matchId} /> : null}
-    </div>
-  );
-}
-
-function AddPeriodForm({ matchId }: { matchId: string }) {
-  const bound = createPeriodAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
-    bound,
-    INITIAL_ACTION_STATE,
-  );
-
-  return (
-    <form
-      key={state.success ?? "idle"}
-      action={formAction}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
-    >
-      <div className="min-w-0 flex-1 space-y-2">
-        <Label htmlFor="add-period-name">Add period</Label>
-        <SearchableSelect
-          id="add-period-name"
-          name="name"
-          required
-          disabled={pending}
-          placeholder="Search period names…"
-          emptyMessage="No period names match."
-          options={MATCH_PERIOD_NAMES.map((name) => ({
-            value: name,
-            label: name,
-          }))}
-        />
-      </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add"}
-      </Button>
-      {state.error ? (
-        <div className="w-full sm:basis-full">
-          <ErrorBanner message={state.error} />
-        </div>
+      {canAddExtraTime ? (
+        <Link
+          href={`/matches/${matchId}/periods/new`}
+          className={buttonVariants()}
+        >
+          Add
+        </Link>
       ) : null}
-    </form>
+    </div>
   );
 }

@@ -1,13 +1,17 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getViewerContext, canEditMatchDay } from "@/lib/authz/context";
+import {
+  availableExtraTimeOrPenaltyPeriodNames,
+  matchAllowsEvents,
+} from "@/lib/constants";
 import { listGoalsForMatch } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
-import { getPeriod } from "@/lib/data/match-periods";
+import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { MatchPeriodEditSection } from "@/components/matches/match-period-edit-section";
+import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
 import {
   Card,
   CardContent,
@@ -16,41 +20,46 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function MatchPeriodEditPage({
+export default async function NewMatchPeriodPage({
   params,
 }: {
-  params: Promise<{ id: string; periodId: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { id: matchId, periodId } = await params;
+  const { id: matchId } = await params;
   const ctx = await getViewerContext();
-  const [
-    { data: match, error: matchError },
-    { data: period, error: periodError },
-  ] = await Promise.all([getMatch(matchId), getPeriod(periodId)]);
+  const { data: match, error: matchError } = await getMatch(matchId);
 
-  if (matchError || periodError) {
+  if (matchError) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Period" />
-        <ErrorBanner message={matchError ?? periodError ?? "Unknown error"} />
+        <PageHeader title="Add extra time or penalties" />
+        <ErrorBanner message={matchError} />
       </div>
     );
   }
 
-  if (!match || !period || !ctx || period.match_id !== match.id) {
+  if (!match || !ctx) {
     notFound();
   }
 
-  const canEdit = canEditMatchDay(ctx, match.team_id);
+  if (!canEditMatchDay(ctx, match.team_id)) {
+    redirect(`/matches/${match.id}`);
+  }
+
+  if (!matchAllowsEvents(match.status)) {
+    redirect(`/matches/${match.id}`);
+  }
 
   const [
     { data: goals, error: goalsError },
     { data: players, error: playersError },
     { data: matchPlayerRows, error: matchPlayersError },
+    { data: periods, error: periodsError },
   ] = await Promise.all([
     listGoalsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
+    listPeriodsForMatch(match.id),
   ]);
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
@@ -58,16 +67,21 @@ export default async function MatchPeriodEditPage({
   const eventPlayers = hasMatchSquad
     ? players.filter((p) => matchSquadIds.has(p.id))
     : players;
+  const defaultStarterPlayerIds = hasMatchSquad
+    ? [...matchSquadIds]
+    : eventPlayers.map((player) => player.id);
+  const availablePeriodNames = availableExtraTimeOrPenaltyPeriodNames(
+    periods.map((period) => period.name),
+  );
 
-  const periodGoals = goals.filter((g) => g.period_id === period.id);
-  const loadErrors = [goalsError, playersError, matchPlayersError]
+  const loadErrors = [goalsError, playersError, matchPlayersError, periodsError]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={period.name}
+        title="Add extra time or penalties"
         description={`vs ${match.opponent_name}`}
       />
 
@@ -75,19 +89,19 @@ export default async function MatchPeriodEditPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit period</CardTitle>
+          <CardTitle>Period details</CardTitle>
           <CardDescription>
-            Set starting players. Goals recorded on the match page are listed
-            below.
+            Choose extra time or a penalty shootout and set starting players.
+            Goals already recorded on the match are listed below.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MatchPeriodEditSection
+          <MatchPeriodCreateSection
             matchId={match.id}
-            period={period}
-            goals={periodGoals}
+            availablePeriodNames={availablePeriodNames}
+            goals={goals}
             squadPlayers={eventPlayers}
-            canEdit={canEdit}
+            defaultStarterPlayerIds={defaultStarterPlayerIds}
           />
         </CardContent>
       </Card>

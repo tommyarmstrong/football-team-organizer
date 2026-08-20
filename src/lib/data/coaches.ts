@@ -20,12 +20,32 @@ export type CoachTeamMembership = {
   team_coach_id: string;
   team_id: string;
   team_name: string;
+  team_season_label: string;
   role: string | null;
 };
 
 export type CoachWithTeams = CoachWithPerson & {
   teams: CoachTeamMembership[];
 };
+
+function mapCoachTeamMembership(tc: {
+  id: string;
+  team_id: string;
+  role: string | null;
+  team:
+    | { name: string; season_label: string }
+    | { name: string; season_label: string }[]
+    | null;
+}): CoachTeamMembership {
+  const team = Array.isArray(tc.team) ? tc.team[0] : tc.team;
+  return {
+    team_coach_id: tc.id,
+    team_id: tc.team_id,
+    team_name: team?.name ?? "",
+    team_season_label: team?.season_label ?? "",
+    role: tc.role,
+  };
+}
 
 function mapCoach(
   row: Coach & { person: Person | Person[] | null },
@@ -42,7 +62,7 @@ export async function listCoaches(): Promise<{
   const { data, error } = await supabase
     .from("coaches")
     .select(
-      `*, ${PERSON_EMBED}, team_coaches(id, team_id, role, team:teams(name))`,
+      `*, ${PERSON_EMBED}, team_coaches(id, team_id, role, team:teams(name, season_label))`,
     )
     .eq("active_role", true);
 
@@ -55,18 +75,15 @@ export async function listCoaches(): Promise<{
         id: string;
         team_id: string;
         role: string | null;
-        team: { name: string } | { name: string }[] | null;
+        team:
+          | { name: string; season_label: string }
+          | { name: string; season_label: string }[]
+          | null;
       }>;
     };
-    const teams: CoachTeamMembership[] = (team_coaches ?? []).map((tc) => {
-      const team = Array.isArray(tc.team) ? tc.team[0] : tc.team;
-      return {
-        team_coach_id: tc.id,
-        team_id: tc.team_id,
-        team_name: team?.name ?? "",
-        role: tc.role,
-      };
-    });
+    const teams: CoachTeamMembership[] = (team_coaches ?? []).map(
+      mapCoachTeamMembership,
+    );
     return { ...mapCoach(coach), teams };
   });
 
@@ -103,20 +120,14 @@ export async function getCoachTeams(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("team_coaches")
-    .select("id, team_id, role, team:teams(name)")
+    .select("id, team_id, role, team:teams(name, season_label)")
     .eq("coach_id", coachId);
 
   if (error) return { data: [], error: error.message };
 
-  const rows: CoachTeamMembership[] = (data ?? []).map((tc) => {
-    const team = Array.isArray(tc.team) ? tc.team[0] : tc.team;
-    return {
-      team_coach_id: tc.id,
-      team_id: tc.team_id,
-      team_name: team?.name ?? "",
-      role: tc.role,
-    };
-  });
+  const rows: CoachTeamMembership[] = (data ?? []).map((tc) =>
+    mapCoachTeamMembership(tc),
+  );
 
   return { data: rows, error: null };
 }

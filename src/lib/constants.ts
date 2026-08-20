@@ -351,6 +351,32 @@ export const MATCH_PERIOD_NAMES = [
 
 export type MatchPeriodName = (typeof MATCH_PERIOD_NAMES)[number];
 
+/** Periods that can be added after kick-off; regulation periods come from the fixture. */
+export const EXTRA_TIME_OR_PENALTY_PERIOD_NAMES = [
+  "Extra time 1",
+  "Extra time 2",
+  "Penalty Shootout",
+] as const satisfies readonly MatchPeriodName[];
+
+export type ExtraTimeOrPenaltyPeriodName =
+  (typeof EXTRA_TIME_OR_PENALTY_PERIOD_NAMES)[number];
+
+export function isExtraTimeOrPenaltyPeriodName(
+  value: string,
+): value is ExtraTimeOrPenaltyPeriodName {
+  return (EXTRA_TIME_OR_PENALTY_PERIOD_NAMES as readonly string[]).includes(
+    value,
+  );
+}
+
+/** Extra time / penalty names not already used on the match. */
+export function availableExtraTimeOrPenaltyPeriodNames(
+  existingNames: readonly string[],
+): ExtraTimeOrPenaltyPeriodName[] {
+  const used = new Set(existingNames);
+  return EXTRA_TIME_OR_PENALTY_PERIOD_NAMES.filter((name) => !used.has(name));
+}
+
 /** Auto sort ranks: quarters, then halves, then single, then ET, penalty last. */
 export const MATCH_PERIOD_SORT_ORDER: Record<MatchPeriodName, number> = {
   "Quarter 1": 10,

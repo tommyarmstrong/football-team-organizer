@@ -32,6 +32,7 @@ import {
 import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
+import { MatchStatusActions } from "@/components/matches/match-status-actions";
 
 export default async function MatchDetailPage({
   params,
@@ -154,6 +155,10 @@ export default async function MatchDetailPage({
         }
       />
 
+      {canEdit ? (
+        <MatchStatusActions matchId={match.id} status={match.status} />
+      ) : null}
+
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {allowsEvents ? (
@@ -177,15 +182,7 @@ export default async function MatchDetailPage({
             />
           </Section>
         </>
-      ) : (
-        <p className="text-muted-foreground text-sm">
-          {canEdit
-            ? canEditPlayerOfTheMatch
-              ? "Edit the match and set status to In progress or Played to record periods, goals, cards, and players of the match."
-              : "Edit the match and set status to In progress or Played to record periods, goals, and cards."
-            : "Periods, goals, cards, and players of the match appear once the match is in progress or played."}
-        </p>
-      )}
+      ) : null}
 
       {!isCancelledOrPostponed ? (
         <Section title="Match-day squad">

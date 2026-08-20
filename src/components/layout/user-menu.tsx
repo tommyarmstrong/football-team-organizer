@@ -11,6 +11,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export function AccountDetails({
   name,
@@ -45,9 +46,11 @@ export function SignOutLink({ className }: { className?: string }) {
 export function UserMenu({
   name,
   email,
+  triggerClassName,
 }: {
   name: string | null;
   email: string | null;
+  triggerClassName?: string;
 }) {
   const title = name ?? email ?? "Account";
   const showEmailUnderName = Boolean(name && email);
@@ -56,15 +59,14 @@ export function UserMenu({
     <Popover>
       <PopoverTrigger
         render={
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="icon-sm"
             aria-label="Account"
+            className={cn(triggerClassName)}
           />
         }
       >
-        <UserIcon />
+        <UserIcon className="size-4 shrink-0" />
       </PopoverTrigger>
       <PopoverContent
         align="end"

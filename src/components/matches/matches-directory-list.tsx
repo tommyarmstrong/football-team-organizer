@@ -7,6 +7,7 @@ import { labelMatchStatus, matchSummaryLines } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
 import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { LiveIndicator } from "@/components/matches/match-header-meta";
 
 export function MatchesDirectoryList({
   matches,
@@ -57,6 +58,11 @@ export function MatchesDirectoryList({
               goalsAgainst={match.goals_against}
               compact
             />
+            {match.status === "in_progress" ? (
+              <span className="flex justify-center">
+                <LiveIndicator />
+              </span>
+            ) : null}
             {meta.competition ? (
               <p className="text-primary text-center text-sm font-bold">
                 {meta.competition}

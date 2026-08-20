@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  availableExtraTimeOrPenaltyPeriodNames,
   isCompetitionPeriods,
+  isExtraTimeOrPenaltyPeriodName,
   isMatchPeriodName,
   matchAllowsEvents,
   matchPeriodSortOrder,
@@ -73,5 +75,34 @@ describe("matchAllowsEvents", () => {
     expect(matchAllowsEvents("scheduled")).toBe(false);
     expect(matchAllowsEvents("postponed")).toBe(false);
     expect(matchAllowsEvents("cancelled")).toBe(false);
+  });
+});
+
+describe("availableExtraTimeOrPenaltyPeriodNames", () => {
+  it("returns extra time and penalty names that are not already used", () => {
+    expect(availableExtraTimeOrPenaltyPeriodNames(["First half"])).toEqual([
+      "Extra time 1",
+      "Extra time 2",
+      "Penalty Shootout",
+    ]);
+    expect(
+      availableExtraTimeOrPenaltyPeriodNames(["Extra time 1", "Quarter 1"]),
+    ).toEqual(["Extra time 2", "Penalty Shootout"]);
+    expect(
+      availableExtraTimeOrPenaltyPeriodNames([
+        "Extra time 1",
+        "Extra time 2",
+        "Penalty Shootout",
+      ]),
+    ).toEqual([]);
+  });
+});
+
+describe("isExtraTimeOrPenaltyPeriodName", () => {
+  it("accepts extra time and penalty labels only", () => {
+    expect(isExtraTimeOrPenaltyPeriodName("Extra time 1")).toBe(true);
+    expect(isExtraTimeOrPenaltyPeriodName("Penalty Shootout")).toBe(true);
+    expect(isExtraTimeOrPenaltyPeriodName("First half")).toBe(false);
+    expect(isExtraTimeOrPenaltyPeriodName("Quarter 3")).toBe(false);
   });
 });

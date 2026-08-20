@@ -6,7 +6,6 @@ import { getActiveTeam, listVisibleTeams } from "@/lib/data/team";
 import { ClubIcon } from "@/components/clubs/club-icon";
 import { AppNav, MobileTabBar } from "@/components/layout/app-nav";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
-import { UserMenu } from "@/components/layout/user-menu";
 
 function viewerFullName(ctx: {
   firstName: string | null;
@@ -38,7 +37,7 @@ export async function AppHeader() {
     <>
       <header className="club-themed-header bg-header text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex min-w-0 items-start gap-2.5">
               <Link
                 href="/dashboard"
@@ -68,12 +67,6 @@ export async function AppHeader() {
                 </div>
               </div>
             </div>
-
-            <div className="hidden shrink-0 items-center gap-2 md:flex">
-              {ctx ? (
-                <UserMenu name={accountName} email={accountEmail} />
-              ) : null}
-            </div>
           </div>
 
           <div className="hidden md:block">
@@ -81,6 +74,9 @@ export async function AppHeader() {
               showClubAndPeople={showClubAndPeople}
               teams={teams}
               activeTeamId={activeTeamId}
+              name={accountName}
+              email={accountEmail}
+              showAccount={Boolean(ctx)}
             />
           </div>
         </div>
