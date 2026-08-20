@@ -14,7 +14,11 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AccountDetails, SignOutLink } from "@/components/layout/user-menu";
+import {
+  AccountDetails,
+  SignOutLink,
+  UserMenu,
+} from "@/components/layout/user-menu";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
 import type { Team } from "@/lib/supabase/database.types";
 
@@ -68,14 +72,29 @@ function isMoreSectionActive(pathname: string, showClubAndPeople: boolean) {
   );
 }
 
+export function desktopNavItemClassName(active = false) {
+  return cn(
+    "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+    active
+      ? "bg-header-foreground/15 text-header-foreground"
+      : "text-header-foreground/70 hover:bg-header-foreground/10 hover:text-header-foreground",
+  );
+}
+
 export function AppNav({
   showClubAndPeople = false,
   teams = [],
   activeTeamId = null,
+  name = null,
+  email = null,
+  showAccount = false,
 }: {
   showClubAndPeople?: boolean;
   teams?: Pick<Team, "id" | "name" | "season_label" | "archived_at">[];
   activeTeamId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  showAccount?: boolean;
 }) {
   const pathname = usePathname();
   const items = getDesktopNavItems(showClubAndPeople);
@@ -93,12 +112,7 @@ export function AppNav({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
-              active
-                ? "bg-header-foreground/15 text-header-foreground"
-                : "text-header-foreground/70 hover:bg-header-foreground/10 hover:text-header-foreground",
-            )}
+            className={desktopNavItemClassName(active)}
           >
             <Icon className="size-4 shrink-0" />
             {item.label}
@@ -110,6 +124,16 @@ export function AppNav({
         activeTeamId={activeTeamId}
         triggerClassName="min-h-9 rounded-full px-3 py-1.5 text-header-foreground/80 hover:text-header-foreground"
       />
+      {showAccount ? (
+        <UserMenu
+          name={name}
+          email={email}
+          triggerClassName={cn(
+            desktopNavItemClassName(),
+            "aria-expanded:bg-header-foreground/15 aria-expanded:text-header-foreground",
+          )}
+        />
+      ) : null}
     </nav>
   );
 }

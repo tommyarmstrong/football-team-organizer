@@ -285,13 +285,7 @@ export function MatchForm({
                 </>
               ) : null}
             </>
-          ) : (
-            <p className="text-muted-foreground text-sm sm:col-span-2">
-              {canEditPlayerOfTheMatch
-                ? "Goals, cards, and players of the match unlock when status is In progress or Played. Changing away from those statuses clears player of the match selections (goals and cards already recorded are kept)."
-                : "Goals and cards unlock when status is In progress or Played."}
-            </p>
-          )
+          ) : null
         ) : showEvents ? (
           <p className="text-muted-foreground text-sm sm:col-span-2">
             After you create this fixture, you can record goals and cards on the

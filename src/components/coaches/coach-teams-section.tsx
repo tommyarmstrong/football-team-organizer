@@ -92,8 +92,15 @@ function OpenTeamRow({ membership }: { membership: CoachTeamMembership }) {
       }}
       className={objectListRowClassName("w-full text-left disabled:opacity-60")}
     >
-      <span className="min-w-0 flex-1 truncate font-medium">
-        {membership.team_name}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">
+          {membership.team_name}
+        </span>
+        {membership.team_season_label ? (
+          <span className="text-muted-foreground block truncate text-sm">
+            {membership.team_season_label}
+          </span>
+        ) : null}
       </span>
       <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
         <RoleChip>{membership.role ?? "Coach"}</RoleChip>

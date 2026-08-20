@@ -209,6 +209,65 @@ export async function updateMatchAction(
   redirect(`/matches/${id}`);
 }
 
+const QUICK_STATUS_TARGETS: MatchStatus[] = [
+  "in_progress",
+  "played",
+  "cancelled",
+];
+
+function canQuickSetStatus(current: MatchStatus, next: MatchStatus): boolean {
+  if (!QUICK_STATUS_TARGETS.includes(next)) return false;
+  if (current === "scheduled") return true;
+  if (current === "in_progress")
+    return next === "played" || next === "cancelled";
+  return false;
+}
+
+function revalidateMatchStatus(id: string) {
+  revalidatePath("/matches");
+  revalidatePath(`/matches/${id}`);
+  revalidatePath(`/matches/${id}/edit`);
+  revalidatePath("/dashboard");
+  revalidatePath("/stats");
+  revalidatePath("/club");
+}
+
+/** Kick off / full time / cancelled controls on the match page. */
+export async function updateMatchStatusAction(
+  id: string,
+  status: MatchStatus,
+): Promise<ActionState> {
+  if (!MATCH_STATUSES.includes(status)) {
+    return { error: "Invalid status." };
+  }
+
+  const [ctx, loaded] = await Promise.all([getViewerContext(), getMatch(id)]);
+  const { data: match, error: loadError } = loaded;
+  if (loadError) return { error: loadError };
+  if (!match) return { error: "Match not found." };
+  if (!ctx || !canEditMatchDay(ctx, match.team_id)) {
+    return { error: "You do not have permission to edit this match." };
+  }
+  if (!canQuickSetStatus(match.status, status)) {
+    return { error: "That status change is not available." };
+  }
+
+  const allowsEvents = matchAllowsEvents(status);
+  const { error } = await updateMatch(id, {
+    status,
+    ...(allowsEvents
+      ? {}
+      : {
+          player_of_the_match_id: null,
+          players_player_of_the_match_id: null,
+        }),
+  });
+  if (error) return { error };
+
+  revalidateMatchStatus(id);
+  return {};
+}
+
 export async function updateMatchPlayersOfTheMatchAction(
   id: string,
   _prev: ActionState,
