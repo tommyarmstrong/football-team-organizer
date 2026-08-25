@@ -2,11 +2,10 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(
+const defaultRepoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const staticRoot = path.join(repoRoot, ".next", "static");
 
 const TEXT_EXTENSIONS = new Set([
   ".js",
@@ -20,12 +19,7 @@ const TEXT_EXTENSIONS = new Set([
   ".svg",
 ]);
 
-const SENTINELS = ["SERVER-ONLY: SUPABASE_SERVICE_ROLE_KEY"];
-
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (serviceRoleKey) {
-  SENTINELS.push(serviceRoleKey);
-}
+export const ADMIN_BUNDLE_SENTINEL = "SERVER-ONLY: SUPABASE_SERVICE_ROLE_KEY";
 
 async function pathExists(filePath) {
   try {
@@ -50,36 +44,73 @@ async function walkFiles(dir) {
   return files;
 }
 
-if (!(await pathExists(staticRoot))) {
-  console.error(
-    "check-client-secrets: missing .next/static. Run `npm run build` first.",
-  );
-  process.exit(1);
-}
+export async function scanClientStaticForServiceRole({
+  repoRoot,
+  serviceRoleKey,
+} = {}) {
+  const root = repoRoot ?? defaultRepoRoot;
+  const staticRoot = path.join(root, ".next", "static");
+  const sentinels = [ADMIN_BUNDLE_SENTINEL];
+  if (serviceRoleKey) {
+    sentinels.push(serviceRoleKey);
+  }
 
-const files = await walkFiles(staticRoot);
-const hits = [];
+  if (!(await pathExists(staticRoot))) {
+    return { ok: false, reason: "missing-static", hits: [], scanned: 0 };
+  }
 
-for (const file of files) {
-  if (!TEXT_EXTENSIONS.has(path.extname(file))) continue;
-  const content = await readFile(file, "utf8");
-  for (const sentinel of SENTINELS) {
-    if (sentinel && content.includes(sentinel)) {
-      hits.push({ file: path.relative(repoRoot, file), sentinel });
+  const files = await walkFiles(staticRoot);
+  const hits = [];
+
+  for (const file of files) {
+    if (!TEXT_EXTENSIONS.has(path.extname(file))) continue;
+    const content = await readFile(file, "utf8");
+    for (const sentinel of sentinels) {
+      if (sentinel && content.includes(sentinel)) {
+        hits.push({ file: path.relative(root, file), sentinel });
+      }
     }
   }
+
+  return {
+    ok: hits.length === 0,
+    reason: hits.length === 0 ? null : "leak",
+    hits,
+    scanned: files.length,
+  };
 }
 
-if (hits.length > 0) {
-  console.error(
-    "check-client-secrets: service-role material found in the client bundle:",
-  );
-  for (const hit of hits) {
-    console.error(`  ${hit.file} contains ${JSON.stringify(hit.sentinel)}`);
+async function main() {
+  const result = await scanClientStaticForServiceRole({
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+
+  if (result.reason === "missing-static") {
+    console.error(
+      "check-client-secrets: missing .next/static. Run `npm run build` first.",
+    );
+    process.exit(1);
   }
-  process.exit(1);
+
+  if (!result.ok) {
+    console.error(
+      "check-client-secrets: service-role material found in the client bundle:",
+    );
+    for (const hit of result.hits) {
+      console.error(`  ${hit.file} contains ${JSON.stringify(hit.sentinel)}`);
+    }
+    process.exit(1);
+  }
+
+  console.log(
+    `check-client-secrets: scanned ${result.scanned} files under .next/static — no service role key leak.`,
+  );
 }
 
-console.log(
-  `check-client-secrets: scanned ${files.length} files under .next/static — no service role key leak.`,
-);
+const invokedAsCli =
+  Boolean(process.argv[1]) &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedAsCli) {
+  await main();
+}

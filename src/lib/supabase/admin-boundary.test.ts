@@ -143,6 +143,7 @@ describe("service role admin client boundary", () => {
     const importers: string[] = [];
     for (const file of sourceFiles) {
       if (path.normalize(file) === path.normalize(adminModule)) continue;
+      if (file.endsWith(".test.ts")) continue;
       const parsed = parseFile(file);
       for (const { spec, typeOnly } of collectModuleSpecifiers(parsed)) {
         if (typeOnly) continue;
@@ -200,5 +201,62 @@ describe("service role admin client boundary", () => {
     );
     expect(envExample).not.toMatch(/NEXT_PUBLIC_SUPABASE_SERVICE_ROLE/);
     expect(envExample).toMatch(/^SUPABASE_SERVICE_ROLE_KEY=/m);
+
+    const files = [
+      ...["src", "scripts", ".github"].flatMap((dir) =>
+        walkAllFiles(path.join(repoRoot, dir)),
+      ),
+      path.join(repoRoot, ".env.example"),
+      path.join(repoRoot, "package.json"),
+      path.join(repoRoot, "eslint.config.mjs"),
+      path.join(repoRoot, "vitest.config.ts"),
+    ];
+    const leaks = files.filter((file) => {
+      if (file.endsWith(".test.ts")) return false;
+      return /NEXT_PUBLIC_SUPABASE_SERVICE_ROLE/.test(
+        readFileSync(file, "utf8"),
+      );
+    });
+    expect(leaks.map(toRepoPath)).toEqual([]);
+  });
+
+  it('marks the admin module with import "server-only"', () => {
+    const source = readFileSync(adminModule, "utf8");
+    expect(source).toMatch(/^import "server-only";/m);
+  });
+
+  it("keeps the ESLint allowlist in sync with known admin importers", () => {
+    const config = readFileSync(
+      path.join(repoRoot, "eslint.config.mjs"),
+      "utf8",
+    );
+    expect(config).toContain("fto/no-admin-client-import");
+    for (const file of allowedDirectImporters) {
+      expect(config).toContain(`"${file}"`);
+    }
+  });
+
+  it("runs a client-bundle secret scan in CI after build", () => {
+    const workflow = readFileSync(
+      path.join(repoRoot, ".github/workflows/ci.yml"),
+      "utf8",
+    );
+    expect(workflow).toContain("npm run check:client-secrets");
+    expect(workflow).toContain(
+      "ci-service-role-canary-do-not-leak-into-client-bundle",
+    );
   });
 });
+
+function walkAllFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...walkAllFiles(full));
+      continue;
+    }
+    if (statSync(full).isFile()) out.push(full);
+  }
+  return out;
+}
