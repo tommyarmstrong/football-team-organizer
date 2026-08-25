@@ -2,24 +2,27 @@
 
 ## Database backups (logical dump → S3)
 
-Daily logical backups are produced by [`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml) (cron + `workflow_dispatch`). Dumps go to S3 only — never as GitHub Actions artifacts and never into git. Archives contain PII and medical notes.
+Daily logical backups are produced by [`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml) (cron + `workflow_dispatch`). The workflow dumps the **production** Supabase project (`mga-production`) only — never the integration project (`football-team-organiser`). Dumps go to S3 only — never as GitHub Actions artifacts and never into git. Archives contain PII and medical notes.
+
+The job uses the GitHub Actions environment `mga-production`.
 
 ### Object layout
 
 ```
-s3://$BACKUP_S3_BUCKET/football-team-organizer/YYYY-MM-DD/backup.tar.gz
+s3://$BACKUP_S3_BUCKET/database-backups/YYYY-MM-DD/backup.tar.gz
 ```
 
 The archive contains `roles.sql`, `schema.sql`, and `data.sql` (Supabase CLI logical dump).
 
 ### Required GitHub Secrets / Variables
 
-| Name                 | Type     | Purpose                                                                                                                                                                        |
-| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `SUPABASE_DB_URL`    | Secret   | Session-mode Postgres URL (port **5432**). Prefer the IPv4 Session pooler string from Supabase → Project Settings → Database. Do **not** use transaction pooler port **6543**. |
-| `AWS_ROLE_TO_ASSUME` | Secret   | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys).                                                                                                  |
-| `AWS_REGION`         | Variable | AWS region for the bucket / STS, e.g. `eu-west-2`.                                                                                                                             |
-| `BACKUP_S3_BUCKET`   | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                   |
+| Name                   | Type     | Purpose                                                                                                                                                                                                               |
+| ---------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_DB_URL`      | Secret   | Session-mode Postgres URL (port **5432**) for **mga-production**. Prefer the IPv4 Session pooler string from that project’s Dashboard → Project Settings → Database. Do **not** use transaction pooler port **6543**. |
+| `SUPABASE_PROJECT_REF` | Variable | mga-production project ref (Dashboard → Project Settings → General). The dump step fails unless `SUPABASE_DB_URL` contains this value, so the integration database cannot be backed up by mistake.                    |
+| `AWS_ROLE_TO_ASSUME`   | Secret   | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys).                                                                                                                                         |
+| `AWS_REGION`           | Variable | AWS region for the bucket / STS, e.g. `us-east-1`.                                                                                                                                                                    |
+| `BACKUP_S3_BUCKET`     | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                                                          |
 
 Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead of OIDC — requires editing the workflow’s `configure-aws-credentials` step.
 
@@ -53,9 +56,9 @@ Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead 
 ```
 
 4. Grant the role least-privilege object write on the backup prefix, for example:
-   - `s3:PutObject`, `s3:AbortMultipartUpload` on `arn:aws:s3:::BUCKET/football-team-organizer/*`
+   - `s3:PutObject`, `s3:AbortMultipartUpload` on `arn:aws:s3:::BUCKET/database-backups/*`
    - optionally `s3:ListBucket` on the bucket (scoped by prefix condition)
-5. Optional: S3 lifecycle rule to expire or transition old `football-team-organizer/` prefixes.
+5. Optional: S3 lifecycle rule to expire or transition old `database-backups/` prefixes.
 
 ### Restore into a throwaway / staging project
 
@@ -64,7 +67,7 @@ Never restore a production dump over a live production database without an expli
 ```bash
 # 1. Download (credentials via your usual AWS profile / role)
 aws s3 cp \
-  "s3://${BACKUP_S3_BUCKET}/football-team-organizer/YYYY-MM-DD/backup.tar.gz" \
+  "s3://${BACKUP_S3_BUCKET}/database-backups/YYYY-MM-DD/backup.tar.gz" \
   ./backup.tar.gz
 
 # 2. Extract
