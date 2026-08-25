@@ -27,7 +27,7 @@ Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead 
 
 1. Create a private S3 bucket with Block Public Access on and default encryption (SSE-S3 or SSE-KMS).
 2. Add a GitHub OIDC identity provider in IAM if the account does not already have one (`token.actions.githubusercontent.com`).
-3. Create an IAM role trusted by that OIDC provider. The trust policy must use `sts:AssumeRoleWithWebIdentity` (not `sts:AssumeRole` for `s3.amazonaws.com`). GitHub’s `sub` is `repo:OWNER/REPO:ref:refs/heads/BRANCH`, so use `StringLike` with `repo:OWNER/REPO:*` (a `StringEquals` on `repo:OWNER/REPO` alone will fail). Example:
+3. Create an IAM role trusted by that OIDC provider. The trust policy must use `sts:AssumeRoleWithWebIdentity` (not `sts:AssumeRole` for `s3.amazonaws.com`). GitHub’s `sub` includes numeric owner/repo IDs, for example `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main`. Match that with `StringLike` (do not use `repo:OWNER/REPO:*` — it will not match). Copy the exact `sub` from a failed CloudTrail `AssumeRoleWithWebIdentity` event if unsure. Example:
 
 ```json
 {
@@ -44,7 +44,7 @@ Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead 
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:OWNER/REPO:*"
+          "token.actions.githubusercontent.com:sub": "repo:OWNER@OWNER_ID/REPO@REPO_ID:*"
         }
       }
     }
