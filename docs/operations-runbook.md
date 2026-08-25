@@ -14,12 +14,12 @@ The archive contains `roles.sql`, `schema.sql`, and `data.sql` (Supabase CLI log
 
 ### Required GitHub Secrets / Variables
 
-| Name | Type | Purpose |
-| --- | --- | --- |
-| `SUPABASE_DB_URL` | Secret | Session-mode Postgres URL (port **5432**). Prefer the IPv4 Session pooler string from Supabase → Project Settings → Database. Do **not** use transaction pooler port **6543**. |
-| `AWS_ROLE_TO_ASSUME` | Secret | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys). |
-| `AWS_REGION` | Variable | AWS region for the bucket / STS, e.g. `eu-west-2`. |
-| `BACKUP_S3_BUCKET` | Variable | Destination bucket name (no `s3://` prefix). |
+| Name                 | Type     | Purpose                                                                                                                                                                        |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SUPABASE_DB_URL`    | Secret   | Session-mode Postgres URL (port **5432**). Prefer the IPv4 Session pooler string from Supabase → Project Settings → Database. Do **not** use transaction pooler port **6543**. |
+| `AWS_ROLE_TO_ASSUME` | Secret   | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys).                                                                                                  |
+| `AWS_REGION`         | Variable | AWS region for the bucket / STS, e.g. `eu-west-2`.                                                                                                                             |
+| `BACKUP_S3_BUCKET`   | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                   |
 
 Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead of OIDC — requires editing the workflow’s `configure-aws-credentials` step.
 
