@@ -13,18 +13,18 @@
 #     # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 #
 #   Variables (or secrets):
-#     AWS_REGION          e.g. eu-west-2
-#     BACKUP_S3_BUCKET    Destination bucket name (no s3:// prefix)
+#     AWS_REGION          e.g. eu-east-1
+#     BACKUP_S3_BUCKET    Destination bucket name e.g. newcastle-united (no s3:// prefix)
 #
 # AWS (outside this repo): create the bucket; attach a role trust policy for
 # GitHub OIDC (token.actions.githubusercontent.com) limited to this repo +
 # this workflow; grant s3:PutObject (and ideally s3:AbortMultipartUpload) on
-# arn:aws:s3:::BUCKET/football-team-organizer/*. Enable bucket default
+# arn:aws:s3:::BUCKET/database-backups/*. Enable bucket default
 # encryption and block public access. Prefer a lifecycle rule to expire old
 # prefixes.
 #
 # Restore (throwaway / staging only — never restore over prod blindly):
-#   1. aws s3 cp s3://$BACKUP_S3_BUCKET/football-team-organizer/YYYY-MM-DD/backup.tar.gz .
+#   1. aws s3 cp s3://$BACKUP_S3_BUCKET/database-backups/YYYY-MM-DD/backup.tar.gz .
 #   2. tar -xzf backup.tar.gz
 #   3. psql "$STAGING_DB_URL" -v ON_ERROR_STOP=1 -f roles.sql -f schema.sql -f data.sql
 #   Never commit dump files; never upload dumps as GitHub Actions artifacts
@@ -123,7 +123,7 @@ jobs:
           tar -czf backup.tar.gz roles.sql schema.sql data.sql
           echo "archive size_bytes=$(wc -c < backup.tar.gz | tr -d ' ')"
 
-          DEST="s3://${BACKUP_S3_BUCKET}/football-team-organizer/${DATE}/backup.tar.gz"
+          DEST="s3://${BACKUP_S3_BUCKET}/database-backups/${DATE}/backup.tar.gz"
           echo "Uploading archive to dated S3 prefix…"
           aws s3 cp backup.tar.gz "$DEST"
           echo "Upload complete."
