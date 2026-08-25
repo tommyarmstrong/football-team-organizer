@@ -1,0 +1,18 @@
+# Fail PRs into production unless they come from main.
+name: Production source
+
+on:
+  pull_request:
+    branches: [production]
+
+jobs:
+  from-main:
+    name: production-source-is-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require head branch main
+        run: |
+          if [ "${GITHUB_HEAD_REF}" != "main" ]; then
+            echo "production only accepts pull requests from main (got '${GITHUB_HEAD_REF}')."
+            exit 1
+          fi
