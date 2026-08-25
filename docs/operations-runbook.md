@@ -27,7 +27,31 @@ Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead 
 
 1. Create a private S3 bucket with Block Public Access on and default encryption (SSE-S3 or SSE-KMS).
 2. Add a GitHub OIDC identity provider in IAM if the account does not already have one (`token.actions.githubusercontent.com`).
-3. Create an IAM role trusted by that OIDC provider, restricted to this repository and preferably the `Database backup` workflow / `main` ref.
+3. Create an IAM role trusted by that OIDC provider. The trust policy must use `sts:AssumeRoleWithWebIdentity` (not `sts:AssumeRole` for `s3.amazonaws.com`). GitHub’s `sub` is `repo:OWNER/REPO:ref:refs/heads/BRANCH`, so use `StringLike` with `repo:OWNER/REPO:*` (a `StringEquals` on `repo:OWNER/REPO` alone will fail). Example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::ACCOUNT:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:OWNER/REPO:*"
+        }
+      }
+    }
+  ]
+}
+```
+
 4. Grant the role least-privilege object write on the backup prefix, for example:
    - `s3:PutObject`, `s3:AbortMultipartUpload` on `arn:aws:s3:::BUCKET/football-team-organizer/*`
    - optionally `s3:ListBucket` on the bucket (scoped by prefix condition)
