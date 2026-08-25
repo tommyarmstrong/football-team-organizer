@@ -48,6 +48,16 @@ supabase/.temp
 # Private local seed data (real teams / people — do not commit)
 supabase/seed.private.sql
 
+# Logical DB dumps / backup archives at repo root (PII — never commit)
+/roles.sql
+/schema.sql
+/data.sql
+/backup.sql
+/backup.sql.gz
+/backup.tar.gz
+/*.dump
+/*.dump.gz
+
 # Work in progress feature development
 docs/feature_requests_1.md
 docs/roadmap.md

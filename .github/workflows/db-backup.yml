@@ -1,0 +1,129 @@
+# Daily logical backup of hosted Supabase Postgres → AWS S3.
+#
+# Required GitHub configuration (Settings → Secrets and variables → Actions):
+#
+#   Secrets:
+#     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432). Prefer the
+#                         IPv4-friendly Session pooler string from Supabase
+#                         Dashboard → Project Settings → Database. Do NOT use
+#                         the transaction pooler (port 6543).
+#     AWS_ROLE_TO_ASSUME  IAM role ARN for GitHub OIDC (preferred). Example:
+#                         arn:aws:iam::123456789012:role/github-db-backup
+#     # Fallback if OIDC is not set up yet (OIDC is preferred):
+#     # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+#
+#   Variables (or secrets):
+#     AWS_REGION          e.g. eu-west-2
+#     BACKUP_S3_BUCKET    Destination bucket name (no s3:// prefix)
+#
+# AWS (outside this repo): create the bucket; attach a role trust policy for
+# GitHub OIDC (token.actions.githubusercontent.com) limited to this repo +
+# this workflow; grant s3:PutObject (and ideally s3:AbortMultipartUpload) on
+# arn:aws:s3:::BUCKET/football-team-organizer/*. Enable bucket default
+# encryption and block public access. Prefer a lifecycle rule to expire old
+# prefixes.
+#
+# Restore (throwaway / staging only — never restore over prod blindly):
+#   1. aws s3 cp s3://$BACKUP_S3_BUCKET/football-team-organizer/YYYY-MM-DD/backup.tar.gz .
+#   2. tar -xzf backup.tar.gz
+#   3. psql "$STAGING_DB_URL" -v ON_ERROR_STOP=1 -f roles.sql -f schema.sql -f data.sql
+#   Never commit dump files; never upload dumps as GitHub Actions artifacts
+#   (they contain PII / medical notes). See docs/operations-runbook.md.
+
+name: Database backup
+
+on:
+  schedule:
+    # Once per day (02:15 UTC).
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # required for AWS OIDC
+
+jobs:
+  backup:
+    name: Dump and upload to S3
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          # If OIDC is unavailable, replace this step with access keys:
+          #   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          #   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          #   aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          # and drop permissions.id-token / role-to-assume. OIDC is preferred.
+
+      - name: Dump database
+        env:
+          # Bound only for this step; never echo or log this value.
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET || secrets.BACKUP_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "${BACKUP_S3_BUCKET:-}" ]; then
+            echo "::error::BACKUP_S3_BUCKET variable is not set"
+            exit 1
+          fi
+
+          # Reject transaction-pooler URLs (port 6543) — dumps need session/direct.
+          case "$SUPABASE_DB_URL" in
+            *:6543/*|*:6543)
+              echo "::error::SUPABASE_DB_URL looks like the transaction pooler (port 6543). Use session mode on port 5432."
+              exit 1
+              ;;
+          esac
+
+          WORKDIR="$(mktemp -d)"
+          trap 'rm -rf "$WORKDIR"' EXIT
+          cd "$WORKDIR"
+
+          echo "Dumping roles…"
+          supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f roles.sql
+
+          echo "Dumping schema…"
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+
+          echo "Dumping data…"
+          supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f data.sql
+
+          for f in roles.sql schema.sql data.sql; do
+            if [ ! -s "$f" ]; then
+              echo "::error::$f is missing or empty"
+              exit 1
+            fi
+            # Size only — never print dump contents.
+            echo "$f size_bytes=$(wc -c < "$f" | tr -d ' ')"
+          done
+
+          DATE="$(date -u +%Y-%m-%d)"
+          tar -czf backup.tar.gz roles.sql schema.sql data.sql
+          echo "archive size_bytes=$(wc -c < backup.tar.gz | tr -d ' ')"
+
+          DEST="s3://${BACKUP_S3_BUCKET}/football-team-organizer/${DATE}/backup.tar.gz"
+          echo "Uploading archive to dated S3 prefix…"
+          aws s3 cp backup.tar.gz "$DEST"
+          echo "Upload complete."
