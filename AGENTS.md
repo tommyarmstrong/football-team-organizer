@@ -77,16 +77,9 @@ Dependencies are refreshed automatically by the startup script (`npm install`). 
 
 ### Running the app end-to-end against local Supabase (non-obvious gotchas)
 
-`npx supabase start` applies `supabase/migrations/` but there are three gotchas that block a working login unless handled:
+`npx supabase start` applies `supabase/migrations/` (a single baseline schema file) but two gotchas can still block a working login:
 
-1. **Table grants (permission denied).** Migrations only `grant execute` on functions — they never grant table privileges, relying on the hosted project's legacy default privileges. Newer local Supabase CLI does NOT grant DML on `postgres`-owned tables to `anon`/`authenticated`, so PostgREST returns `permission denied for table ...` and the app shows "No team found". After `supabase start`, grant them (RLS still enforces row access):
-   ```sql
-   grant all on all tables in schema public to anon, authenticated, service_role;
-   grant all on all sequences in schema public to anon, authenticated, service_role;
-   alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
-   alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;
-   ```
-2. **Seed needs a matching Auth user.** `supabase/seed.sql` hardcodes an Auth user UUID and inserts `team_members` for it; without that Auth user the seed fails FK checks and a logged-in user has no team. Create an Auth user first (e.g. via `POST /auth/v1/admin/users` with the service role key), then substitute its id for the placeholder `05b5a111-…397b` when loading the seed. Auto-seed is disabled in `supabase/config.toml` for this reason.
-3. **Seed row ordering.** `seed.sql` inserts `team_members` for the England team (`bbbb…`) before that team is created later in the same transaction, so a straight load fails on `team_members_team_id_fkey`. Load it with FK triggers off: prepend `set session_replication_role = replica;` and append `reset session_replication_role;` around the seed when applying it locally.
+1. **Seed needs a matching Auth user.** `supabase/seed.sql` hardcodes an Auth user UUID and inserts `team_members` for it; without that Auth user the seed fails FK checks and a logged-in user has no team. Create an Auth user first (e.g. via `POST /auth/v1/admin/users` with the service role key), then substitute its id for the placeholder `05b5a111-…397b` when loading the seed. Auto-seed is disabled in `supabase/config.toml` for this reason.
+2. **Seed row ordering.** `seed.sql` inserts `team_members` for the England team (`bbbb…`) before that team is created later in the same transaction, so a straight load fails on `team_members_team_id_fkey`. Load it with FK triggers off: prepend `set session_replication_role = replica;` and append `reset session_replication_role;` around the seed when applying it locally.
 
 `.env.local` (gitignored) needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` — read the values from `npx supabase status`. Test login used during setup: `coach@example.com` / `Password123!`.
