@@ -30,7 +30,7 @@ Create a coach user under **Authentication → Users** (Add user), or sign up on
 
 ### Database (Stage 4)
 
-Apply the versioned migration in `supabase/migrations/`, then seed one team + membership.
+Apply the baseline schema (`supabase/migrations/20260825000000_schema.sql`) once on an empty database, then seed one team + membership.
 
 **Option A — Supabase CLI (linked project)**
 
@@ -43,12 +43,14 @@ npx supabase db push
 **Option B — SQL Editor**
 
 1. Open Supabase Dashboard → **SQL** → New query
-2. Paste and run `supabase/migrations/20260724170000_init_schema.sql`
+2. Paste and run `supabase/migrations/20260825000000_schema.sql`
 3. Copy your Auth user UUID from **Authentication → Users**
 4. Edit `supabase/seed.sql`: replace `00000000-0000-0000-0000-000000000000` with that UUID
 5. Run the edited seed SQL in the SQL Editor
 
 Without a `team_members` row, a signed-in user is redirected to `/no-access` and cannot use app routes.
+
+The previous incremental migration chain is squashed into that one file. Use it only on an **empty** database. If a project already applied the old files, do not re-run the squash; align CLI history with `npx supabase migration list` / `npx supabase migration repair` instead.
 
 Regenerate TypeScript types after schema changes (optional; checked-in types live at `src/lib/supabase/database.types.ts`):
 
