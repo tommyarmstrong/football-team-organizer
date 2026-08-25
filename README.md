@@ -79,11 +79,11 @@ Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky
 
 ## CI / CD
 
-| Stage                                                                   | When                        | What runs                               |
-| ----------------------------------------------------------------------- | --------------------------- | --------------------------------------- |
-| Pre-commit                                                              | Local `git commit`          | ESLint + Prettier on staged files only  |
-| GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) | Every PR and push to `main` | `lint`, `format:check`, `test`, `build` |
-| Vercel                                                                  | After push / PR             | Next.js deploy (preview or production)  |
+| Stage                                                                   | When                        | What runs                                                          |
+| ----------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------ |
+| Pre-commit                                                              | Local `git commit`          | ESLint + Prettier on staged files only                             |
+| GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) | Every PR and push to `main` | `lint`, `format:check`, `test`, `build`, client-bundle secret scan |
+| Vercel                                                                  | After push / PR             | Next.js deploy (preview or production)                             |
 
 **Gate:** `main` requires a pull request and a green **Lint, test, and build** check before merge. That keeps failed CI from landing on `main` and triggering a production deploy. Preview deploys still build on the PR in parallel with Actions.
 
@@ -116,9 +116,13 @@ Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled). P
 2. Set env vars for **Production**, **Preview**, and **Development**:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` — **SERVER-ONLY**. Do not prefix with `NEXT_PUBLIC_`. In the Vercel dashboard, add it as a Sensitive secret, limit which team members can access Environment Variables, and set it for Production and Preview (invites need it on both). Never commit the real value.
+   - `NEXT_PUBLIC_APP_URL` — public origin used in invitation links (production domain)
    ```bash
    npx vercel env add NEXT_PUBLIC_SUPABASE_URL production,preview,development
    npx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production,preview,development
+   npx vercel env add SUPABASE_SERVICE_ROLE_KEY production,preview
+   npx vercel env add NEXT_PUBLIC_APP_URL production,preview
    ```
 3. Push to `main` (or open a PR) to trigger a deployment.
 

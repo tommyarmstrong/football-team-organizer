@@ -44,3 +44,10 @@ jobs:
           # Placeholders so `next build` can compile; Vercel supplies real values at deploy.
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: public-anon-key-for-ci
+          # Distinctive canary so the next step can prove this never ships to the browser.
+          SUPABASE_SERVICE_ROLE_KEY: ci-service-role-canary-do-not-leak-into-client-bundle
+
+      - name: Assert service role key is not in the client bundle
+        run: npm run check:client-secrets
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ci-service-role-canary-do-not-leak-into-client-bundle
