@@ -147,9 +147,23 @@ export function loginRedirectForAuthParams(params: AuthCallbackParams): {
     });
     const search = new URLSearchParams();
     search.set("code", params.code);
-    search.set("next", next);
     if (params.inviteToken) search.set("invite_token", params.inviteToken);
     if (params.type) search.set("type", params.type);
+
+    // Invite/recovery: land on the password page so the browser client can
+    // exchange the PKCE code against the cookie code verifier.
+    if (
+      next.startsWith("/auth/reset-password") ||
+      next.startsWith("/auth/invite")
+    ) {
+      search.set("next", next);
+      return {
+        pathname: `${next.split("?")[0]}?${search.toString()}`,
+        preserveHash: false,
+      };
+    }
+
+    search.set("next", next);
     return {
       pathname: `/auth/callback?${search.toString()}`,
       preserveHash: false,

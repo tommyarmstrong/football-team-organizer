@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { requestOwnPasswordResetAction } from "@/lib/auth/actions";
+import { requestPasswordResetEmail } from "@/lib/auth/request-password-reset";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
@@ -14,7 +14,7 @@ export function RequestOwnResetForm({ email }: { email: string }) {
     setError(null);
     setSuccess(null);
     setPending(true);
-    const result = await requestOwnPasswordResetAction();
+    const result = await requestPasswordResetEmail(email);
     setPending(false);
     if (result.error) {
       setError(result.error);

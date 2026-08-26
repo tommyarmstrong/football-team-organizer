@@ -124,10 +124,15 @@ describe("parseAuthCallbackParams and login redirect", () => {
     });
   });
 
-  it("sends PKCE codes through /auth/callback", () => {
-    const params = parseAuthCallbackParams("?code=abc&type=invite");
-    expect(loginRedirectForAuthParams(params)?.pathname).toBe(
-      "/auth/callback?code=abc&next=%2Fauth%2Finvite&type=invite",
+  it("sends invite/recovery PKCE codes to the password pages", () => {
+    const invite = parseAuthCallbackParams("?code=abc&type=invite");
+    expect(loginRedirectForAuthParams(invite)?.pathname).toBe(
+      "/auth/invite?code=abc&type=invite&next=%2Fauth%2Finvite",
+    );
+
+    const recovery = parseAuthCallbackParams("?code=xyz&type=recovery");
+    expect(loginRedirectForAuthParams(recovery)?.pathname).toBe(
+      "/auth/reset-password?code=xyz&type=recovery&next=%2Fauth%2Freset-password",
     );
   });
 
@@ -167,9 +172,11 @@ describe("parseAuthCallbackParams and login redirect", () => {
   });
 
   it("still forwards when an error is present with a PKCE code", () => {
-    const params = parseAuthCallbackParams("?code=abc&error=server_error");
+    const params = parseAuthCallbackParams(
+      "?code=abc&type=recovery&error=server_error",
+    );
     expect(loginRedirectForAuthParams(params)?.pathname).toContain(
-      "/auth/callback?code=abc",
+      "/auth/reset-password?code=abc",
     );
   });
 
@@ -178,7 +185,7 @@ describe("parseAuthCallbackParams and login redirect", () => {
       "?code=abc&type=invite&invite_token=tok",
     );
     expect(loginRedirectForAuthParams(code)?.pathname).toBe(
-      "/auth/callback?code=abc&next=%2Fauth%2Finvite&invite_token=tok&type=invite",
+      "/auth/invite?code=abc&invite_token=tok&type=invite&next=%2Fauth%2Finvite",
     );
 
     const hash = parseAuthCallbackParams(
@@ -194,7 +201,14 @@ describe("parseAuthCallbackParams and login redirect", () => {
       "?code=abc&next=%2Fauth%2Freset-password",
     );
     expect(loginRedirectForAuthParams(params)?.pathname).toBe(
-      "/auth/callback?code=abc&next=%2Fauth%2Freset-password",
+      "/auth/reset-password?code=abc&next=%2Fauth%2Freset-password",
+    );
+  });
+
+  it("keeps non-password-setup PKCE codes on /auth/callback", () => {
+    const params = parseAuthCallbackParams("?code=abc&next=%2Fdashboard");
+    expect(loginRedirectForAuthParams(params)?.pathname).toBe(
+      "/auth/callback?code=abc&next=%2Fdashboard",
     );
   });
 
