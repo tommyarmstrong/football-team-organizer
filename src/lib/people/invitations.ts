@@ -1,3 +1,4 @@
+import { appOrigin } from "@/lib/auth/origin";
 import {
   createInvitationToken,
   evaluateInvitation,
@@ -21,14 +22,6 @@ export type SendInvitationResult =
       acceptUrl?: string;
     }
   | { ok: false; error: string };
-
-function appOrigin(): string {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (explicit) return explicit;
-  const vercel = process.env.VERCEL_URL?.replace(/\/$/, "");
-  if (vercel) return `https://${vercel}`;
-  return "http://localhost:3000";
-}
 
 function isAlreadyRegisteredError(message: string) {
   return /already (been )?registered/i.test(message);
@@ -110,7 +103,7 @@ export async function sendPersonInvitation(input: {
     .update({ account_status: "invited" })
     .eq("id", input.person.id);
 
-  const redirectTo = `${appOrigin()}/auth/callback?next=${encodeURIComponent(`/onboarding/complete?token=${token}`)}&invite_token=${encodeURIComponent(token)}`;
+  const redirectTo = `${appOrigin()}/auth/invite?invite_token=${encodeURIComponent(token)}`;
 
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
     email,

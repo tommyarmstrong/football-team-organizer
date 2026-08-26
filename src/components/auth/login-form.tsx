@@ -2,11 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { createClient } from "@/lib/supabase/client";
+import { validateNewPassword } from "@/lib/auth/password";
 import { acceptInvitationWithPassword } from "@/lib/people/onboarding-actions";
 
 export function AcceptInvitationForm({
@@ -27,12 +29,9 @@ export function AcceptInvitationForm({
   async function onPasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords do not match.");
+    const passwordError = validateNewPassword(password, confirm);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -134,10 +133,11 @@ export function LoginFormWithGoogle() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/dashboard";
+  const urlError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(urlError);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -216,6 +216,15 @@ export function LoginFormWithGoogle() {
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
         </Button>
+
+        <p className="text-center text-sm">
+          <Link
+            href="/auth/forgot-password"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </form>
 
       <div className="relative py-2 text-center text-sm">
