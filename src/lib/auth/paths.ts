@@ -25,6 +25,13 @@ export const PASSWORD_SETUP_COOKIE = "password_setup";
 
 export type PasswordSetupKind = "invite" | "recovery";
 
+export function parsePasswordSetupKind(
+  value: string | undefined,
+): PasswordSetupKind | null {
+  if (value === "invite" || value === "recovery") return value;
+  return null;
+}
+
 const AUTH_PREFIX = "/auth/";
 
 export function isPublicPath(pathname: string) {

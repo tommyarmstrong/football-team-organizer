@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   loginRedirectForAuthParams,
   parseAuthCallbackParams,
+  parseEmailOtpType,
   passwordSetupKindForAuth,
   resolveAuthNextPath,
   sanitizeNextPath,
@@ -19,6 +20,15 @@ describe("sanitizeNextPath", () => {
     expect(sanitizeNextPath("//evil.example")).toBeNull();
     expect(sanitizeNextPath("https://evil.example/phish")).toBe("/phish");
     expect(sanitizeNextPath("not-a-path")).toBeNull();
+    expect(sanitizeNextPath("")).toBeNull();
+    expect(sanitizeNextPath("   ")).toBeNull();
+    expect(sanitizeNextPath("javascript:alert(1)")).toBeNull();
+  });
+
+  it("keeps the path and query when given an absolute URL", () => {
+    expect(
+      sanitizeNextPath("https://tracker.example.com/auth/invite?x=1"),
+    ).toBe("/auth/invite?x=1");
   });
 });
 
@@ -43,6 +53,24 @@ describe("resolveAuthNextPath", () => {
       }),
     ).toBe("/auth/invite");
   });
+
+  it("ignores an unsafe next path and uses the flow default", () => {
+    expect(
+      resolveAuthNextPath({ nextRaw: "//evil.example", type: "invite" }),
+    ).toBe("/auth/invite");
+    expect(
+      resolveAuthNextPath({ nextRaw: "not-a-path", type: "recovery" }),
+    ).toBe("/auth/reset-password");
+    expect(resolveAuthNextPath({ nextRaw: "not-a-path", type: null })).toBe(
+      "/dashboard",
+    );
+  });
+
+  it("defaults unknown email types to the dashboard", () => {
+    expect(resolveAuthNextPath({ nextRaw: null, type: "signup" })).toBe(
+      "/dashboard",
+    );
+  });
 });
 
 describe("passwordSetupKindForAuth", () => {
@@ -59,6 +87,15 @@ describe("passwordSetupKindForAuth", () => {
     expect(
       passwordSetupKindForAuth({ type: null, nextPath: "/dashboard" }),
     ).toBeNull();
+  });
+
+  it("treats a recovery next path as recovery even when type is invite", () => {
+    expect(
+      passwordSetupKindForAuth({
+        type: "invite",
+        nextPath: "/auth/reset-password",
+      }),
+    ).toBe("recovery");
   });
 });
 
@@ -99,5 +136,80 @@ describe("parseAuthCallbackParams and login redirect", () => {
     expect(loginRedirectForAuthParams(params)?.pathname).toBe(
       "/auth/confirm?token_hash=hash&type=recovery&next=%2Fauth%2Freset-password",
     );
+  });
+
+  it("parses query and hash tokens, preferring hash type", () => {
+    const params = parseAuthCallbackParams(
+      "?type=recovery&invite_token=tok&error=access_denied&error_description=User+denied",
+      "#access_token=aaa&refresh_token=bbb&type=invite",
+    );
+    expect(params).toMatchObject({
+      type: "invite",
+      accessToken: "aaa",
+      refreshToken: "bbb",
+      inviteToken: "tok",
+      error: "access_denied",
+      errorDescription: "User denied",
+    });
+  });
+
+  it("accepts only known email OTP types", () => {
+    expect(parseEmailOtpType("invite")).toBe("invite");
+    expect(parseEmailOtpType("recovery")).toBe("recovery");
+    expect(parseEmailOtpType("email")).toBe("email");
+    expect(parseEmailOtpType("not-a-type")).toBeNull();
+    expect(parseEmailOtpType(null)).toBeNull();
+  });
+
+  it("leaves error-only login URLs on /login", () => {
+    const params = parseAuthCallbackParams("?error=access_denied");
+    expect(loginRedirectForAuthParams(params)).toBeNull();
+  });
+
+  it("still forwards when an error is present with a PKCE code", () => {
+    const params = parseAuthCallbackParams("?code=abc&error=server_error");
+    expect(loginRedirectForAuthParams(params)?.pathname).toContain(
+      "/auth/callback?code=abc",
+    );
+  });
+
+  it("keeps an invite token on PKCE and token_hash forwards", () => {
+    const code = parseAuthCallbackParams(
+      "?code=abc&type=invite&invite_token=tok",
+    );
+    expect(loginRedirectForAuthParams(code)?.pathname).toBe(
+      "/auth/callback?code=abc&next=%2Fauth%2Finvite&invite_token=tok&type=invite",
+    );
+
+    const hash = parseAuthCallbackParams(
+      "?token_hash=hash&type=invite&invite_token=tok",
+    );
+    expect(loginRedirectForAuthParams(hash)?.pathname).toBe(
+      "/auth/confirm?token_hash=hash&type=invite&next=%2Fauth%2Finvite&invite_token=tok",
+    );
+  });
+
+  it("uses an explicit next path when forwarding a PKCE code", () => {
+    const params = parseAuthCallbackParams(
+      "?code=abc&next=%2Fauth%2Freset-password",
+    );
+    expect(loginRedirectForAuthParams(params)?.pathname).toBe(
+      "/auth/callback?code=abc&next=%2Fauth%2Freset-password",
+    );
+  });
+
+  it("sends untyped hash tokens to the invite page", () => {
+    const params = parseAuthCallbackParams(
+      "",
+      "#access_token=aaa&refresh_token=bbb",
+    );
+    expect(loginRedirectForAuthParams(params)).toEqual({
+      pathname: "/auth/invite",
+      preserveHash: true,
+    });
+  });
+
+  it("does not redirect when the URL has no auth token", () => {
+    expect(loginRedirectForAuthParams(parseAuthCallbackParams(""))).toBeNull();
   });
 });

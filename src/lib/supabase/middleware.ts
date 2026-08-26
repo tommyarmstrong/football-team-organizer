@@ -4,18 +4,11 @@ import {
   isMembershipExemptPath,
   isPasswordSetupPath,
   isPublicPath,
+  parsePasswordSetupKind,
   PASSWORD_SETUP_COOKIE,
   passwordSetupDestination,
-  type PasswordSetupKind,
 } from "@/lib/auth/paths";
 import type { Database } from "@/lib/supabase/database.types";
-
-function parsePasswordSetupKind(
-  value: string | undefined,
-): PasswordSetupKind | null {
-  if (value === "invite" || value === "recovery") return value;
-  return null;
-}
 
 async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,
