@@ -130,4 +130,25 @@ Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled). P
 
 Dashboard: [vercel.com/tommyarmstrongs-projects/football-team-organizer](https://vercel.com/tommyarmstrongs-projects/football-team-organizer)
 
-In Supabase Auth URL config, add your Vercel domains to **Redirect URLs** if you later add email links (not required for password-only login).
+In Supabase **Authentication → URL Configuration**:
+
+- **Site URL** — your public origin only (e.g. `https://your-domain.com`), not `/login`. Invite and reset emails fall back to this URL when `redirectTo` is not allow-listed.
+- **Redirect URLs** — include:
+  - `https://your-domain.com/auth/callback`
+  - `https://your-domain.com/auth/confirm`
+  - `https://your-domain.com/auth/invite`
+  - `https://your-domain.com/auth/reset-password`
+  - or a wildcard such as `https://your-domain.com/auth/**`
+
+**Email templates (required for reliable invite/reset):** paste the HTML from `src/templates/` into Supabase **Authentication → Email Templates**:
+
+| Template       | File                             | Link shape                                                           |
+| -------------- | -------------------------------- | -------------------------------------------------------------------- |
+| Invite user    | `src/templates/user_invite.html` | `{{ .ConfirmationURL }}` (keeps `invite_token` on redirect)          |
+| Reset password | `src/templates/recovery.html`    | `/auth/confirm?token_hash=…&type=recovery&next=/auth/reset-password` |
+
+The recovery template uses `token_hash` + `/auth/confirm` (`verifyOtp`) so reset links work on any device. The default `{{ .ConfirmationURL }}` PKCE recovery links need a same-browser code verifier and often fail with “PKCE code verifier not found in storage.” Until the hosted Recovery template is updated, the app requests reset emails with the implicit Auth flow so Supabase’s default ConfirmationURL returns hash tokens instead of a PKCE `code`.
+
+Local `supabase start` loads the same bodies from `supabase/templates/` via `config.toml`.
+
+The app also handles Site URL `/login` fallbacks: it forwards invite tokens to `/auth/invite` and recovery tokens to `/auth/reset-password`.

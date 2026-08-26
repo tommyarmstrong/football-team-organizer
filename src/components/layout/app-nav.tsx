@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   AccountDetails,
+  ResetPasswordLink,
   SignOutLink,
   UserMenu,
 } from "@/components/layout/user-menu";
@@ -230,6 +231,7 @@ export function MobileTabBar({
               })}
             </ul>
             <div className="border-header-foreground/15 mt-1 border-t pt-1">
+              <ResetPasswordLink className="text-header-foreground h-10 w-full justify-start px-3" />
               <SignOutLink className="text-header-foreground h-10 w-full justify-start px-3" />
             </div>
           </div>

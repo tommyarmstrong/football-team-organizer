@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { UserIcon } from "lucide-react";
 import { signOut } from "@/lib/auth/actions";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -40,6 +41,17 @@ export function SignOutLink({ className }: { className?: string }) {
         Sign out
       </Button>
     </form>
+  );
+}
+
+export function ResetPasswordLink({ className }: { className?: string }) {
+  return (
+    <Link
+      href="/account/password"
+      className={cn(buttonVariants({ variant: "link", size: "sm" }), className)}
+    >
+      Reset password
+    </Link>
   );
 }
 
@@ -81,6 +93,7 @@ export function UserMenu({
             </PopoverDescription>
           ) : null}
         </PopoverHeader>
+        <ResetPasswordLink className="h-auto justify-start px-0.5 py-1" />
         <SignOutLink className="h-auto justify-start px-0.5 py-1" />
       </PopoverContent>
     </Popover>
