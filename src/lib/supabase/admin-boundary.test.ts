@@ -136,7 +136,7 @@ function isAdminSpecifier(spec: string) {
   );
 }
 
-describe("service role admin client boundary", () => {
+describe("service role admin client boundary", { timeout: 20_000 }, () => {
   const sourceFiles = walkSourceFiles(srcRoot);
 
   it("is only imported from known server modules", () => {

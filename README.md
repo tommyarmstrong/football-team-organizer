@@ -130,4 +130,16 @@ Repo config: [`vercel.json`](vercel.json) (Next.js + Git deployments enabled). P
 
 Dashboard: [vercel.com/tommyarmstrongs-projects/football-team-organizer](https://vercel.com/tommyarmstrongs-projects/football-team-organizer)
 
-In Supabase Auth URL config, add your Vercel domains to **Redirect URLs** if you later add email links (not required for password-only login).
+In Supabase **Authentication → URL Configuration**:
+
+- **Site URL** — your public origin only (e.g. `https://your-domain.com`), not `/login`. Invite and reset emails fall back to this URL when `redirectTo` is not allow-listed.
+- **Redirect URLs** — include:
+  - `https://your-domain.com/auth/callback`
+  - `https://your-domain.com/auth/confirm`
+  - `https://your-domain.com/auth/invite`
+  - `https://your-domain.com/auth/reset-password`
+  - or a wildcard such as `https://your-domain.com/auth/**`
+
+Optional: if you switch the hosted email templates to the PKCE `token_hash` form, point invite/recovery links at `/auth/confirm?token_hash={{ .TokenHash }}&type=invite|recovery&next=/auth/invite` (or `/auth/reset-password`). The default `{{ .ConfirmationURL }}` templates still work.
+
+The app handles the common case where Site URL is `/login` and tokens arrive on that page: it forwards invite tokens to `/auth/invite` and recovery tokens to `/auth/reset-password`.

@@ -1,35 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  isMembershipExemptPath,
+  isPasswordSetupPath,
+  isPublicPath,
+  parsePasswordSetupKind,
+  PASSWORD_SETUP_COOKIE,
+  passwordSetupDestination,
+} from "@/lib/auth/paths";
 import type { Database } from "@/lib/supabase/database.types";
-
-const PUBLIC_PATHS = new Set([
-  "/login",
-  "/onboarding/accept",
-  "/auth/callback",
-]);
-const MEMBERSHIP_EXEMPT_PATHS = new Set([
-  "/login",
-  "/no-access",
-  "/onboarding/accept",
-  "/onboarding/complete",
-  "/auth/callback",
-]);
-
-function isPublicPath(pathname: string) {
-  return (
-    PUBLIC_PATHS.has(pathname) ||
-    pathname.startsWith("/onboarding/accept") ||
-    pathname.startsWith("/auth/callback")
-  );
-}
-
-function isMembershipExemptPath(pathname: string) {
-  return (
-    MEMBERSHIP_EXEMPT_PATHS.has(pathname) ||
-    pathname.startsWith("/onboarding/") ||
-    pathname.startsWith("/auth/callback")
-  );
-}
 
 async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,
@@ -76,13 +55,24 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const setupKind = parsePasswordSetupKind(
+    request.cookies.get(PASSWORD_SETUP_COOKIE)?.value,
+  );
 
   if (!user && !isPublicPath(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    redirectUrl.search = "";
     if (pathname !== "/" && pathname !== "/no-access") {
       redirectUrl.searchParams.set("next", pathname);
     }
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (user && setupKind && !isPasswordSetupPath(pathname, setupKind)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = passwordSetupDestination(setupKind);
+    redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -98,7 +88,12 @@ export async function updateSession(request: NextRequest) {
 
     if (
       hasTeam &&
-      (pathname === "/login" || pathname === "/" || pathname === "/no-access")
+      !setupKind &&
+      (pathname === "/login" ||
+        pathname === "/" ||
+        pathname === "/no-access" ||
+        pathname === "/auth/invite" ||
+        pathname === "/auth/forgot-password")
     ) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
