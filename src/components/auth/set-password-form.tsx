@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { updatePasswordAndFinishAction } from "@/lib/auth/actions";
-import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/lib/auth/password";
+import {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_POLICY_HINT,
+  validateNewPassword,
+} from "@/lib/auth/password";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,9 +70,7 @@ export function SetPasswordForm({
           onChange={(e) => setPassword(e.target.value)}
           disabled={pending}
         />
-        <p className="text-muted-foreground text-xs">
-          At least {MIN_PASSWORD_LENGTH} characters.
-        </p>
+        <p className="text-muted-foreground text-xs">{PASSWORD_POLICY_HINT}</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirm">Confirm password</Label>
