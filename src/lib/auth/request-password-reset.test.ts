@@ -5,7 +5,7 @@ const { createClientMock, resetPasswordForEmailMock } = vi.hoisted(() => ({
   resetPasswordForEmailMock: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/client", () => ({
+vi.mock("@supabase/supabase-js", () => ({
   createClient: createClientMock,
 }));
 
@@ -22,10 +22,13 @@ describe("requestPasswordResetEmail", () => {
     vi.stubGlobal("window", {
       location: { origin: "https://tracker.example.com" },
     });
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("rejects a blank email without calling Supabase", async () => {
@@ -34,9 +37,16 @@ describe("requestPasswordResetEmail", () => {
     expect(createClientMock).not.toHaveBeenCalled();
   });
 
-  it("sends a reset email that returns to /auth/reset-password", async () => {
+  it("requests recovery with the implicit Auth flow (no PKCE verifier)", async () => {
     const result = await requestPasswordResetEmail(" ada@example.com ");
 
+    expect(createClientMock).toHaveBeenCalledWith(
+      "https://example.supabase.co",
+      "anon-key",
+      expect.objectContaining({
+        auth: expect.objectContaining({ flowType: "implicit" }),
+      }),
+    );
     expect(resetPasswordForEmailMock).toHaveBeenCalledWith("ada@example.com", {
       redirectTo: "https://tracker.example.com/auth/reset-password",
     });

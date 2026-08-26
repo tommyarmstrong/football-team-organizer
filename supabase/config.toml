@@ -254,10 +254,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Email templates use token_hash → /auth/confirm (no PKCE code verifier).
+# Hosted projects: paste the matching files from src/templates/ into
+# Authentication → Email Templates in the Supabase dashboard.
+[auth.email.template.invite]
+subject = "You're invited to Match Tracker"
+content_path = "./templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Match Tracker password"
+content_path = "./templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

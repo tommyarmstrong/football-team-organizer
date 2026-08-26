@@ -140,6 +140,15 @@ In Supabase **Authentication → URL Configuration**:
   - `https://your-domain.com/auth/reset-password`
   - or a wildcard such as `https://your-domain.com/auth/**`
 
-Optional: if you switch the hosted email templates to the PKCE `token_hash` form, point invite/recovery links at `/auth/confirm?token_hash={{ .TokenHash }}&type=invite|recovery&next=/auth/invite` (or `/auth/reset-password`). The default `{{ .ConfirmationURL }}` templates still work.
+**Email templates (required for reliable invite/reset):** paste the HTML from `src/templates/` into Supabase **Authentication → Email Templates**:
 
-The app handles the common case where Site URL is `/login` and tokens arrive on that page: it forwards invite tokens to `/auth/invite` and recovery tokens to `/auth/reset-password`.
+| Template | File | Link shape |
+| --- | --- | --- |
+| Invite user | `src/templates/user_invite.html` | `{{ .ConfirmationURL }}` (keeps `invite_token` on redirect) |
+| Reset password | `src/templates/recovery.html` | `/auth/confirm?token_hash=…&type=recovery&next=/auth/reset-password` |
+
+The recovery template uses `token_hash` + `/auth/confirm` (`verifyOtp`) so reset links work on any device. The default `{{ .ConfirmationURL }}` PKCE recovery links need a same-browser code verifier and often fail with “PKCE code verifier not found in storage.” Until the hosted Recovery template is updated, the app requests reset emails with the implicit Auth flow so Supabase’s default ConfirmationURL returns hash tokens instead of a PKCE `code`.
+
+Local `supabase start` loads the same bodies from `supabase/templates/` via `config.toml`.
+
+The app also handles Site URL `/login` fallbacks: it forwards invite tokens to `/auth/invite` and recovery tokens to `/auth/reset-password`.
