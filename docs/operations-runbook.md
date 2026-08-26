@@ -2,9 +2,7 @@
 
 ## Database backups (logical dump → S3)
 
-Daily logical backups are produced by [`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml) (cron + `workflow_dispatch`). The workflow dumps the **production** Supabase project (`mga-production`) only — never the integration project (`football-team-organiser`). Dumps go to S3 only — never as GitHub Actions artifacts and never into git. Archives contain PII and medical notes.
-
-The job uses the GitHub Actions environment `mga-production`.
+Daily logical backups are produced by [`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml) (cron + `workflow_dispatch`). The target database is whatever `SUPABASE_DB_URL` and `SUPABASE_PROJECT_REF` are configured to (set those to production in GitHub Actions settings). Dumps go to S3 only — never as GitHub Actions artifacts and never into git. Archives contain PII and medical notes.
 
 ### Object layout
 
@@ -16,17 +14,17 @@ The archive contains `roles.sql`, `schema.sql`, and `data.sql` (Supabase CLI log
 
 ### Required GitHub Secrets / Variables
 
-| Name                   | Type     | Purpose                                                                                                                                                                                                               |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_DB_URL`      | Secret   | Session-mode Postgres URL (port **5432**) for **mga-production**. Prefer the IPv4 Session pooler string from that project’s Dashboard → Project Settings → Database. Do **not** use transaction pooler port **6543**. |
-| `SUPABASE_PROJECT_REF` | Variable | mga-production project ref (Dashboard → Project Settings → General). The dump step fails unless `SUPABASE_DB_URL` contains this value, so the integration database cannot be backed up by mistake.                    |
-| `AWS_ROLE_TO_ASSUME`   | Secret   | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys).                                                                                                                                         |
-| `AWS_REGION`           | Variable | AWS region for the bucket / STS, e.g. `us-east-1`.                                                                                                                                                                    |
-| `BACKUP_S3_BUCKET`     | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                                                          |
+| Name                   | Type     | Purpose                                                                                                                                                                                                                                  |
+| ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_DB_URL`      | Secret   | Session-mode Postgres URL (port **5432**) for the target Supabase project. Prefer the IPv4 Session pooler string from that project’s Dashboard → Connect / Project Settings → Database. Do **not** use transaction pooler port **6543**. |
+| `SUPABASE_PROJECT_REF` | Variable | Target project ref (Dashboard → Project Settings → General, or the `/project/<ref>/` segment in the dashboard URL). The dump step fails unless `SUPABASE_DB_URL` contains this value.                                                    |
+| `AWS_ROLE_TO_ASSUME`   | Secret   | IAM role ARN assumed via GitHub OIDC (preferred over long-lived access keys).                                                                                                                                                            |
+| `AWS_REGION`           | Variable | AWS region for the bucket / STS, e.g. `us-east-1`.                                                                                                                                                                                       |
+| `BACKUP_S3_BUCKET`     | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                                                                             |
 
 #### Formatting `SUPABASE_DB_URL`
 
-1. In **mga-production**: Dashboard → **Connect** → **Session pooler** (port **5432**), or Project Settings → Database.
+1. In the target Supabase project: Dashboard → **Connect** → **Session pooler** (port **5432**), or Project Settings → Database.
 2. Paste the URI into the GitHub secret with **no** surrounding quotes and **no** trailing newline.
 3. Replace `[YOUR-PASSWORD]` with the real database password (Database Settings). This is the **database** password, not the anon/service role API key.
 4. If the password contains `@`, `#`, `:`, `/`, `?`, `%`, or spaces, **percent-encode** those characters in the URI (`@` → `%40`, `#` → `%23`, `:` → `%3A`, `/` → `%2F`, `?` → `%3F`, `%` → `%25`, space → `%20`). Or reset the DB password to alphanumeric and skip encoding.
