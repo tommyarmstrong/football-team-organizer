@@ -43,6 +43,9 @@ export default async function PeoplePage() {
     : filterPeopleDirectory(people, ctx, club.id).map((person) =>
         redactDirectoryEmergencyContact(person, ctx, club.id),
       );
+  const showAccountDetailsFor = visiblePeople
+    .filter((person) => directoryShowsAccountDetails(person, ctx, club.id))
+    .map((person) => person.id);
 
   return (
     <div className="space-y-8">
@@ -72,9 +75,7 @@ export default async function PeoplePage() {
       {!error && visiblePeople.length > 0 ? (
         <PeopleDirectoryList
           people={visiblePeople}
-          showAccountDetails={(person) =>
-            directoryShowsAccountDetails(person, ctx, club.id)
-          }
+          showAccountDetailsFor={showAccountDetailsFor}
         />
       ) : null}
     </div>
