@@ -9,7 +9,9 @@
 #                         **mga-production**. Prefer the IPv4-friendly Session
 #                         pooler string from that project's Dashboard →
 #                         Project Settings → Database. Do NOT use the
-#                         transaction pooler (port 6543).
+#                         transaction pooler (port 6543). Replace
+#                         [YOUR-PASSWORD]; percent-encode special chars in the
+#                         password (@ → %40, # → %23, etc.). No quotes.
 #     AWS_ROLE_TO_ASSUME  IAM role ARN for GitHub OIDC (preferred). Example:
 #                         arn:aws:iam::123456789012:role/github-db-backup
 #     # Fallback if OIDC is not set up yet (OIDC is preferred):
@@ -101,6 +103,26 @@ jobs:
             exit 1
           fi
 
+          # Normalize common paste mistakes (quotes / surrounding whitespace).
+          # Never echo the URL — it contains the DB password.
+          SUPABASE_DB_URL="$(printf '%s' "$SUPABASE_DB_URL" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+
+          case "$SUPABASE_DB_URL" in
+            postgres://*|postgresql://*)
+              ;;
+            *)
+              echo "::error::SUPABASE_DB_URL must start with postgresql:// or postgres:// (got a non-URI value)."
+              exit 1
+              ;;
+          esac
+
+          case "$SUPABASE_DB_URL" in
+            *'[YOUR-PASSWORD]'*|*YOUR-PASSWORD*|*'[PASSWORD]'*)
+              echo "::error::SUPABASE_DB_URL still contains a password placeholder. Replace it with the real DB password (URL-encoded if it has special characters)."
+              exit 1
+              ;;
+          esac
+
           # Reject transaction-pooler URLs (port 6543) — dumps need session/direct.
           case "$SUPABASE_DB_URL" in
             *:6543/*|*:6543)
@@ -123,14 +145,21 @@ jobs:
           trap 'rm -rf "$WORKDIR"' EXIT
           cd "$WORKDIR"
 
+          dump_or_explain() {
+            if ! supabase db dump "$@"; then
+              echo "::error::supabase db dump failed to use SUPABASE_DB_URL. Usual cause: DB password special characters (@ # : / ? % space) are not percent-encoded in the URI. Encode them (e.g. @ → %40, # → %23) or reset the DB password to alphanumeric, then update the secret."
+              exit 1
+            fi
+          }
+
           echo "Dumping roles…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f roles.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" --role-only -f roles.sql
 
           echo "Dumping schema…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" -f schema.sql
 
           echo "Dumping data…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f data.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f data.sql
 
           for f in roles.sql schema.sql data.sql; do
             if [ ! -s "$f" ]; then

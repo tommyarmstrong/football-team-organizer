@@ -24,6 +24,22 @@ The archive contains `roles.sql`, `schema.sql`, and `data.sql` (Supabase CLI log
 | `AWS_REGION`           | Variable | AWS region for the bucket / STS, e.g. `us-east-1`.                                                                                                                                                                    |
 | `BACKUP_S3_BUCKET`     | Variable | Destination bucket name (no `s3://` prefix).                                                                                                                                                                          |
 
+#### Formatting `SUPABASE_DB_URL`
+
+1. In **mga-production**: Dashboard → **Connect** → **Session pooler** (port **5432**), or Project Settings → Database.
+2. Paste the URI into the GitHub secret with **no** surrounding quotes and **no** trailing newline.
+3. Replace `[YOUR-PASSWORD]` with the real database password (Database Settings). This is the **database** password, not the anon/service role API key.
+4. If the password contains `@`, `#`, `:`, `/`, `?`, `%`, or spaces, **percent-encode** those characters in the URI (`@` → `%40`, `#` → `%23`, `:` → `%3A`, `/` → `%2F`, `?` → `%3F`, `%` → `%25`, space → `%20`). Or reset the DB password to alphanumeric and skip encoding.
+5. Confirm the URI contains the `SUPABASE_PROJECT_REF` value (project ref appears in the username or hostname).
+
+Example shape (password already encoded if needed):
+
+```
+postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+`failed to parse connection string` almost always means step 3 or 4 was skipped.
+
 Fallback (not preferred): `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` instead of OIDC — requires editing the workflow’s `configure-aws-credentials` step.
 
 ### AWS setup (outside this repo)
