@@ -133,9 +133,7 @@ export default async function MatchDetailPage({
             venueName={match.venue?.name ?? null}
             venueId={match.venue?.id ?? null}
             competitionName={
-              match.is_friendly
-                ? "Friendly"
-                : (match.competition?.name ?? null)
+              match.is_friendly ? "Friendly" : (match.competition?.name ?? null)
             }
             status={match.status}
             matchDaySquadCount={matchSquadIds.size}
