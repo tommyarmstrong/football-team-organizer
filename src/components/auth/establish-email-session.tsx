@@ -63,7 +63,12 @@ export function EstablishEmailSession({
           await supabase.auth.exchangeCodeForSession(params.code);
         if (exchangeError) {
           if (!cancelled) {
-            setError(exchangeError.message);
+            const message = /code verifier/i.test(exchangeError.message)
+              ? kind === "recovery"
+                ? "This reset link needs a fresh request. Use Forgot password? again, then open the newest email in this browser."
+                : "This invitation link could not be completed in this browser. Open the newest invite email on the device where you can finish setup, or ask your club to resend it."
+              : exchangeError.message;
+            setError(message);
             setStatus("error");
           }
           return;

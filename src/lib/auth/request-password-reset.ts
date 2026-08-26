@@ -1,14 +1,20 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
 
 const SUCCESS_MESSAGE =
   "If an account exists for that email, we sent a password reset link. Check your inbox.";
 
 /**
- * Starts a password-recovery email from the browser client.
+ * Starts a password-recovery email.
  *
- * Must run in the browser (not a Server Action): PKCE stores a code verifier
- * in cookies via @supabase/ssr, and /auth/callback needs that same cookie to
- * call exchangeCodeForSession.
+ * Uses the implicit Auth flow (not PKCE). The SSR browser client always uses
+ * PKCE, which stores a code verifier in cookies that must still be present when
+ * the email link is opened — that fails across devices/browsers and often even
+ * in the same browser. Implicit recovery returns tokens in the URL hash, which
+ * `/auth/reset-password` already establishes via setSession.
+ *
+ * Prefer the hosted Recovery email template that uses `token_hash` +
+ * `/auth/confirm` (see `src/templates/recovery.html`) for the SSR-recommended
+ * path that also works without hash tokens.
  */
 export async function requestPasswordResetEmail(
   email: string,
@@ -16,10 +22,23 @@ export async function requestPasswordResetEmail(
   const trimmed = email.trim();
   if (!trimmed) return { error: "Enter your email address." };
 
-  const supabase = createClient();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    return { error: "Auth is not configured." };
+  }
+
+  const supabase = createSupabaseJsClient(url, anonKey, {
+    auth: {
+      flowType: "implicit",
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+      storageKey: "ft-password-reset-request",
+    },
+  });
+
   const origin = window.location.origin;
-  // Land on the reset page so exchangeCodeForSession runs in the browser
-  // against the same cookie storage that holds the PKCE code verifier.
   const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
     redirectTo: `${origin}/auth/reset-password`,
   });
