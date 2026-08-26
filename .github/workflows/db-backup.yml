@@ -1,20 +1,26 @@
-# Daily logical backup of hosted Supabase Postgres → AWS S3.
+# Daily logical backup of the production Supabase project (mga-production)
+# Postgres → AWS S3. Do not point this workflow at the integration project
+# (football-team-organiser).
 #
 # Required GitHub configuration (Settings → Secrets and variables → Actions):
 #
 #   Secrets:
-#     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432). Prefer the
-#                         IPv4-friendly Session pooler string from Supabase
-#                         Dashboard → Project Settings → Database. Do NOT use
-#                         the transaction pooler (port 6543).
+#     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432) for
+#                         **mga-production**. Prefer the IPv4-friendly Session
+#                         pooler string from that project's Dashboard →
+#                         Project Settings → Database. Do NOT use the
+#                         transaction pooler (port 6543).
 #     AWS_ROLE_TO_ASSUME  IAM role ARN for GitHub OIDC (preferred). Example:
 #                         arn:aws:iam::123456789012:role/github-db-backup
 #     # Fallback if OIDC is not set up yet (OIDC is preferred):
 #     # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 #
 #   Variables (or secrets):
-#     AWS_REGION          e.g. eu-east-1
-#     BACKUP_S3_BUCKET    Destination bucket name e.g. newcastle-united (no s3:// prefix)
+#     SUPABASE_PROJECT_REF  mga-production project ref (Settings → General).
+#                           The dump URL must contain this ref so we cannot
+#                           silently back up the integration database.
+#     AWS_REGION            e.g. us-east-1
+#     BACKUP_S3_BUCKET      Destination bucket name (no s3:// prefix)
 #
 # AWS (outside this repo): create the bucket; attach a role trust policy for
 # GitHub OIDC (token.actions.githubusercontent.com) limited to this repo +
@@ -47,6 +53,7 @@ jobs:
     name: Dump and upload to S3
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: mga-production
     permissions:
       contents: read
       id-token: write # required for AWS OIDC
@@ -76,12 +83,17 @@ jobs:
         env:
           # Bound only for this step; never echo or log this value.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_REF }}
           BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET || secrets.BACKUP_S3_BUCKET }}
         run: |
           set -euo pipefail
 
           if [ -z "${SUPABASE_DB_URL:-}" ]; then
-            echo "::error::SUPABASE_DB_URL secret is not set"
+            echo "::error::SUPABASE_DB_URL secret is not set (must be the mga-production session-mode URI)"
+            exit 1
+          fi
+          if [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
+            echo "::error::SUPABASE_PROJECT_REF variable is not set (must be the mga-production project ref)"
             exit 1
           fi
           if [ -z "${BACKUP_S3_BUCKET:-}" ]; then
@@ -93,6 +105,16 @@ jobs:
           case "$SUPABASE_DB_URL" in
             *:6543/*|*:6543)
               echo "::error::SUPABASE_DB_URL looks like the transaction pooler (port 6543). Use session mode on port 5432."
+              exit 1
+              ;;
+          esac
+
+          # Fail closed if the URL is still the integration project.
+          case "$SUPABASE_DB_URL" in
+            *"${SUPABASE_PROJECT_REF}"*)
+              ;;
+            *)
+              echo "::error::SUPABASE_DB_URL does not contain SUPABASE_PROJECT_REF. Point the secret at mga-production, not football-team-organiser."
               exit 1
               ;;
           esac
