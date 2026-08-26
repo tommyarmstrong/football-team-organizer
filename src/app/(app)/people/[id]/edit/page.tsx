@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import {
+  canEditLinkedPlayerProfile,
+  canEditPersonDetails,
   canManageClub,
   getViewerContext,
   isSelfPerson,
@@ -44,9 +46,7 @@ export default async function EditPersonPage({
   if (!person) notFound();
 
   const self = isSelfPerson(ctx, person);
-  const canEdit = Boolean(club && canManageClub(ctx, club.id));
-  if (!canEdit && !self) redirect("/dashboard");
-
+  const canAdmin = Boolean(club && canManageClub(ctx, club.id));
   const player =
     club != null
       ? (person.players.find(
@@ -55,6 +55,19 @@ export default async function EditPersonPage({
         person.players.find((row) => row.active_role) ??
         null)
       : (person.players.find((row) => row.active_role) ?? null);
+
+  if (
+    !canEditPersonDetails(ctx, person, player?.id ?? null, club?.id ?? null)
+  ) {
+    redirect("/dashboard");
+  }
+
+  const showPlayerDobSchool = Boolean(
+    player &&
+    club &&
+    canEditLinkedPlayerProfile(ctx, player.id, player.club_id),
+  );
+  const showPlayerPosition = Boolean(player && canAdmin);
 
   const coachRole =
     club != null
@@ -75,16 +88,25 @@ export default async function EditPersonPage({
         <CardHeader>
           <CardTitle>Name and details</CardTitle>
           <CardDescription>
-            Shared person-level details
-            {player ? ", plus player DOB, position, and school." : "."}
+            {showPlayerDobSchool && showPlayerPosition
+              ? "Shared person-level details, plus player DOB, position, and school."
+              : showPlayerDobSchool
+                ? "Name, contact details, date of birth, and school."
+                : "Name, email, and phone number."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PersonForm mode="edit" person={person} player={player} />
+          <PersonForm
+            mode="edit"
+            person={person}
+            player={player}
+            showPlayerDobSchool={showPlayerDobSchool}
+            showPlayerPosition={showPlayerPosition}
+          />
         </CardContent>
       </Card>
 
-      {coachRecord && (canEdit || self) ? (
+      {coachRecord && (canAdmin || self) ? (
         <CoachTextCards
           coachId={coachRecord.id}
           personId={person.id}
@@ -93,7 +115,7 @@ export default async function EditPersonPage({
         />
       ) : null}
 
-      {canEdit && club ? (
+      {canAdmin && club ? (
         <Card>
           <CardHeader>
             <CardTitle>Club roles</CardTitle>

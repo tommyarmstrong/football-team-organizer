@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccessClubAndPeople,
+  canEditLinkedPlayerProfile,
   canEditMatchDay,
+  canEditPersonDetails,
   canEditPlayer,
   canEditTeam,
+  isGuardianOfPlayer,
   isSelfPerson,
   canManageClub,
   canReadTeam,
@@ -218,6 +221,61 @@ describe("canEditPlayer / canViewPlayerContact", () => {
     expect(
       canViewPlayerContact(viewer(), "player-1", "club-1", ["team-1"]),
     ).toBe(false);
+  });
+});
+
+describe("canEditPersonDetails / canEditLinkedPlayerProfile", () => {
+  it("lets a person edit their own name and contact details", () => {
+    expect(
+      canEditPersonDetails(
+        viewer({ personId: "person-1" }),
+        { id: "person-1", auth_user_id: null },
+        null,
+        "club-1",
+      ),
+    ).toBe(true);
+  });
+
+  it("lets a guardian edit a linked player's person details and profile", () => {
+    const ctx = viewer({ guardianPlayerIds: ["player-1"] });
+    expect(
+      canEditPersonDetails(
+        ctx,
+        { id: "kid", auth_user_id: null },
+        "player-1",
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(canEditLinkedPlayerProfile(ctx, "player-1", "club-1")).toBe(true);
+    expect(
+      canEditPersonDetails(
+        ctx,
+        { id: "other", auth_user_id: null },
+        "player-2",
+        "club-1",
+      ),
+    ).toBe(false);
+    expect(canEditLinkedPlayerProfile(ctx, "player-2", "club-1")).toBe(false);
+  });
+
+  it("does not let a player edit their own DOB or school via the guardian path", () => {
+    expect(
+      canEditLinkedPlayerProfile(
+        viewer({ personId: "person-1", selfPlayerIds: ["player-1"] }),
+        "player-1",
+        "club-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("identifies guardians of a player", () => {
+    expect(
+      isGuardianOfPlayer(
+        viewer({ guardianPlayerIds: ["player-1"] }),
+        "player-1",
+      ),
+    ).toBe(true);
+    expect(isGuardianOfPlayer(viewer(), "player-1")).toBe(false);
   });
 });
 

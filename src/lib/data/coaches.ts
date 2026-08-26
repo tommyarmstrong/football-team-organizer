@@ -118,16 +118,19 @@ export async function getCoachTeams(
   coachId: string,
 ): Promise<{ data: CoachTeamMembership[]; error: string | null }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("team_coaches")
-    .select("id, team_id, role, team:teams(name, season_label)")
-    .eq("coach_id", coachId);
+  const { data, error } = await supabase.rpc("list_visible_coach_teams", {
+    p_coach_id: coachId,
+  });
 
   if (error) return { data: [], error: error.message };
 
-  const rows: CoachTeamMembership[] = (data ?? []).map((tc) =>
-    mapCoachTeamMembership(tc),
-  );
+  const rows: CoachTeamMembership[] = (data ?? []).map((row) => ({
+    team_coach_id: row.team_coach_id,
+    team_id: row.team_id,
+    team_name: row.team_name,
+    team_season_label: row.team_season_label,
+    role: row.role,
+  }));
 
   return { data: rows, error: null };
 }

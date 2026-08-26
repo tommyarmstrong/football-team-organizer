@@ -9,6 +9,7 @@ import { getPrimaryClub } from "@/lib/data/clubs";
 import { listPeople } from "@/lib/data/people";
 import {
   directoryDescription,
+  directoryShowsAccountDetails,
   filterPeopleDirectory,
   redactDirectoryEmergencyContact,
 } from "@/lib/people/directory";
@@ -69,7 +70,12 @@ export default async function PeoplePage() {
         />
       ) : null}
       {!error && visiblePeople.length > 0 ? (
-        <PeopleDirectoryList people={visiblePeople} />
+        <PeopleDirectoryList
+          people={visiblePeople}
+          showAccountDetails={(person) =>
+            directoryShowsAccountDetails(person, ctx, club.id)
+          }
+        />
       ) : null}
     </div>
   );

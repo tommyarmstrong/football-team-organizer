@@ -1,6 +1,12 @@
 import { COMPETITION_KINDS } from "@/lib/constants";
 import type { CompetitionKind } from "@/lib/supabase/database.types";
 
+export type StatCompetitionRef = {
+  competitionId: string | null;
+  competitionKind: CompetitionKind | null;
+  isFriendly: boolean;
+};
+
 export type CompetitionFilterOption = {
   id: string;
   name: string;
@@ -47,4 +53,30 @@ export function matchesCompetitionFilters(input: {
   }
 
   return true;
+}
+
+export function filterStatCompetitions(
+  events: StatCompetitionRef[],
+  selectedCompetitionId: string,
+  selectedCompetitionKind: string,
+): StatCompetitionRef[] {
+  return events.filter((event) =>
+    matchesCompetitionFilters({
+      competitionId: event.competitionId,
+      competitionKind: event.competitionKind,
+      isFriendly: event.isFriendly,
+      selectedCompetitionId,
+      selectedCompetitionKind,
+    }),
+  );
+}
+
+export function hasCompetitionFilter(
+  selectedCompetitionId: string,
+  selectedCompetitionKind: string,
+): boolean {
+  return (
+    selectedCompetitionId !== ALL_COMPETITIONS ||
+    selectedCompetitionKind !== ALL_COMPETITION_KINDS
+  );
 }

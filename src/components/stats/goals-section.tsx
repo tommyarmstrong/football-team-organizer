@@ -23,9 +23,7 @@ import {
 import {
   ALL_COMPETITION_KINDS,
   ALL_COMPETITIONS,
-  type CompetitionFilterOption,
 } from "@/lib/stats/competition-filters";
-import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
 import { Button } from "@/components/ui/button";
@@ -54,15 +52,15 @@ function FilterButton({
 
 export function GoalsSection({
   data,
-  competitions,
+  competitionId = ALL_COMPETITIONS,
+  competitionKind = ALL_COMPETITION_KINDS,
 }: {
   data: GoalsByPlayerPoint[];
-  competitions: CompetitionFilterOption[];
+  competitionId?: string;
+  competitionKind?: string;
 }) {
   const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
   const [metric, setMetric] = useState<GoalsMetric>("total");
-  const [competitionId, setCompetitionId] = useState(ALL_COMPETITIONS);
-  const [competitionKind, setCompetitionKind] = useState(ALL_COMPETITION_KINDS);
 
   const rows = buildGoalsViewRows(
     data,
@@ -77,7 +75,7 @@ export function GoalsSection({
     .join("; ");
 
   return (
-    <Section title="Goals" description="Our goals in played matches">
+    <Section title="Goals">
       <div className="space-y-4">
         {data.length === 0 ? (
           <EmptyState
@@ -86,15 +84,6 @@ export function GoalsSection({
           />
         ) : (
           <>
-            <StatsCompetitionFilters
-              idPrefix="goals"
-              competitions={competitions}
-              competitionId={competitionId}
-              competitionKind={competitionKind}
-              onCompetitionIdChange={setCompetitionId}
-              onCompetitionKindChange={setCompetitionKind}
-            />
-
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Position
