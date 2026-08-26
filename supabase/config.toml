@@ -255,7 +255,7 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Email templates use token_hash → /auth/confirm (no PKCE code verifier).
-# Hosted projects: paste the matching files from src/templates/ into
+# Hosted projects: paste matching files from supabase/templates/ into
 # Authentication → Email Templates in the Supabase dashboard.
 # content_path bases differ by CLI quirk: auth.email.template.* is project-root
 # relative; auth.email.notification.* is relative to supabase/.

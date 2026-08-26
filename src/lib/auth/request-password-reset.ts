@@ -13,8 +13,8 @@ const SUCCESS_MESSAGE =
  * `/auth/reset-password` already establishes via setSession.
  *
  * Prefer the hosted Recovery email template that uses `token_hash` +
- * `/auth/confirm` (see `src/templates/recovery.html`) for the SSR-recommended
- * path that also works without hash tokens.
+ * `/auth/confirm` (see `supabase/templates/recovery.html`) for the
+ * SSR-recommended path that also works without hash tokens.
  */
 export async function requestPasswordResetEmail(
   email: string,
