@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { requestPasswordResetAction } from "@/lib/auth/actions";
+import { requestPasswordResetEmail } from "@/lib/auth/request-password-reset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ export function ForgotPasswordForm({
     setError(null);
     setSuccess(null);
     setPending(true);
-    const result = await requestPasswordResetAction({ email });
+    const result = await requestPasswordResetEmail(email);
     setPending(false);
     if (result.error) {
       setError(result.error);

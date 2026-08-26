@@ -14,6 +14,25 @@ function markPasswordSetupCookie(kind: "invite" | "recovery") {
   document.cookie = `${PASSWORD_SETUP_COOKIE}=${kind}; Path=/; Max-Age=3600; SameSite=Lax`;
 }
 
+function stripAuthParamsFromUrl() {
+  const url = new URL(window.location.href);
+  for (const key of [
+    "code",
+    "token_hash",
+    "type",
+    "error",
+    "error_description",
+    "error_code",
+  ]) {
+    url.searchParams.delete(key);
+  }
+  window.history.replaceState(
+    {},
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
 export function EstablishEmailSession({
   kind,
   children,
@@ -35,19 +54,22 @@ export function EstablishEmailSession({
         window.location.hash,
       );
 
-      if (params.code) {
-        const search = new URLSearchParams(window.location.search);
-        if (!search.get("next")) {
-          search.set(
-            "next",
-            kind === "recovery" ? "/auth/reset-password" : "/auth/invite",
-          );
-        }
-        window.location.replace(`/auth/callback?${search.toString()}`);
-        return;
-      }
+      const supabase = createClient();
 
-      if (params.tokenHash && params.type) {
+      // Exchange PKCE codes in the browser so the code verifier cookie written
+      // by resetPasswordForEmail / signIn is available in the same storage.
+      if (params.code) {
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(params.code);
+        if (exchangeError) {
+          if (!cancelled) {
+            setError(exchangeError.message);
+            setStatus("error");
+          }
+          return;
+        }
+        stripAuthParamsFromUrl();
+      } else if (params.tokenHash && params.type) {
         const search = new URLSearchParams(window.location.search);
         if (!search.get("next")) {
           search.set(
@@ -57,12 +79,7 @@ export function EstablishEmailSession({
         }
         window.location.replace(`/auth/confirm?${search.toString()}`);
         return;
-      }
-
-      const queryError = params.errorDescription || params.error;
-      const supabase = createClient();
-
-      if (params.accessToken && params.refreshToken) {
+      } else if (params.accessToken && params.refreshToken) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: params.accessToken,
           refresh_token: params.refreshToken,
@@ -79,12 +96,15 @@ export function EstablishEmailSession({
           "",
           `${window.location.pathname}${window.location.search}`,
         );
-      } else if (queryError && !params.code && !params.tokenHash) {
-        if (!cancelled) {
-          setError(queryError.replace(/\+/g, " "));
-          setStatus("error");
+      } else {
+        const queryError = params.errorDescription || params.error;
+        if (queryError) {
+          if (!cancelled) {
+            setError(queryError.replace(/\+/g, " "));
+            setStatus("error");
+          }
+          return;
         }
-        return;
       }
 
       const {

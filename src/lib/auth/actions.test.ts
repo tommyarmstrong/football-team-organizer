@@ -33,17 +33,12 @@ vi.mock("@/lib/people/invitations", () => ({
   findPersonForVerifiedEmail: findPersonForVerifiedEmailMock,
 }));
 
-import {
-  requestOwnPasswordResetAction,
-  requestPasswordResetAction,
-  updatePasswordAndFinishAction,
-} from "@/lib/auth/actions";
+import { updatePasswordAndFinishAction } from "@/lib/auth/actions";
 
 const user = { id: "auth-1", email: "ada@example.com" };
 
 function authClient({
   sessionUser = user as { id: string; email?: string | null } | null,
-  resetError = null as string | null,
   updateError = null as string | null,
 } = {}) {
   return {
@@ -52,11 +47,6 @@ function authClient({
         data: { user: sessionUser },
         error: null,
       })),
-      resetPasswordForEmail: vi.fn(async () =>
-        resetError
-          ? { data: null, error: { message: resetError } }
-          : { data: {}, error: null },
-      ),
       updateUser: vi.fn(async () =>
         updateError
           ? { data: { user: null }, error: { message: updateError } }
@@ -66,78 +56,17 @@ function authClient({
   };
 }
 
-describe("password reset and set-password actions", () => {
+describe("updatePasswordAndFinishAction", () => {
   beforeEach(() => {
     createClientMock.mockReset();
     cookiesDeleteMock.mockReset();
     loadInvitationByTokenMock.mockReset();
     linkAuthUserToPersonMock.mockReset();
     findPersonForVerifiedEmailMock.mockReset();
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://tracker.example.com");
-    vi.stubEnv("VERCEL_URL", "");
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
-  });
-
-  it("rejects a blank reset email without calling Supabase", async () => {
-    const result = await requestPasswordResetAction({ email: "  " });
-    expect(result).toEqual({ error: "Enter your email address." });
-    expect(createClientMock).not.toHaveBeenCalled();
-  });
-
-  it("sends a reset email that returns to /auth/reset-password", async () => {
-    const client = authClient();
-    createClientMock.mockResolvedValue(client);
-
-    const result = await requestPasswordResetAction({
-      email: " ada@example.com ",
-    });
-
-    expect(client.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-      "ada@example.com",
-      { redirectTo: "https://tracker.example.com/auth/reset-password" },
-    );
-    expect(result.success).toMatch(/password reset link/i);
-    expect(result.error).toBeUndefined();
-  });
-
-  it("returns the Supabase error when sending a reset email fails", async () => {
-    createClientMock.mockResolvedValue(
-      authClient({ resetError: "rate limited" }),
-    );
-
-    const result = await requestPasswordResetAction({
-      email: "ada@example.com",
-    });
-    expect(result).toEqual({ error: "rate limited" });
-  });
-
-  it("requires a signed-in email for own-account reset", async () => {
-    createClientMock.mockResolvedValue(authClient({ sessionUser: null }));
-    expect(await requestOwnPasswordResetAction()).toEqual({
-      error: "Not signed in.",
-    });
-
-    createClientMock.mockResolvedValue(
-      authClient({ sessionUser: { id: "auth-1", email: null } }),
-    );
-    expect(await requestOwnPasswordResetAction()).toEqual({
-      error: "Not signed in.",
-    });
-  });
-
-  it("sends a reset email to the signed-in user", async () => {
-    const client = authClient();
-    createClientMock.mockResolvedValue(client);
-
-    const result = await requestOwnPasswordResetAction();
-    expect(client.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-      "ada@example.com",
-      { redirectTo: "https://tracker.example.com/auth/reset-password" },
-    );
-    expect(result.success).toBeTruthy();
   });
 
   it("rejects a weak new password without updating the user", async () => {
