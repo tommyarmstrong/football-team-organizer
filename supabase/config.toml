@@ -257,29 +257,32 @@ otp_expiry = 3600
 # Email templates use token_hash → /auth/confirm (no PKCE code verifier).
 # Hosted projects: paste the matching files from src/templates/ into
 # Authentication → Email Templates in the Supabase dashboard.
+# content_path bases differ by CLI quirk: auth.email.template.* is project-root
+# relative; auth.email.notification.* is relative to supabase/.
+# See https://github.com/supabase/cli/issues/5124
 [auth.email.template.invite]
 subject = "You're invited to {{ if .Data.club_name }}{{ .Data.club_name }}{{ else }}Match Tracker{{ end }}"
-content_path = "./templates/invite.html"
+content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.confirmation]
 subject = "Confirm your email for Match Tracker"
-content_path = "./templates/confirmation.html"
+content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
 subject = "Reset your Match Tracker password"
-content_path = "./templates/recovery.html"
+content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.magic_link]
 subject = "Your Match Tracker sign-in link"
-content_path = "./templates/magic_link.html"
+content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.email_change]
 subject = "Confirm your new Match Tracker email"
-content_path = "./templates/email_change.html"
+content_path = "./supabase/templates/email_change.html"
 
 [auth.email.template.reauthentication]
 subject = "{{ .Token }} is your Match Tracker verification code"
-content_path = "./templates/reauthentication.html"
+content_path = "./supabase/templates/reauthentication.html"
 
 [auth.email.notification.password_changed]
 enabled = true
