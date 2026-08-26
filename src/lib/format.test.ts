@@ -36,6 +36,7 @@ import {
   labelVenueFoodAndDrink,
   labelVenueSurface,
   managerDisplayName,
+  matchCompetitionLabel,
   matchSummaryLines,
   playerDisplayName,
   resultLetter,
@@ -163,6 +164,32 @@ describe("matchSummaryLines", () => {
       dateTime: formatMatchDate("2026-03-15"),
       venue: null,
     });
+  });
+});
+
+describe("matchCompetitionLabel", () => {
+  it("returns Friendly for friendly fixtures", () => {
+    expect(
+      matchCompetitionLabel({
+        is_friendly: true,
+        competition: { name: "Premier League" },
+      }),
+    ).toBe("Friendly");
+  });
+
+  it("returns the competition name for competitive fixtures", () => {
+    expect(
+      matchCompetitionLabel({
+        is_friendly: false,
+        competition: { name: "Premier League" },
+      }),
+    ).toBe("Premier League");
+  });
+
+  it("returns null when there is no competition", () => {
+    expect(
+      matchCompetitionLabel({ is_friendly: false, competition: null }),
+    ).toBeNull();
   });
 });
 

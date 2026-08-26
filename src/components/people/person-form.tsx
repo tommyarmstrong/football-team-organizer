@@ -17,10 +17,14 @@ export function PersonForm({
   person,
   player,
   mode,
+  showPlayerDobSchool = Boolean(player),
+  showPlayerPosition = Boolean(player),
 }: {
   person?: Person;
   player?: PersonPlayerRef | null;
   mode: "create" | "edit";
+  showPlayerDobSchool?: boolean;
+  showPlayerPosition?: boolean;
 }) {
   const action =
     mode === "create"
@@ -85,49 +89,55 @@ export function PersonForm({
             disabled={pending}
           />
         </div>
-        {player ? (
+        {player && (showPlayerDobSchool || showPlayerPosition) ? (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="date_of_birth">
-                DOB <OptionalHint />
-              </Label>
-              <Input
-                id="date_of_birth"
-                name="date_of_birth"
-                type="date"
-                defaultValue={player.date_of_birth ?? ""}
-                disabled={pending}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="position">
-                Position <OptionalHint />
-              </Label>
-              <NativeSelect
-                id="position"
-                name="position"
-                defaultValue={player.position ?? ""}
-                disabled={pending}
-              >
-                <option value="">None</option>
-                {PLAYER_POSITIONS.map((pos) => (
-                  <option key={pos} value={pos}>
-                    {pos}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="school">
-                School <OptionalHint />
-              </Label>
-              <Input
-                id="school"
-                name="school"
-                defaultValue={player.school ?? ""}
-                disabled={pending}
-              />
-            </div>
+            {showPlayerDobSchool ? (
+              <div className="space-y-2">
+                <Label htmlFor="date_of_birth">
+                  DOB <OptionalHint />
+                </Label>
+                <Input
+                  id="date_of_birth"
+                  name="date_of_birth"
+                  type="date"
+                  defaultValue={player.date_of_birth ?? ""}
+                  disabled={pending}
+                />
+              </div>
+            ) : null}
+            {showPlayerPosition ? (
+              <div className="space-y-2">
+                <Label htmlFor="position">
+                  Position <OptionalHint />
+                </Label>
+                <NativeSelect
+                  id="position"
+                  name="position"
+                  defaultValue={player.position ?? ""}
+                  disabled={pending}
+                >
+                  <option value="">None</option>
+                  {PLAYER_POSITIONS.map((pos) => (
+                    <option key={pos} value={pos}>
+                      {pos}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            ) : null}
+            {showPlayerDobSchool ? (
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="school">
+                  School <OptionalHint />
+                </Label>
+                <Input
+                  id="school"
+                  name="school"
+                  defaultValue={player.school ?? ""}
+                  disabled={pending}
+                />
+              </div>
+            ) : null}
             <input type="hidden" name="player_id" value={player.id} />
           </>
         ) : null}

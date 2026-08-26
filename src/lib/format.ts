@@ -97,6 +97,15 @@ export function formatMatchDateTime(
     .join(" · ");
 }
 
+/** Competition line for a fixture: friendlies show as "Friendly". */
+export function matchCompetitionLabel(match: {
+  is_friendly?: boolean;
+  competition?: { name: string } | null;
+}): string | null {
+  if (match.is_friendly) return "Friendly";
+  return match.competition?.name?.trim() || null;
+}
+
 /**
  * Shared match summary lines used on the matches list, match page, and
  * dashboard: competition, then date and time, then venue — each optional

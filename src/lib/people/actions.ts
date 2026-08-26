@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import {
   canManageClub,
+  canEditPersonDetails,
+  canEditLinkedPlayerProfile,
   getViewerContext,
-  isSelfPerson,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import {
@@ -122,9 +123,19 @@ export async function updatePersonAction(
   if (!existing) return { error: "Person not found." };
 
   const club = await getPrimaryClub();
-  const isSelf = isSelfPerson(ctx, existing);
   const isAdmin = club ? canManageClub(ctx, club.id) : false;
-  if (!isSelf && !isAdmin) {
+  const playerId =
+    existing.players.find((row) => ctx.guardianPlayerIds.includes(row.id))
+      ?.id ??
+    existing.players.find((row) => row.active_role)?.id ??
+    null;
+  const canEdit = canEditPersonDetails(
+    ctx,
+    existing,
+    playerId,
+    club?.id ?? null,
+  );
+  if (!canEdit) {
     return { error: "You cannot edit this person." };
   }
 
@@ -152,14 +163,26 @@ export async function updatePersonAction(
       return { error: "Player role not found for this person." };
     }
 
-    const { error: playerError } = await updatePlayer(playerFields.player_id, {
-      first_name: parsed.first_name,
-      last_name: parsed.last_name,
-      date_of_birth: playerFields.date_of_birth,
-      position: playerFields.position,
-      school: playerFields.school,
-    });
-    if (playerError) return { error: playerError };
+    if (
+      isAdmin ||
+      canEditLinkedPlayerProfile(
+        ctx,
+        playerFields.player_id,
+        player.data.club_id,
+      )
+    ) {
+      const { error: playerError } = await updatePlayer(
+        playerFields.player_id,
+        {
+          first_name: parsed.first_name,
+          last_name: parsed.last_name,
+          date_of_birth: playerFields.date_of_birth,
+          position: isAdmin ? playerFields.position : player.data.position,
+          school: playerFields.school,
+        },
+      );
+      if (playerError) return { error: playerError };
+    }
   }
 
   revalidatePeople(id);

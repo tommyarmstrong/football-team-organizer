@@ -1,6 +1,7 @@
 import {
   canManageClub,
   canViewPlayerContact,
+  isClubStaff,
   isSelfPerson,
   staffTeamIds,
   type ViewerContext,
@@ -45,6 +46,8 @@ export function isPersonVisibleInDirectory(
   const guardianViewer = isGuardianDirectoryViewer(ctx);
 
   if (self && (coachViewer || guardianViewer)) return true;
+
+  if (guardianViewer && person.roles.coach) return true;
 
   if (
     guardianViewer &&
@@ -103,5 +106,18 @@ export function directoryDescription(
   if (coachViewer) {
     return `Coaches, managers, and people linked to your teams at ${clubName}.`;
   }
-  return `Your account and linked players at ${clubName}.`;
+  return `Your account, linked players, and coaches at ${clubName}.`;
+}
+
+export function directoryShowsAccountDetails(
+  person: PersonDirectoryVisibility,
+  ctx: ViewerContext,
+  clubId: string,
+): boolean {
+  if (canManageClub(ctx, clubId) || isClubStaff(ctx, clubId)) return true;
+  if (isSelfPerson(ctx, person)) return true;
+  if (person.playerIds.some((id) => ctx.guardianPlayerIds.includes(id))) {
+    return true;
+  }
+  return false;
 }

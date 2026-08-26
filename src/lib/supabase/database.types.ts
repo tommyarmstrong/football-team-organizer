@@ -1282,6 +1282,25 @@ export type Database = {
         Args: { p_name: string };
         Returns: Database["public"]["Tables"]["clubs"]["Row"];
       };
+      list_visible_coach_teams: {
+        Args: { p_coach_id: string };
+        Returns: {
+          team_coach_id: string;
+          team_id: string;
+          team_name: string;
+          team_season_label: string;
+          role: string | null;
+        }[];
+      };
+      is_club_guardian: { Args: { p_club_id: string }; Returns: boolean };
+      is_guardian_of_person: {
+        Args: { p_person_id: string };
+        Returns: boolean;
+      };
+      is_guardian_of_player: {
+        Args: { p_player_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";

@@ -3,6 +3,7 @@ import type { ViewerContext } from "@/lib/authz/context";
 import type { Team } from "@/lib/supabase/database.types";
 import {
   directoryDescription,
+  directoryShowsAccountDetails,
   filterPeopleDirectory,
   isPersonVisibleInDirectory,
   redactDirectoryEmergencyContact,
@@ -103,7 +104,7 @@ describe("isPersonVisibleInDirectory", () => {
     ).toBe(true);
   });
 
-  it("lets guardians see themselves and linked players only", () => {
+  it("lets guardians see themselves, linked players, and coaches", () => {
     const ctx = viewer({
       userId: "guardian-user",
       personId: "guardian-person",
@@ -165,6 +166,21 @@ describe("isPersonVisibleInDirectory", () => {
             guardian: false,
             coach: true,
             manager: false,
+          },
+        }),
+        ctx,
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(
+      isPersonVisibleInDirectory(
+        person({
+          id: "other-coach-wait",
+          roles: {
+            player: false,
+            guardian: false,
+            coach: false,
+            manager: true,
           },
         }),
         ctx,
@@ -364,6 +380,45 @@ describe("directoryDescription", () => {
         "club-1",
         "Riverside",
       ),
-    ).toBe("Your account and linked players at Riverside.");
+    ).toBe("Your account, linked players, and coaches at Riverside.");
+  });
+});
+
+describe("directoryShowsAccountDetails", () => {
+  it("hides coach login details from guardians who are not staff", () => {
+    const coach = person({
+      id: "coach-1",
+      roles: { player: false, guardian: false, coach: true, manager: false },
+    });
+    expect(
+      directoryShowsAccountDetails(
+        coach,
+        viewer({ guardianPlayerIds: ["player-1"] }),
+        "club-1",
+      ),
+    ).toBe(false);
+    expect(
+      directoryShowsAccountDetails(
+        coach,
+        viewer({ managementClubIds: ["club-1"] }),
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(
+      directoryShowsAccountDetails(
+        person({
+          id: "kid",
+          roles: {
+            player: true,
+            guardian: false,
+            coach: false,
+            manager: false,
+          },
+          playerIds: ["player-1"],
+        }),
+        viewer({ guardianPlayerIds: ["player-1"] }),
+        "club-1",
+      ),
+    ).toBe(true);
   });
 });

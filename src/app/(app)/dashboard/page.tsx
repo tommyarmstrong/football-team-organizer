@@ -16,14 +16,17 @@ import {
   getTopAssists,
   getTopPlayersOfTheMatch,
   getTopScorers,
+  getResultsOverTime,
 } from "@/lib/data/stats";
 import {
   formatAwardMonth,
   formatCountLabel,
+  matchCompetitionLabel,
   matchSummaryLines,
   playerDisplayName,
   teamDisplayName,
 } from "@/lib/format";
+import { STATS_FORM_LIMIT } from "@/lib/constants";
 import { PitchGraphic } from "@/components/brand/pitch-graphic";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
@@ -37,6 +40,7 @@ import {
 } from "@/components/shared/object-list";
 import { MatchScoreboard } from "@/components/matches/match-scoreboard";
 import { CompetitionsSection } from "@/components/team/competitions-section";
+import { FormStrip } from "@/components/stats/form-strip";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function DashboardPage() {
@@ -60,6 +64,7 @@ export default async function DashboardPage() {
     potm,
     competitions,
     potMonth,
+    results,
     canEditMatch,
     canEditTeam,
   ] = await Promise.all([
@@ -70,6 +75,7 @@ export default async function DashboardPage() {
     getTopPlayersOfTheMatch(5),
     listCompetitions(team.id),
     listPlayerOfTheMonth(team.id, 5),
+    getResultsOverTime(),
     canEditActiveMatchDay(),
     canEditActiveTeam(),
   ]);
@@ -82,6 +88,7 @@ export default async function DashboardPage() {
     potm.error,
     competitions.error,
     potMonth.error,
+    results.error,
   ].filter(Boolean);
 
   return (
@@ -128,6 +135,20 @@ export default async function DashboardPage() {
           emptyDescription="Played matches will show here."
         />
       </div>
+
+      <Section
+        title="Form"
+        description={`Most recent ${STATS_FORM_LIMIT} played matches (oldest → newest)`}
+      >
+        {results.form.length === 0 ? (
+          <EmptyState
+            title="No played matches"
+            description="Form appears after you record results."
+          />
+        ) : (
+          <FormStrip form={results.form} />
+        )}
+      </Section>
 
       <Section
         title="Competitions"
@@ -233,7 +254,7 @@ function FixtureSection({
   }
 
   const meta = matchSummaryLines({
-    competitionName: match.competition?.name,
+    competitionName: matchCompetitionLabel(match),
     date: match.date,
     kickoffTime: match.kickoff_time,
     venueName: match.venue?.name,
