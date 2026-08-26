@@ -27,6 +27,7 @@ export function MatchesDirectoryList({
           teamName,
           match.venue?.name ?? "",
           match.competition?.name ?? "",
+          match.is_friendly ? "Friendly" : "",
           labelMatchStatus(match.status),
         ].join(" ")
       }
@@ -38,7 +39,9 @@ export function MatchesDirectoryList({
       emptyFilterDescription="Try a different opponent, venue, or competition."
       renderItem={(match) => {
         const meta = matchSummaryLines({
-          competitionName: match.competition?.name,
+          competitionName: match.is_friendly
+            ? "Friendly"
+            : match.competition?.name,
           date: match.date,
           kickoffTime: match.kickoff_time,
           venueName: match.venue?.name,

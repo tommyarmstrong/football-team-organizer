@@ -41,6 +41,7 @@ export type GoalsByPlayerPoint = {
   goalCompetitions: Array<{
     competitionId: string | null;
     competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
   }>;
 };
 
@@ -61,6 +62,7 @@ export type ResultOverTimePoint = {
   competitionId: string | null;
   competitionKind: CompetitionKind | null;
   competitionName: string | null;
+  isFriendly: boolean;
 };
 
 async function getShirtByPlayer(
@@ -253,7 +255,7 @@ export async function getGoalsByPlayerStats(): Promise<{
   const { data: goalRows, error: goalsError } = await supabase
     .from("goals")
     .select(
-      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status, competition_id, competition:competitions(id, kind))`,
+      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status, competition_id, is_friendly, competition:competitions(id, kind))`,
     )
     .eq("match.team_id", team.id)
     .eq("match.status", "played")
@@ -295,10 +297,18 @@ export async function getGoalsByPlayerStats(): Promise<{
       "kind" in competitionRaw
         ? ((competitionRaw.kind as CompetitionKind | null) ?? null)
         : null;
+    const isFriendly =
+      matchRaw && typeof matchRaw === "object" && "is_friendly" in matchRaw
+        ? Boolean(matchRaw.is_friendly)
+        : false;
     const existing = byPlayer.get(player.id);
     if (existing) {
       existing.goals += 1;
-      existing.goalCompetitions.push({ competitionId, competitionKind });
+      existing.goalCompetitions.push({
+        competitionId,
+        competitionKind,
+        isFriendly,
+      });
       continue;
     }
     byPlayer.set(player.id, {
@@ -308,7 +318,7 @@ export async function getGoalsByPlayerStats(): Promise<{
       position,
       matchesPlayed: 0,
       periodsPlayed: 0,
-      goalCompetitions: [{ competitionId, competitionKind }],
+      goalCompetitions: [{ competitionId, competitionKind, isFriendly }],
     });
   }
 
@@ -497,7 +507,7 @@ export async function getResultsOverTime(): Promise<{
   const { data, error } = await supabase
     .from("matches")
     .select(
-      "id, date, opponent_name, status, competition_id, competition:competitions(id, name, kind), goals(is_opposition)",
+      "id, date, opponent_name, status, competition_id, is_friendly, competition:competitions(id, name, kind), goals(is_opposition)",
     )
     .eq("team_id", team.id)
     .eq("status", "played")
@@ -527,7 +537,10 @@ export async function getResultsOverTime(): Promise<{
       result: letter,
       competitionId: competitionRaw?.id ?? match.competition_id ?? null,
       competitionKind: (competitionRaw?.kind as CompetitionKind | null) ?? null,
-      competitionName: competitionRaw?.name ?? null,
+      competitionName: match.is_friendly
+        ? "Friendly"
+        : (competitionRaw?.name ?? null),
+      isFriendly: Boolean(match.is_friendly),
     });
   }
 

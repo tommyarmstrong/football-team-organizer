@@ -10,6 +10,7 @@ import {
 } from "@/lib/authz/context";
 import {
   DEFAULT_MATCH_PERIODS,
+  FRIENDLY_COMPETITION_VALUE,
   MATCH_HOME_AWAYS,
   MATCH_STATUSES,
   isCompetitionPeriods,
@@ -72,7 +73,9 @@ export async function createMatchAction(
   const kickoff_time = str(formData, "kickoff_time") || null;
   const home_away = str(formData, "home_away") as MatchHomeAway;
   const status = (str(formData, "status") || "scheduled") as MatchStatus;
-  const competition_id = str(formData, "competition_id") || null;
+  const competitionRaw = str(formData, "competition_id");
+  const is_friendly = competitionRaw === FRIENDLY_COMPETITION_VALUE;
+  const competition_id = !competitionRaw || is_friendly ? null : competitionRaw;
   const notes = str(formData, "notes") || null;
   const club_notes = str(formData, "club_notes") || null;
   const periodsRaw = str(formData, "periods");
@@ -106,6 +109,7 @@ export async function createMatchAction(
     home_away,
     venue_id: venueResult.venue_id,
     competition_id,
+    is_friendly,
     notes,
     club_notes,
     status,
@@ -142,7 +146,9 @@ export async function updateMatchAction(
   const kickoff_time = str(formData, "kickoff_time") || null;
   const home_away = str(formData, "home_away") as MatchHomeAway;
   const status = str(formData, "status") as MatchStatus;
-  const competition_id = str(formData, "competition_id") || null;
+  const competitionRaw = str(formData, "competition_id");
+  const is_friendly = competitionRaw === FRIENDLY_COMPETITION_VALUE;
+  const competition_id = !competitionRaw || is_friendly ? null : competitionRaw;
   const player_of_the_match_id =
     str(formData, "player_of_the_match_id") || null;
   const players_player_of_the_match_id =
@@ -186,6 +192,7 @@ export async function updateMatchAction(
     venue_id: venueResult.venue_id,
     status,
     competition_id,
+    is_friendly,
     notes,
     club_notes,
     ...(canEditPotm

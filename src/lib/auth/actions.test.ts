@@ -82,8 +82,8 @@ describe("updatePasswordAndFinishAction", () => {
     createClientMock.mockResolvedValue(authClient({ sessionUser: null }));
 
     const result = await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
     });
     expect(result.error).toMatch(/expired or is no longer valid/i);
   });
@@ -94,8 +94,8 @@ describe("updatePasswordAndFinishAction", () => {
     );
 
     const result = await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
     });
     expect(result).toEqual({ error: "Password is too weak" });
     expect(cookiesDeleteMock).not.toHaveBeenCalled();
@@ -112,13 +112,13 @@ describe("updatePasswordAndFinishAction", () => {
     linkAuthUserToPersonMock.mockResolvedValue({ error: null });
 
     const result = await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
       inviteToken: " tok ",
     });
 
     expect(client.auth.updateUser).toHaveBeenCalledWith({
-      password: "password1",
+      password: "Password1",
     });
     expect(loadInvitationByTokenMock).toHaveBeenCalledWith("tok");
     expect(linkAuthUserToPersonMock).toHaveBeenCalledWith({
@@ -143,8 +143,8 @@ describe("updatePasswordAndFinishAction", () => {
     });
 
     await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
       inviteToken: "tok",
     });
 
@@ -161,8 +161,8 @@ describe("updatePasswordAndFinishAction", () => {
     linkAuthUserToPersonMock.mockResolvedValue({ error: null });
 
     await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
     });
 
     expect(findPersonForVerifiedEmailMock).toHaveBeenCalledWith(
@@ -183,8 +183,8 @@ describe("updatePasswordAndFinishAction", () => {
     });
 
     await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
     });
 
     expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
@@ -195,8 +195,8 @@ describe("updatePasswordAndFinishAction", () => {
     loadInvitationByTokenMock.mockRejectedValue(new Error("no service role"));
 
     const result = await updatePasswordAndFinishAction({
-      password: "password1",
-      confirm: "password1",
+      password: "Password1",
+      confirm: "Password1",
       inviteToken: "tok",
     });
 

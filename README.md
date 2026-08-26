@@ -142,10 +142,28 @@ In Supabase **Authentication → URL Configuration**:
 
 **Email templates (required for reliable invite/reset):** paste the HTML from `src/templates/` into Supabase **Authentication → Email Templates**:
 
-| Template       | File                             | Link shape                                                           |
-| -------------- | -------------------------------- | -------------------------------------------------------------------- |
-| Invite user    | `src/templates/user_invite.html` | `{{ .ConfirmationURL }}` (keeps `invite_token` on redirect)          |
-| Reset password | `src/templates/recovery.html`    | `/auth/confirm?token_hash=…&type=recovery&next=/auth/reset-password` |
+| Template          | File                                                    | Notes                                                                |
+| ----------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
+| Invite user       | `src/templates/user_invite.html`                        | Uses `{{ .ConfirmationURL }}`; club/user from `{{ .Data }}`          |
+| Reset password    | `src/templates/recovery.html`                           | `/auth/confirm?token_hash=…&type=recovery&next=/auth/reset-password` |
+| Confirm signup    | `src/templates/confirmation.html`                       |                                                                      |
+| Magic link        | `src/templates/magic_link.html`                         |                                                                      |
+| Change email      | `src/templates/email_change.html`                       |                                                                      |
+| Reauthentication  | `src/templates/reauthentication.html`                   | OTP via `{{ .Token }}`                                               |
+| Password changed  | `src/templates/password_changed_notification.html`      | Security notification (enable in dashboard)                          |
+| Email changed     | `src/templates/email_changed_notification.html`         | Security notification                                                |
+| Phone changed     | `src/templates/phone_changed_notification.html`         | Security notification                                                |
+| Identity linked   | `src/templates/identity_linked_notification.html`       | Security notification                                                |
+| Identity unlinked | `src/templates/identity_unlinked_notification.html`     | Security notification                                                |
+| MFA enrolled      | `src/templates/mfa_factor_enrolled_notification.html`   | Security notification                                                |
+| MFA unenrolled    | `src/templates/mfa_factor_unenrolled_notification.html` | Security notification                                                |
+
+Templates personalize with `{{ .Data.first_name }}` and `{{ .Data.club_name }}` from Auth user metadata (set on invite). Do not hardcode a club name in the HTML.
+
+Also configure hosted Auth:
+
+- **Password**: minimum length 8; requirements lowercase + uppercase + digits (matches `supabase/config.toml`).
+- **Sessions**: timebox `24h` so sessions expire after 24 hours.
 
 The recovery template uses `token_hash` + `/auth/confirm` (`verifyOtp`) so reset links work on any device. The default `{{ .ConfirmationURL }}` PKCE recovery links need a same-browser code verifier and often fail with “PKCE code verifier not found in storage.” Until the hosted Recovery template is updated, the app requests reset emails with the implicit Auth flow so Supabase’s default ConfirmationURL returns hash tokens instead of a PKCE `code`.
 

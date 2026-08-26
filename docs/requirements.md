@@ -153,15 +153,15 @@ Management is recorded in `managers` (club people with optional `user_id`). Link
 
 ### Competition
 
-Competitions the team enters this season (league, cup, friendly series, etc.).
+Competitions the team enters this season (league, cup, tournament, etc.).
 
-| Field      | Notes                                                                |
-| ---------- | -------------------------------------------------------------------- |
-| id         | UUID                                                                 |
-| team_id    | FK → teams                                                           |
-| name       | e.g. `County League`, `Cup`, `Friendly`                              |
-| kind       | Optional: `league` \| `cup` \| `friendly` \| `tournament` \| `other` |
-| created_at | Timestamp                                                            |
+| Field      | Notes                                                  |
+| ---------- | ------------------------------------------------------ |
+| id         | UUID                                                   |
+| team_id    | FK → teams                                             |
+| name       | e.g. `County League`, `Cup`                            |
+| kind       | Optional: `league` \| `cup` \| `tournament` \| `other` |
+| created_at | Timestamp                                              |
 
 ### Player (club-level person)
 
@@ -192,6 +192,7 @@ A match is scheduled (fixture) and may later have a result.
 | home_away                 | `home` \| `away` \| `neutral`                                           |
 | venue_id                  | Optional FK → venues (`null` = unknown)                                 |
 | competition_id            | Optional FK → competitions                                              |
+| is_friendly               | When true, fixture is a Friendly (not a competitions row)               |
 | player_of_the_match_id    | Optional FK → players (set when played; editable by coaches/management) |
 | status                    | `scheduled` \| `played` \| `postponed` \| `cancelled`                   |
 | goals_for / goals_against | Null until played; `goals_against` is opponent **aggregate** only       |
@@ -321,7 +322,7 @@ Team-scoped screens act on the **active team** chosen in the header switcher. Th
 
 ### Matches
 
-1. Create a fixture (opponent, kickoff, home/away, optional venue, optional competition)
+1. Create a fixture (opponent, kickoff, home/away, optional venue, optional competition or Friendly)
 2. List upcoming fixtures and past results
 3. Mark match played and set score (`goals_for` / `goals_against` aggregate only)
 4. Postpone / cancel a fixture
