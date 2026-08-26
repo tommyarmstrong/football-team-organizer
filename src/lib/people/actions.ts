@@ -378,6 +378,7 @@ export async function sendInvitationAction(
     const result = await sendPersonInvitation({
       person,
       invitedBy: ctx.userId,
+      clubName: club.name,
     });
     if (!result.ok) return { error: result.error };
 

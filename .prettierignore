@@ -4,3 +4,6 @@ out
 build
 coverage
 package-lock.json
+# Go template tags ({{ }}) are broken by Prettier line wrapping.
+src/templates/**
+supabase/templates/**
