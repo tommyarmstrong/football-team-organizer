@@ -1,20 +1,29 @@
 # Daily logical backup of hosted Supabase Postgres → AWS S3.
 #
+# Target database is whatever SUPABASE_DB_URL / SUPABASE_PROJECT_REF point at
+# (configure those for your production project in GitHub Actions settings).
+#
 # Required GitHub configuration (Settings → Secrets and variables → Actions):
 #
 #   Secrets:
 #     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432). Prefer the
 #                         IPv4-friendly Session pooler string from Supabase
-#                         Dashboard → Project Settings → Database. Do NOT use
-#                         the transaction pooler (port 6543).
+#                         Dashboard → Connect / Project Settings → Database.
+#                         Do NOT use the transaction pooler (port 6543).
+#                         Replace [YOUR-PASSWORD]; percent-encode special
+#                         chars in the password (@ → %40, # → %23, etc.).
+#                         No surrounding quotes.
 #     AWS_ROLE_TO_ASSUME  IAM role ARN for GitHub OIDC (preferred). Example:
 #                         arn:aws:iam::123456789012:role/github-db-backup
 #     # Fallback if OIDC is not set up yet (OIDC is preferred):
 #     # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 #
-#   Variables (or secrets):
-#     AWS_REGION          e.g. eu-east-1
-#     BACKUP_S3_BUCKET    Destination bucket name e.g. newcastle-united (no s3:// prefix)
+#   Variables:
+#     SUPABASE_PROJECT_REF  Supabase project ref (Settings → General).
+#                           The dump URL must contain this ref so a wrong
+#                           project's URI cannot be used by mistake.
+#     AWS_REGION            e.g. us-east-1
+#     BACKUP_S3_BUCKET      Destination bucket name (no s3:// prefix)
 #
 # AWS (outside this repo): create the bucket; attach a role trust policy for
 # GitHub OIDC (token.actions.githubusercontent.com) limited to this repo +
@@ -50,6 +59,10 @@ jobs:
     permissions:
       contents: read
       id-token: write # required for AWS OIDC
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
 
     steps:
       - name: Checkout
@@ -64,30 +77,57 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
           # If OIDC is unavailable, replace this step with access keys:
           #   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           #   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          #   aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          #   aws-region: ${{ env.AWS_REGION }}
           # and drop permissions.id-token / role-to-assume. OIDC is preferred.
 
       - name: Dump database
         env:
           # Bound only for this step; never echo or log this value.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET || secrets.BACKUP_S3_BUCKET }}
         run: |
           set -euo pipefail
 
           if [ -z "${SUPABASE_DB_URL:-}" ]; then
-            echo "::error::SUPABASE_DB_URL secret is not set"
+            echo "::error::SUPABASE_DB_URL secret is not set (session-mode Postgres URI for the target project)"
+            exit 1
+          fi
+          if [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
+            echo "::error::SUPABASE_PROJECT_REF variable is not set (Supabase project ref for the target database)"
             exit 1
           fi
           if [ -z "${BACKUP_S3_BUCKET:-}" ]; then
             echo "::error::BACKUP_S3_BUCKET variable is not set"
             exit 1
           fi
+          if [ -z "${AWS_REGION:-}" ]; then
+            echo "::error::AWS_REGION variable is not set"
+            exit 1
+          fi
+
+          # Normalize common paste mistakes (quotes / surrounding whitespace).
+          # Never echo the URL — it contains the DB password.
+          SUPABASE_DB_URL="$(printf '%s' "$SUPABASE_DB_URL" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+
+          case "$SUPABASE_DB_URL" in
+            postgres://*|postgresql://*)
+              ;;
+            *)
+              echo "::error::SUPABASE_DB_URL must start with postgresql:// or postgres:// (got a non-URI value)."
+              exit 1
+              ;;
+          esac
+
+          case "$SUPABASE_DB_URL" in
+            *'[YOUR-PASSWORD]'*|*YOUR-PASSWORD*|*'[PASSWORD]'*)
+              echo "::error::SUPABASE_DB_URL still contains a password placeholder. Replace it with the real DB password (URL-encoded if it has special characters)."
+              exit 1
+              ;;
+          esac
 
           # Reject transaction-pooler URLs (port 6543) — dumps need session/direct.
           case "$SUPABASE_DB_URL" in
@@ -97,18 +137,35 @@ jobs:
               ;;
           esac
 
+          # Fail closed if the URL does not match the configured project ref.
+          case "$SUPABASE_DB_URL" in
+            *"${SUPABASE_PROJECT_REF}"*)
+              ;;
+            *)
+              echo "::error::SUPABASE_DB_URL does not contain SUPABASE_PROJECT_REF. Update the secret so it matches the configured project."
+              exit 1
+              ;;
+          esac
+
           WORKDIR="$(mktemp -d)"
           trap 'rm -rf "$WORKDIR"' EXIT
           cd "$WORKDIR"
 
+          dump_or_explain() {
+            if ! supabase db dump "$@"; then
+              echo "::error::supabase db dump failed to use SUPABASE_DB_URL. Usual cause: DB password special characters (@ # : / ? % space) are not percent-encoded in the URI. Encode them (e.g. @ → %40, # → %23) or reset the DB password to alphanumeric, then update the secret."
+              exit 1
+            fi
+          }
+
           echo "Dumping roles…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f roles.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" --role-only -f roles.sql
 
           echo "Dumping schema…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" -f schema.sql
 
           echo "Dumping data…"
-          supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f data.sql
+          dump_or_explain --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f data.sql
 
           for f in roles.sql schema.sql data.sql; do
             if [ ! -s "$f" ]; then
