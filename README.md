@@ -142,21 +142,21 @@ In Supabase **Authentication → URL Configuration**:
 
 **Email templates (required for reliable invite/reset):** single source of truth is `supabase/templates/`. Local `supabase start` loads them via `config.toml`. For **hosted** Supabase, paste each file into **Authentication → Email Templates** (and enable security notifications where noted):
 
-| Dashboard template | File in repo | Notes |
-| ------------------ | ------------ | ----- |
-| Invite user | `supabase/templates/invite.html` | Uses `{{ .ConfirmationURL }}`; club/user from `{{ .Data }}` |
-| Reset password | `supabase/templates/recovery.html` | `token_hash` → `/auth/confirm` → `/auth/reset-password` |
-| Confirm signup | `supabase/templates/confirmation.html` | |
-| Magic link | `supabase/templates/magic_link.html` | |
-| Change email address | `supabase/templates/email_change.html` | |
-| Reauthentication | `supabase/templates/reauthentication.html` | OTP via `{{ .Token }}` |
-| Password changed | `supabase/templates/password_changed_notification.html` | Enable security notification |
-| Email address changed | `supabase/templates/email_changed_notification.html` | Enable security notification |
-| Phone number changed | `supabase/templates/phone_changed_notification.html` | Enable security notification |
-| Identity linked | `supabase/templates/identity_linked_notification.html` | Enable security notification |
-| Identity unlinked | `supabase/templates/identity_unlinked_notification.html` | Enable security notification |
-| MFA method added | `supabase/templates/mfa_factor_enrolled_notification.html` | Enable security notification |
-| MFA method removed | `supabase/templates/mfa_factor_unenrolled_notification.html` | Enable security notification |
+| Dashboard template    | File in repo                                                 | Notes                                                       |
+| --------------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| Invite user           | `supabase/templates/invite.html`                             | Uses `{{ .ConfirmationURL }}`; club/user from `{{ .Data }}` |
+| Reset password        | `supabase/templates/recovery.html`                           | `token_hash` → `/auth/confirm` → `/auth/reset-password`     |
+| Confirm signup        | `supabase/templates/confirmation.html`                       |                                                             |
+| Magic link            | `supabase/templates/magic_link.html`                         |                                                             |
+| Change email address  | `supabase/templates/email_change.html`                       |                                                             |
+| Reauthentication      | `supabase/templates/reauthentication.html`                   | OTP via `{{ .Token }}`                                      |
+| Password changed      | `supabase/templates/password_changed_notification.html`      | Enable security notification                                |
+| Email address changed | `supabase/templates/email_changed_notification.html`         | Enable security notification                                |
+| Phone number changed  | `supabase/templates/phone_changed_notification.html`         | Enable security notification                                |
+| Identity linked       | `supabase/templates/identity_linked_notification.html`       | Enable security notification                                |
+| Identity unlinked     | `supabase/templates/identity_unlinked_notification.html`     | Enable security notification                                |
+| MFA method added      | `supabase/templates/mfa_factor_enrolled_notification.html`   | Enable security notification                                |
+| MFA method removed    | `supabase/templates/mfa_factor_unenrolled_notification.html` | Enable security notification                                |
 
 Templates personalize with `{{ .Data.first_name }}` and `{{ .Data.club_name }}` from Auth user metadata (set on invite). Do not hardcode a club name in the HTML.
 
