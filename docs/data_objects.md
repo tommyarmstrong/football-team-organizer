@@ -235,7 +235,7 @@ Competitions a team enters this season.
 
 - Team (required)
 - Name (required)
-- Kind — `league` | `cup` | `friendly` | `tournament` | `other` (default `league`)
+- Kind — `league` | `cup` | `tournament` | `other` (default `league`)
 
 ---
 
@@ -247,6 +247,7 @@ Fixture / result for a team.
 
 - Team (required)
 - Opponent name (required)
+- Friendly — boolean; when true the fixture is a friendly (not a competitions row, no competition result)
 - Date (required)
 - Kick-off time
 - Home / away (required) — `home` | `away` | `neutral`

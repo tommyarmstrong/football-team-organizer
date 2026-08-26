@@ -25,7 +25,7 @@ export function CompetitionsSection({
           title="No competitions yet"
           description={
             canEdit
-              ? "Add a league, cup, or friendly series your team enters this season."
+              ? "Add a league, cup, or tournament your team enters this season."
               : "Competitions this team enters will appear here."
           }
         />

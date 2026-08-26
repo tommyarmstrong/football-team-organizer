@@ -218,6 +218,7 @@ function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
     home_away: row.home_away,
     venue_id: row.venue_id,
     competition_id: row.competition_id,
+    is_friendly: row.is_friendly,
     player_of_the_match_id: row.player_of_the_match_id,
     players_player_of_the_match_id: row.players_player_of_the_match_id,
     status: row.status,

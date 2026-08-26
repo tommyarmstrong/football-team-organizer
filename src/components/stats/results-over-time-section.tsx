@@ -29,6 +29,7 @@ export function ResultsOverTimeSection({
         matchesCompetitionFilters({
           competitionId: point.competitionId,
           competitionKind: point.competitionKind,
+          isFriendly: point.isFriendly,
           selectedCompetitionId: competitionId,
           selectedCompetitionKind: competitionKind,
         }),

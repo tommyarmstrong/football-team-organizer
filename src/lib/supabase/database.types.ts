@@ -829,6 +829,7 @@ export type Database = {
           created_at: string;
           date: string;
           id: string;
+          is_friendly: boolean;
           kickoff_time: string | null;
           notes: string | null;
           club_notes: string | null;
@@ -846,6 +847,7 @@ export type Database = {
           created_at?: string;
           date: string;
           id?: string;
+          is_friendly?: boolean;
           kickoff_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
@@ -863,6 +865,7 @@ export type Database = {
           created_at?: string;
           date?: string;
           id?: string;
+          is_friendly?: boolean;
           kickoff_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
@@ -1286,7 +1289,7 @@ export type Database = {
         "management" | "coach" | "guardian" | "guardian_assistant" | "player";
       guardian_relationship:
         "parent" | "guardian" | "football_contact" | "other";
-      competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
+      competition_kind: "league" | "cup" | "tournament" | "other";
       competition_gender: "female" | "male" | "mixed";
       competition_periods: "1" | "2" | "4" | "other";
       competition_result:
