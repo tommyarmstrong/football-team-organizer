@@ -42,10 +42,11 @@ function missingEmergencyContact(person: PersonDirectoryItem): boolean {
 
 export function PeopleDirectoryList({
   people,
-  showAccountDetails,
+  showAccountDetailsFor,
 }: {
   people: PersonDirectoryItem[];
-  showAccountDetails?: (person: PersonDirectoryItem) => boolean;
+  /** Person ids whose login/email line may be shown. Omit to show for everyone. */
+  showAccountDetailsFor?: string[];
 }) {
   return (
     <FilterablePaginatedList
@@ -60,7 +61,8 @@ export function PeopleDirectoryList({
       emptyFilterDescription="Try a different name or email."
       renderItem={(person) => {
         const loginLine =
-          showAccountDetails?.(person) === false
+          showAccountDetailsFor != null &&
+          !showAccountDetailsFor.includes(person.id)
             ? null
             : loginStatusLine(person);
 

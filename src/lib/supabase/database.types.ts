@@ -1293,6 +1293,7 @@ export type Database = {
         }[];
       };
       is_club_guardian: { Args: { p_club_id: string }; Returns: boolean };
+      team_club_id: { Args: { p_team_id: string }; Returns: string };
       is_guardian_of_person: {
         Args: { p_person_id: string };
         Returns: boolean;
