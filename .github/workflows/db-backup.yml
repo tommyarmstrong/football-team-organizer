@@ -1,26 +1,27 @@
-# Daily logical backup of the production Supabase project (mga-production)
-# Postgres → AWS S3. Do not point this workflow at the integration project
-# (football-team-organiser).
+# Daily logical backup of hosted Supabase Postgres → AWS S3.
+#
+# Target database is whatever SUPABASE_DB_URL / SUPABASE_PROJECT_REF point at
+# (configure those for your production project in GitHub Actions settings).
 #
 # Required GitHub configuration (Settings → Secrets and variables → Actions):
 #
 #   Secrets:
-#     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432) for
-#                         **mga-production**. Prefer the IPv4-friendly Session
-#                         pooler string from that project's Dashboard →
-#                         Project Settings → Database. Do NOT use the
-#                         transaction pooler (port 6543). Replace
-#                         [YOUR-PASSWORD]; percent-encode special chars in the
-#                         password (@ → %40, # → %23, etc.). No quotes.
+#     SUPABASE_DB_URL     Session-mode Postgres URI (port 5432). Prefer the
+#                         IPv4-friendly Session pooler string from Supabase
+#                         Dashboard → Connect / Project Settings → Database.
+#                         Do NOT use the transaction pooler (port 6543).
+#                         Replace [YOUR-PASSWORD]; percent-encode special
+#                         chars in the password (@ → %40, # → %23, etc.).
+#                         No surrounding quotes.
 #     AWS_ROLE_TO_ASSUME  IAM role ARN for GitHub OIDC (preferred). Example:
 #                         arn:aws:iam::123456789012:role/github-db-backup
 #     # Fallback if OIDC is not set up yet (OIDC is preferred):
 #     # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 #
-#   Variables (or secrets):
-#     SUPABASE_PROJECT_REF  mga-production project ref (Settings → General).
-#                           The dump URL must contain this ref so we cannot
-#                           silently back up the integration database.
+#   Variables:
+#     SUPABASE_PROJECT_REF  Supabase project ref (Settings → General).
+#                           The dump URL must contain this ref so a wrong
+#                           project's URI cannot be used by mistake.
 #     AWS_REGION            e.g. us-east-1
 #     BACKUP_S3_BUCKET      Destination bucket name (no s3:// prefix)
 #
@@ -55,10 +56,13 @@ jobs:
     name: Dump and upload to S3
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: mga-production
     permissions:
       contents: read
       id-token: write # required for AWS OIDC
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
 
     steps:
       - name: Checkout
@@ -73,33 +77,35 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
           # If OIDC is unavailable, replace this step with access keys:
           #   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           #   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          #   aws-region: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+          #   aws-region: ${{ env.AWS_REGION }}
           # and drop permissions.id-token / role-to-assume. OIDC is preferred.
 
       - name: Dump database
         env:
           # Bound only for this step; never echo or log this value.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_REF }}
-          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET || secrets.BACKUP_S3_BUCKET }}
         run: |
           set -euo pipefail
 
           if [ -z "${SUPABASE_DB_URL:-}" ]; then
-            echo "::error::SUPABASE_DB_URL secret is not set (must be the mga-production session-mode URI)"
+            echo "::error::SUPABASE_DB_URL secret is not set (session-mode Postgres URI for the target project)"
             exit 1
           fi
           if [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
-            echo "::error::SUPABASE_PROJECT_REF variable is not set (must be the mga-production project ref)"
+            echo "::error::SUPABASE_PROJECT_REF variable is not set (Supabase project ref for the target database)"
             exit 1
           fi
           if [ -z "${BACKUP_S3_BUCKET:-}" ]; then
             echo "::error::BACKUP_S3_BUCKET variable is not set"
+            exit 1
+          fi
+          if [ -z "${AWS_REGION:-}" ]; then
+            echo "::error::AWS_REGION variable is not set"
             exit 1
           fi
 
@@ -131,12 +137,12 @@ jobs:
               ;;
           esac
 
-          # Fail closed if the URL is still the integration project.
+          # Fail closed if the URL does not match the configured project ref.
           case "$SUPABASE_DB_URL" in
             *"${SUPABASE_PROJECT_REF}"*)
               ;;
             *)
-              echo "::error::SUPABASE_DB_URL does not contain SUPABASE_PROJECT_REF. Point the secret at mga-production, not football-team-organiser."
+              echo "::error::SUPABASE_DB_URL does not contain SUPABASE_PROJECT_REF. Update the secret so it matches the configured project."
               exit 1
               ;;
           esac
