@@ -256,6 +256,27 @@ describe("canEditPersonDetails / canEditLinkedPlayerProfile", () => {
     ).toBe(true);
   });
 
+  it("lets a club manager edit person details and linked player profile", () => {
+    const ctx = viewer({ managementClubIds: ["club-1"], isManagement: true });
+    expect(
+      canEditPersonDetails(
+        ctx,
+        { id: "other", auth_user_id: null },
+        "player-1",
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(canEditLinkedPlayerProfile(ctx, "player-1", "club-1")).toBe(true);
+    expect(
+      canEditPersonDetails(
+        viewer(),
+        { id: "other", auth_user_id: null },
+        null,
+        null,
+      ),
+    ).toBe(false);
+  });
+
   it("lets a guardian edit a linked player's person details and profile", () => {
     const ctx = viewer({ guardianPlayerIds: ["player-1"] });
     expect(
@@ -350,6 +371,30 @@ describe("canManageGuardianPlayerLinks / canEditOwnGuardianPlayerLink", () => {
         [],
       ),
     ).toBe(true);
+  });
+
+  it("does not let an unrelated viewer update a guardian link", () => {
+    expect(
+      canUpdateGuardianPlayerLink(
+        viewer(),
+        "player-1",
+        "guardian-1",
+        "club-1",
+        ["team-1"],
+      ),
+    ).toBe(false);
+    expect(
+      canUpdateGuardianPlayerLink(
+        viewer({
+          guardianPlayerIds: ["player-2"],
+          guardianIds: ["guardian-1"],
+        }),
+        "player-1",
+        "guardian-1",
+        "club-1",
+        [],
+      ),
+    ).toBe(false);
   });
 });
 
