@@ -16,13 +16,93 @@ vi.mock("@/lib/people/delete-auth-user", () => ({
 
 import {
   createPerson,
+  deletePerson,
+  getPerson,
   getPersonByAuthUserId,
+  linkRoleToPerson,
+  listPeople,
   updatePerson,
 } from "@/lib/data/people";
 
 describe("people data writes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("lists people into directory items", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult([
+          {
+            ...personFixture(),
+            managers: [],
+            coaches: [{ id: "c1", active_role: true }],
+            guardians: [],
+            players: [
+              {
+                id: "player-1",
+                active_role: true,
+                team_players: [{ team_id: "team-1" }],
+                player_guardians: [],
+              },
+            ],
+          },
+        ]),
+      }),
+    );
+    const listed = await listPeople();
+    expect(listed.data[0]?.roles).toEqual({
+      player: true,
+      guardian: false,
+      coach: true,
+      manager: false,
+    });
+  });
+
+  it("loads a person with roles and outstanding invitation", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ id: "person-1" })),
+        managers: okResult([]),
+        coaches: okResult([{ id: "c1", club_id: "club-1", active_role: true }]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([
+          {
+            id: "inv-1",
+            person_id: "person-1",
+            email: "ada@example.com",
+            accepted_at: null,
+            revoked_at: null,
+          },
+        ]),
+      }),
+    );
+    const person = await getPerson("person-1");
+    expect(person.data?.coaches).toHaveLength(1);
+    expect(person.data?.outstanding_invitation?.id).toBe("inv-1");
+  });
+
+  it("links roles and deletes people", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        coaches: okResult(null),
+        people: [
+          okResult(personFixture({ auth_user_id: null })),
+          okResult(null),
+        ],
+      }),
+    );
+    expect(
+      await linkRoleToPerson({
+        personId: "person-1",
+        role: "coach",
+        roleId: "coach-1",
+      }),
+    ).toEqual({ error: null });
+
+    deleteAuthUserMock.mockResolvedValue({ error: null });
+    expect(await deletePerson("person-1")).toEqual({ error: null });
   });
 
   it("normalizes email on create and maps unique violations", async () => {
