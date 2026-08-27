@@ -262,4 +262,48 @@ describe("getNextFixture / getLastResult", () => {
     expect(result.data?.id).toBe("m-last");
     expect(result.data?.goals_against).toBe(1);
   });
+
+  it("falls back to any scheduled fixture when none are upcoming", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: [
+          okResult(null),
+          okResult({
+            id: "m-past-scheduled",
+            team_id: "team-1",
+            opponent_name: "Past FC",
+            date: "2020-01-01",
+            kickoff_time: null,
+            home_away: "home",
+            venue_id: null,
+            competition_id: null,
+            is_friendly: true,
+            player_of_the_match_id: null,
+            players_player_of_the_match_id: null,
+            status: "scheduled",
+            notes: null,
+            club_notes: null,
+            created_at: "2025-01-01T00:00:00Z",
+            updated_at: "2025-01-01T00:00:00Z",
+            competition: null,
+            venue: null,
+            goals: [],
+          }),
+        ],
+      }),
+    );
+
+    const result = await getNextFixture();
+    expect(result.error).toBeNull();
+    expect(result.data?.id).toBe("m-past-scheduled");
+  });
+
+  it("returns null when no scheduled fixtures exist", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: [okResult(null), okResult(null)],
+      }),
+    );
+    expect(await getNextFixture()).toEqual({ data: null, error: null });
+  });
 });

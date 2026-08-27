@@ -45,6 +45,107 @@ describe("clubs data", () => {
     expect(await listVisibleClubs()).toEqual({ data: [], error: "fail" });
   });
 
+  it("gets a club by id and maps errors", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        clubs: okResult({ id: "club-1", name: "Example FC" }),
+      }),
+    );
+    const { getClub } = await import("@/lib/data/clubs");
+    expect((await getClub("club-1")).data?.id).toBe("club-1");
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ clubs: errResult("missing") }),
+    );
+    expect(await getClub("club-x")).toEqual({ data: null, error: "missing" });
+  });
+
+  it("resolves primary club from preferred ids and falls back to first visible", async () => {
+    getViewerContextMock.mockResolvedValue(
+      clubManagerViewer({
+        managementClubIds: ["club-hidden"],
+        visibleTeams: [teamFixture({ club_id: "club-1" })],
+      }),
+    );
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        clubs: [
+          okResult([{ id: "club-1", name: "Visible FC" }]),
+          okResult({ id: "club-hidden", name: "Hidden FC" }),
+        ],
+      }),
+    );
+    const { getPrimaryClub } = await import("@/lib/data/clubs");
+    expect((await getPrimaryClub())?.id).toBe("club-hidden");
+
+    getViewerContextMock.mockResolvedValue(null);
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        clubs: okResult([{ id: "club-only", name: "Only FC" }]),
+      }),
+    );
+    vi.resetModules();
+    const { getPrimaryClub: getPrimaryAgain } =
+      await import("@/lib/data/clubs");
+    expect((await getPrimaryAgain())?.id).toBe("club-only");
+
+    createClientMock.mockResolvedValue(mockFromClient({ clubs: okResult([]) }));
+    vi.resetModules();
+    const { getPrimaryClub: getPrimaryEmpty } =
+      await import("@/lib/data/clubs");
+    expect(await getPrimaryEmpty()).toBeNull();
+  });
+
+  it("creates and updates clubs", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            create_club_with_management: okResult({
+              id: "club-new",
+              name: "New FC",
+            }),
+          },
+        },
+      ),
+    );
+    const { createClub, updateClub } = await import("@/lib/data/clubs");
+    expect((await createClub("New FC")).data?.id).toBe("club-new");
+
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            create_club_with_management: errResult("rpc failed"),
+          },
+        },
+      ),
+    );
+    expect(await createClub("X")).toEqual({
+      data: null,
+      error: "rpc failed",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        clubs: okResult({ id: "club-1", name: "Updated" }),
+      }),
+    );
+    expect((await updateClub("club-1", { name: "Updated" })).data?.name).toBe(
+      "Updated",
+    );
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ clubs: errResult("update failed") }),
+    );
+    expect(await updateClub("club-1", { name: "X" })).toEqual({
+      data: null,
+      error: "update failed",
+    });
+  });
+
   it("resolves a staff club id for managers", async () => {
     getViewerContextMock.mockResolvedValue(clubManagerViewer());
     createClientMock.mockResolvedValue(

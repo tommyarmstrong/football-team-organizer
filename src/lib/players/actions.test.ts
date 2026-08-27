@@ -66,13 +66,18 @@ vi.mock("@/lib/data/player-objectives", () => ({
 }));
 
 import {
+  addPlayerObjectiveAction,
   addPlayerToTeamAction,
   addRosterPlayerAction,
   createPlayerAction,
   createRosterPlayerAction,
   deletePlayerAction,
+  deletePlayerObjectiveAction,
+  deletePlayerObjectiveAndReturnAction,
+  removePlayerFromTeamAction,
   savePlayerContactAction,
   updatePlayerAction,
+  updatePlayerObjectiveAction,
   updateRosterEntryAction,
 } from "@/lib/players/actions";
 
@@ -229,5 +234,108 @@ describe("roster actions", () => {
       "team-player-1",
       expect.objectContaining({ shirt_number: 10, active: true }),
     );
+  });
+
+  it("requires a player when adding to roster and removes roster links", async () => {
+    expect(
+      await addRosterPlayerAction("team-1", {}, formDataFrom({})),
+    ).toMatchObject({ error: expect.stringMatching(/select a player/i) });
+
+    const removed = await removePlayerFromTeamAction(
+      "team-player-1",
+      "player-1",
+    );
+    expect(removed.success).toMatch(/removed/i);
+    expect(removePlayerFromTeamMock).toHaveBeenCalledWith("team-player-1");
+  });
+
+  it("returns create and roster errors for createRosterPlayerAction", async () => {
+    resolveStaffClubIdMock.mockResolvedValue(null);
+    expect(
+      await createRosterPlayerAction(
+        "team-1",
+        "club-1",
+        {},
+        formDataFrom({ first_name: "Sam", last_name: "Striker" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/no club/i) });
+
+    resolveStaffClubIdMock.mockResolvedValue("club-1");
+    createPlayerMock.mockResolvedValue({ data: null, error: "create failed" });
+    expect(
+      await createRosterPlayerAction(
+        "team-1",
+        "club-1",
+        {},
+        formDataFrom({ first_name: "Sam", last_name: "Striker" }),
+      ),
+    ).toEqual({ error: "create failed" });
+
+    createPlayerMock.mockResolvedValue({
+      data: { id: "player-new", person_id: "person-new" },
+      error: null,
+    });
+    addPlayerToTeamMock.mockResolvedValue({ error: "roster failed" });
+    expect(
+      await createRosterPlayerAction(
+        "team-1",
+        "club-1",
+        {},
+        formDataFrom({ first_name: "Sam", last_name: "Striker" }),
+      ),
+    ).toEqual({ error: "roster failed" });
+  });
+});
+
+describe("player objective actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getPlayerMock.mockResolvedValue({
+      data: { id: "player-1", person_id: "person-1" },
+      error: null,
+    });
+    createPlayerObjectiveMock.mockResolvedValue({
+      data: { id: "obj-1" },
+      error: null,
+    });
+    updatePlayerObjectiveMock.mockResolvedValue({ error: null });
+    deletePlayerObjectiveMock.mockResolvedValue({ error: null });
+  });
+
+  it("creates and updates objectives then redirects", async () => {
+    await expect(
+      addPlayerObjectiveAction(
+        "player-1",
+        {},
+        formDataFrom({
+          body: "First touch",
+          objective_type: "skills",
+          status: "emerging",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/people/person-1");
+
+    await expect(
+      updatePlayerObjectiveAction(
+        "player-1",
+        "obj-1",
+        {},
+        formDataFrom({
+          body: "Passing",
+          objective_type: "team_work",
+          status: "expected",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/people/person-1");
+  });
+
+  it("deletes objectives and supports return redirect", async () => {
+    expect(
+      await deletePlayerObjectiveAction("player-1", "obj-1"),
+    ).toMatchObject({ success: expect.stringMatching(/removed/i) });
+
+    await expect(
+      deletePlayerObjectiveAndReturnAction("player-1", "obj-1"),
+    ).rejects.toThrow("redirect:/people/person-1");
   });
 });
