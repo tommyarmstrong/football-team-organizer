@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   getViewerContext,
   canEditTeam,
+  canEditTeamHistory,
   canManageClub,
 } from "@/lib/authz/context";
 import { getActiveTeam, isTeamArchived } from "@/lib/data/team";
@@ -102,6 +103,7 @@ export default async function TeamPage() {
   }
 
   const canEdit = canEditTeam(ctx, team.id);
+  const canEditHistory = canEditTeamHistory(ctx, team.id);
   const teamClubVenues = clubVenues.filter((v) => v.club_id === team.club_id);
 
   const [
@@ -163,8 +165,9 @@ export default async function TeamPage() {
         <div className="border-border bg-muted/40 rounded-xl border px-4 py-3 text-sm">
           <p className="font-medium">Archived season</p>
           <p className="text-muted-foreground mt-1">
-            This is the historical record for {team.season_label}. Matches,
-            squad, and scorers stay available. Start the next season from{" "}
+            This is a read-only historical record for {team.season_label}.
+            Squad, matches, goals, periods, and competitions cannot be changed.
+            Start the next season from{" "}
             <Link
               href="/team/edit"
               className="text-foreground underline-offset-4 hover:underline"
@@ -192,7 +195,7 @@ export default async function TeamPage() {
           <CompetitionsSection
             key={team.id}
             competitions={competitions.data}
-            canEdit={canEdit}
+            canEdit={canEditHistory}
           />
         )}
       </Section>
@@ -206,7 +209,7 @@ export default async function TeamPage() {
             teamId={team.id}
             roster={roster}
             candidates={playerCandidates}
-            canEdit={canEdit}
+            canEdit={canEditHistory}
           />
         )}
       </Section>
@@ -220,7 +223,7 @@ export default async function TeamPage() {
             teamId={team.id}
             assigned={teamCoaches}
             candidates={coachCandidates}
-            canEdit={canEdit}
+            canEdit={canEditHistory}
           />
         )}
       </Section>
@@ -234,7 +237,7 @@ export default async function TeamPage() {
           teamId={team.id}
           assistants={assistants}
           candidates={assistantCandidates}
-          canEdit={canEdit}
+          canEdit={canEditHistory}
         />
       </Section>
 
@@ -245,7 +248,10 @@ export default async function TeamPage() {
         {potmError ? (
           <ErrorBanner message={potmError} />
         ) : (
-          <PlayerOfTheMonthSection awards={potmAwards} canEdit={canEdit} />
+          <PlayerOfTheMonthSection
+            awards={potmAwards}
+            canEdit={canEditHistory}
+          />
         )}
       </Section>
     </div>

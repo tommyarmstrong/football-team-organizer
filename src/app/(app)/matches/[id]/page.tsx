@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import {
   getViewerContext,
   canEditMatchDay,
-  canEditTeam,
+  canEditTeamHistory,
 } from "@/lib/authz/context";
 import { matchAllowsEvents } from "@/lib/constants";
 import { listCardsForMatch } from "@/lib/data/cards";
@@ -57,7 +57,7 @@ export default async function MatchDetailPage({
   }
 
   const canEdit = canEditMatchDay(ctx, match.team_id);
-  const canEditPlayerOfTheMatch = canEditTeam(ctx, match.team_id);
+  const canEditPlayerOfTheMatch = canEditTeamHistory(ctx, match.team_id);
   const allowsEvents = matchAllowsEvents(match.status);
   const isCancelledOrPostponed =
     match.status === "cancelled" || match.status === "postponed";

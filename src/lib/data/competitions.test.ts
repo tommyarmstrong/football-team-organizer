@@ -67,6 +67,17 @@ describe("competitions data", () => {
     expect(await deleteCompetition("comp-1")).toEqual({ error: null });
   });
 
+  it("rejects writes when the active team is archived", async () => {
+    getCurrentTeamMock.mockResolvedValue(
+      teamFixture({ archived_at: "2026-05-01T00:00:00Z" }),
+    );
+    expect(await createCompetition({ name: "Cup", kind: "cup" })).toMatchObject(
+      {
+        error: expect.stringMatching(/read-only/i),
+      },
+    );
+  });
+
   it("maps query errors", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({ competitions: errResult("fail") }),

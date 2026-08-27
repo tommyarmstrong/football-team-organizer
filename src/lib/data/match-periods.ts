@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { matchPeriodSortOrder } from "@/lib/constants";
+import { rejectIfMatchTeamArchived } from "@/lib/team/readonly-guard";
 import {
   mapPlayerNameEmbed,
   PLAYER_NAME_EMBED,
@@ -96,6 +97,9 @@ export async function getPeriod(
 export async function createPeriod(
   input: TablesInsert<"match_periods">,
 ): Promise<{ data: MatchPeriod | null; error: string | null }> {
+  const archivedError = await rejectIfMatchTeamArchived(input.match_id);
+  if (archivedError) return { data: null, error: archivedError };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("match_periods")
@@ -114,6 +118,9 @@ export async function createPeriodsWithStarters(
   starterPlayerIds: string[],
 ): Promise<{ error: string | null }> {
   if (names.length === 0) return { error: null };
+
+  const archivedError = await rejectIfMatchTeamArchived(matchId);
+  if (archivedError) return { error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase

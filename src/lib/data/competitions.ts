@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentTeam } from "@/lib/data/team";
+import { archivedTeamWriteError } from "@/lib/team/season";
 import type {
   Competition,
   TablesInsert,
@@ -60,6 +61,8 @@ export async function createCompetition(
   if (!team) {
     return { data: null, error: "No team found for your account." };
   }
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -86,6 +89,8 @@ export async function updateCompetition(
   if (!team) {
     return { data: null, error: "No team found for your account." };
   }
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -110,6 +115,8 @@ export async function deleteCompetition(
   if (!team) {
     return { error: "No team found for your account." };
   }
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { error: archivedError };
 
   const supabase = await createClient();
   const { error } = await supabase

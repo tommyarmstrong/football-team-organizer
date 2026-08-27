@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
 import type { AgeGroup } from "@/lib/constants";
 import {
+  archivedTeamWriteError,
   isTeamArchived,
   isValidSeasonLabel,
   SEASON_FORMAT_HINT,
@@ -16,7 +17,12 @@ import type {
 } from "@/lib/supabase/database.types";
 
 export type { Team };
-export { isTeamArchived, sortTeamsForDisplay };
+export {
+  ARCHIVED_TEAM_READONLY_MESSAGE,
+  archivedTeamWriteError,
+  isTeamArchived,
+  sortTeamsForDisplay,
+} from "@/lib/team/season";
 
 export type StartNewTeamSeasonOptions = {
   seasonLabel: string;
@@ -88,6 +94,31 @@ export async function getTeam(
 
   if (error) return { data: null, error: error.message };
   return { data, error: null };
+}
+
+/** Reject writes against an archived season's historical records. */
+export async function requireWritableTeam(
+  teamId: string,
+): Promise<{ error: string | null }> {
+  const { data, error } = await getTeam(teamId);
+  if (error) return { error };
+  if (!data) return { error: "Team not found." };
+  return { error: archivedTeamWriteError(data) };
+}
+
+/** Reject writes against historical records belonging to a match's team. */
+export async function requireWritableMatchTeam(
+  matchId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select("team_id")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Match not found." };
+  return requireWritableTeam(data.team_id);
 }
 
 export async function updateTeam(
@@ -290,5 +321,14 @@ export async function canEditActiveTeam(): Promise<boolean> {
 export async function canEditActiveMatchDay(): Promise<boolean> {
   const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
   if (!ctx || !team) return false;
+  if (isTeamArchived(team)) return false;
   return canEditMatchDay(ctx, team.id);
+}
+
+/** True when historical records on the active team may be mutated. */
+export async function canEditActiveTeamHistory(): Promise<boolean> {
+  const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
+  if (!ctx || !team) return false;
+  if (isTeamArchived(team)) return false;
+  return ctx.editableTeamIds.includes(team.id);
 }

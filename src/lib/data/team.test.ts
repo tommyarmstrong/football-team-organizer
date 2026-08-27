@@ -460,4 +460,31 @@ describe("team data", () => {
     const { canEditActiveTeam: noTeam } = await import("@/lib/data/team");
     expect(await noTeam()).toBe(false);
   });
+
+  it("treats archived active teams as match-day read-only", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        teams: okResult([
+          teamFixture({ id: "team-1", archived_at: "2026-05-01T00:00:00Z" }),
+        ]),
+      }),
+    );
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ editableTeamIds: ["team-1"] }),
+    );
+    vi.resetModules();
+    const { canEditActiveMatchDay, canEditActiveTeamHistory, getTeam } =
+      await import("@/lib/data/team");
+    expect(await canEditActiveMatchDay()).toBe(false);
+    expect(await canEditActiveTeamHistory()).toBe(false);
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        teams: okResult(teamFixture({ archived_at: "2026-05-01T00:00:00Z" })),
+      }),
+    );
+    expect(await getTeam("team-1")).toMatchObject({
+      data: { archived_at: "2026-05-01T00:00:00Z" },
+    });
+  });
 });

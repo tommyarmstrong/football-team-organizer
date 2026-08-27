@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  ARCHIVED_TEAM_READONLY_MESSAGE,
+  archivedTeamWriteError,
   DEFAULT_SEASON,
   isTeamArchived,
   isValidSeasonLabel,
@@ -88,6 +90,12 @@ describe("isTeamArchived", () => {
         team({ id: "1", name: "Lions", archived_at: "2026-05-01T00:00:00Z" }),
       ),
     ).toBe(true);
+    expect(
+      archivedTeamWriteError(
+        team({ id: "1", name: "Lions", archived_at: "2026-05-01T00:00:00Z" }),
+      ),
+    ).toBe(ARCHIVED_TEAM_READONLY_MESSAGE);
+    expect(archivedTeamWriteError(team({ id: "1", name: "Lions" }))).toBeNull();
   });
 });
 

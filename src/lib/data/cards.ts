@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
 import { unwrapPerson } from "@/lib/people/person";
+import { rejectIfMatchTeamArchived } from "@/lib/team/readonly-guard";
 import type {
   Card,
   Person,
@@ -152,12 +153,14 @@ export async function createCard(
 
   const { data: match, error: matchError } = await supabase
     .from("matches")
-    .select("id, status")
+    .select("id, status, team_id")
     .eq("id", input.match_id)
     .maybeSingle();
 
   if (matchError) return { data: null, error: matchError.message };
   if (!match) return { data: null, error: "Match not found." };
+  const archivedError = await rejectIfMatchTeamArchived(input.match_id);
+  if (archivedError) return { data: null, error: archivedError };
   if (!matchAllowsEvents(match.status)) {
     return {
       data: null,

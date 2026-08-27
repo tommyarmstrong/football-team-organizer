@@ -7,7 +7,7 @@ export function DeletePersonButton({ personId }: { personId: string }) {
   return (
     <ListDeleteButton
       label="Delete person"
-      confirmMessage="Delete this person? Their roles will be deactivated and they will leave the directory. Historic match data is kept. This cannot be undone."
+      confirmMessage="Disable this person? They move to Previous members with their login unlinked. Historic match data is kept. You can re-activate them later."
       deleteAction={() => deletePersonAction(personId)}
     />
   );

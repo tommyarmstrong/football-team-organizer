@@ -72,18 +72,17 @@ describe("match-players data", () => {
   });
 
   it("adds and removes squad members", async () => {
-    let call = 0;
-    createClientMock.mockResolvedValue({
-      from(table: string) {
-        call += 1;
-        if (call === 1) {
-          return mockFromClient({
-            match_players: okResult([{ id: "mp-old", player_id: "player-1" }]),
-          }).from(table);
-        }
-        return mockFromClient({ match_players: okResult(null) }).from(table);
-      },
-    });
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult({ team_id: "team-1" }),
+        teams: okResult({ archived_at: null }),
+        match_players: [
+          okResult([{ id: "mp-old", player_id: "player-1" }]),
+          okResult(null),
+          okResult(null),
+        ],
+      }),
+    );
 
     const result = await setMatchSquad("m1", ["player-2", "player-2"]);
     expect(result.error).toBeNull();

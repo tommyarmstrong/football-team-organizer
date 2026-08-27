@@ -10,6 +10,7 @@ const {
   getViewerContextMock,
   getPrimaryClubMock,
   listPeopleMock,
+  listPreviousMembersMock,
   listMatchesMock,
   listCompetitionsMock,
   getNextFixtureMock,
@@ -35,6 +36,7 @@ const {
   getViewerContextMock: vi.fn(),
   getPrimaryClubMock: vi.fn(),
   listPeopleMock: vi.fn(),
+  listPreviousMembersMock: vi.fn(),
   listMatchesMock: vi.fn(),
   listCompetitionsMock: vi.fn(),
   getNextFixtureMock: vi.fn(),
@@ -64,6 +66,7 @@ vi.mock("@/lib/data/team", () => ({
   getActiveTeam: getActiveTeamMock,
   canEditActiveMatchDay: canEditActiveMatchDayMock,
   canEditActiveTeam: canEditActiveTeamMock,
+  canEditActiveTeamHistory: canEditActiveTeamMock,
 }));
 vi.mock("@/lib/data/matches", () => ({
   listMatches: listMatchesMock,
@@ -87,7 +90,10 @@ vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
 }));
 vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
-vi.mock("@/lib/data/people", () => ({ listPeople: listPeopleMock }));
+vi.mock("@/lib/data/people", () => ({
+  listPeople: listPeopleMock,
+  listPreviousMembers: listPreviousMembersMock,
+}));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
   return {
@@ -209,6 +215,7 @@ describe("app pages", () => {
     canAccessClubAndPeopleMock.mockReturnValue(true);
     getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
     listPeopleMock.mockResolvedValue({ data: [], error: null });
+    listPreviousMembersMock.mockResolvedValue({ data: [], error: null });
   });
 
   it("home page redirects to dashboard", () => {

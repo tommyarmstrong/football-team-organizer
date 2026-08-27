@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { personDisplayName } from "@/lib/people/person";
+import { isTeamArchived } from "@/lib/team/season";
 import type { Team, TeamRole } from "@/lib/supabase/database.types";
 
 /**
@@ -193,11 +194,29 @@ export function canEditTeam(ctx: ViewerContext, teamId: string): boolean {
   return ctx.editableTeamIds.includes(teamId);
 }
 
+function isVisibleTeamArchived(ctx: ViewerContext, teamId: string): boolean {
+  const team = ctx.visibleTeams.find((row) => row.id === teamId);
+  return team != null && isTeamArchived(team);
+}
+
+/**
+ * Squad, competitions, coaching staff, and other historical team records.
+ * Team profile / archive controls still use `canEditTeam`.
+ */
+export function canEditTeamHistory(
+  ctx: ViewerContext,
+  teamId: string,
+): boolean {
+  return canEditTeam(ctx, teamId) && !isVisibleTeamArchived(ctx, teamId);
+}
+
 /**
  * Record fixtures and match-day events (squad, periods, goals/assists, cards).
  * Guardian assistants get this without full team-edit rights (no POTM).
+ * Archived seasons are read-only.
  */
 export function canEditMatchDay(ctx: ViewerContext, teamId: string): boolean {
+  if (isVisibleTeamArchived(ctx, teamId)) return false;
   return (
     canEditTeam(ctx, teamId) || hasTeamRole(ctx, teamId, "guardian_assistant")
   );

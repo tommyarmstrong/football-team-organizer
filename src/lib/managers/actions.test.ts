@@ -9,8 +9,8 @@ const {
   getPrimaryClubMock,
   createManagerMock,
   updateManagerMock,
-  deleteManagerMock,
   getManagerMock,
+  deletePersonMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -20,8 +20,8 @@ const {
   getPrimaryClubMock: vi.fn(),
   createManagerMock: vi.fn(),
   updateManagerMock: vi.fn(),
-  deleteManagerMock: vi.fn(),
   getManagerMock: vi.fn(),
+  deletePersonMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -34,8 +34,10 @@ vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
 vi.mock("@/lib/data/managers", () => ({
   createManager: createManagerMock,
   updateManager: updateManagerMock,
-  deleteManager: deleteManagerMock,
   getManager: getManagerMock,
+}));
+vi.mock("@/lib/data/people", () => ({
+  deletePerson: deletePersonMock,
 }));
 
 import {
@@ -59,11 +61,12 @@ describe("manager actions", () => {
       error: null,
     });
     updateManagerMock.mockResolvedValue({ error: null });
-    deleteManagerMock.mockResolvedValue({ error: null });
+    deletePersonMock.mockResolvedValue({ error: null });
     getManagerMock.mockResolvedValue({
       data: {
         id: "mgr-1",
         club_id: "club-1",
+        person_id: "person-mgr",
         user_id: "other-user",
       },
       error: null,
@@ -109,6 +112,7 @@ describe("manager actions", () => {
       data: {
         id: "mgr-1",
         club_id: "club-1",
+        person_id: "person-mgr",
         user_id: "user-1",
       },
       error: null,

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditTeamHistory } from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
 import { getCurrentTeam } from "@/lib/data/team";
@@ -34,7 +34,7 @@ export default async function EditCompetitionPage({
     notFound();
   }
 
-  if (!canEditTeam(ctx, competition.team_id)) {
+  if (!canEditTeamHistory(ctx, competition.team_id)) {
     redirect(`/competitions/${competition.id}`);
   }
 
