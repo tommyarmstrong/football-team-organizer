@@ -7,7 +7,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      all: true,
+      // Vitest 4 dropped coverage.all; include all src files via include globs.
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "src/lib/supabase/**",

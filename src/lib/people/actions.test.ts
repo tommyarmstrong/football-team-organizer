@@ -250,7 +250,16 @@ describe("addClubRoleToPersonAction", () => {
   it("rejects duplicate active roles", async () => {
     getPersonMock.mockResolvedValue({
       data: personWithRolesFixture({
-        players: [{ id: "p1", club_id: "club-1", active_role: true }],
+        players: [
+          {
+            id: "p1",
+            club_id: "club-1",
+            active_role: true,
+            position: null,
+            school: null,
+            date_of_birth: null,
+          },
+        ],
       }),
       error: null,
     });

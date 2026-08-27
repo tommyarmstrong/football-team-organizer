@@ -3,13 +3,10 @@ import type { Match, Person, Team, Venue } from "@/lib/supabase/database.types";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { PersonWithRoles } from "@/lib/data/people";
 
-export function teamFixture(
-  overrides: Partial<Team> & Pick<Team, "id" | "club_id"> = {
+export function teamFixture(overrides: Partial<Team> = {}): Team {
+  return {
     id: "team-1",
     club_id: "club-1",
-  },
-): Team {
-  return {
     name: "U12 Blues",
     display_name: null,
     age_group: "U12",
@@ -120,19 +117,18 @@ export function personWithRolesFixture(
   };
 }
 
-export function venueFixture(
-  overrides: Partial<Venue> & Pick<Venue, "id" | "club_id"> = {
+export function venueFixture(overrides: Partial<Venue> = {}): Venue {
+  return {
     id: "venue-1",
     club_id: "club-1",
-  },
-): Venue {
-  return {
     name: "Main Pitch",
-    address: null,
+    address_line1: null,
+    address_line2: null,
+    town_city: null,
     postcode: null,
-    notes: null,
-    lat: null,
-    lng: null,
+    surface: ["grass"],
+    parking: "unknown",
+    food_and_drink: [],
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,
