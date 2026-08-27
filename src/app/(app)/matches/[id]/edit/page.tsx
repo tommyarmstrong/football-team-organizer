@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import {
   canEditMatchDay,
-  canEditTeam,
+  canEditTeamHistory,
   getViewerContext,
 } from "@/lib/authz/context";
 import { listCompetitions } from "@/lib/data/competitions";
@@ -112,7 +112,7 @@ export default async function EditMatchPage({
             venues={venues}
             players={eventPlayers}
             matchDaySquadCount={matchSquadIds.size}
-            canEditPlayerOfTheMatch={canEditTeam(ctx, match.team_id)}
+            canEditPlayerOfTheMatch={canEditTeamHistory(ctx, match.team_id)}
           />
         </CardContent>
       </Card>

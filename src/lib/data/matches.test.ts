@@ -198,18 +198,48 @@ describe("createMatch / updateMatch / deleteMatch", () => {
   it("updates and deletes matches", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ id: "m1", opponent_name: "Updated" }),
+        matches: okResult({
+          id: "m1",
+          team_id: "team-1",
+          opponent_name: "Updated",
+        }),
+        teams: okResult({ archived_at: null }),
       }),
     );
     expect(await updateMatch("m1", { opponent_name: "Updated" })).toEqual({
-      data: { id: "m1", opponent_name: "Updated" },
+      data: { id: "m1", team_id: "team-1", opponent_name: "Updated" },
       error: null,
     });
 
     createClientMock.mockResolvedValue(
-      mockFromClient({ matches: okResult(null) }),
+      mockFromClient({
+        matches: okResult({ id: "m1", team_id: "team-1" }),
+        teams: okResult({ archived_at: null }),
+      }),
     );
     expect(await deleteMatch("m1")).toEqual({ error: null });
+  });
+
+  it("rejects writes when the team is archived", async () => {
+    getActiveTeamMock.mockResolvedValue(
+      teamFixture({ archived_at: "2026-05-01T00:00:00Z" }),
+    );
+    expect(
+      await createMatch({
+        opponent_name: "Rivals",
+        date: "2025-09-01",
+        kickoff_time: null,
+        home_away: "home",
+        venue_id: null,
+        competition_id: null,
+        is_friendly: true,
+        notes: null,
+        club_notes: null,
+        status: "scheduled",
+        player_of_the_match_id: null,
+        players_player_of_the_match_id: null,
+      }),
+    ).toMatchObject({ error: expect.stringMatching(/read-only/i) });
   });
 });
 

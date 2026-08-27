@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { MatchPlayer, TablesInsert } from "@/lib/supabase/database.types";
 import type { RosterPlayer } from "@/lib/data/players";
+import { rejectIfMatchTeamArchived } from "@/lib/team/readonly-guard";
 
 export type MatchSquadPlayer = RosterPlayer & {
   match_player_id: string;
@@ -44,6 +45,9 @@ export async function setMatchSquad(
   matchId: string,
   playerIds: string[],
 ): Promise<{ error: string | null }> {
+  const archivedError = await rejectIfMatchTeamArchived(matchId);
+  if (archivedError) return { error: archivedError };
+
   const supabase = await createClient();
   const uniqueIds = [...new Set(playerIds.filter(Boolean))];
 

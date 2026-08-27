@@ -59,6 +59,17 @@ export function isTeamArchived(team: Pick<Team, "archived_at">): boolean {
   return team.archived_at != null;
 }
 
+export const ARCHIVED_TEAM_READONLY_MESSAGE =
+  "This team's historical data is read-only because the season is archived.";
+
+/** Error when writes against archived historical data must be rejected. */
+export function archivedTeamWriteError(
+  team: Pick<Team, "archived_at"> | null | undefined,
+): string | null {
+  if (!team || !isTeamArchived(team)) return null;
+  return ARCHIVED_TEAM_READONLY_MESSAGE;
+}
+
 /** Split teams into current and archived lists, preserving input order. */
 export function partitionTeamsByArchiveStatus(teams: Team[]): {
   current: Team[];

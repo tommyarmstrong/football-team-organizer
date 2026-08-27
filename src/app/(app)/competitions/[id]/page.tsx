@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditTeamHistory } from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
 import { getCurrentTeam } from "@/lib/data/team";
@@ -52,7 +52,7 @@ export default async function CompetitionDetailPage({
     redirect("/dashboard");
   }
 
-  const canEdit = canEditTeam(ctx, competition.team_id);
+  const canEdit = canEditTeamHistory(ctx, competition.team_id);
   const team = await getCurrentTeam();
   const { data: venues } = await listVenues(team?.club_id);
   const venueLabel = competitionVenueLabel(competition, venues);

@@ -12,6 +12,7 @@ import type {
   TablesUpdate,
 } from "@/lib/supabase/database.types";
 import type { CoachFormFields } from "@/lib/coaches/parse";
+import { archivedTeamWriteError } from "@/lib/team/season";
 
 export type CoachWithPerson = Coach & PersonFields;
 export type { Coach };
@@ -308,6 +309,14 @@ export async function addCoachToTeam(
   role: string | null,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("archived_at")
+    .eq("id", teamId)
+    .maybeSingle();
+  if (teamError) return { error: teamError.message };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { error: archivedError };
   const { error } = await supabase.from("team_coaches").insert({
     team_id: teamId,
     coach_id: coachId,

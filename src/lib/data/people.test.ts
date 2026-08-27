@@ -21,6 +21,8 @@ import {
   getPersonByAuthUserId,
   linkRoleToPerson,
   listPeople,
+  listPreviousMembers,
+  reactivatePerson,
   updatePerson,
 } from "@/lib/data/people";
 
@@ -141,10 +143,36 @@ describe("people data writes", () => {
       }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: null });
+    expect(deleteAuthUserMock).toHaveBeenCalledWith("auth-1");
+  });
+
+  it("soft-deletes guardian/manager people without removing the row", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1", auth_user_id: null })),
+          okResult(null),
+        ],
+        managers: [
+          okResult([{ id: "mgr-1", club_id: "club-1", active_role: true }]),
+          okResult(null),
+        ],
+        coaches: okResult([]),
+        guardians: [
+          okResult([
+            { id: "guardian-1", club_id: "club-1", active_role: true },
+          ]),
+          okResult(null),
+        ],
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: null });
     expect(deleteAuthUserMock).not.toHaveBeenCalled();
   });
 
-  it("deletes auth users when hard-deleting linked people", async () => {
+  it("deletes auth users when disabling linked people", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         people: [
@@ -161,6 +189,64 @@ describe("people data writes", () => {
     deleteAuthUserMock.mockResolvedValue({ error: null });
     expect(await deletePerson("person-1")).toEqual({ error: null });
     expect(deleteAuthUserMock).toHaveBeenCalledWith("auth-1");
+  });
+
+  it("lists previous members and reactivates disabled people", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult([
+          {
+            ...personFixture({
+              id: "person-old",
+              account_status: "disabled",
+            }),
+            managers: [],
+            coaches: [],
+            guardians: [],
+            players: [],
+          },
+        ]),
+      }),
+    );
+    const previous = await listPreviousMembers();
+    expect(previous.data[0]?.id).toBe("person-old");
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(
+            personFixture({
+              id: "person-old",
+              account_status: "disabled",
+              auth_user_id: null,
+            }),
+          ),
+          okResult(null),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await reactivatePerson("person-old")).toEqual({ error: null });
+  });
+
+  it("rejects reactivating people who are not disabled", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ account_status: "active" })),
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await reactivatePerson("person-1")).toEqual({
+      error: "This person is not a previous member.",
+    });
   });
 
   it("normalizes email on create and maps unique violations", async () => {

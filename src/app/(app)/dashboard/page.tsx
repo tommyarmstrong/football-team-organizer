@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   canEditActiveMatchDay,
-  canEditActiveTeam,
+  canEditActiveTeamHistory,
   getCurrentTeam,
 } from "@/lib/data/team";
 import {
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
     listPlayerOfTheMonth(team.id, 5),
     getResultsOverTime(),
     canEditActiveMatchDay(),
-    canEditActiveTeam(),
+    canEditActiveTeamHistory(),
   ]);
 
   const errors = [

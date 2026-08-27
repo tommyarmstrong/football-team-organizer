@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditTeamHistory } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
@@ -26,7 +26,7 @@ export default async function EditPlayerOfTheMonthPage({
 
   const team = await getActiveTeam();
   if (!team) redirect("/team");
-  if (!canEditTeam(ctx, team.id)) redirect("/team");
+  if (!canEditTeamHistory(ctx, team.id)) redirect("/team");
 
   const [{ data: award, error }, { data: roster }] = await Promise.all([
     getPlayerOfTheMonth(id),
