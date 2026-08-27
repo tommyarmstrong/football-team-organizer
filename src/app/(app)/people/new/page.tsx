@@ -29,8 +29,7 @@ export default async function NewPersonPage() {
         <CardHeader>
           <CardTitle>Person details</CardTitle>
           <CardDescription>
-            Enter known details, then assign roles and send an invitation from
-            the person page.
+            Enter known details and optionally assign club roles in one step.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -297,7 +297,9 @@ export async function setGuardianActiveRole(
 export async function deleteGuardian(
   id: string,
 ): Promise<{ error: string | null }> {
-  return setGuardianActiveRole(id, false);
+  const supabase = await createClient();
+  const { error } = await supabase.from("guardians").delete().eq("id", id);
+  return { error: error?.message ?? null };
 }
 
 export async function linkGuardianToPlayer(input: {

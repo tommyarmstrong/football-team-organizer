@@ -79,6 +79,59 @@ const GoalsPieChart = dynamic(
   },
 );
 
+function ResultPieCharts({
+  results,
+  filteredResults,
+  hasResultOutcomes,
+  hasGoals,
+  emptyFilterDescription,
+}: {
+  results: ResultOverTimePoint[];
+  filteredResults: ResultOverTimePoint[];
+  hasResultOutcomes: boolean;
+  hasGoals: boolean;
+  emptyFilterDescription: string;
+}) {
+  return (
+    <div className="grid gap-8 lg:grid-cols-2">
+      <div className="space-y-4">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">
+          Results
+        </h2>
+        {results.length === 0 ? (
+          <EmptyState
+            title="No results yet"
+            description="Played matches with scores will appear here."
+          />
+        ) : !hasResultOutcomes ? (
+          <EmptyState
+            title="No results for this filter"
+            description={emptyFilterDescription}
+          />
+        ) : (
+          <ResultsPieChart data={filteredResults} />
+        )}
+      </div>
+
+      <Section title="Goals">
+        {results.length === 0 ? (
+          <EmptyState
+            title="No goals yet"
+            description="Played matches with scores will appear here."
+          />
+        ) : !hasGoals ? (
+          <EmptyState
+            title="No goals for this filter"
+            description={emptyFilterDescription}
+          />
+        ) : (
+          <GoalsPieChart data={filteredResults} />
+        )}
+      </Section>
+    </div>
+  );
+}
+
 export function StatsPageContent({
   goalsByPlayer,
   assistsByPlayer,
@@ -141,6 +194,14 @@ export function StatsPageContent({
         />
       ) : null}
 
+      <ResultPieCharts
+        results={results}
+        filteredResults={filteredResults}
+        hasResultOutcomes={hasResultOutcomes}
+        hasGoals={hasGoals}
+        emptyFilterDescription={emptyFilterDescription}
+      />
+
       <Section title="Goal difference">
         {results.length === 0 ? (
           <EmptyState
@@ -157,7 +218,7 @@ export function StatsPageContent({
         )}
       </Section>
 
-      <Section title="Results over time">
+      <Section title="Results">
         {results.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -170,38 +231,6 @@ export function StatsPageContent({
           />
         ) : (
           <ResultsOverTimeChart data={filteredResults} />
-        )}
-      </Section>
-
-      <Section title="Results">
-        {results.length === 0 ? (
-          <EmptyState
-            title="No results yet"
-            description="Played matches with scores will appear here."
-          />
-        ) : !hasResultOutcomes ? (
-          <EmptyState
-            title="No results for this filter"
-            description={emptyFilterDescription}
-          />
-        ) : (
-          <ResultsPieChart data={filteredResults} />
-        )}
-      </Section>
-
-      <Section title="Goals for and against">
-        {results.length === 0 ? (
-          <EmptyState
-            title="No goals yet"
-            description="Played matches with scores will appear here."
-          />
-        ) : !hasGoals ? (
-          <EmptyState
-            title="No goals for this filter"
-            description={emptyFilterDescription}
-          />
-        ) : (
-          <GoalsPieChart data={filteredResults} />
         )}
       </Section>
 
