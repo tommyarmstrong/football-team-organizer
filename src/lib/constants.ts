@@ -103,10 +103,12 @@ export type CoachTeamRole = (typeof COACH_TEAM_ROLES)[number];
 export const COMPETITION_KINDS: CompetitionKind[] = [
   "league",
   "cup",
-  "friendly",
   "tournament",
   "other",
 ];
+
+/** Form/select value for a friendly fixture (not a competitions row). */
+export const FRIENDLY_COMPETITION_VALUE = "__friendly__";
 
 export const COMPETITION_GENDERS: CompetitionGender[] = [
   "female",

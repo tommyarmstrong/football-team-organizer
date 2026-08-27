@@ -6,6 +6,7 @@ import {
   COMPETITION_PERIODS,
   COMPETITION_PERIOD_LABELS,
   DEFAULT_MATCH_PERIODS,
+  FRIENDLY_COMPETITION_VALUE,
   MATCH_HOME_AWAYS,
   MATCH_STATUSES,
   matchAllowsEvents,
@@ -64,7 +65,9 @@ export function MatchForm({
     match?.status ?? "scheduled",
   );
   const [competitionId, setCompetitionId] = useState(
-    match?.competition_id ?? "",
+    match?.is_friendly
+      ? FRIENDLY_COMPETITION_VALUE
+      : (match?.competition_id ?? ""),
   );
   const [periods, setPeriods] = useState<CompetitionPeriods>(
     DEFAULT_MATCH_PERIODS,
@@ -73,7 +76,7 @@ export function MatchForm({
 
   function handleCompetitionChange(nextId: string) {
     setCompetitionId(nextId);
-    if (!nextId) {
+    if (!nextId || nextId === FRIENDLY_COMPETITION_VALUE) {
       setPeriods(DEFAULT_MATCH_PERIODS);
       return;
     }
@@ -171,6 +174,7 @@ export function MatchForm({
             disabled={pending}
           >
             <option value="">None</option>
+            <option value={FRIENDLY_COMPETITION_VALUE}>Friendly</option>
             {competitions.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

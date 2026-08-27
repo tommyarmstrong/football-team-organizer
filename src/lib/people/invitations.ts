@@ -57,6 +57,7 @@ export async function findAuthUserIdByEmail(
 export async function sendPersonInvitation(input: {
   person: Person;
   invitedBy: string | null;
+  clubName?: string | null;
 }): Promise<SendInvitationResult> {
   if (!input.person.email) {
     return { ok: false, error: "Person must have an email address to invite." };
@@ -114,6 +115,7 @@ export async function sendPersonInvitation(input: {
         invitation_id: invitation.id,
         first_name: input.person.first_name,
         last_name: input.person.last_name,
+        ...(input.clubName ? { club_name: input.clubName } : {}),
       },
     },
   );

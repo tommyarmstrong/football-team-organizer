@@ -132,6 +132,7 @@ const eslintConfig = defineConfig([
       "src/lib/supabase/admin.ts",
       "src/lib/people/invitations.ts",
       "src/lib/people/onboarding-actions.ts",
+      "src/lib/people/delete-auth-user.ts",
       "src/**/*.test.ts",
     ],
     rules: {

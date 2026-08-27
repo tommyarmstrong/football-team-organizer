@@ -9,6 +9,7 @@ import { getPrimaryClub } from "@/lib/data/clubs";
 import { listPeople } from "@/lib/data/people";
 import {
   directoryDescription,
+  directoryShowsAccountDetails,
   filterPeopleDirectory,
   redactDirectoryEmergencyContact,
 } from "@/lib/people/directory";
@@ -42,6 +43,9 @@ export default async function PeoplePage() {
     : filterPeopleDirectory(people, ctx, club.id).map((person) =>
         redactDirectoryEmergencyContact(person, ctx, club.id),
       );
+  const showAccountDetailsFor = visiblePeople
+    .filter((person) => directoryShowsAccountDetails(person, ctx, club.id))
+    .map((person) => person.id);
 
   return (
     <div className="space-y-8">
@@ -69,7 +73,10 @@ export default async function PeoplePage() {
         />
       ) : null}
       {!error && visiblePeople.length > 0 ? (
-        <PeopleDirectoryList people={visiblePeople} />
+        <PeopleDirectoryList
+          people={visiblePeople}
+          showAccountDetailsFor={showAccountDetailsFor}
+        />
       ) : null}
     </div>
   );

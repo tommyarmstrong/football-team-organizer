@@ -41,6 +41,7 @@ export type GoalsByPlayerPoint = {
   goalCompetitions: Array<{
     competitionId: string | null;
     competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
   }>;
 };
 
@@ -49,6 +50,11 @@ export type PlayerCountPoint = {
   name: string;
   count: number;
   matchesPlayed?: number;
+  events?: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
+  }>;
 };
 
 export type ResultOverTimePoint = {
@@ -61,6 +67,7 @@ export type ResultOverTimePoint = {
   competitionId: string | null;
   competitionKind: CompetitionKind | null;
   competitionName: string | null;
+  isFriendly: boolean;
 };
 
 async function getShirtByPlayer(
@@ -109,6 +116,33 @@ function bumpPlayerCount(
     },
     count: 1,
   });
+}
+
+function competitionFromMatch(matchRaw: unknown): {
+  competitionId: string | null;
+  competitionKind: CompetitionKind | null;
+  isFriendly: boolean;
+} {
+  const match = Array.isArray(matchRaw) ? matchRaw[0] : matchRaw;
+  if (!match || typeof match !== "object") {
+    return { competitionId: null, competitionKind: null, isFriendly: false };
+  }
+  const row = match as {
+    competition_id?: string | null;
+    is_friendly?: boolean;
+    competition?:
+      | { id?: string; kind?: CompetitionKind | null }
+      | Array<{ id?: string; kind?: CompetitionKind | null }>
+      | null;
+  };
+  const competitionRaw = Array.isArray(row.competition)
+    ? row.competition[0]
+    : row.competition;
+  return {
+    competitionId: competitionRaw?.id ?? row.competition_id ?? null,
+    competitionKind: (competitionRaw?.kind as CompetitionKind | null) ?? null,
+    isFriendly: Boolean(row.is_friendly),
+  };
 }
 
 export async function getTopScorers(
@@ -253,7 +287,7 @@ export async function getGoalsByPlayerStats(): Promise<{
   const { data: goalRows, error: goalsError } = await supabase
     .from("goals")
     .select(
-      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status, competition_id, competition:competitions(id, kind))`,
+      `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}, position), match:matches!inner(team_id, status, competition_id, is_friendly, competition:competitions(id, kind))`,
     )
     .eq("match.team_id", team.id)
     .eq("match.status", "played")
@@ -295,10 +329,18 @@ export async function getGoalsByPlayerStats(): Promise<{
       "kind" in competitionRaw
         ? ((competitionRaw.kind as CompetitionKind | null) ?? null)
         : null;
+    const isFriendly =
+      matchRaw && typeof matchRaw === "object" && "is_friendly" in matchRaw
+        ? Boolean(matchRaw.is_friendly)
+        : false;
     const existing = byPlayer.get(player.id);
     if (existing) {
       existing.goals += 1;
-      existing.goalCompetitions.push({ competitionId, competitionKind });
+      existing.goalCompetitions.push({
+        competitionId,
+        competitionKind,
+        isFriendly,
+      });
       continue;
     }
     byPlayer.set(player.id, {
@@ -308,7 +350,7 @@ export async function getGoalsByPlayerStats(): Promise<{
       position,
       matchesPlayed: 0,
       periodsPlayed: 0,
-      goalCompetitions: [{ competitionId, competitionKind }],
+      goalCompetitions: [{ competitionId, competitionKind, isFriendly }],
     });
   }
 
@@ -381,16 +423,44 @@ export async function getAssistsByPlayerStats(): Promise<{
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
 
-  const { data, error } = await getTopAssists(50);
-  if (error) return { data: [], error };
-  if (data.length === 0) return { data: [], error: null };
-
   const supabase = await createClient();
-  const playerIds = data.map((row) => row.player.id);
-  const matchesPlayedByPlayer = new Map<string, number>(
-    playerIds.map((id) => [id, 0]),
-  );
+  const { data, error } = await supabase
+    .from("goals")
+    .select(
+      `assist_player_id, assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status, competition_id, is_friendly, competition:competitions(id, kind))`,
+    )
+    .eq("match.team_id", team.id)
+    .eq("match.status", "played")
+    .eq("is_opposition", false)
+    .not("assist_player_id", "is", null);
 
+  if (error) return { data: [], error: error.message };
+
+  const byPlayer = new Map<string, PlayerCountPoint>();
+  for (const row of data ?? []) {
+    const playerRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
+    if (!player) continue;
+    const event = competitionFromMatch(row.match);
+    const existing = byPlayer.get(player.id);
+    if (existing) {
+      existing.count += 1;
+      existing.events = [...(existing.events ?? []), event];
+      continue;
+    }
+    byPlayer.set(player.id, {
+      playerId: player.id,
+      name: `${player.first_name} ${player.last_name}`,
+      count: 1,
+      events: [event],
+    });
+  }
+
+  if (byPlayer.size === 0) return { data: [], error: null };
+
+  const playerIds = [...byPlayer.keys()];
   const { data: playedMatches, error: matchesError } = await supabase
     .from("matches")
     .select("id")
@@ -410,18 +480,15 @@ export async function getAssistsByPlayerStats(): Promise<{
     if (appearancesError) return { data: [], error: appearancesError.message };
 
     for (const row of appearanceRows ?? []) {
-      const current = matchesPlayedByPlayer.get(row.player_id) ?? 0;
-      matchesPlayedByPlayer.set(row.player_id, current + 1);
+      const entry = byPlayer.get(row.player_id);
+      if (entry) {
+        entry.matchesPlayed = (entry.matchesPlayed ?? 0) + 1;
+      }
     }
   }
 
   return {
-    data: data.map((row) => ({
-      playerId: row.player.id,
-      name: `${row.player.first_name} ${row.player.last_name}`,
-      count: row.count,
-      matchesPlayed: matchesPlayedByPlayer.get(row.player.id) ?? 0,
-    })),
+    data: [...byPlayer.values()].sort((a, b) => b.count - a.count),
     error: null,
   };
 }
@@ -430,15 +497,48 @@ export async function getPlayerOfTheMatchByPlayerStats(): Promise<{
   data: PlayerCountPoint[];
   error: string | null;
 }> {
-  const { data, error } = await getTopPlayersOfTheMatch(50);
-  if (error) return { data: [], error };
+  const team = await getActiveTeam();
+  if (!team) return { data: [], error: "No team selected." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select(
+      `player_of_the_match_id, competition_id, is_friendly, competition:competitions(id, kind),
+       coach_potm:players!matches_player_of_the_match_id_fkey(${PLAYER_NAME_EMBED})`,
+    )
+    .eq("team_id", team.id)
+    .eq("status", "played")
+    .not("player_of_the_match_id", "is", null);
+
+  if (error) return { data: [], error: error.message };
+
+  const byPlayer = new Map<string, PlayerCountPoint>();
+  for (const row of data ?? []) {
+    const playerRaw = Array.isArray(row.coach_potm)
+      ? row.coach_potm[0]
+      : row.coach_potm;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
+    if (!player) continue;
+    const event = competitionFromMatch(row);
+    const existing = byPlayer.get(player.id);
+    if (existing) {
+      existing.count += 1;
+      existing.events = [...(existing.events ?? []), event];
+      continue;
+    }
+    byPlayer.set(player.id, {
+      playerId: player.id,
+      name: `${player.first_name} ${player.last_name}`,
+      count: 1,
+      events: [event],
+    });
+  }
 
   return {
-    data: data.map((row) => ({
-      playerId: row.player.id,
-      name: `${row.player.first_name} ${row.player.last_name}`,
-      count: row.count,
-    })),
+    data: [...byPlayer.values()].sort((a, b) => b.count - a.count),
     error: null,
   };
 }
@@ -454,7 +554,7 @@ export async function getMatchesPlayedByPlayerStats(): Promise<{
   const { data, error } = await supabase
     .from("match_players")
     .select(
-      `player_id, player:players!match_players_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id)`,
+      `player_id, player:players!match_players_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, competition_id, is_friendly, competition:competitions(id, kind))`,
     )
     .eq("match.team_id", team.id);
 
@@ -467,14 +567,17 @@ export async function getMatchesPlayedByPlayerStats(): Promise<{
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
     );
     if (!player) continue;
+    const event = competitionFromMatch(row.match);
     const existing = counts.get(player.id);
     if (existing) {
       existing.count += 1;
+      existing.events = [...(existing.events ?? []), event];
     } else {
       counts.set(player.id, {
         playerId: player.id,
         name: `${player.first_name} ${player.last_name}`,
         count: 1,
+        events: [event],
       });
     }
   }
@@ -497,7 +600,7 @@ export async function getResultsOverTime(): Promise<{
   const { data, error } = await supabase
     .from("matches")
     .select(
-      "id, date, opponent_name, status, competition_id, competition:competitions(id, name, kind), goals(is_opposition)",
+      "id, date, opponent_name, status, competition_id, is_friendly, competition:competitions(id, name, kind), goals(is_opposition)",
     )
     .eq("team_id", team.id)
     .eq("status", "played")
@@ -527,7 +630,10 @@ export async function getResultsOverTime(): Promise<{
       result: letter,
       competitionId: competitionRaw?.id ?? match.competition_id ?? null,
       competitionKind: (competitionRaw?.kind as CompetitionKind | null) ?? null,
-      competitionName: competitionRaw?.name ?? null,
+      competitionName: match.is_friendly
+        ? "Friendly"
+        : (competitionRaw?.name ?? null),
+      isFriendly: Boolean(match.is_friendly),
     });
   }
 

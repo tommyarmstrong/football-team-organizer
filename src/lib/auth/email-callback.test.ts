@@ -30,6 +30,10 @@ describe("sanitizeNextPath", () => {
       sanitizeNextPath("https://tracker.example.com/auth/invite?x=1"),
     ).toBe("/auth/invite?x=1");
   });
+
+  it("rejects malformed absolute URLs", () => {
+    expect(sanitizeNextPath("https://")).toBeNull();
+  });
 });
 
 describe("resolveAuthNextPath", () => {

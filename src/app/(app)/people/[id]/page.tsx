@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import {
   canAccessClubAndPeople,
+  canEditPersonDetails,
   canEditPlayer,
   canManageClub,
   canViewPlayerContact,
   getViewerContext,
+  isClubStaff,
   isSelfPerson,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
@@ -46,6 +48,7 @@ export default async function PersonDetailPage({
 
   const club = await getPrimaryClub();
   const canEdit = Boolean(club && canManageClub(ctx, club.id));
+  const clubStaff = Boolean(club && isClubStaff(ctx, club.id));
 
   const { data: person, error } = await getPerson(id);
   if (error) {
@@ -157,10 +160,20 @@ export default async function PersonDetailPage({
       player.club_id,
       playerTeams.map((team) => team.team_id),
     );
+  const canEditDetails = canEditPersonDetails(
+    ctx,
+    person,
+    player?.id ?? null,
+    club?.id ?? null,
+  );
   const canEditCoachRole =
     coach != null && (canManageClub(ctx, coach.club_id) || self);
   const canEditGuardianRole =
     guardian != null && canManageClub(ctx, guardian.club_id);
+  const restrictCoachProfile = Boolean(
+    coach && !self && !canEdit && !clubStaff,
+  );
+  const showPersonContact = self || canEdit || clubStaff || canViewContact;
 
   const playerTeamIds = new Set(playerTeams.map((team) => team.team_id));
   const availablePlayerTeams = ctx.visibleTeams.filter(
@@ -237,11 +250,11 @@ export default async function PersonDetailPage({
         title={title}
         description={
           <PersonHeaderMeta
-            email={person.email}
-            phone={person.phone}
+            email={showPersonContact ? person.email : null}
+            phone={showPersonContact ? person.phone : null}
             roles={roles}
-            player={player}
-            showPlayerAge={Boolean(player)}
+            player={restrictCoachProfile ? null : player}
+            showPlayerAge={Boolean(player) && !restrictCoachProfile}
             emergencyContactName={
               canViewContact && emergencyGuardian
                 ? guardianDisplayName(emergencyGuardian)
@@ -253,7 +266,7 @@ export default async function PersonDetailPage({
           />
         }
         actions={
-          canEdit || self ? (
+          canEditDetails ? (
             <>
               <EditIconLink
                 href={`/people/${person.id}/edit`}
@@ -302,11 +315,12 @@ export default async function PersonDetailPage({
             memberships={coachTeams}
             availableTeams={availableCoachTeams}
             canEdit={canEditCoachRole}
+            openableTeamIds={ctx.visibleTeams.map((team) => team.id)}
           />
         </Section>
       ) : null}
 
-      {coach ? (
+      {coach && !restrictCoachProfile ? (
         <Section
           title="Coaching development"
           description="Optional goals for this coach's development."

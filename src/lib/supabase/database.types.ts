@@ -829,6 +829,7 @@ export type Database = {
           created_at: string;
           date: string;
           id: string;
+          is_friendly: boolean;
           kickoff_time: string | null;
           notes: string | null;
           club_notes: string | null;
@@ -846,6 +847,7 @@ export type Database = {
           created_at?: string;
           date: string;
           id?: string;
+          is_friendly?: boolean;
           kickoff_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
@@ -863,6 +865,7 @@ export type Database = {
           created_at?: string;
           date?: string;
           id?: string;
+          is_friendly?: boolean;
           kickoff_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
@@ -1279,6 +1282,26 @@ export type Database = {
         Args: { p_name: string };
         Returns: Database["public"]["Tables"]["clubs"]["Row"];
       };
+      list_visible_coach_teams: {
+        Args: { p_coach_id: string };
+        Returns: {
+          team_coach_id: string;
+          team_id: string;
+          team_name: string;
+          team_season_label: string;
+          role: string | null;
+        }[];
+      };
+      is_club_guardian: { Args: { p_club_id: string }; Returns: boolean };
+      team_club_id: { Args: { p_team_id: string }; Returns: string };
+      is_guardian_of_person: {
+        Args: { p_person_id: string };
+        Returns: boolean;
+      };
+      is_guardian_of_player: {
+        Args: { p_player_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";
@@ -1286,7 +1309,7 @@ export type Database = {
         "management" | "coach" | "guardian" | "guardian_assistant" | "player";
       guardian_relationship:
         "parent" | "guardian" | "football_contact" | "other";
-      competition_kind: "league" | "cup" | "friendly" | "tournament" | "other";
+      competition_kind: "league" | "cup" | "tournament" | "other";
       competition_gender: "female" | "male" | "mixed";
       competition_periods: "1" | "2" | "4" | "other";
       competition_result:

@@ -4,15 +4,24 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import type { PlayerCountPoint, ResultOverTimePoint } from "@/lib/data/stats";
+import {
+  cumulativeResults,
+  tallyGoals,
+  tallyResults,
+  withGoalDifference,
+} from "@/lib/stats/results-view";
 
 export function PlayerCountChart({
   data,
@@ -116,22 +125,17 @@ export function PlayerCountChart({
   );
 }
 
-export function ResultsOverTimeChart({
-  data,
-}: {
-  data: ResultOverTimePoint[];
-}) {
-  const chartData = data.map((point, index) => ({
+export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
+  const chartData = withGoalDifference(data).map((point) => ({
     ...point,
-    index: index + 1,
     shortLabel:
       point.label.length > 12 ? `${point.label.slice(0, 12)}…` : point.label,
   }));
 
-  const summary = data
+  const summary = chartData
     .map(
       (row) =>
-        `${row.date} vs ${row.label}: ${row.goalsFor}–${row.goalsAgainst}`,
+        `${row.date} vs ${row.label}: ${row.goalDifference > 0 ? "+" : ""}${row.goalDifference}`,
     )
     .join("; ");
 
@@ -140,7 +144,7 @@ export function ResultsOverTimeChart({
       <div
         className="h-72 w-full"
         role="img"
-        aria-label={`Line chart of goals for and against over time. ${summary}`}
+        aria-label={`Line chart of goals for, goals against, and goal difference over time. ${summary}`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -153,7 +157,8 @@ export function ResultsOverTimeChart({
             <Tooltip
               labelFormatter={(_, payload) => {
                 const row = payload?.[0]?.payload as
-                  ResultOverTimePoint | undefined;
+                  | (ResultOverTimePoint & { goalDifference: number })
+                  | undefined;
                 return row ? `${row.date} vs ${row.label}` : "";
               }}
             />
@@ -162,7 +167,7 @@ export function ResultsOverTimeChart({
               type="monotone"
               dataKey="goalsFor"
               name="Goals for"
-              stroke="var(--color-chart-1)"
+              stroke="var(--color-win)"
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -170,18 +175,25 @@ export function ResultsOverTimeChart({
               type="monotone"
               dataKey="goalsAgainst"
               name="Goals against"
-              stroke="var(--color-chart-4)"
+              stroke="var(--color-loss)"
               strokeWidth={2}
-              strokeDasharray="4 4"
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="goalDifference"
+              name="Goal difference"
+              stroke="var(--color-foreground)"
+              strokeWidth={2}
               dot={{ r: 3 }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="sr-only">Results over time: {summary}</figcaption>
+      <figcaption className="sr-only">Goal difference: {summary}</figcaption>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[20rem] text-left text-sm">
-          <caption className="sr-only">Results over time</caption>
+          <caption className="sr-only">Goal difference</caption>
           <thead>
             <tr className="border-border text-muted-foreground border-b">
               <th scope="col" className="py-2 pr-3 font-medium">
@@ -190,24 +202,234 @@ export function ResultsOverTimeChart({
               <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
                 For
               </th>
-              <th scope="col" className="py-2 font-medium tabular-nums">
+              <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
                 Against
+              </th>
+              <th scope="col" className="py-2 font-medium tabular-nums">
+                GD
               </th>
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => (
+            {chartData.map((row) => (
               <tr key={row.matchId} className="border-border/60 border-b">
                 <td className="py-2 pr-3">
                   {row.date} vs {row.label}
                 </td>
                 <td className="py-2 pr-3 tabular-nums">{row.goalsFor}</td>
-                <td className="py-2 tabular-nums">{row.goalsAgainst}</td>
+                <td className="py-2 pr-3 tabular-nums">{row.goalsAgainst}</td>
+                <td className="py-2 tabular-nums">
+                  {row.goalDifference > 0 ? "+" : ""}
+                  {row.goalDifference}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+    </figure>
+  );
+}
+
+export function ResultsOverTimeChart({
+  data,
+}: {
+  data: ResultOverTimePoint[];
+}) {
+  const chartData = cumulativeResults(data).map((point) => ({
+    ...point,
+    shortLabel:
+      point.label.length > 12 ? `${point.label.slice(0, 12)}…` : point.label,
+  }));
+
+  const summary = chartData
+    .map(
+      (row) =>
+        `${row.date} vs ${row.label}: ${row.wins}W ${row.draws}D ${row.losses}L`,
+    )
+    .join("; ");
+
+  return (
+    <figure className="space-y-4">
+      <div
+        className="h-72 w-full"
+        role="img"
+        aria-label={`Line chart of cumulative wins, draws, and losses. ${summary}`}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="shortLabel" tick={{ fontSize: 11 }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
+            <Tooltip
+              labelFormatter={(_, payload) => {
+                const row = payload?.[0]?.payload as
+                  (typeof chartData)[number] | undefined;
+                return row ? `${row.date} vs ${row.label}` : "";
+              }}
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="wins"
+              name="Wins"
+              stroke="var(--color-win)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="draws"
+              name="Draws"
+              stroke="var(--color-draw)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="losses"
+              name="Losses"
+              stroke="var(--color-loss)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <figcaption className="sr-only">Results: {summary}</figcaption>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[20rem] text-left text-sm">
+          <caption className="sr-only">Cumulative results</caption>
+          <thead>
+            <tr className="border-border text-muted-foreground border-b">
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Match
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
+                Wins
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
+                Draws
+              </th>
+              <th scope="col" className="py-2 font-medium tabular-nums">
+                Losses
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {chartData.map((row) => (
+              <tr key={row.matchId} className="border-border/60 border-b">
+                <td className="py-2 pr-3">
+                  {row.date} vs {row.label}
+                </td>
+                <td className="py-2 pr-3 tabular-nums">{row.wins}</td>
+                <td className="py-2 pr-3 tabular-nums">{row.draws}</td>
+                <td className="py-2 tabular-nums">{row.losses}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </figure>
+  );
+}
+
+const RESULT_PIE_COLORS = {
+  Wins: "var(--color-win)",
+  Draws: "var(--color-draw)",
+  Losses: "var(--color-loss)",
+} as const;
+
+export function ResultsPieChart({ data }: { data: ResultOverTimePoint[] }) {
+  const tally = tallyResults(data);
+  const slices = [
+    { name: "Wins" as const, value: tally.wins },
+    { name: "Draws" as const, value: tally.draws },
+    { name: "Losses" as const, value: tally.losses },
+  ].filter((slice) => slice.value > 0);
+
+  const summary = `Wins ${tally.wins}, draws ${tally.draws}, losses ${tally.losses}`;
+
+  return (
+    <figure className="space-y-4">
+      <div
+        className="h-72 w-full"
+        role="img"
+        aria-label={`Pie chart of results. ${summary}`}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={slices}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              label
+            >
+              {slices.map((slice) => (
+                <Cell key={slice.name} fill={RESULT_PIE_COLORS[slice.name]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <figcaption className="sr-only">{summary}</figcaption>
+    </figure>
+  );
+}
+
+export function GoalsPieChart({ data }: { data: ResultOverTimePoint[] }) {
+  const tally = tallyGoals(data);
+  const slices = [
+    {
+      name: "Goals for",
+      value: tally.goalsFor,
+      fill: "var(--color-win)",
+    },
+    {
+      name: "Goals against",
+      value: tally.goalsAgainst,
+      fill: "var(--color-loss)",
+    },
+  ].filter((slice) => slice.value > 0);
+
+  const summary = `Goals for ${tally.goalsFor}, goals against ${tally.goalsAgainst}`;
+
+  return (
+    <figure className="space-y-4">
+      <div
+        className="h-72 w-full"
+        role="img"
+        aria-label={`Pie chart of goals for and against. ${summary}`}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={slices}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              label
+            >
+              {slices.map((slice) => (
+                <Cell key={slice.name} fill={slice.fill} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <figcaption className="sr-only">{summary}</figcaption>
     </figure>
   );
 }

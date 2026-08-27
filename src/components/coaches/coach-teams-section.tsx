@@ -29,11 +29,13 @@ export function CoachTeamsSection({
   memberships,
   availableTeams,
   canEdit,
+  openableTeamIds,
 }: {
   coachId: string;
   memberships: CoachTeamMembership[];
   availableTeams: Pick<Team, "id" | "name">[];
   canEdit: boolean;
+  openableTeamIds?: string[];
 }) {
   return (
     <div className="space-y-4">
@@ -50,7 +52,13 @@ export function CoachTeamsSection({
         <ul className={objectListClassName}>
           {memberships.map((membership) => (
             <li key={membership.team_coach_id} className="flex items-stretch">
-              <OpenTeamRow membership={membership} />
+              <OpenTeamRow
+                membership={membership}
+                canOpen={
+                  openableTeamIds == null ||
+                  openableTeamIds.includes(membership.team_id)
+                }
+              />
               {canEdit ? (
                 <div className="flex items-center pr-2">
                   <ListUnlinkButton
@@ -76,22 +84,18 @@ export function CoachTeamsSection({
   );
 }
 
-function OpenTeamRow({ membership }: { membership: CoachTeamMembership }) {
+function OpenTeamRow({
+  membership,
+  canOpen,
+}: {
+  membership: CoachTeamMembership;
+  canOpen: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => {
-        startTransition(async () => {
-          await setActiveTeamAction(membership.team_id);
-          router.push("/team");
-        });
-      }}
-      className={objectListRowClassName("w-full text-left disabled:opacity-60")}
-    >
+  const content = (
+    <>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">
           {membership.team_name}
@@ -105,6 +109,30 @@ function OpenTeamRow({ membership }: { membership: CoachTeamMembership }) {
       <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
         <RoleChip>{membership.role ?? "Coach"}</RoleChip>
       </span>
+    </>
+  );
+
+  if (!canOpen) {
+    return (
+      <div className={objectListRowClassName("w-full text-left")}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => {
+        startTransition(async () => {
+          await setActiveTeamAction(membership.team_id);
+          router.push("/team");
+        });
+      }}
+      className={objectListRowClassName("w-full text-left disabled:opacity-60")}
+    >
+      {content}
     </button>
   );
 }

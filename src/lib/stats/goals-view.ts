@@ -68,6 +68,7 @@ export function filterGoalsByCompetition(
         matchesCompetitionFilters({
           competitionId: goal.competitionId,
           competitionKind: goal.competitionKind,
+          isFriendly: goal.isFriendly,
           selectedCompetitionId,
           selectedCompetitionKind,
         }),

@@ -249,6 +249,40 @@ export function canEditPlayer(
   return playerTeamIds.some((teamId) => ctx.editableTeamIds.includes(teamId));
 }
 
+/** True when the viewer is a guardian of this player record. */
+export function isGuardianOfPlayer(
+  ctx: ViewerContext,
+  playerId: string,
+): boolean {
+  return ctx.guardianPlayerIds.includes(playerId);
+}
+
+/**
+ * Name, email, and phone: the person themselves, club managers, or a guardian
+ * of this player's person record.
+ */
+export function canEditPersonDetails(
+  ctx: ViewerContext,
+  person: { id: string; auth_user_id: string | null },
+  playerId: string | null,
+  clubId: string | null,
+): boolean {
+  if (isSelfPerson(ctx, person)) return true;
+  if (clubId && canManageClub(ctx, clubId)) return true;
+  if (playerId && isGuardianOfPlayer(ctx, playerId)) return true;
+  return false;
+}
+
+/** DOB and school on a linked player: club managers or that player's guardian. */
+export function canEditLinkedPlayerProfile(
+  ctx: ViewerContext,
+  playerId: string,
+  playerClubId: string,
+): boolean {
+  if (canManageClub(ctx, playerClubId)) return true;
+  return isGuardianOfPlayer(ctx, playerId);
+}
+
 /** Can the user see/edit a player's sensitive contact details? */
 export function canViewPlayerContact(
   ctx: ViewerContext,
