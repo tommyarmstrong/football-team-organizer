@@ -204,7 +204,7 @@ function normalizeRelation<T>(value: unknown): T | null {
   return (value as T | null) ?? null;
 }
 
-function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
+export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
   const { goalsFor, goalsAgainst } = scoreFromGoals(
     Array.isArray(row.goals) ? row.goals : [],
   );

@@ -7,7 +7,14 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      exclude: ["src/lib/supabase/**", "src/components/ui/**", "**/*.test.ts"],
+      all: true,
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/lib/supabase/**",
+        "src/components/ui/**",
+        "src/test/**",
+        "**/*.test.ts",
+      ],
     },
   },
   resolve: {
