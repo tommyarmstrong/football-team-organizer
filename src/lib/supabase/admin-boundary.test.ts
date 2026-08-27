@@ -8,6 +8,7 @@ const srcRoot = path.join(repoRoot, "src");
 const adminModule = path.join(srcRoot, "lib/supabase/admin.ts");
 
 const allowedDirectImporters = new Set([
+  "src/lib/people/delete-auth-user.ts",
   "src/lib/people/invitations.ts",
   "src/lib/people/onboarding-actions.ts",
 ]);

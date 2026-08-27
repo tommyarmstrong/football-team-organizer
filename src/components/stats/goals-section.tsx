@@ -75,7 +75,7 @@ export function GoalsSection({
     .join("; ");
 
   return (
-    <Section title="Goals">
+    <Section title="Goal Scorers">
       <div className="space-y-4">
         {data.length === 0 ? (
           <EmptyState

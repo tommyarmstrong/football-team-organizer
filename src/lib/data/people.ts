@@ -315,8 +315,9 @@ export async function updatePerson(
 }
 
 /**
- * Soft-delete a person: deactivate all roles, revoke open invites, and mark
- * account_status disabled so they leave the directory while historic links stay.
+ * Delete a person. Guardians and managers are always removed from their tables.
+ * People with player or coach history are soft-deleted and scrubbed; others are
+ * hard-deleted along with their auth user when present.
  */
 export async function deletePerson(
   id: string,
@@ -327,36 +328,18 @@ export async function deletePerson(
   if (loadError) return { error: loadError };
   if (!person) return { error: "Person not found." };
 
-  for (const row of person.players) {
-    if (!row.active_role) continue;
-    const { error } = await supabase
-      .from("players")
-      .update({ active_role: false })
-      .eq("id", row.id);
-    if (error) return { error: error.message };
-  }
-  for (const row of person.coaches) {
-    if (!row.active_role) continue;
-    const { error } = await supabase
-      .from("coaches")
-      .update({ active_role: false })
-      .eq("id", row.id);
-    if (error) return { error: error.message };
-  }
+  const hasPlayerOrCoach =
+    person.players.length > 0 || person.coaches.length > 0;
+
   for (const row of person.guardians) {
-    if (!row.active_role) continue;
     const { error } = await supabase
       .from("guardians")
-      .update({ active_role: false })
+      .delete()
       .eq("id", row.id);
     if (error) return { error: error.message };
   }
   for (const row of person.managers) {
-    if (!row.active_role) continue;
-    const { error } = await supabase
-      .from("managers")
-      .update({ active_role: false })
-      .eq("id", row.id);
+    const { error } = await supabase.from("managers").delete().eq("id", row.id);
     if (error) return { error: error.message };
   }
 
@@ -368,10 +351,56 @@ export async function deletePerson(
     .is("revoked_at", null);
   if (inviteError) return { error: inviteError.message };
 
-  const { error } = await supabase
-    .from("people")
-    .update({ account_status: "disabled" })
-    .eq("id", id);
+  if (hasPlayerOrCoach) {
+    for (const row of person.players) {
+      if (!row.active_role) continue;
+      const { error } = await supabase
+        .from("players")
+        .update({ active_role: false })
+        .eq("id", row.id);
+      if (error) return { error: error.message };
+    }
+    for (const row of person.coaches) {
+      if (!row.active_role) continue;
+      const { error } = await supabase
+        .from("coaches")
+        .update({ active_role: false })
+        .eq("id", row.id);
+      if (error) return { error: error.message };
+    }
+
+    for (const row of person.players) {
+      const { error } = await supabase
+        .from("player_contacts")
+        .update({
+          email: null,
+          phone: null,
+          address: null,
+          medical_notes: null,
+        })
+        .eq("player_id", row.id);
+      if (error) return { error: error.message };
+    }
+
+    const { error } = await supabase
+      .from("people")
+      .update({
+        email: null,
+        phone: null,
+        account_status: "disabled",
+      })
+      .eq("id", id);
+    return { error: error?.message ?? null };
+  }
+
+  if (person.auth_user_id) {
+    const { deleteAuthUserById } =
+      await import("@/lib/people/delete-auth-user");
+    const { error: authError } = await deleteAuthUserById(person.auth_user_id);
+    if (authError) return { error: authError };
+  }
+
+  const { error } = await supabase.from("people").delete().eq("id", id);
   return { error: error?.message ?? null };
 }
 

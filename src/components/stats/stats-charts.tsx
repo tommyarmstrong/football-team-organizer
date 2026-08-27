@@ -144,7 +144,7 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
       <div
         className="h-72 w-full"
         role="img"
-        aria-label={`Line chart of goal difference over time. ${summary}`}
+        aria-label={`Line chart of goals for, goals against, and goal difference over time. ${summary}`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -165,9 +165,25 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
             <Legend />
             <Line
               type="monotone"
+              dataKey="goalsFor"
+              name="Goals for"
+              stroke="var(--color-win)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="goalsAgainst"
+              name="Goals against"
+              stroke="var(--color-loss)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
               dataKey="goalDifference"
               name="Goal difference"
-              stroke="var(--color-chart-1)"
+              stroke="var(--color-foreground)"
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -283,7 +299,7 @@ export function ResultsOverTimeChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="sr-only">Results over time: {summary}</figcaption>
+      <figcaption className="sr-only">Results: {summary}</figcaption>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[20rem] text-left text-sm">
           <caption className="sr-only">Cumulative results</caption>
@@ -375,12 +391,12 @@ export function GoalsPieChart({ data }: { data: ResultOverTimePoint[] }) {
     {
       name: "Goals for",
       value: tally.goalsFor,
-      fill: "var(--color-chart-1)",
+      fill: "var(--color-win)",
     },
     {
       name: "Goals against",
       value: tally.goalsAgainst,
-      fill: "var(--color-chart-4)",
+      fill: "var(--color-loss)",
     },
   ].filter((slice) => slice.value > 0);
 

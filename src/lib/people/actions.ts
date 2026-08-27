@@ -45,7 +45,11 @@ import {
   updatePlayer,
 } from "@/lib/data/players";
 import { sendPersonInvitation } from "@/lib/people/invitations";
-import { parsePersonForm, parsePersonPlayerForm } from "@/lib/people/parse";
+import {
+  parsePersonForm,
+  parsePersonPlayerForm,
+  parsePersonRolesForm,
+} from "@/lib/people/parse";
 import { str } from "@/lib/form-parse";
 import type { PersonRoleKind } from "@/lib/people/roles";
 
@@ -79,6 +83,26 @@ export async function createPersonAction(
   });
   if (error) return { error };
   if (!data) return { error: "Could not create person." };
+
+  const roles = parsePersonRolesForm(formData);
+  if (roles.length > 0) {
+    const personWithRoles: PersonWithRoles = {
+      ...data,
+      managers: [],
+      coaches: [],
+      guardians: [],
+      players: [],
+      outstanding_invitation: null,
+    };
+    for (const role of roles) {
+      const roleError = await createClubRoleForPerson(
+        personWithRoles,
+        club.id,
+        role,
+      );
+      if (roleError.error) return { error: roleError.error };
+    }
+  }
 
   revalidatePeople(data.id);
   redirect(`/people/${data.id}`);
@@ -221,6 +245,83 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+async function createClubRoleForPerson(
+  person: PersonWithRoles,
+  clubId: string,
+  role: PersonRoleKind,
+): Promise<{ error: string | null }> {
+  const existing = roleRowsFor(person, role).find(
+    (row) => row.club_id === clubId,
+  );
+  if (existing?.active_role) {
+    return { error: `This person already has a ${role} role at this club.` };
+  }
+
+  if (existing && !existing.active_role) {
+    const { error } =
+      role === "player"
+        ? await setPlayerActiveRole(existing.id, true)
+        : role === "coach"
+          ? await setCoachActiveRole(existing.id, true)
+          : role === "guardian"
+            ? await setGuardianActiveRole(existing.id, true)
+            : await setManagerActiveRole(existing.id, true);
+    return { error };
+  }
+
+  if (role === "player") {
+    const { error } = await createPlayer({
+      club_id: clubId,
+      person_id: person.id,
+      first_name: person.first_name,
+      last_name: person.last_name,
+    });
+    return { error };
+  }
+  if (role === "coach") {
+    const { error } = await createCoach({
+      club_id: clubId,
+      person_id: person.id,
+      first_name: person.first_name,
+      second_name: person.last_name,
+      phone: person.phone,
+      email: person.email,
+      joined_date: todayIsoDate(),
+      date_of_birth: null,
+      notes: null,
+      biography: null,
+      philosophy: null,
+      dbs_checked: false,
+      fa_level_1: false,
+      fa_level_2: false,
+    });
+    return { error };
+  }
+  if (role === "guardian") {
+    const { error } = await createGuardian({
+      club_id: clubId,
+      person_id: person.id,
+      first_name: person.first_name,
+      second_name: person.last_name,
+      phone: person.phone,
+      email: person.email,
+      notes: null,
+    });
+    return { error };
+  }
+
+  const { error } = await createManager({
+    club_id: clubId,
+    person_id: person.id,
+    first_name: person.first_name,
+    second_name: person.last_name,
+    phone: person.phone,
+    email: person.email,
+    notes: null,
+  });
+  return { error };
+}
+
 function roleRowsFor(
   person: PersonWithRoles,
   role: PersonRoleKind,
@@ -260,65 +361,8 @@ export async function addClubRoleToPersonAction(
     return { error: `This person already has a ${role} role at this club.` };
   }
 
-  if (existing && !existing.active_role) {
-    const { error } =
-      role === "player"
-        ? await setPlayerActiveRole(existing.id, true)
-        : role === "coach"
-          ? await setCoachActiveRole(existing.id, true)
-          : role === "guardian"
-            ? await setGuardianActiveRole(existing.id, true)
-            : await setManagerActiveRole(existing.id, true);
-    if (error) return { error };
-  } else if (role === "player") {
-    const { error } = await createPlayer({
-      club_id: club.id,
-      person_id: person.id,
-      first_name: person.first_name,
-      last_name: person.last_name,
-    });
-    if (error) return { error };
-  } else if (role === "coach") {
-    const { error } = await createCoach({
-      club_id: club.id,
-      person_id: person.id,
-      first_name: person.first_name,
-      second_name: person.last_name,
-      phone: person.phone,
-      email: person.email,
-      joined_date: todayIsoDate(),
-      date_of_birth: null,
-      notes: null,
-      biography: null,
-      philosophy: null,
-      dbs_checked: false,
-      fa_level_1: false,
-      fa_level_2: false,
-    });
-    if (error) return { error };
-  } else if (role === "guardian") {
-    const { error } = await createGuardian({
-      club_id: club.id,
-      person_id: person.id,
-      first_name: person.first_name,
-      second_name: person.last_name,
-      phone: person.phone,
-      email: person.email,
-      notes: null,
-    });
-    if (error) return { error };
-  } else {
-    const { error } = await createManager({
-      club_id: club.id,
-      person_id: person.id,
-      first_name: person.first_name,
-      second_name: person.last_name,
-      phone: person.phone,
-      email: person.email,
-      notes: null,
-    });
-    if (error) return { error };
-  }
+  const { error } = await createClubRoleForPerson(person, club.id, role);
+  if (error) return { error };
 
   revalidatePeople(personId);
   revalidatePath("/club");
@@ -379,7 +423,12 @@ export async function removeClubRoleFromPersonAction(
 
   revalidatePeople(personId);
   revalidatePath("/club");
-  return { success: "Club role deactivated." };
+  return {
+    success:
+      role === "guardian" || role === "manager"
+        ? "Club role removed."
+        : "Club role deactivated.",
+  };
 }
 
 export async function sendInvitationAction(

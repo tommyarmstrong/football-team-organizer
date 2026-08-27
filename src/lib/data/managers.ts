@@ -159,5 +159,7 @@ export async function setManagerActiveRole(
 export async function deleteManager(
   id: string,
 ): Promise<{ error: string | null }> {
-  return setManagerActiveRole(id, false);
+  const supabase = await createClient();
+  const { error } = await supabase.from("managers").delete().eq("id", id);
+  return { error: error?.message ?? null };
 }

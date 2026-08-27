@@ -1,5 +1,6 @@
 import { str } from "@/lib/form-parse";
 import { normalizeEmail } from "@/lib/people/person";
+import { PERSON_ROLE_ORDER, type PersonRoleKind } from "@/lib/people/roles";
 import { PLAYER_POSITIONS } from "@/lib/constants";
 
 export type PersonFormFields = {
@@ -59,6 +60,16 @@ export function parsePersonPlayerForm(
   }
 
   return { player_id, date_of_birth, position, school };
+}
+
+export function parsePersonRolesForm(formData: FormData): PersonRoleKind[] {
+  const roles: PersonRoleKind[] = [];
+  for (const role of PERSON_ROLE_ORDER) {
+    if (formData.get(`role_${role}`) === "on") {
+      roles.push(role);
+    }
+  }
+  return roles;
 }
 
 export function parseOptionalPersonProfile(
