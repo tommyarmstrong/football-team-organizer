@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
+import { archivedTeamWriteError } from "@/lib/team/season";
 import { createPerson, updatePerson } from "@/lib/data/people";
 import {
   PERSON_EMBED,
@@ -360,6 +361,14 @@ export async function addPlayerToTeam(
   shirtNumber: number | null,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("archived_at")
+    .eq("id", teamId)
+    .maybeSingle();
+  if (teamError) return { error: teamError.message };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { error: archivedError };
   const { error } = await supabase.from("team_players").insert({
     team_id: teamId,
     player_id: playerId,

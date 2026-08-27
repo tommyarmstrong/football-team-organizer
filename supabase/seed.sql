@@ -2,7 +2,7 @@
 --
 -- Seeded domain data:
 --   - 1 club (The Football Association)
---   - 32 venues (training/national + 2025/26 Premier League stadiums + WC 2026 tournament venues)
+--   - 30 venues (training/national + 2025/26 Premier League stadiums + WC 2026 tournament venues)
 --   - 4 teams (England Men 1965/66, England Men 1995/96, England Men 2025/26, England Women 2021/22)
 --   - 1 club manager (John Hall) + people row
 --   - 7 coaches (Keegan, Robson, Howe, Ramsey, Wiegman, Venables, Tuchel) + their people rows
@@ -63,28 +63,6 @@ upserted_venues as (
     food_and_drink
   )
   values
-    (
-      'a0000001-0000-4000-8000-000000000001',
-      '11111111-1111-1111-1111-111111111111',
-      'Aylward Academy',
-      '1 Windmill Road',
-      'Edmonton',
-      'London',
-      'N18 1NB',
-      array['astro']::public.venue_surface[],
-      array['tuck_shop', 'local_outlets']::public.venue_food_and_drink[]
-    ),
-    (
-      'a0000002-0000-4000-8000-000000000002',
-      '11111111-1111-1111-1111-111111111111',
-      'St Thomas More Catholic School',
-      'Glendale Avenue',
-      'Wood Green',
-      'London',
-      'N22 5HN',
-      array['astro']::public.venue_surface[],
-      '{}'::public.venue_food_and_drink[]
-    ),
     (
       'a0000003-0000-4000-8000-000000000003',
       '11111111-1111-1111-1111-111111111111',

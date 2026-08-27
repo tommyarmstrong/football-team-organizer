@@ -4,13 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
-import {
-  createManager,
-  deleteManager,
-  getManager,
-  updateManager,
-} from "@/lib/data/managers";
+import { createManager, getManager, updateManager } from "@/lib/data/managers";
 import { getPrimaryClub } from "@/lib/data/clubs";
+import { deletePerson } from "@/lib/data/people";
 import { parseManagerForm } from "@/lib/managers/parse";
 
 function revalidateManager(managerId?: string) {
@@ -84,9 +80,10 @@ export async function deleteManagerAction(id: string): Promise<ActionState> {
     return { error: "You cannot delete your own manager record." };
   }
 
-  const { error } = await deleteManager(id);
+  const { error } = await deletePerson(existing.person_id);
   if (error) return { error };
 
   revalidateManager();
+  revalidatePath("/people");
   redirect("/club");
 }

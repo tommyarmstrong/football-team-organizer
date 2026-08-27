@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { setMatchSquad } from "@/lib/data/match-players";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
+import { archivedTeamWriteError } from "@/lib/team/season";
 import type { MatchListFilter } from "@/lib/constants";
 import { scoreFromGoals } from "@/lib/format";
 import type {
@@ -81,6 +82,8 @@ export async function createMatch(
   if (!team) {
     return { data: null, error: "No team selected." };
   }
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -112,6 +115,22 @@ export async function updateMatch(
   input: TablesUpdate<"matches">,
 ): Promise<{ data: Match | null; error: string | null }> {
   const supabase = await createClient();
+  const { data: existing, error: loadError } = await supabase
+    .from("matches")
+    .select("team_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (loadError) return { data: null, error: loadError.message };
+  if (!existing) return { data: null, error: "Match not found." };
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("archived_at")
+    .eq("id", existing.team_id)
+    .maybeSingle();
+  if (teamError) return { data: null, error: teamError.message };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
   const { data, error } = await supabase
     .from("matches")
     .update(input)
@@ -127,6 +146,22 @@ export async function deleteMatch(
   id: string,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
+  const { data: existing, error: loadError } = await supabase
+    .from("matches")
+    .select("team_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (loadError) return { error: loadError.message };
+  if (!existing) return { error: "Match not found." };
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("archived_at")
+    .eq("id", existing.team_id)
+    .maybeSingle();
+  if (teamError) return { error: teamError.message };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { error: archivedError };
   const { error } = await supabase.from("matches").delete().eq("id", id);
   return { error: error?.message ?? null };
 }
@@ -204,7 +239,7 @@ function normalizeRelation<T>(value: unknown): T | null {
   return (value as T | null) ?? null;
 }
 
-function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
+export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
   const { goalsFor, goalsAgainst } = scoreFromGoals(
     Array.isArray(row.goals) ? row.goals : [],
   );

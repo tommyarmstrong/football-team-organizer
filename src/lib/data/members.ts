@@ -11,6 +11,7 @@ import type {
   TeamMember,
   TablesInsert,
 } from "@/lib/supabase/database.types";
+import { rejectIfTeamArchived } from "@/lib/team/readonly-guard";
 
 export type { TeamMember };
 
@@ -127,6 +128,9 @@ export async function listGuardianAssistantCandidates(
 export async function addTeamMember(
   input: TablesInsert<"team_members">,
 ): Promise<{ error: string | null }> {
+  const archivedError = await rejectIfTeamArchived(input.team_id);
+  if (archivedError) return { error: archivedError };
+
   const supabase = await createClient();
   const { error } = await supabase.from("team_members").insert(input);
   if (error?.message.includes("team_members_team_user_role_unique")) {

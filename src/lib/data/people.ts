@@ -47,15 +47,16 @@ export type PersonDirectoryItem = Person & {
   } | null;
 };
 
-export async function listPeople(): Promise<{
+export async function listPeople(options?: {
+  accountStatus?: "current" | "disabled";
+}): Promise<{
   data: PersonDirectoryItem[];
   error: string | null;
 }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("people")
-    .select(
-      `*,
+  const status = options?.accountStatus ?? "current";
+  let query = supabase.from("people").select(
+    `*,
       managers(id, active_role),
       coaches(id, active_role),
       guardians(id, active_role, player_guardians(player_id)),
@@ -70,8 +71,12 @@ export async function listPeople(): Promise<{
           )
         )
       )`,
-    )
-    .neq("account_status", "disabled")
+  );
+  query =
+    status === "disabled"
+      ? query.eq("account_status", "disabled")
+      : query.neq("account_status", "disabled");
+  const { data, error } = await query
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -210,6 +215,14 @@ export async function listPeople(): Promise<{
   return { data: rows, error: null };
 }
 
+/** Disabled people shown to managers as previous members. */
+export async function listPreviousMembers(): Promise<{
+  data: PersonDirectoryItem[];
+  error: string | null;
+}> {
+  return listPeople({ accountStatus: "disabled" });
+}
+
 export async function getPerson(
   id: string,
 ): Promise<{ data: PersonWithRoles | null; error: string | null }> {
@@ -315,9 +328,8 @@ export async function updatePerson(
 }
 
 /**
- * Delete a person. Guardians and managers are always removed from their tables.
- * People with player or coach history are soft-deleted and scrubbed; others are
- * hard-deleted along with their auth user when present.
+ * Soft-delete a person: deactivate club roles, revoke invites, unlink login,
+ * and set account_status=disabled. The people row is kept for Previous members.
  */
 export async function deletePerson(
   id: string,
@@ -328,18 +340,38 @@ export async function deletePerson(
   if (loadError) return { error: loadError };
   if (!person) return { error: "Person not found." };
 
-  const hasPlayerOrCoach =
-    person.players.length > 0 || person.coaches.length > 0;
+  const authUserId = person.auth_user_id;
 
   for (const row of person.guardians) {
+    if (!row.active_role) continue;
     const { error } = await supabase
       .from("guardians")
-      .delete()
+      .update({ active_role: false })
       .eq("id", row.id);
     if (error) return { error: error.message };
   }
   for (const row of person.managers) {
-    const { error } = await supabase.from("managers").delete().eq("id", row.id);
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("managers")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.players) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("players")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.coaches) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("coaches")
+      .update({ active_role: false })
+      .eq("id", row.id);
     if (error) return { error: error.message };
   }
 
@@ -351,56 +383,42 @@ export async function deletePerson(
     .is("revoked_at", null);
   if (inviteError) return { error: inviteError.message };
 
-  if (hasPlayerOrCoach) {
-    for (const row of person.players) {
-      if (!row.active_role) continue;
-      const { error } = await supabase
-        .from("players")
-        .update({ active_role: false })
-        .eq("id", row.id);
-      if (error) return { error: error.message };
-    }
-    for (const row of person.coaches) {
-      if (!row.active_role) continue;
-      const { error } = await supabase
-        .from("coaches")
-        .update({ active_role: false })
-        .eq("id", row.id);
-      if (error) return { error: error.message };
-    }
+  const { error: disableError } = await supabase
+    .from("people")
+    .update({
+      auth_user_id: null,
+      account_status: "disabled",
+    })
+    .eq("id", id);
+  if (disableError) return { error: disableError.message };
 
-    for (const row of person.players) {
-      const { error } = await supabase
-        .from("player_contacts")
-        .update({
-          email: null,
-          phone: null,
-          address: null,
-          medical_notes: null,
-        })
-        .eq("player_id", row.id);
-      if (error) return { error: error.message };
-    }
-
-    const { error } = await supabase
-      .from("people")
-      .update({
-        email: null,
-        phone: null,
-        account_status: "disabled",
-      })
-      .eq("id", id);
-    return { error: error?.message ?? null };
-  }
-
-  if (person.auth_user_id) {
+  if (authUserId) {
     const { deleteAuthUserById } =
       await import("@/lib/people/delete-auth-user");
-    const { error: authError } = await deleteAuthUserById(person.auth_user_id);
+    const { error: authError } = await deleteAuthUserById(authUserId);
     if (authError) return { error: authError };
   }
 
-  const { error } = await supabase.from("people").delete().eq("id", id);
+  return { error: null };
+}
+
+export async function reactivatePerson(
+  id: string,
+): Promise<{ error: string | null }> {
+  const { data: person, error: loadError } = await getPerson(id);
+  if (loadError) return { error: loadError };
+  if (!person) return { error: "Person not found." };
+  if (person.account_status !== "disabled") {
+    return { error: "This person is not a previous member." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("people")
+    .update({
+      account_status: person.auth_user_id ? "active" : "none",
+    })
+    .eq("id", id);
   return { error: error?.message ?? null };
 }
 

@@ -6,6 +6,7 @@ import {
   canEditPersonDetails,
   canEditPlayer,
   canEditTeam,
+  canEditTeamHistory,
   isGuardianOfPlayer,
   isSelfPerson,
   canManageClub,
@@ -132,6 +133,21 @@ describe("canEditMatchDay", () => {
         "team-2",
       ),
     ).toBe(false);
+  });
+
+  it("is false for archived teams", () => {
+    const archived = team({
+      id: "team-1",
+      club_id: "club-1",
+      archived_at: "2026-05-01T00:00:00Z",
+    });
+    const ctx = viewer({
+      visibleTeams: [archived],
+      editableTeamIds: ["team-1"],
+    });
+    expect(canEditMatchDay(ctx, "team-1")).toBe(false);
+    expect(canEditTeam(ctx, "team-1")).toBe(true);
+    expect(canEditTeamHistory(ctx, "team-1")).toBe(false);
   });
 });
 

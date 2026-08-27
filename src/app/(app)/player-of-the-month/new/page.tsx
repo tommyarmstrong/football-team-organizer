@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getViewerContext, canEditTeam } from "@/lib/authz/context";
+import { getViewerContext, canEditTeamHistory } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
 import { listRosterForTeam } from "@/lib/data/players";
 import { PageHeader } from "@/components/shared/page-header";
@@ -30,7 +30,7 @@ export default async function NewPlayerOfTheMonthPage() {
     );
   }
 
-  if (!canEditTeam(ctx, team.id)) redirect("/team");
+  if (!canEditTeamHistory(ctx, team.id)) redirect("/team");
 
   const { data: roster } = await listRosterForTeam(team.id);
 

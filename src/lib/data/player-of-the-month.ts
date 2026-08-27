@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
+import { archivedTeamWriteError } from "@/lib/team/season";
 import {
   mapPlayerNameEmbed,
   PLAYER_NAME_EMBED,
@@ -110,6 +111,8 @@ export async function createPlayerOfTheMonth(
 ): Promise<{ data: PlayerOfTheMonth | null; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: null, error: "No team found for your account." };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -128,6 +131,8 @@ export async function updatePlayerOfTheMonth(
 ): Promise<{ data: PlayerOfTheMonth | null; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: null, error: "No team found for your account." };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -147,6 +152,8 @@ export async function deletePlayerOfTheMonth(
 ): Promise<{ error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { error: "No team found for your account." };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { error: archivedError };
 
   const supabase = await createClient();
   const { error } = await supabase

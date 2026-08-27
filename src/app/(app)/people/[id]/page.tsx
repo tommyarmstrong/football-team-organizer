@@ -29,7 +29,11 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { DeletePersonButton } from "@/components/people/delete-person-button";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
-import { PersonInvitationPanel } from "@/components/people/person-admin-panels";
+import {
+  PersonClubRolesSection,
+  PersonInvitationPanel,
+} from "@/components/people/person-admin-panels";
+import { ReactivatePersonButton } from "@/components/people/reactivate-person-button";
 import { PlayerTeamsSection } from "@/components/players/player-teams-section";
 import { CoachTeamsSection } from "@/components/coaches/coach-teams-section";
 import { PlayerObjectivesSection } from "@/components/players/player-objectives-section";
@@ -243,6 +247,9 @@ export default async function PersonDetailPage({
     player?.position != null && player.position !== ""
       ? `${displayName} (${player.position})`
       : displayName;
+  const isDisabled = person.account_status === "disabled";
+  const showLoginPanel =
+    canEdit && (isDisabled || roles.coach || roles.guardian || roles.manager);
 
   return (
     <div className="space-y-8">
@@ -272,13 +279,31 @@ export default async function PersonDetailPage({
                 href={`/people/${person.id}/edit`}
                 label="Edit person"
               />
-              {canEdit && !self ? (
+              {canEdit && !self && !isDisabled ? (
                 <DeletePersonButton personId={person.id} />
               ) : null}
             </>
           ) : undefined
         }
       />
+
+      {isDisabled && canEdit ? (
+        <Section
+          title="Previous member"
+          description="This person's account is disabled. Re-activate them, assign club roles, and link a new login."
+        >
+          <ReactivatePersonButton personId={person.id} />
+        </Section>
+      ) : null}
+
+      {canEdit && club && isDisabled ? (
+        <Section
+          title="Club roles"
+          description="Assign roles before or after re-activating this previous member."
+        >
+          <PersonClubRolesSection person={person} clubId={club.id} />
+        </Section>
+      ) : null}
 
       {coach ? (
         <Section title="Biography">
@@ -391,7 +416,7 @@ export default async function PersonDetailPage({
         </Section>
       ) : null}
 
-      {canEdit && (roles.coach || roles.guardian || roles.manager) ? (
+      {showLoginPanel ? (
         <Section
           title="Login account"
           description="Coaches, Guardians and Managers must create login accounts via an invite to their email address."

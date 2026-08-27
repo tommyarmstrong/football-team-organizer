@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { canEditActiveTeam, getCurrentTeam } from "@/lib/data/team";
+import { canEditActiveTeamHistory, getCurrentTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 export default async function NewCompetitionPage() {
   const [team, canEdit] = await Promise.all([
     getCurrentTeam(),
-    canEditActiveTeam(),
+    canEditActiveTeamHistory(),
   ]);
 
   if (!team) {

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
+import { archivedTeamWriteError } from "@/lib/team/season";
 import {
   mapPlayerNameEmbed,
   PLAYER_NAME_EMBED,
@@ -109,12 +110,20 @@ export async function createGoal(
 
   const { data: match, error: matchError } = await supabase
     .from("matches")
-    .select("id, status")
+    .select("id, status, team_id")
     .eq("id", input.match_id)
     .maybeSingle();
 
   if (matchError) return { data: null, error: matchError.message };
   if (!match) return { data: null, error: "Match not found." };
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("archived_at")
+    .eq("id", match.team_id)
+    .maybeSingle();
+  if (teamError) return { data: null, error: teamError.message };
+  const archivedError = archivedTeamWriteError(team);
+  if (archivedError) return { data: null, error: archivedError };
   if (!matchAllowsEvents(match.status)) {
     return {
       data: null,
