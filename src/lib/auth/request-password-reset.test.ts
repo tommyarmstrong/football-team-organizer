@@ -63,4 +63,13 @@ describe("requestPasswordResetEmail", () => {
     const result = await requestPasswordResetEmail("ada@example.com");
     expect(result).toEqual({ error: "rate limited" });
   });
+
+  it("reports when Supabase env vars are missing", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+
+    const result = await requestPasswordResetEmail("ada@example.com");
+    expect(result).toEqual({ error: "Auth is not configured." });
+    expect(createClientMock).not.toHaveBeenCalled();
+  });
 });

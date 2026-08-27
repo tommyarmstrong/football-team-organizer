@@ -8,12 +8,18 @@ const {
   loadInvitationByTokenMock,
   linkAuthUserToPersonMock,
   findPersonForVerifiedEmailMock,
+  redirectMock,
+  signOutMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   cookiesDeleteMock: vi.fn(),
   loadInvitationByTokenMock: vi.fn(),
   linkAuthUserToPersonMock: vi.fn(),
   findPersonForVerifiedEmailMock: vi.fn(),
+  redirectMock: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`);
+  }),
+  signOutMock: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -33,7 +39,11 @@ vi.mock("@/lib/people/invitations", () => ({
   findPersonForVerifiedEmail: findPersonForVerifiedEmailMock,
 }));
 
-import { updatePasswordAndFinishAction } from "@/lib/auth/actions";
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+}));
+
+import { signOut, updatePasswordAndFinishAction } from "@/lib/auth/actions";
 
 const user = { id: "auth-1", email: "ada@example.com" };
 
@@ -47,6 +57,7 @@ function authClient({
         data: { user: sessionUser },
         error: null,
       })),
+      signOut: signOutMock,
       updateUser: vi.fn(async () =>
         updateError
           ? { data: { user: null }, error: { message: updateError } }
@@ -55,6 +66,27 @@ function authClient({
     },
   };
 }
+
+describe("signOut", () => {
+  beforeEach(() => {
+    createClientMock.mockReset();
+    cookiesDeleteMock.mockReset();
+    redirectMock.mockClear();
+    signOutMock.mockReset();
+  });
+
+  it("signs out, clears the password-setup cookie, and redirects to login", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    signOutMock.mockResolvedValue({ error: null });
+
+    await expect(signOut()).rejects.toThrow("redirect:/login");
+
+    expect(signOutMock).toHaveBeenCalled();
+    expect(cookiesDeleteMock).toHaveBeenCalledWith(PASSWORD_SETUP_COOKIE);
+    expect(redirectMock).toHaveBeenCalledWith("/login");
+  });
+});
 
 describe("updatePasswordAndFinishAction", () => {
   beforeEach(() => {

@@ -381,6 +381,18 @@ describe("directoryDescription", () => {
         "Riverside",
       ),
     ).toBe("Your account, linked players, and coaches at Riverside.");
+    expect(
+      directoryDescription(
+        viewer({
+          coachTeamIds: ["team-1"],
+          guardianPlayerIds: ["player-1"],
+        }),
+        "club-1",
+        "Riverside",
+      ),
+    ).toBe(
+      "Your account, linked players, coaches, managers, and people linked to your teams at Riverside.",
+    );
   });
 });
 

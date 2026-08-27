@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { GoalsByPlayerPoint } from "@/lib/data/stats";
 import {
+  ALL_COMPETITION_KINDS,
+  ALL_COMPETITIONS,
+} from "@/lib/stats/competition-filters";
+import {
   buildGoalsViewRows,
+  filterGoalsByCompetition,
   filterGoalsByPositions,
   formatGoalsMetricValue,
+  goalsMetricLabel,
   goalsMetricValue,
   toggleGoalsPositionFilter,
 } from "@/lib/stats/goals-view";
@@ -83,9 +89,31 @@ describe("toggleGoalsPositionFilter", () => {
   });
 });
 
+describe("filterGoalsByCompetition", () => {
+  it("returns the original rows when no competition filter is set", () => {
+    expect(
+      filterGoalsByCompetition(sample, ALL_COMPETITIONS, ALL_COMPETITION_KINDS),
+    ).toEqual(sample);
+  });
+
+  it("recounts goals for the selected competition", () => {
+    const rows = filterGoalsByCompetition(sample, "c1", ALL_COMPETITION_KINDS);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ name: "Ada Mid", goals: 6 });
+    expect(rows[1]).toMatchObject({ name: "Bea Fwd", goals: 4 });
+  });
+
+  it("drops players with no matching goals", () => {
+    expect(
+      filterGoalsByCompetition(sample, "missing", ALL_COMPETITION_KINDS),
+    ).toEqual([]);
+  });
+});
+
 describe("filterGoalsByPositions", () => {
-  it("returns everyone for ALL", () => {
+  it("returns everyone for ALL or an empty selection", () => {
     expect(filterGoalsByPositions(sample, ["ALL"])).toHaveLength(4);
+    expect(filterGoalsByPositions(sample, [])).toHaveLength(4);
   });
 
   it("keeps any selected position", () => {
@@ -147,5 +175,27 @@ describe("formatGoalsMetricValue", () => {
     expect(formatGoalsMetricValue(3, "total")).toBe("3");
     expect(formatGoalsMetricValue(1.5, "per_game")).toBe("1.50");
     expect(formatGoalsMetricValue(null, "per_period")).toBe("—");
+  });
+});
+
+describe("goalsMetricLabel", () => {
+  it("labels each metric for the chart", () => {
+    expect(goalsMetricLabel("total")).toBe("Goals");
+    expect(goalsMetricLabel("per_game")).toBe("Goals / game");
+    expect(goalsMetricLabel("per_period")).toBe("Goals / period");
+  });
+});
+
+describe("buildGoalsViewRows with competition filters", () => {
+  it("applies competition filters before formatting rows", () => {
+    const rows = buildGoalsViewRows(
+      sample,
+      ["ALL"],
+      "total",
+      "c1",
+      ALL_COMPETITION_KINDS,
+    );
+    expect(rows.map((row) => row.name)).toEqual(["Ada Mid", "Bea Fwd"]);
+    expect(rows.map((row) => row.displayValue)).toEqual(["6", "4"]);
   });
 });

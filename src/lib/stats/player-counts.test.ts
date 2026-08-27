@@ -51,4 +51,35 @@ describe("filterPlayerCountPoints", () => {
       expect.objectContaining({ playerId: "1", count: 1 }),
     ]);
   });
+
+  it("sorts filtered rows by count then name", () => {
+    const rows = filterPlayerCountPoints(data, "c1", ALL_COMPETITION_KINDS);
+    expect(rows.map((row) => row.name)).toEqual(["Ada"]);
+  });
+
+  it("sorts ties alphabetically by player name", () => {
+    const tied: PlayerCountPoint[] = [
+      {
+        playerId: "2",
+        name: "Zoe",
+        count: 2,
+        events: [
+          { competitionId: "c1", competitionKind: "league", isFriendly: false },
+          { competitionId: "c1", competitionKind: "league", isFriendly: false },
+        ],
+      },
+      {
+        playerId: "1",
+        name: "Amy",
+        count: 2,
+        events: [
+          { competitionId: "c1", competitionKind: "league", isFriendly: false },
+          { competitionId: "c1", competitionKind: "league", isFriendly: false },
+        ],
+      },
+    ];
+
+    const rows = filterPlayerCountPoints(tied, "c1", ALL_COMPETITION_KINDS);
+    expect(rows.map((row) => row.name)).toEqual(["Amy", "Zoe"]);
+  });
 });
