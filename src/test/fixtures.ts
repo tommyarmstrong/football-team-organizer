@@ -91,10 +91,9 @@ export function matchFixture(
   };
 }
 
-export function personFixture(
-  overrides: Partial<Person> & Pick<Person, "id"> = { id: "person-1" },
-): Person {
+export function personFixture(overrides: Partial<Person> = {}): Person {
   return {
+    id: "person-1",
     first_name: "Ada",
     last_name: "Lovelace",
     email: "ada@example.com",
