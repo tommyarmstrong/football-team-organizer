@@ -198,8 +198,6 @@ describe("players data", () => {
           position: "Midfield",
           school: null,
           date_of_birth: null,
-          phone: null,
-          email: null,
         })
       ).error,
     ).toBeNull();
