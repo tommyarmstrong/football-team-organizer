@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formDataFrom } from "@/test/form-data";
-import { clubManagerViewer } from "@/test/fixtures";
+import { clubManagerViewer, viewerFixture } from "@/test/fixtures";
 
 const {
   revalidatePathMock,
@@ -17,6 +17,7 @@ const {
   unlinkGuardianFromPlayerMock,
   updateGuardianPlayerLinkMock,
   getPlayerMock,
+  getPlayerTeamsMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -34,6 +35,7 @@ const {
   unlinkGuardianFromPlayerMock: vi.fn(),
   updateGuardianPlayerLinkMock: vi.fn(),
   getPlayerMock: vi.fn(),
+  getPlayerTeamsMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -56,7 +58,10 @@ vi.mock("@/lib/data/guardians", () => ({
   unlinkGuardianFromPlayer: unlinkGuardianFromPlayerMock,
   updateGuardianPlayerLink: updateGuardianPlayerLinkMock,
 }));
-vi.mock("@/lib/data/players", () => ({ getPlayer: getPlayerMock }));
+vi.mock("@/lib/data/players", () => ({
+  getPlayer: getPlayerMock,
+  getPlayerTeams: getPlayerTeamsMock,
+}));
 
 import {
   createGuardianAction,
@@ -103,9 +108,10 @@ describe("guardian actions", () => {
       error: null,
     });
     getPlayerMock.mockResolvedValue({
-      data: { id: "player-1", person_id: "person-p" },
+      data: { id: "player-1", person_id: "person-p", club_id: "club-1" },
       error: null,
     });
+    getPlayerTeamsMock.mockResolvedValue({ data: [{ team_id: "team-1" }] });
     linkGuardianToPlayerMock.mockResolvedValue({ error: null });
     unlinkGuardianFromPlayerMock.mockResolvedValue({ error: null });
     updateGuardianPlayerLinkMock.mockResolvedValue({ error: null });
@@ -176,5 +182,73 @@ describe("guardian actions", () => {
         formDataFrom({ player_id: "player-1", relationship: "cousin" }),
       ),
     ).toMatchObject({ error: expect.stringMatching(/relationship/i) });
+  });
+
+  it("rejects guardian link management from non-staff viewers", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        coachTeamIds: [],
+        editableTeamIds: [],
+        guardianPlayerIds: ["player-1"],
+        guardianIds: ["g-1"],
+      }),
+    );
+
+    expect(await linkGuardianToPlayerAction("g-1", {}, linkForm)).toMatchObject(
+      { error: expect.stringMatching(/club staff/i) },
+    );
+    expect(
+      await linkPlayerToGuardianAction(
+        "player-1",
+        {},
+        formDataFrom({ guardian_id: "g-1", relationship: "parent" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/club staff/i) });
+    expect(
+      await unlinkGuardianFromPlayerAction("link-1", "g-1", "player-1"),
+    ).toMatchObject({ error: expect.stringMatching(/club staff/i) });
+  });
+
+  it("lets a linked guardian update their own relationship", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        coachTeamIds: [],
+        editableTeamIds: [],
+        guardianPlayerIds: ["player-1"],
+        guardianIds: ["g-1"],
+      }),
+    );
+
+    expect(
+      await updateGuardianPlayerLinkAction(
+        "link-1",
+        "g-1",
+        "player-1",
+        {},
+        formDataFrom({ relationship: "parent", legal_guardian: "on" }),
+      ),
+    ).toMatchObject({ success: expect.stringMatching(/link updated/i) });
+    expect(updateGuardianPlayerLinkMock).toHaveBeenCalled();
+  });
+
+  it("rejects guardian updates to another guardian's link", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        coachTeamIds: [],
+        editableTeamIds: [],
+        guardianPlayerIds: ["player-1"],
+        guardianIds: ["g-1"],
+      }),
+    );
+
+    expect(
+      await updateGuardianPlayerLinkAction(
+        "link-1",
+        "g-other",
+        "player-1",
+        {},
+        formDataFrom({ relationship: "parent" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/cannot edit/i) });
   });
 });

@@ -45,12 +45,14 @@ export function PlayerGuardiansSection({
   playerId,
   links,
   availableGuardians,
-  canEdit,
+  canManageLinks,
+  selfGuardianIds = [],
 }: {
   playerId: string;
   links: PlayerGuardianLink[];
   availableGuardians: GuardianOption[];
-  canEdit: boolean;
+  canManageLinks: boolean;
+  selfGuardianIds?: string[];
 }) {
   return (
     <div className="space-y-4">
@@ -58,19 +60,23 @@ export function PlayerGuardiansSection({
         <EmptyState
           title="No guardians linked"
           description={
-            canEdit
+            canManageLinks
               ? "Link an existing guardian to this player."
               : "Guardians linked to this player will appear here."
           }
         />
       ) : (
         <ul className={objectListClassName}>
-          {links.map((link) =>
-            canEdit && playerId ? (
+          {links.map((link) => {
+            const canEditLink =
+              canManageLinks || selfGuardianIds.includes(link.guardian_id);
+
+            return canEditLink && playerId ? (
               <PlayerGuardianLinkRow
                 key={link.player_guardian_id}
                 playerId={playerId}
                 link={link}
+                canUnlink={canManageLinks}
               />
             ) : (
               <li key={link.player_guardian_id}>
@@ -84,12 +90,12 @@ export function PlayerGuardiansSection({
                   </div>
                 </Link>
               </li>
-            ),
-          )}
+            );
+          })}
         </ul>
       )}
 
-      {canEdit && playerId && availableGuardians.length > 0 ? (
+      {canManageLinks && playerId && availableGuardians.length > 0 ? (
         <LinkGuardianForm
           playerId={playerId}
           availableGuardians={availableGuardians}
@@ -118,9 +124,11 @@ function LinkChips({ link }: { link: PlayerGuardianLink }) {
 function PlayerGuardianLinkRow({
   playerId,
   link,
+  canUnlink,
 }: {
   playerId: string;
   link: PlayerGuardianLink;
+  canUnlink: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const name = guardianDisplayName(link);
@@ -135,16 +143,18 @@ function PlayerGuardianLinkRow({
           >
             {name}
           </Link>
-          <ListUnlinkButton
-            label={`Unlink ${name}`}
-            unlinkAction={() =>
-              unlinkGuardianFromPlayerAction(
-                link.player_guardian_id,
-                link.guardian_id,
-                playerId,
-              )
-            }
-          />
+          {canUnlink ? (
+            <ListUnlinkButton
+              label={`Unlink ${name}`}
+              unlinkAction={() =>
+                unlinkGuardianFromPlayerAction(
+                  link.player_guardian_id,
+                  link.guardian_id,
+                  playerId,
+                )
+              }
+            />
+          ) : null}
         </div>
         <EditLinkForm
           playerId={playerId}
@@ -171,16 +181,18 @@ function PlayerGuardianLinkRow({
           label={`Edit ${name}`}
           onClick={() => setEditing(true)}
         />
-        <ListUnlinkButton
-          label={`Unlink ${name}`}
-          unlinkAction={() =>
-            unlinkGuardianFromPlayerAction(
-              link.player_guardian_id,
-              link.guardian_id,
-              playerId,
-            )
-          }
-        />
+        {canUnlink ? (
+          <ListUnlinkButton
+            label={`Unlink ${name}`}
+            unlinkAction={() =>
+              unlinkGuardianFromPlayerAction(
+                link.player_guardian_id,
+                link.guardian_id,
+                playerId,
+              )
+            }
+          />
+        ) : null}
       </div>
     </li>
   );

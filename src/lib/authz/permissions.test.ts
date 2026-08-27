@@ -3,14 +3,17 @@ import {
   canAccessClubAndPeople,
   canEditLinkedPlayerProfile,
   canEditMatchDay,
+  canEditOwnGuardianPlayerLink,
   canEditPersonDetails,
   canEditPlayer,
   canEditTeam,
   canEditTeamHistory,
+  canManageGuardianPlayerLinks,
   isGuardianOfPlayer,
   isSelfPerson,
   canManageClub,
   canReadTeam,
+  canUpdateGuardianPlayerLink,
   canViewClubTeams,
   canViewPlayerContact,
   hasTeamRole,
@@ -51,6 +54,7 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
     managementTeamIds: [],
     memberTeamRoles: {},
     guardianPlayerIds: [],
+    guardianIds: [],
     selfPlayerIds: [],
     personId: null,
     visibleTeams: [],
@@ -292,6 +296,60 @@ describe("canEditPersonDetails / canEditLinkedPlayerProfile", () => {
       ),
     ).toBe(true);
     expect(isGuardianOfPlayer(viewer(), "player-1")).toBe(false);
+  });
+});
+
+describe("canManageGuardianPlayerLinks / canEditOwnGuardianPlayerLink", () => {
+  it("lets club staff and team coaches manage guardian links", () => {
+    expect(
+      canManageGuardianPlayerLinks(
+        viewer({ managementClubIds: ["club-1"], isManagement: true }),
+        "club-1",
+        [],
+      ),
+    ).toBe(true);
+    expect(
+      canManageGuardianPlayerLinks(
+        viewer({ editableTeamIds: ["team-1"] }),
+        "club-1",
+        ["team-1"],
+      ),
+    ).toBe(true);
+    expect(canManageGuardianPlayerLinks(viewer(), "club-1", ["team-1"])).toBe(
+      false,
+    );
+  });
+
+  it("lets a linked guardian edit their own link but not manage links", () => {
+    const ctx = viewer({
+      guardianPlayerIds: ["player-1"],
+      guardianIds: ["guardian-1"],
+    });
+    expect(canManageGuardianPlayerLinks(ctx, "club-1", [])).toBe(false);
+    expect(canEditOwnGuardianPlayerLink(ctx, "player-1", "guardian-1")).toBe(
+      true,
+    );
+    expect(canEditOwnGuardianPlayerLink(ctx, "player-1", "guardian-2")).toBe(
+      false,
+    );
+    expect(canEditOwnGuardianPlayerLink(ctx, "player-2", "guardian-1")).toBe(
+      false,
+    );
+    expect(
+      canUpdateGuardianPlayerLink(ctx, "player-1", "guardian-1", "club-1", []),
+    ).toBe(true);
+  });
+
+  it("prefers staff manage permission over guardian self-edit", () => {
+    expect(
+      canUpdateGuardianPlayerLink(
+        viewer({ managementClubIds: ["club-1"], isManagement: true }),
+        "player-1",
+        "guardian-9",
+        "club-1",
+        [],
+      ),
+    ).toBe(true);
   });
 });
 
