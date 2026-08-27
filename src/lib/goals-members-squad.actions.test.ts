@@ -50,6 +50,7 @@ import { saveMatchSquadAction } from "@/lib/match-players/actions";
 import {
   addGuardianAssistantAction,
   addTeamMemberAction,
+  removeGuardianAssistantAction,
   removeTeamMemberAction,
 } from "@/lib/members/actions";
 import {
@@ -135,6 +136,25 @@ describe("member actions", () => {
       formDataFrom({ guardian_id: "g1" }),
     );
     expect(result.error).toMatch(/no linked login/i);
+  });
+
+  it("adds and removes guardian assistants", async () => {
+    getGuardianMock.mockResolvedValue({
+      data: { id: "g1", user_id: "11111111-1111-1111-1111-111111111111" },
+      error: null,
+    });
+    const added = await addGuardianAssistantAction(
+      "team-1",
+      {},
+      formDataFrom({ guardian_id: "g1" }),
+    );
+    expect(added.success).toMatch(/assistant added/i);
+    expect(addTeamMemberMock).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "guardian_assistant" }),
+    );
+
+    const removed = await removeGuardianAssistantAction("tm-ga-1");
+    expect(removed.success).toMatch(/assistant removed/i);
   });
 });
 

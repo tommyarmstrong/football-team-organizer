@@ -105,6 +105,64 @@ describe("people data writes", () => {
     expect(await deletePerson("person-1")).toEqual({ error: null });
   });
 
+  it("soft-deletes people with player or coach history", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1", auth_user_id: "auth-1" })),
+          okResult(null),
+        ],
+        managers: okResult([]),
+        coaches: [
+          okResult([{ id: "coach-1", club_id: "club-1", active_role: true }]),
+          okResult(null),
+        ],
+        guardians: [
+          okResult([
+            { id: "guardian-1", club_id: "club-1", active_role: true },
+          ]),
+          okResult(null),
+        ],
+        players: [
+          okResult([
+            {
+              id: "player-1",
+              club_id: "club-1",
+              active_role: true,
+              position: null,
+              school: null,
+              date_of_birth: null,
+            },
+          ]),
+          okResult(null),
+        ],
+        person_invitations: okResult([]),
+        player_contacts: okResult(null),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: null });
+    expect(deleteAuthUserMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes auth users when hard-deleting linked people", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1", auth_user_id: "auth-1" })),
+          okResult(null),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    deleteAuthUserMock.mockResolvedValue({ error: null });
+    expect(await deletePerson("person-1")).toEqual({ error: null });
+    expect(deleteAuthUserMock).toHaveBeenCalledWith("auth-1");
+  });
+
   it("normalizes email on create and maps unique violations", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
