@@ -11,6 +11,7 @@ const {
   updateManagerMock,
   deleteManagerMock,
   getManagerMock,
+  deletePersonMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -22,6 +23,7 @@ const {
   updateManagerMock: vi.fn(),
   deleteManagerMock: vi.fn(),
   getManagerMock: vi.fn(),
+  deletePersonMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -36,6 +38,9 @@ vi.mock("@/lib/data/managers", () => ({
   updateManager: updateManagerMock,
   deleteManager: deleteManagerMock,
   getManager: getManagerMock,
+}));
+vi.mock("@/lib/data/people", () => ({
+  deletePerson: deletePersonMock,
 }));
 
 import {
@@ -60,10 +65,12 @@ describe("manager actions", () => {
     });
     updateManagerMock.mockResolvedValue({ error: null });
     deleteManagerMock.mockResolvedValue({ error: null });
+    deletePersonMock.mockResolvedValue({ error: null });
     getManagerMock.mockResolvedValue({
       data: {
         id: "mgr-1",
         club_id: "club-1",
+        person_id: "person-mgr",
         user_id: "other-user",
       },
       error: null,
@@ -100,8 +107,9 @@ describe("manager actions", () => {
     );
 
     await expect(deleteManagerAction("mgr-1")).rejects.toThrow(
-      "redirect:/club",
+      "redirect:/people",
     );
+    expect(deletePersonMock).toHaveBeenCalledWith("person-mgr");
   });
 
   it("blocks self-delete", async () => {

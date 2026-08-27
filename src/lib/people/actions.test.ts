@@ -17,6 +17,7 @@ const {
   getPersonMock,
   updatePersonMock,
   linkRoleToPersonMock,
+  reactivatePersonMock,
   createPlayerMock,
   createCoachMock,
   createGuardianMock,
@@ -46,6 +47,7 @@ const {
   getPersonMock: vi.fn(),
   updatePersonMock: vi.fn(),
   linkRoleToPersonMock: vi.fn(),
+  reactivatePersonMock: vi.fn(),
   createPlayerMock: vi.fn(),
   createCoachMock: vi.fn(),
   createGuardianMock: vi.fn(),
@@ -78,6 +80,7 @@ vi.mock("@/lib/data/people", () => ({
   getPerson: getPersonMock,
   updatePerson: updatePersonMock,
   linkRoleToPerson: linkRoleToPersonMock,
+  reactivatePerson: reactivatePersonMock,
 }));
 vi.mock("@/lib/data/players", () => ({
   createPlayer: createPlayerMock,
@@ -114,6 +117,7 @@ import {
   createPersonAction,
   deletePersonAction,
   linkRoleToPersonAction,
+  reactivatePersonAction,
   removeClubRoleFromPersonAction,
   sendInvitationAction,
 } from "@/lib/people/actions";
@@ -200,6 +204,29 @@ describe("deletePersonAction", () => {
     await expect(deletePersonAction("person-2")).rejects.toThrow(
       "redirect:/people",
     );
+  });
+});
+
+describe("reactivatePersonAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPrimaryClubMock.mockResolvedValue(club);
+  });
+
+  it("requires club management", async () => {
+    getViewerContextMock.mockResolvedValue(viewerFixture());
+    expect(await reactivatePersonAction("person-1")).toMatchObject({
+      error: expect.stringMatching(/only club management/i),
+    });
+  });
+
+  it("reactivates a disabled person", async () => {
+    reactivatePersonMock.mockResolvedValue({ error: null });
+    expect(await reactivatePersonAction("person-1")).toMatchObject({
+      success: expect.stringMatching(/reactivated/i),
+    });
+    expect(reactivatePersonMock).toHaveBeenCalledWith("person-1");
   });
 });
 

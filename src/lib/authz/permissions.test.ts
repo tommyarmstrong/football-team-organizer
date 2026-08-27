@@ -6,6 +6,7 @@ import {
   canEditPersonDetails,
   canEditPlayer,
   canEditTeam,
+  canMutateTeamData,
   isGuardianOfPlayer,
   isSelfPerson,
   canManageClub,
@@ -132,6 +133,41 @@ describe("canEditMatchDay", () => {
         "team-2",
       ),
     ).toBe(false);
+  });
+
+  it("blocks match-day edits on archived teams", () => {
+    const archived = team({
+      id: "team-1",
+      club_id: "club-1",
+      archived_at: "2026-06-01T00:00:00Z",
+    });
+    expect(
+      canEditMatchDay(
+        viewer({
+          editableTeamIds: ["team-1"],
+          visibleTeams: [archived],
+        }),
+        "team-1",
+      ),
+    ).toBe(false);
+    expect(
+      canMutateTeamData(
+        viewer({
+          editableTeamIds: ["team-1"],
+          visibleTeams: [archived],
+        }),
+        "team-1",
+      ),
+    ).toBe(false);
+    expect(
+      canMutateTeamData(
+        viewer({
+          editableTeamIds: ["team-1"],
+          visibleTeams: [team({ id: "team-1", club_id: "club-1" })],
+        }),
+        "team-1",
+      ),
+    ).toBe(true);
   });
 });
 

@@ -14,6 +14,8 @@ const {
   unlinkGuardianFromPlayerMock,
   updateGuardianPlayerLinkMock,
   getPlayerMock,
+  getViewerContextMock,
+  deletePersonMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -29,6 +31,8 @@ const {
   unlinkGuardianFromPlayerMock: vi.fn(),
   updateGuardianPlayerLinkMock: vi.fn(),
   getPlayerMock: vi.fn(),
+  getViewerContextMock: vi.fn(),
+  deletePersonMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -37,6 +41,10 @@ vi.mock("@/lib/data/team", () => ({ getActiveTeam: getActiveTeamMock }));
 vi.mock("@/lib/data/clubs", () => ({
   resolveStaffClubId: resolveStaffClubIdMock,
 }));
+vi.mock("@/lib/authz/context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authz/context")>();
+  return { ...actual, getViewerContext: getViewerContextMock };
+});
 vi.mock("@/lib/data/guardians", () => ({
   createGuardian: createGuardianMock,
   updateGuardian: updateGuardianMock,
@@ -47,7 +55,9 @@ vi.mock("@/lib/data/guardians", () => ({
   updateGuardianPlayerLink: updateGuardianPlayerLinkMock,
 }));
 vi.mock("@/lib/data/players", () => ({ getPlayer: getPlayerMock }));
+vi.mock("@/lib/data/people", () => ({ deletePerson: deletePersonMock }));
 
+import { clubManagerViewer } from "@/test/fixtures";
 import {
   createGuardianAction,
   deleteGuardianAction,
@@ -73,6 +83,7 @@ const linkForm = formDataFrom({
 describe("guardian actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
     getActiveTeamMock.mockResolvedValue({ id: "team-1", club_id: "club-1" });
     resolveStaffClubIdMock.mockResolvedValue("club-1");
     createGuardianMock.mockResolvedValue({
@@ -81,8 +92,14 @@ describe("guardian actions", () => {
     });
     updateGuardianMock.mockResolvedValue({ error: null });
     deleteGuardianMock.mockResolvedValue({ error: null });
+    deletePersonMock.mockResolvedValue({ error: null });
     getGuardianMock.mockResolvedValue({
-      data: { id: "g-1", person_id: "person-g" },
+      data: {
+        id: "g-1",
+        person_id: "person-g",
+        club_id: "club-1",
+        user_id: null,
+      },
       error: null,
     });
     getPlayerMock.mockResolvedValue({
@@ -109,7 +126,10 @@ describe("guardian actions", () => {
       "redirect:/guardians/g-1",
     );
 
-    await expect(deleteGuardianAction("g-1")).rejects.toThrow("redirect:/club");
+    await expect(deleteGuardianAction("g-1")).rejects.toThrow(
+      "redirect:/people",
+    );
+    expect(deletePersonMock).toHaveBeenCalledWith("person-g");
   });
 
   it("links players both directions and updates/unlinks", async () => {

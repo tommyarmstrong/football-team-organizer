@@ -7,7 +7,7 @@ export function DeleteGuardianButton({ guardianId }: { guardianId: string }) {
   return (
     <ListDeleteButton
       label="Delete guardian"
-      confirmMessage="Delete this guardian? Player links will be removed. This cannot be undone."
+      confirmMessage="Disable this guardian? Their person record moves to Previous members, player links are removed, and their login is unlinked."
       deleteAction={() => deleteGuardianAction(guardianId)}
     />
   );

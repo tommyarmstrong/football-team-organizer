@@ -21,6 +21,8 @@ import {
   getPersonByAuthUserId,
   linkRoleToPerson,
   listPeople,
+  listPreviousMembers,
+  reactivatePerson,
   updatePerson,
 } from "@/lib/data/people";
 
@@ -83,7 +85,7 @@ describe("people data writes", () => {
     expect(person.data?.outstanding_invitation?.id).toBe("inv-1");
   });
 
-  it("links roles and deletes people", async () => {
+  it("links roles and soft-deletes people without player/coach history", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         coaches: okResult(null),
@@ -91,6 +93,10 @@ describe("people data writes", () => {
           okResult(personFixture({ auth_user_id: null })),
           okResult(null),
         ],
+        managers: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
       }),
     );
     expect(
@@ -101,8 +107,8 @@ describe("people data writes", () => {
       }),
     ).toEqual({ error: null });
 
-    deleteAuthUserMock.mockResolvedValue({ error: null });
     expect(await deletePerson("person-1")).toEqual({ error: null });
+    expect(deleteAuthUserMock).not.toHaveBeenCalled();
   });
 
   it("soft-deletes people with player or coach history", async () => {
@@ -140,11 +146,12 @@ describe("people data writes", () => {
         player_contacts: okResult(null),
       }),
     );
+    deleteAuthUserMock.mockResolvedValue({ error: null });
     expect(await deletePerson("person-1")).toEqual({ error: null });
-    expect(deleteAuthUserMock).not.toHaveBeenCalled();
+    expect(deleteAuthUserMock).toHaveBeenCalledWith("auth-1");
   });
 
-  it("deletes auth users when hard-deleting linked people", async () => {
+  it("unlinks auth users when soft-deleting linked people", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         people: [
@@ -161,6 +168,46 @@ describe("people data writes", () => {
     deleteAuthUserMock.mockResolvedValue({ error: null });
     expect(await deletePerson("person-1")).toEqual({ error: null });
     expect(deleteAuthUserMock).toHaveBeenCalledWith("auth-1");
+  });
+
+  it("lists previous members with account_status disabled", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult([
+          {
+            ...personFixture({
+              id: "person-disabled",
+              account_status: "disabled",
+            }),
+            managers: [],
+            coaches: [],
+            guardians: [],
+            players: [],
+          },
+        ]),
+      }),
+    );
+    const listed = await listPreviousMembers();
+    expect(listed.data).toHaveLength(1);
+    expect(listed.data[0]?.account_status).toBe("disabled");
+  });
+
+  it("reactivates disabled people", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(
+            personFixture({
+              id: "person-1",
+              account_status: "disabled",
+              auth_user_id: null,
+            }),
+          ),
+          okResult(null),
+        ],
+      }),
+    );
+    expect(await reactivatePerson("person-1")).toEqual({ error: null });
   });
 
   it("normalizes email on create and maps unique violations", async () => {

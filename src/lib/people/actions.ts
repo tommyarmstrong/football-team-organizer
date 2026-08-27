@@ -33,6 +33,7 @@ import {
   deletePerson,
   getPerson,
   linkRoleToPerson,
+  reactivatePerson,
   updatePerson,
   type PersonRoleRef,
   type PersonWithRoles,
@@ -132,6 +133,25 @@ export async function deletePersonAction(id: string): Promise<ActionState> {
   revalidatePath("/team");
   revalidatePath("/club");
   redirect("/people");
+}
+
+export async function reactivatePersonAction(id: string): Promise<ActionState> {
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+
+  const club = await getPrimaryClub();
+  if (!club || !canManageClub(ctx, club.id)) {
+    return { error: "Only club management can reactivate people." };
+  }
+
+  const { error } = await reactivatePerson(id);
+  if (error) return { error };
+
+  revalidatePeople(id);
+  return {
+    success:
+      "Person reactivated. Assign roles and send an invitation to relink a login.",
+  };
 }
 
 export async function updatePersonAction(

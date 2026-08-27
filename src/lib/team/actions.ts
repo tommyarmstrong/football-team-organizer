@@ -33,7 +33,11 @@ import {
   str as formStr,
 } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
-import { isValidSeasonLabel, SEASON_FORMAT_HINT } from "@/lib/team/season";
+import {
+  archivedTeamReadOnlyError,
+  isValidSeasonLabel,
+  SEASON_FORMAT_HINT,
+} from "@/lib/team/season";
 import {
   AGE_GROUPS,
   COMPETITION_GENDERS,
@@ -402,6 +406,11 @@ export async function createCompetitionAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const team = await getActiveTeam();
+  if (!team) return { error: "No team selected." };
+  const archivedError = archivedTeamReadOnlyError(team);
+  if (archivedError) return { error: archivedError };
+
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 
@@ -571,6 +580,11 @@ export async function createCompetitionAndReturnAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const team = await getActiveTeam();
+  if (!team) return { error: "No team selected." };
+  const archivedError = archivedTeamReadOnlyError(team);
+  if (archivedError) return { error: archivedError };
+
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 

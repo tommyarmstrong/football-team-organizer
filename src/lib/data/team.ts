@@ -8,6 +8,7 @@ import {
   isValidSeasonLabel,
   SEASON_FORMAT_HINT,
   sortTeamsForDisplay,
+  archivedTeamReadOnlyError,
 } from "@/lib/team/season";
 import type {
   Team,
@@ -283,6 +284,7 @@ export async function startNewTeamSeason(
 export async function canEditActiveTeam(): Promise<boolean> {
   const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
   if (!ctx || !team) return false;
+  if (isTeamArchived(team)) return false;
   return ctx.editableTeamIds.includes(team.id);
 }
 
@@ -291,4 +293,13 @@ export async function canEditActiveMatchDay(): Promise<boolean> {
   const [ctx, team] = await Promise.all([getViewerContext(), getActiveTeam()]);
   if (!ctx || !team) return false;
   return canEditMatchDay(ctx, team.id);
+}
+
+/** Error when the team is archived; otherwise null. */
+export async function assertTeamDataMutable(
+  teamId: string,
+): Promise<string | null> {
+  const { data, error } = await getTeam(teamId);
+  if (error) return error;
+  return archivedTeamReadOnlyError(data);
 }

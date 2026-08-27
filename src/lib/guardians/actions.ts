@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
+import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import {
   createGuardian,
   deleteGuardian,
@@ -12,6 +13,7 @@ import {
   updateGuardian,
   updateGuardianPlayerLink,
 } from "@/lib/data/guardians";
+import { deletePerson } from "@/lib/data/people";
 import { getPlayer } from "@/lib/data/players";
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
@@ -79,11 +81,31 @@ export async function updateGuardianAction(
 }
 
 export async function deleteGuardianAction(id: string): Promise<ActionState> {
-  const { error } = await deleteGuardian(id);
-  if (error) return { error };
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+
+  const { data: existing, error: loadError } = await getGuardian(id);
+  if (loadError) return { error: loadError };
+  if (!existing) return { error: "Guardian not found." };
+  if (!canManageClub(ctx, existing.club_id)) {
+    return { error: "Only club management can delete guardians." };
+  }
+
+  // Soft-delete the person (account_status=disabled), same as deleting from People.
+  if (existing.person_id) {
+    if (existing.user_id && existing.user_id === ctx.userId) {
+      return { error: "You cannot delete your own person record." };
+    }
+    const { error } = await deletePerson(existing.person_id);
+    if (error) return { error };
+  } else {
+    const { error } = await deleteGuardian(id);
+    if (error) return { error };
+  }
 
   revalidatePath("/club");
-  redirect("/club");
+  revalidatePath("/people");
+  redirect("/people");
 }
 
 export async function linkGuardianToPlayerAction(

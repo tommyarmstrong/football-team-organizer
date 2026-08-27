@@ -18,7 +18,7 @@ import {
   updateCoachObjective,
 } from "@/lib/data/coach-objectives";
 import { resolveStaffClubId } from "@/lib/data/clubs";
-import { getActiveTeam } from "@/lib/data/team";
+import { assertTeamDataMutable, getActiveTeam } from "@/lib/data/team";
 import { parseCoachForm } from "@/lib/coaches/parse";
 import { parseCoachObjectiveForm } from "@/lib/objectives/parse";
 import { str } from "@/lib/form-parse";
@@ -112,6 +112,9 @@ export async function addCoachToTeamAction(
   const role = str(formData, "role") || null;
   if (!teamId) return { error: "Select a team." };
 
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const { error } = await addCoachToTeam(teamId, coachId, role);
   if (error) return { error };
 
@@ -127,6 +130,9 @@ export async function createTeamCoachAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const resolvedClubId = await resolveStaffClubId(clubId);
   if (!resolvedClubId) return { error: "No club found for your account." };
 

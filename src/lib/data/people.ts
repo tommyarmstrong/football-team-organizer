@@ -315,9 +315,9 @@ export async function updatePerson(
 }
 
 /**
- * Delete a person. Guardians and managers are always removed from their tables.
- * People with player or coach history are soft-deleted and scrubbed; others are
- * hard-deleted along with their auth user when present.
+ * Soft-delete a person: set account_status=disabled, unlink login, revoke
+ * invitations, and deactivate all club roles. The people row is kept so
+ * managers can review Previous members and reactivate.
  */
 export async function deletePerson(
   id: string,
@@ -328,21 +328,6 @@ export async function deletePerson(
   if (loadError) return { error: loadError };
   if (!person) return { error: "Person not found." };
 
-  const hasPlayerOrCoach =
-    person.players.length > 0 || person.coaches.length > 0;
-
-  for (const row of person.guardians) {
-    const { error } = await supabase
-      .from("guardians")
-      .delete()
-      .eq("id", row.id);
-    if (error) return { error: error.message };
-  }
-  for (const row of person.managers) {
-    const { error } = await supabase.from("managers").delete().eq("id", row.id);
-    if (error) return { error: error.message };
-  }
-
   const { error: inviteError } = await supabase
     .from("person_invitations")
     .update({ revoked_at: new Date().toISOString() })
@@ -351,46 +336,50 @@ export async function deletePerson(
     .is("revoked_at", null);
   if (inviteError) return { error: inviteError.message };
 
-  if (hasPlayerOrCoach) {
-    for (const row of person.players) {
-      if (!row.active_role) continue;
-      const { error } = await supabase
-        .from("players")
-        .update({ active_role: false })
-        .eq("id", row.id);
-      if (error) return { error: error.message };
-    }
-    for (const row of person.coaches) {
-      if (!row.active_role) continue;
-      const { error } = await supabase
-        .from("coaches")
-        .update({ active_role: false })
-        .eq("id", row.id);
-      if (error) return { error: error.message };
-    }
-
-    for (const row of person.players) {
-      const { error } = await supabase
-        .from("player_contacts")
-        .update({
-          email: null,
-          phone: null,
-          address: null,
-          medical_notes: null,
-        })
-        .eq("player_id", row.id);
-      if (error) return { error: error.message };
-    }
-
+  for (const row of person.guardians) {
+    if (!row.active_role) continue;
     const { error } = await supabase
-      .from("people")
+      .from("guardians")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.managers) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("managers")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.players) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("players")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+  for (const row of person.coaches) {
+    if (!row.active_role) continue;
+    const { error } = await supabase
+      .from("coaches")
+      .update({ active_role: false })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
+
+  for (const row of person.players) {
+    const { error } = await supabase
+      .from("player_contacts")
       .update({
         email: null,
         phone: null,
-        account_status: "disabled",
+        address: null,
+        medical_notes: null,
       })
-      .eq("id", id);
-    return { error: error?.message ?? null };
+      .eq("player_id", row.id);
+    if (error) return { error: error.message };
   }
 
   if (person.auth_user_id) {
@@ -400,7 +389,111 @@ export async function deletePerson(
     if (authError) return { error: authError };
   }
 
-  const { error } = await supabase.from("people").delete().eq("id", id);
+  const { error } = await supabase
+    .from("people")
+    .update({
+      auth_user_id: null,
+      account_status: "disabled",
+    })
+    .eq("id", id);
+  return { error: error?.message ?? null };
+}
+
+/** List people with account_status=disabled (Previous members). */
+export async function listPreviousMembers(): Promise<{
+  data: PersonDirectoryItem[];
+  error: string | null;
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("people")
+    .select(
+      `*,
+      managers(id, active_role),
+      coaches(id, active_role),
+      guardians(id, active_role, player_guardians(player_id)),
+      players(
+        id,
+        active_role,
+        team_players(team_id),
+        player_guardians(
+          emergency_contact,
+          guardian:guardians(
+            person:people!person_id(first_name, last_name, phone)
+          )
+        )
+      )`,
+    )
+    .eq("account_status", "disabled")
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true });
+
+  if (error) return { data: [], error: error.message };
+
+  const rows: PersonDirectoryItem[] = (data ?? []).map((row) => {
+    const person = row as Person & {
+      managers: { id: string; active_role: boolean }[] | null;
+      coaches: { id: string; active_role: boolean }[] | null;
+      guardians:
+        | {
+            id: string;
+            active_role: boolean;
+            player_guardians: { player_id: string }[] | null;
+          }[]
+        | null;
+      players:
+        | {
+            id: string;
+            active_role: boolean;
+            team_players: { team_id: string }[] | null;
+            player_guardians: unknown[] | null;
+          }[]
+        | null;
+    };
+    const { managers, coaches, guardians, players, ...rest } = person;
+    return {
+      ...rest,
+      roles: {
+        player: (players ?? []).some((r) => r.active_role),
+        guardian: (guardians ?? []).some((r) => r.active_role),
+        coach: (coaches ?? []).some((r) => r.active_role),
+        manager: (managers ?? []).some((r) => r.active_role),
+      },
+      playerIds: [],
+      playerTeamIds: [],
+      linkedPlayerIds: [],
+      linkedPlayerTeamIds: [],
+      emergency_contact: null,
+    };
+  });
+
+  return { data: rows, error: null };
+}
+
+/** Restore a disabled person so they reappear in the People directory. */
+export async function reactivatePerson(
+  id: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { data: person, error: loadError } = await supabase
+    .from("people")
+    .select("id, account_status, auth_user_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError) return { error: loadError.message };
+  if (!person) return { error: "Person not found." };
+  if (person.account_status !== "disabled") {
+    return { error: "This person is not disabled." };
+  }
+
+  const { error } = await supabase
+    .from("people")
+    .update({
+      account_status: person.auth_user_id ? "active" : "none",
+    })
+    .eq("id", id);
+
   return { error: error?.message ?? null };
 }
 

@@ -20,7 +20,7 @@ import {
   updatePlayerObjective,
 } from "@/lib/data/player-objectives";
 import { resolveStaffClubId } from "@/lib/data/clubs";
-import { getActiveTeam } from "@/lib/data/team";
+import { assertTeamDataMutable, getActiveTeam } from "@/lib/data/team";
 import { parsePlayerObjectiveForm } from "@/lib/objectives/parse";
 import { parseShirtNumber, str } from "@/lib/form-parse";
 
@@ -146,6 +146,9 @@ export async function addPlayerToTeamAction(
   const teamId = str(formData, "team_id");
   if (!teamId) return { error: "Select a team." };
 
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const shirt = parseShirtNumber(str(formData, "shirt_number"));
   if (shirt && typeof shirt === "object" && "error" in shirt) {
     return { error: shirt.error };
@@ -168,6 +171,9 @@ export async function addRosterPlayerAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const playerId = str(formData, "player_id");
   if (!playerId) return { error: "Select a player." };
 
@@ -196,6 +202,9 @@ export async function createRosterPlayerAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const resolvedClubId = await resolveStaffClubId(clubId);
   if (!resolvedClubId) return { error: "No club found for your account." };
 

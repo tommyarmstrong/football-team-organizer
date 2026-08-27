@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/action-state";
 import { getGuardian } from "@/lib/data/guardians";
 import { addTeamMember, removeTeamMember } from "@/lib/data/members";
+import { assertTeamDataMutable } from "@/lib/data/team";
 import { TEAM_ROLES } from "@/lib/constants";
 import type { TeamRole } from "@/lib/supabase/database.types";
 import { str } from "@/lib/form-parse";
@@ -16,6 +17,9 @@ export async function addTeamMemberAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const userId = str(formData, "user_id");
   const role = str(formData, "role") as TeamRole;
 
@@ -50,6 +54,9 @@ export async function addGuardianAssistantAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const archivedError = await assertTeamDataMutable(teamId);
+  if (archivedError) return { error: archivedError };
+
   const guardianId = str(formData, "guardian_id");
   if (!guardianId) return { error: "Select a guardian." };
 

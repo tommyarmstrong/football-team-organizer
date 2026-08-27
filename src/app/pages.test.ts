@@ -87,7 +87,10 @@ vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
 }));
 vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
-vi.mock("@/lib/data/people", () => ({ listPeople: listPeopleMock }));
+vi.mock("@/lib/data/people", () => ({
+  listPeople: listPeopleMock,
+  listPreviousMembers: vi.fn().mockResolvedValue({ data: [], error: null }),
+}));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
   return {

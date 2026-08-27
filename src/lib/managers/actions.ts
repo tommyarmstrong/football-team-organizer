@@ -10,6 +10,7 @@ import {
   getManager,
   updateManager,
 } from "@/lib/data/managers";
+import { deletePerson } from "@/lib/data/people";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { parseManagerForm } from "@/lib/managers/parse";
 
@@ -84,9 +85,16 @@ export async function deleteManagerAction(id: string): Promise<ActionState> {
     return { error: "You cannot delete your own manager record." };
   }
 
-  const { error } = await deleteManager(id);
-  if (error) return { error };
+  // Soft-delete the person (account_status=disabled), same as deleting a guardian.
+  if (existing.person_id) {
+    const { error } = await deletePerson(existing.person_id);
+    if (error) return { error };
+  } else {
+    const { error } = await deleteManager(id);
+    if (error) return { error };
+  }
 
   revalidateManager();
-  redirect("/club");
+  revalidatePath("/people");
+  redirect("/people");
 }

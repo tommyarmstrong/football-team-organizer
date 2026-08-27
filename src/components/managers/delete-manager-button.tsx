@@ -7,7 +7,7 @@ export function DeleteManagerButton({ managerId }: { managerId: string }) {
   return (
     <ListDeleteButton
       label="Delete manager"
-      confirmMessage="Delete this manager? This cannot be undone."
+      confirmMessage="Disable this manager? Their person record moves to Previous members and their login is unlinked. You cannot delete yourself."
       deleteAction={() => deleteManagerAction(managerId)}
     />
   );

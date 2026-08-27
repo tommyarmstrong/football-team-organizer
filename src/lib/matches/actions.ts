@@ -29,6 +29,7 @@ import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
+import { archivedTeamReadOnlyError } from "@/lib/team/season";
 import type {
   CompetitionPeriods,
   MatchHomeAway,
@@ -95,6 +96,8 @@ export async function createMatchAction(
 
   const [team, ctx] = await Promise.all([getActiveTeam(), getViewerContext()]);
   if (!team) return { error: "No team selected." };
+  const archivedError = archivedTeamReadOnlyError(team);
+  if (archivedError) return { error: archivedError };
   if (!ctx || !canEditMatchDay(ctx, team.id)) {
     return { error: "You do not have permission to add fixtures." };
   }
@@ -177,6 +180,12 @@ export async function updateMatchAction(
   if (!ctx || !canEditMatchDay(ctx, existing.data.team_id)) {
     return { error: "You do not have permission to edit this match." };
   }
+  const matchTeam =
+    team.id === existing.data.team_id
+      ? team
+      : ctx.visibleTeams.find((row) => row.id === existing.data!.team_id);
+  const archivedError = archivedTeamReadOnlyError(matchTeam);
+  if (archivedError) return { error: archivedError };
 
   const venueResult = await parseVenueId(formData, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };

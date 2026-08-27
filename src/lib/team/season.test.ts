@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SEASON,
+  archivedTeamReadOnlyError,
   isTeamArchived,
   isValidSeasonLabel,
   nextSeasonLabel,
@@ -88,6 +89,18 @@ describe("isTeamArchived", () => {
         team({ id: "1", name: "Lions", archived_at: "2026-05-01T00:00:00Z" }),
       ),
     ).toBe(true);
+  });
+
+  it("returns a read-only error for archived teams", () => {
+    expect(archivedTeamReadOnlyError(null)).toBeNull();
+    expect(
+      archivedTeamReadOnlyError(team({ id: "1", name: "Lions" })),
+    ).toBeNull();
+    expect(
+      archivedTeamReadOnlyError(
+        team({ id: "1", name: "Lions", archived_at: "2026-05-01T00:00:00Z" }),
+      ),
+    ).toMatch(/archived/i);
   });
 });
 

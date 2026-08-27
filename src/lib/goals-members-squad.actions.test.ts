@@ -37,6 +37,9 @@ vi.mock("@/lib/data/members", () => ({
   removeTeamMember: removeTeamMemberMock,
 }));
 vi.mock("@/lib/data/guardians", () => ({ getGuardian: getGuardianMock }));
+vi.mock("@/lib/data/team", () => ({
+  assertTeamDataMutable: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/data/goals", () => ({
   createGoal: createGoalMock,
   deleteGoal: deleteGoalMock,

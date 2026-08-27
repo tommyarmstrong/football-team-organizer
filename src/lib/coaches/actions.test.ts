@@ -37,7 +37,10 @@ const {
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
-vi.mock("@/lib/data/team", () => ({ getActiveTeam: getActiveTeamMock }));
+vi.mock("@/lib/data/team", () => ({
+  getActiveTeam: getActiveTeamMock,
+  assertTeamDataMutable: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/data/clubs", () => ({
   resolveStaffClubId: resolveStaffClubIdMock,
 }));
