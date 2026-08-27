@@ -25,6 +25,10 @@ export function queryChain(result: QueryResult) {
     "limit",
     "filter",
     "match",
+    "not",
+    "or",
+    "contains",
+    "overlaps",
   ]) {
     builder[method] = self;
   }
@@ -54,25 +58,46 @@ export function mockFromClient(
     string,
     QueryResult | QueryResult[] | ((call: number) => QueryResult)
   >,
+  options?: {
+    rpcResults?: Record<
+      string,
+      QueryResult | QueryResult[] | ((call: number) => QueryResult)
+    >;
+  },
 ) {
   const callCounts = new Map<string, number>();
+  const rpcCallCounts = new Map<string, number>();
+
+  function resolveConfigured(
+    configured:
+      QueryResult | QueryResult[] | ((call: number) => QueryResult) | undefined,
+    count: number,
+    fallback: QueryResult,
+  ): QueryResult {
+    if (typeof configured === "function") return configured(count);
+    if (Array.isArray(configured)) {
+      return configured[Math.min(count, configured.length - 1)] ?? fallback;
+    }
+    if (configured) return configured;
+    return fallback;
+  }
+
   return {
     from(table: string) {
       const count = callCounts.get(table) ?? 0;
       callCounts.set(table, count + 1);
-      const configured = tableResults[table];
-      let result: QueryResult;
-      if (typeof configured === "function") {
-        result = configured(count);
-      } else if (Array.isArray(configured)) {
-        result =
-          configured[Math.min(count, configured.length - 1)] ?? okResult(null);
-      } else if (configured) {
-        result = configured;
-      } else {
-        result = okResult([]);
-      }
-      return queryChain(result);
+      return queryChain(
+        resolveConfigured(tableResults[table], count, okResult([])),
+      );
+    },
+    async rpc(fn: string) {
+      const count = rpcCallCounts.get(fn) ?? 0;
+      rpcCallCounts.set(fn, count + 1);
+      return resolveConfigured(
+        options?.rpcResults?.[fn],
+        count,
+        okResult(null),
+      );
     },
   };
 }
