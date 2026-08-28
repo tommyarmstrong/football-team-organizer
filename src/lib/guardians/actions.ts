@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
-import { canManageClub, getViewerContext } from "@/lib/authz/context";
+import {
+  canManageClub,
+  canManageGuardianPlayerLinks,
+  canUpdateGuardianPlayerLink,
+  getViewerContext,
+} from "@/lib/authz/context";
 import {
   createGuardian,
   deleteGuardian,
@@ -14,7 +19,7 @@ import {
   updateGuardianPlayerLink,
 } from "@/lib/data/guardians";
 import { deletePerson } from "@/lib/data/people";
-import { getPlayer } from "@/lib/data/players";
+import { getPlayer, getPlayerTeams } from "@/lib/data/players";
 import { resolveStaffClubId } from "@/lib/data/clubs";
 import { getActiveTeam } from "@/lib/data/team";
 import {
@@ -24,6 +29,59 @@ import {
   parseLegalGuardian,
 } from "@/lib/guardians/parse";
 import { str } from "@/lib/form-parse";
+
+async function assertCanManageGuardianPlayerLinks(
+  playerId: string,
+): Promise<ActionState | null> {
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+
+  const [playerResult, teamsResult] = await Promise.all([
+    getPlayer(playerId),
+    getPlayerTeams(playerId),
+  ]);
+  if (playerResult.error) return { error: playerResult.error };
+  if (!playerResult.data) return { error: "Player not found." };
+
+  const playerTeamIds = teamsResult.data.map((team) => team.team_id);
+  if (
+    !canManageGuardianPlayerLinks(ctx, playerResult.data.club_id, playerTeamIds)
+  ) {
+    return { error: "Only club staff can manage guardian links." };
+  }
+
+  return null;
+}
+
+async function assertCanUpdateGuardianPlayerLink(
+  guardianId: string,
+  playerId: string,
+): Promise<ActionState | null> {
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+
+  const [playerResult, teamsResult] = await Promise.all([
+    getPlayer(playerId),
+    getPlayerTeams(playerId),
+  ]);
+  if (playerResult.error) return { error: playerResult.error };
+  if (!playerResult.data) return { error: "Player not found." };
+
+  const playerTeamIds = teamsResult.data.map((team) => team.team_id);
+  if (
+    !canUpdateGuardianPlayerLink(
+      ctx,
+      playerId,
+      guardianId,
+      playerResult.data.club_id,
+      playerTeamIds,
+    )
+  ) {
+    return { error: "You cannot edit this guardian relationship." };
+  }
+
+  return null;
+}
 
 async function revalidateGuardian(guardianId: string, playerId?: string) {
   revalidatePath("/club");
@@ -116,6 +174,9 @@ export async function linkGuardianToPlayerAction(
   const playerId = str(formData, "player_id");
   if (!playerId) return { error: "Select a player." };
 
+  const authError = await assertCanManageGuardianPlayerLinks(playerId);
+  if (authError) return authError;
+
   const relationship = parseGuardianRelationship(formData);
   if (typeof relationship === "object") return relationship;
 
@@ -140,6 +201,9 @@ export async function linkPlayerToGuardianAction(
   const guardianId = str(formData, "guardian_id");
   if (!guardianId) return { error: "Select a guardian." };
 
+  const authError = await assertCanManageGuardianPlayerLinks(playerId);
+  if (authError) return authError;
+
   const relationship = parseGuardianRelationship(formData);
   if (typeof relationship === "object") return relationship;
 
@@ -163,6 +227,12 @@ export async function updateGuardianPlayerLinkAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const authError = await assertCanUpdateGuardianPlayerLink(
+    guardianId,
+    playerId,
+  );
+  if (authError) return authError;
+
   const relationship = parseGuardianRelationship(formData);
   if (typeof relationship === "object") return relationship;
 
@@ -182,6 +252,9 @@ export async function unlinkGuardianFromPlayerAction(
   guardianId: string,
   playerId: string,
 ): Promise<ActionState> {
+  const authError = await assertCanManageGuardianPlayerLinks(playerId);
+  if (authError) return authError;
+
   const { error } = await unlinkGuardianFromPlayer(linkId);
   if (error) return { error };
 

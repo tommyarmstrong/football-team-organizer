@@ -40,6 +40,7 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
     managementTeamIds: [],
     memberTeamRoles: {},
     guardianPlayerIds: [],
+    guardianIds: [],
     selfPlayerIds: [],
     personId: null,
     visibleTeams: [],

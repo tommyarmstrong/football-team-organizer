@@ -397,7 +397,8 @@ export default async function PersonDetailPage({
             playerId={player.id}
             links={playerGuardians}
             availableGuardians={availableGuardians}
-            canEdit={canEditPlayerRole || canEdit}
+            canManageLinks={canEditPlayerRole || canEdit}
+            selfGuardianIds={ctx.guardianIds}
           />
         </Section>
       ) : null}
@@ -411,7 +412,8 @@ export default async function PersonDetailPage({
             guardianId={guardian.id}
             links={guardianPlayerLinks}
             availablePlayers={availablePlayers}
-            canEdit={canEditGuardianRole}
+            canManageLinks={canEditGuardianRole}
+            selfGuardianIds={ctx.guardianIds}
           />
         </Section>
       ) : null}

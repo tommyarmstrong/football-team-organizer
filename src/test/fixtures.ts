@@ -41,6 +41,7 @@ export function viewerFixture(
     managementTeamIds: [],
     memberTeamRoles: { "team-1": ["coach"] },
     guardianPlayerIds: [],
+    guardianIds: [],
     selfPlayerIds: [],
     visibleTeams,
     editableTeamIds: ["team-1"],

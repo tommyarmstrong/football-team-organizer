@@ -34,6 +34,8 @@ export type ViewerContext = {
   /** All team_members roles for the user, keyed by team id. */
   memberTeamRoles: Record<string, TeamRole[]>;
   guardianPlayerIds: string[];
+  /** Guardian role record ids for the signed-in person's guardian roles. */
+  guardianIds: string[];
   selfPlayerIds: string[];
   /** RLS-filtered teams the user can read. */
   visibleTeams: Team[];
@@ -128,6 +130,9 @@ export const getViewerContext = cache(
       if (row.role === "management") managementTeamIds.push(row.team_id);
     }
 
+    const guardianIds = (guardianLinks.data ?? []).map(
+      (guardian) => guardian.id,
+    );
     const guardianPlayerIds = (guardianLinks.data ?? []).flatMap((guardian) => {
       const links = guardian.player_guardians as
         { player_id: string }[] | null | undefined;
@@ -160,6 +165,7 @@ export const getViewerContext = cache(
       managementTeamIds,
       memberTeamRoles,
       guardianPlayerIds,
+      guardianIds,
       selfPlayerIds,
       visibleTeams,
       editableTeamIds,
@@ -274,6 +280,41 @@ export function isGuardianOfPlayer(
   playerId: string,
 ): boolean {
   return ctx.guardianPlayerIds.includes(playerId);
+}
+
+/** Club staff and team coaches who manage a player's roster. */
+export function canManageGuardianPlayerLinks(
+  ctx: ViewerContext,
+  playerClubId: string,
+  playerTeamIds: string[],
+): boolean {
+  if (canManageClub(ctx, playerClubId)) return true;
+  return canEditPlayer(ctx, playerClubId, playerTeamIds);
+}
+
+/** A linked guardian editing their own relationship flags on a player. */
+export function canEditOwnGuardianPlayerLink(
+  ctx: ViewerContext,
+  playerId: string,
+  guardianId: string,
+): boolean {
+  return (
+    isGuardianOfPlayer(ctx, playerId) && ctx.guardianIds.includes(guardianId)
+  );
+}
+
+/** Update relationship / legal guardian / emergency contact on a link. */
+export function canUpdateGuardianPlayerLink(
+  ctx: ViewerContext,
+  playerId: string,
+  guardianId: string,
+  playerClubId: string,
+  playerTeamIds: string[],
+): boolean {
+  if (canManageGuardianPlayerLinks(ctx, playerClubId, playerTeamIds)) {
+    return true;
+  }
+  return canEditOwnGuardianPlayerLink(ctx, playerId, guardianId);
 }
 
 /**
