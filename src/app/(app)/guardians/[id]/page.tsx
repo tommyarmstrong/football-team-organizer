@@ -39,10 +39,10 @@ export default async function GuardianDetailPage({
     notFound();
   }
 
-  const canEdit = canManageClub(ctx, guardian.club_id);
+  const canManageLinks = canManageClub(ctx, guardian.club_id);
   const [{ data: links }, { data: players }] = await Promise.all([
     getGuardianPlayers(guardian.id),
-    canEdit
+    canManageLinks
       ? listPlayers()
       : Promise.resolve({
           data: [] as Awaited<ReturnType<typeof listPlayers>>["data"],
@@ -61,13 +61,13 @@ export default async function GuardianDetailPage({
         title={guardianDisplayName(guardian)}
         description={guardian.email ?? guardian.phone ?? "Guardian"}
         actions={
-          canEdit ? (
+          canManageLinks ? (
             <DeleteGuardianButton guardianId={guardian.id} />
           ) : undefined
         }
       />
 
-      {canEdit ? (
+      {canManageLinks ? (
         <Card>
           <CardHeader>
             <CardTitle>Guardian details</CardTitle>
@@ -89,7 +89,8 @@ export default async function GuardianDetailPage({
           guardianId={guardian.id}
           links={links}
           availablePlayers={availablePlayers}
-          canEdit={canEdit}
+          canManageLinks={canManageLinks}
+          selfGuardianIds={ctx.guardianIds}
         />
       </Section>
     </div>

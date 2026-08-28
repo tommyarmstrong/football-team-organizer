@@ -160,6 +160,7 @@ describe("getViewerContext", () => {
         "team-2": ["management"],
       },
       guardianPlayerIds: ["player-9"],
+      guardianIds: ["guardian-1"],
       selfPlayerIds: ["player-1"],
       editableTeamIds: ["team-1", "team-2"],
       isManagement: true,
@@ -192,9 +193,45 @@ describe("getViewerContext", () => {
       coachTeamIds: [],
       managementTeamIds: [],
       guardianPlayerIds: [],
+      guardianIds: [],
       selfPlayerIds: [],
       editableTeamIds: [],
       isManagement: false,
+    });
+  });
+
+  it("keeps guardian ids when a guardian has no player links yet", async () => {
+    mockSupabase({
+      user: { id: "user-3", email: "pat@example.com" },
+      person: { id: "person-g", first_name: "Pat", last_name: "Parent" },
+      guardianLinks: [{ id: "guardian-2", player_guardians: null }],
+    });
+
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    const ctx = await freshGetViewerContext();
+
+    expect(ctx).toMatchObject({
+      personId: "person-g",
+      guardianIds: ["guardian-2"],
+      guardianPlayerIds: [],
+    });
+  });
+
+  it("nulls email when the auth user has none", async () => {
+    mockSupabase({
+      user: { id: "user-4", email: null, user_metadata: { full_name: "Pat" } },
+      person: null,
+    });
+
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    const ctx = await freshGetViewerContext();
+
+    expect(ctx).toMatchObject({
+      userId: "user-4",
+      email: null,
+      displayName: "Pat",
     });
   });
 });
