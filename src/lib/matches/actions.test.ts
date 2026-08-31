@@ -212,6 +212,28 @@ describe("updateMatchStatusAction", () => {
       }),
     );
   });
+
+  it("allows guardian assistants to set full time", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        editableTeamIds: [],
+        coachTeamIds: [],
+        memberTeamRoles: { "team-1": ["guardian_assistant"] },
+      }),
+    );
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "in_progress" }),
+      error: null,
+    });
+    updateMatchMock.mockResolvedValue({ data: {}, error: null });
+
+    const result = await updateMatchStatusAction("match-1", "played");
+    expect(result).toEqual({});
+    expect(updateMatchMock).toHaveBeenCalledWith(
+      "match-1",
+      expect.objectContaining({ status: "played" }),
+    );
+  });
 });
 
 describe("updateMatchPlayersOfTheMatchAction", () => {

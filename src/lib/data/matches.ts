@@ -136,9 +136,16 @@ export async function updateMatch(
     .update(input)
     .eq("id", id)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) return { data: null, error: error.message };
+  if (!data) {
+    return {
+      data: null,
+      error:
+        "Could not update this match. You may not have permission to change it.",
+    };
+  }
   return { data, error: null };
 }
 
