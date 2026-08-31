@@ -10,8 +10,15 @@ const {
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getActiveTeamMock: vi.fn(),
-  setMatchSquadMock: vi.fn(async () => ({ error: null })),
-  listRosterForTeamMock: vi.fn(async () => ({ data: [], error: null })),
+  setMatchSquadMock: vi.fn(async (): Promise<{ error: string | null }> => ({
+    error: null,
+  })),
+  listRosterForTeamMock: vi.fn(
+    async (): Promise<{
+      data: Array<{ id: string }>;
+      error: string | null;
+    }> => ({ data: [], error: null }),
+  ),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
