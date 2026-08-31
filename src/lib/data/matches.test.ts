@@ -198,11 +198,14 @@ describe("createMatch / updateMatch / deleteMatch", () => {
   it("updates and deletes matches", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({
-          id: "m1",
-          team_id: "team-1",
-          opponent_name: "Updated",
-        }),
+        matches: [
+          okResult({ id: "m1", team_id: "team-1" }),
+          okResult({
+            id: "m1",
+            team_id: "team-1",
+            opponent_name: "Updated",
+          }),
+        ],
         teams: okResult({ archived_at: null }),
       }),
     );
@@ -218,6 +221,19 @@ describe("createMatch / updateMatch / deleteMatch", () => {
       }),
     );
     expect(await deleteMatch("m1")).toEqual({ error: null });
+  });
+
+  it("surfaces a clear error when an update returns no row", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: [okResult({ id: "m1", team_id: "team-1" }), okResult(null)],
+        teams: okResult({ archived_at: null }),
+      }),
+    );
+    expect(await updateMatch("m1", { status: "played" })).toMatchObject({
+      data: null,
+      error: expect.stringMatching(/permission/i),
+    });
   });
 
   it("rejects writes when the team is archived", async () => {

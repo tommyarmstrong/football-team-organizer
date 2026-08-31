@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formDataFrom } from "@/test/form-data";
 
+import { matchFixture, viewerFixture } from "@/test/fixtures";
+
 const {
   revalidatePathMock,
   setMatchSquadMock,
@@ -11,6 +13,8 @@ const {
   deleteGoalMock,
   updateGoalMock,
   createClientMock,
+  getViewerContextMock,
+  getMatchMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   setMatchSquadMock: vi.fn(),
@@ -21,6 +25,8 @@ const {
   deleteGoalMock: vi.fn(),
   updateGoalMock: vi.fn(),
   createClientMock: vi.fn(),
+  getViewerContextMock: vi.fn(),
+  getMatchMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -28,6 +34,13 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
+}));
+vi.mock("@/lib/authz/context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authz/context")>();
+  return { ...actual, getViewerContext: getViewerContextMock };
+});
+vi.mock("@/lib/data/matches", () => ({
+  getMatch: getMatchMock,
 }));
 vi.mock("@/lib/data/match-players", () => ({
   setMatchSquad: setMatchSquadMock,
@@ -62,6 +75,11 @@ describe("saveMatchSquadAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setMatchSquadMock.mockResolvedValue({ error: null });
+    getViewerContextMock.mockResolvedValue(viewerFixture());
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "in_progress" }),
+      error: null,
+    });
   });
 
   it("saves selected player ids", async () => {
@@ -73,6 +91,42 @@ describe("saveMatchSquadAction", () => {
     expect(result.success).toMatch(/saved/i);
     expect(setMatchSquadMock).toHaveBeenCalledWith("match-1", ["p1", "p2"]);
     expect(revalidatePathMock).toHaveBeenCalledWith("/matches/match-1");
+  });
+
+  it("allows guardian assistants to save the squad", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        editableTeamIds: [],
+        coachTeamIds: [],
+        memberTeamRoles: { "team-1": ["guardian_assistant"] },
+      }),
+    );
+
+    const result = await saveMatchSquadAction(
+      "match-1",
+      {},
+      formDataFrom({ player_id: ["p1"] }),
+    );
+    expect(result.success).toMatch(/saved/i);
+    expect(setMatchSquadMock).toHaveBeenCalledWith("match-1", ["p1"]);
+  });
+
+  it("rejects viewers without match-day edit access", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        editableTeamIds: [],
+        coachTeamIds: [],
+        memberTeamRoles: { "team-1": ["guardian"] },
+      }),
+    );
+
+    const result = await saveMatchSquadAction(
+      "match-1",
+      {},
+      formDataFrom({ player_id: ["p1"] }),
+    );
+    expect(result.error).toMatch(/permission/i);
+    expect(setMatchSquadMock).not.toHaveBeenCalled();
   });
 
   it("returns squad errors", async () => {

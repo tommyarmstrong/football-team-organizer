@@ -78,13 +78,29 @@ describe("match-players data", () => {
         teams: okResult({ archived_at: null }),
         match_players: [
           okResult([{ id: "mp-old", player_id: "player-1" }]),
-          okResult(null),
-          okResult(null),
+          okResult([{ id: "mp-old" }]),
+          okResult([{ id: "mp-new" }]),
         ],
       }),
     );
 
     const result = await setMatchSquad("m1", ["player-2", "player-2"]);
     expect(result.error).toBeNull();
+  });
+
+  it("reports when RLS silently blocks squad removals", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult({ team_id: "team-1" }),
+        teams: okResult({ archived_at: null }),
+        match_players: [
+          okResult([{ id: "mp-old", player_id: "player-1" }]),
+          okResult([]),
+        ],
+      }),
+    );
+
+    const result = await setMatchSquad("m1", []);
+    expect(result.error).toMatch(/permission/i);
   });
 });

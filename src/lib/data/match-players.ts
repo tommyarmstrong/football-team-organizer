@@ -69,16 +69,32 @@ export async function setMatchSquad(
     .map((player_id) => ({ match_id: matchId, player_id }));
 
   if (toRemove.length > 0) {
-    const { error } = await supabase
+    const { data: removed, error } = await supabase
       .from("match_players")
       .delete()
-      .in("id", toRemove);
+      .in("id", toRemove)
+      .select("id");
     if (error) return { error: error.message };
+    if ((removed ?? []).length !== toRemove.length) {
+      return {
+        error:
+          "Could not update the match-day squad. You may not have permission to change it.",
+      };
+    }
   }
 
   if (toAdd.length > 0) {
-    const { error } = await supabase.from("match_players").insert(toAdd);
+    const { data: inserted, error } = await supabase
+      .from("match_players")
+      .insert(toAdd)
+      .select("id");
     if (error) return { error: error.message };
+    if ((inserted ?? []).length !== toAdd.length) {
+      return {
+        error:
+          "Could not update the match-day squad. You may not have permission to change it.",
+      };
+    }
   }
 
   return { error: null };
