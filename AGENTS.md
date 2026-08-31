@@ -69,7 +69,7 @@ Dependencies are refreshed automatically by the startup script (`npm install`). 
 ### Services
 
 - **Web app** — Next.js (App Router). Standard scripts live in `package.json`: `npm run dev` (http://localhost:3000), `npm run build`, `npm run lint`, `npm run format:check`, `npm test`. CI (`.github/workflows/ci.yml`) runs `lint` → `format:check` → `test` → `build`.
-- **Supabase** (Postgres + Auth) — required for anything past `/login`. The repo targets a hosted Supabase project by default (see `README.md`), but for local end‑to‑end work run the Supabase CLI stack (`npx supabase start`), which needs Docker.
+- **Supabase** (Postgres + Auth) — required for anything past `/login`. The repo targets a hosted Supabase project by default (see `docs/install.md` and `docs/deploy.md`), but for local end‑to‑end work run the Supabase CLI stack (`npx supabase start`), which needs Docker.
 
 ### `npm run build` without a real backend
 
