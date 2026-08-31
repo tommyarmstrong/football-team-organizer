@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
+  <title id="title">Football Team Organizer</title>
+  <desc id="desc">Matchday ready. Record fixtures, results, players, and goals for your youth football team.</desc>
+  <defs>
+    <linearGradient id="hero" x1="8%" y1="0%" x2="92%" y2="100%">
+      <stop offset="0%" stop-color="#123528"/>
+      <stop offset="52%" stop-color="#146C4A"/>
+      <stop offset="100%" stop-color="#9ED63F"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="32%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#f4f4f5"/>
+      <stop offset="100%" stop-color="#a1a1aa"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#hero)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.18" transform="translate(720, 28) scale(1.45)">
+    <rect x="12" y="12" width="336" height="196" rx="10" stroke-width="2.5"/>
+    <line x1="180" y1="12" x2="180" y2="208" stroke-width="2"/>
+    <circle cx="180" cy="110" r="32" stroke-width="2"/>
+    <circle cx="180" cy="110" r="3.5" fill="#ffffff" fill-opacity="0.18" stroke="none"/>
+    <rect x="12" y="58" width="52" height="104" stroke-width="2"/>
+    <rect x="12" y="82" width="22" height="56" stroke-width="2"/>
+    <rect x="296" y="58" width="52" height="104" stroke-width="2"/>
+    <rect x="326" y="82" width="22" height="56" stroke-width="2"/>
+    <path d="M64 86a36 36 0 0 1 0 48" stroke-width="2"/>
+    <path d="M296 86a36 36 0 0 0 0 48" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(64, 48)">
+    <circle cx="22" cy="22" r="20" fill="url(#ball)"/>
+    <path fill="#18181b" d="M22 13.5 26.4 16.8 24.7 22H19.3L17.6 16.8Z"/>
+    <path stroke="#18181b" stroke-width="1.2" stroke-linejoin="round" fill="none" d="M22 13.5 17.6 16.8 12.4 15.2 10.6 9.1 17.1 7.9ZM22 13.5 26.4 16.8 31.6 15.2 33.4 9.1 26.9 7.9ZM17.6 16.8 19.3 22 15.2 25.8 9.8 23.3 12.4 15.2ZM26.4 16.8 24.7 22 28.8 25.8 34.2 23.3 31.6 15.2ZM19.3 22H24.7L28.8 25.8 22 30.4 15.2 25.8Z"/>
+  </g>
+
+  <rect x="64" y="108" width="168" height="28" rx="14" fill="#C6EB63" fill-opacity="0.22"/>
+  <text x="148" y="127" text-anchor="middle" fill="#C6EB63" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="2.4">MATCHDAY READY</text>
+
+  <text x="64" y="196" fill="#F4F9F3" font-family="Arial Narrow, Franklin Gothic Medium, Helvetica Neue, sans-serif" font-size="52" font-weight="700" letter-spacing="-1.2">Football Team</text>
+  <text x="64" y="252" fill="#F4F9F3" font-family="Arial Narrow, Franklin Gothic Medium, Helvetica Neue, sans-serif" font-size="52" font-weight="700" letter-spacing="-1.2">Organizer</text>
+
+  <text x="64" y="304" fill="#ffffff" fill-opacity="0.82" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica, Arial, sans-serif" font-size="20">Record fixtures, results, players, and goals</text>
+  <text x="64" y="334" fill="#ffffff" fill-opacity="0.82" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica, Arial, sans-serif" font-size="20">for your youth football team.</text>
+</svg>

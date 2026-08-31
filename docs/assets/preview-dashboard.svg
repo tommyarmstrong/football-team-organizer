@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="720" viewBox="0 0 1120 720" role="img" aria-labelledby="title">
+  <title id="title">Dashboard: next fixture, last result, form, and top scorers</title>
+  <defs>
+    <linearGradient id="hero" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#123528"/>
+      <stop offset="60%" stop-color="#146C4A"/>
+      <stop offset="100%" stop-color="#8FCF3A"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="32%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#a1a1aa"/>
+    </radialGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#123528" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1120" height="720" rx="28" fill="#E7F3E6"/>
+  <rect x="36" y="28" width="1048" height="664" rx="22" fill="#F4F9F3" filter="url(#shadow)"/>
+
+  <path d="M36 28h1048a22 22 0 0 1 22 22v70H14V50a22 22 0 0 1 22-22z" fill="#1A4536"/>
+  <circle cx="72" cy="64" r="16" fill="url(#ball)"/>
+  <path fill="#18181b" d="M72 55.5 76 58.6 74.4 64h-4.8L68 58.6Z"/>
+  <text x="98" y="58" fill="#F4F9F3" font-family="Arial Narrow, Franklin Gothic Medium, sans-serif" font-size="22" font-weight="700">Greenfield FC</text>
+  <text x="98" y="78" fill="#C6EB63" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="600">U11 Lions | 2025-26</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600">
+    <rect x="430" y="48" width="96" height="32" rx="16" fill="#ffffff" fill-opacity="0.15"/>
+    <text x="478" y="69" text-anchor="middle" fill="#F4F9F3">Dashboard</text>
+    <text x="568" y="69" fill="#F4F9F3" fill-opacity="0.75">Team</text>
+    <text x="630" y="69" fill="#F4F9F3" fill-opacity="0.75">Matches</text>
+    <text x="704" y="69" fill="#F4F9F3" fill-opacity="0.75">Stats</text>
+    <text x="770" y="69" fill="#F4F9F3" fill-opacity="0.75">Venues</text>
+    <text x="838" y="69" fill="#F4F9F3" fill-opacity="0.75">Club</text>
+    <text x="892" y="69" fill="#F4F9F3" fill-opacity="0.75">People</text>
+  </g>
+
+  <rect x="64" y="130" width="992" height="118" rx="24" fill="url(#hero)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.16" transform="translate(780, 122) scale(0.72)">
+    <rect x="12" y="12" width="336" height="196" rx="10" stroke-width="2.5"/>
+    <line x1="180" y1="12" x2="180" y2="208" stroke-width="2"/>
+    <circle cx="180" cy="110" r="32" stroke-width="2"/>
+    <rect x="12" y="58" width="52" height="104" stroke-width="2"/>
+    <rect x="296" y="58" width="52" height="104" stroke-width="2"/>
+  </g>
+  <text x="92" y="172" fill="#C6EB63" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="3">DASHBOARD</text>
+  <text x="92" y="212" fill="#F4F9F3" font-family="Arial Narrow, Franklin Gothic Medium, sans-serif" font-size="36" font-weight="700">U11 Lions</text>
+  <text x="92" y="234" fill="#ffffff" fill-opacity="0.72" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14">2025-26 season</text>
+
+  <rect x="64" y="268" width="480" height="168" rx="20" fill="#ffffff" stroke="#D5E6D4"/>
+  <text x="88" y="300" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="700">Next fixture</text>
+  <text x="88" y="328" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">League | Sat 6 Sep | 10:30</text>
+  <text x="220" y="372" text-anchor="end" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700">U11 Lions</text>
+  <text x="248" y="372" text-anchor="middle" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="2">VS</text>
+  <text x="276" y="372" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700">Riverside Athletic</text>
+  <text x="304" y="404" text-anchor="middle" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="600" letter-spacing="1">HOME</text>
+
+  <rect x="576" y="268" width="480" height="168" rx="20" fill="#ffffff" stroke="#D5E6D4"/>
+  <text x="600" y="300" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="700">Last result</text>
+  <text x="600" y="328" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">Cup | Sun 31 Aug</text>
+  <text x="748" y="372" text-anchor="end" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700">U11 Lions</text>
+  <rect x="764" y="350" width="72" height="32" rx="10" fill="#2D7A4F" fill-opacity="0.14"/>
+  <text x="800" y="372" text-anchor="middle" fill="#2D7A4F" font-family="Arial Narrow, Franklin Gothic Medium, sans-serif" font-size="22" font-weight="700">4-1</text>
+  <text x="852" y="372" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700">Parkside</text>
+  <text x="816" y="404" text-anchor="middle" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="600" letter-spacing="1">AWAY</text>
+
+  <text x="64" y="472" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="700">Form</text>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="800">
+    <rect x="64" y="486" width="36" height="36" rx="8" fill="#2D7A4F"/><text x="82" y="510" text-anchor="middle" fill="#F4F9F3">W</text>
+    <rect x="106" y="486" width="36" height="36" rx="8" fill="#2D7A4F"/><text x="124" y="510" text-anchor="middle" fill="#F4F9F3">W</text>
+    <rect x="148" y="486" width="36" height="36" rx="8" fill="#E6C84A"/><text x="166" y="510" text-anchor="middle" fill="#5A3E12">D</text>
+    <rect x="190" y="486" width="36" height="36" rx="8" fill="#2D7A4F"/><text x="208" y="510" text-anchor="middle" fill="#F4F9F3">W</text>
+    <rect x="232" y="486" width="36" height="36" rx="8" fill="#C44B2B"/><text x="250" y="510" text-anchor="middle" fill="#F4F9F3">L</text>
+    <rect x="274" y="486" width="36" height="36" rx="8" fill="#2D7A4F"/><text x="292" y="510" text-anchor="middle" fill="#F4F9F3">W</text>
+    <rect x="316" y="486" width="36" height="36" rx="8" fill="#2D7A4F"/><text x="334" y="510" text-anchor="middle" fill="#F4F9F3">W</text>
+    <rect x="358" y="486" width="36" height="36" rx="8" fill="#E6C84A"/><text x="376" y="510" text-anchor="middle" fill="#5A3E12">D</text>
+  </g>
+
+  <rect x="64" y="544" width="312" height="124" rx="18" fill="#ffffff" stroke="#D5E6D4"/>
+  <text x="84" y="572" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Top scorers</text>
+  <text x="84" y="598" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">1.  #9  Maya  |  12 goals</text>
+  <text x="84" y="622" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">2.  #7  Luca  |  9 goals</text>
+  <text x="84" y="646" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">3.  #11 Aisha |  7 goals</text>
+
+  <rect x="392" y="544" width="312" height="124" rx="18" fill="#ffffff" stroke="#D5E6D4"/>
+  <text x="412" y="572" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Most assists</text>
+  <text x="412" y="598" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">1.  #4  Noah  |  8 assists</text>
+  <text x="412" y="622" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">2.  #9  Maya  |  6 assists</text>
+  <text x="412" y="646" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">3.  #8  Erin  |  5 assists</text>
+
+  <rect x="720" y="544" width="336" height="124" rx="18" fill="#ffffff" stroke="#D5E6D4"/>
+  <text x="740" y="572" fill="#1E3329" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="700">Player of the match</text>
+  <text x="740" y="598" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">1.  #9  Maya  |  4 awards</text>
+  <text x="740" y="622" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">2.  #1  Jess  |  3 awards</text>
+  <text x="740" y="646" fill="#5A7264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">3.  #7  Luca  |  2 awards</text>
+</svg>
