@@ -54,6 +54,7 @@ vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
 vi.mock("@/lib/data/people", () => ({ getPerson: getPersonMock }));
 vi.mock("@/lib/data/players", () => ({
   getPlayerTeams: getPlayerTeamsMock,
+  listPlayerTeamsByPlayerIds: getPlayerTeamsMock,
   listPlayers: listPlayersMock,
 }));
 vi.mock("@/lib/data/guardians", () => ({

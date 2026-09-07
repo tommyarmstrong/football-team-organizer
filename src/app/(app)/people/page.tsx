@@ -21,10 +21,8 @@ import { PeopleDirectoryList } from "@/components/people/people-directory-list";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function PeoplePage() {
-  const ctx = await getViewerContext();
+  const [ctx, club] = await Promise.all([getViewerContext(), getPrimaryClub()]);
   if (!ctx || !canAccessClubAndPeople(ctx)) redirect("/dashboard");
-
-  const club = await getPrimaryClub();
   if (!club) {
     return (
       <div className="space-y-8">

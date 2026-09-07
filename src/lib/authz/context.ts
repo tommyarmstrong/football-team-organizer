@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { loadVisibleTeams } from "@/lib/data/visible-teams";
 import { personDisplayName } from "@/lib/people/person";
 import { isTeamArchived } from "@/lib/team/season";
 import type { Team, TeamRole } from "@/lib/supabase/database.types";
@@ -114,7 +115,7 @@ export const getViewerContext = cache(
         personId
           ? supabase.from("players").select("id").eq("person_id", personId)
           : Promise.resolve({ data: [] as { id: string }[], error: null }),
-        supabase.from("teams").select("*").order("name", { ascending: true }),
+        loadVisibleTeams(),
       ]);
 
     const managementClubIds = (managers.data ?? []).map((row) => row.club_id);
@@ -139,7 +140,7 @@ export const getViewerContext = cache(
       return (links ?? []).map((link) => link.player_id);
     });
     const selfPlayerIds = (selfPlayers.data ?? []).map((row) => row.id);
-    const visibleTeams = (teams.data ?? []) as Team[];
+    const visibleTeams = teams.data;
 
     const managementClubSet = new Set(managementClubIds);
     const coachTeamSet = new Set(coachTeamIds);

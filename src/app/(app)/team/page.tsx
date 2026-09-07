@@ -42,14 +42,11 @@ import {
 } from "@/components/ui/card";
 
 export default async function TeamPage() {
-  const ctx = await getViewerContext();
-  const [club, team, { data: clubCoaches }, { data: clubVenues }] =
-    await Promise.all([
-      getPrimaryClub(),
-      getActiveTeam(),
-      listCoaches(),
-      listVenues(),
-    ]);
+  const [ctx, club, team] = await Promise.all([
+    getViewerContext(),
+    getPrimaryClub(),
+    getActiveTeam(),
+  ]);
 
   if (!ctx) {
     return (
@@ -64,15 +61,19 @@ export default async function TeamPage() {
   const canCreateTeam = createClubId
     ? canManageClub(ctx, createClubId)
     : ctx.isManagement;
-
-  const coachesForClub = club
-    ? clubCoaches.filter((c) => c.club_id === club.id)
-    : clubCoaches;
-  const venuesForClub = club
-    ? clubVenues.filter((v) => v.club_id === club.id)
-    : clubVenues;
+  const venueClubId = team?.club_id ?? club?.id;
 
   if (!team) {
+    const [{ data: clubCoaches }, { data: clubVenues }] = await Promise.all([
+      listCoaches(),
+      venueClubId ? listVenues(venueClubId) : listVenues(),
+    ]);
+    const coachesForClub = club
+      ? clubCoaches.filter((c) => c.club_id === club.id)
+      : clubCoaches;
+    const venuesForClub = club
+      ? clubVenues.filter((v) => v.club_id === club.id)
+      : clubVenues;
     return (
       <div className="space-y-8">
         <PageHeader
@@ -104,9 +105,9 @@ export default async function TeamPage() {
 
   const canEdit = canEditTeam(ctx, team.id);
   const canEditHistory = canEditTeamHistory(ctx, team.id);
-  const teamClubVenues = clubVenues.filter((v) => v.club_id === team.club_id);
 
   const [
+    { data: clubVenues },
     { data: roster, error: rosterError },
     { data: playerCandidates },
     { data: teamCoaches, error: teamCoachesError },
@@ -116,6 +117,7 @@ export default async function TeamPage() {
     { data: potmAwards, error: potmError },
     competitions,
   ] = await Promise.all([
+    listVenues(team.club_id),
     listRosterForTeam(team.id, { includeInactive: true }),
     club
       ? listPlayersNotOnTeam(club.id, team.id)
@@ -127,6 +129,8 @@ export default async function TeamPage() {
     listPlayerOfTheMonth(team.id),
     listCompetitions(team.id),
   ]);
+
+  const teamClubVenues = clubVenues;
 
   const headCoach = teamCoaches.find((c) => c.role === "Head Coach") ?? null;
   const trainingDaysLabel = formatTrainingDays(team.training_days);
