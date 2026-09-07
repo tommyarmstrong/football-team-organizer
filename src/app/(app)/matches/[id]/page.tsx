@@ -29,7 +29,6 @@ import {
   LiveIndicator,
   MatchHeaderMeta,
 } from "@/components/matches/match-header-meta";
-import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
@@ -165,26 +164,16 @@ export default async function MatchDetailPage({
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {allowsEvents ? (
-        <>
-          <Section title="Goals">
-            {goalsError ? <ErrorBanner message={goalsError} /> : null}
-            <MatchGoalsSection
-              matchId={match.id}
-              goals={goals}
-              canEdit={canEdit}
-            />
-          </Section>
-
-          <Section title="Periods">
-            {periodsError ? <ErrorBanner message={periodsError} /> : null}
-            <MatchPeriodsSection
-              matchId={match.id}
-              periods={periods}
-              goals={goals}
-              canEdit={canEdit}
-            />
-          </Section>
-        </>
+        <Section title="Goals">
+          {goalsError ? <ErrorBanner message={goalsError} /> : null}
+          <MatchGoalsSection
+            matchId={match.id}
+            goals={goals}
+            periods={periods}
+            canEdit={canEdit}
+            showAddPeriod={canEdit}
+          />
+        </Section>
       ) : null}
 
       {!isCancelledOrPostponed ? (

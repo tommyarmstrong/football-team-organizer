@@ -30,7 +30,7 @@ function goalFixture(
 }
 
 describe("groupGoalsByPeriod", () => {
-  it("groups goals by period and keeps insertion order", () => {
+  it("groups goals by period and keeps insertion order for unknown labels", () => {
     const goals = [
       goalFixture({
         id: "g1",
@@ -61,11 +61,13 @@ describe("groupGoalsByPeriod", () => {
       {
         key: "p1",
         label: "1st Half",
+        periodId: "p1",
         goals: [goals[0], goals[1]],
       },
       {
         key: "p2",
         label: "2nd Half",
+        periodId: "p2",
         goals: [goals[2]],
       },
     ]);
@@ -74,7 +76,7 @@ describe("groupGoalsByPeriod", () => {
   it("falls back to an em dash when period is missing", () => {
     const goals = [goalFixture({ id: "g1" })];
     expect(groupGoalsByPeriod(goals)).toEqual([
-      { key: "label:—", label: "—", goals },
+      { key: "label:—", label: "—", periodId: null, goals },
     ]);
   });
 
@@ -90,5 +92,105 @@ describe("groupGoalsByPeriod", () => {
       "label:Penalties",
     ]);
     expect(groupGoalsByPeriod(goals)[0]?.goals).toHaveLength(2);
+  });
+
+  it("orders known period names numerically even when goals arrive out of order", () => {
+    const goals = [
+      goalFixture({
+        id: "g1",
+        period: "Penalty Shootout",
+        period_id: "p-pen",
+      }),
+      goalFixture({
+        id: "g2",
+        period: "Quarter 4",
+        period_id: "p-q4",
+      }),
+      goalFixture({
+        id: "g3",
+        period: "Quarter 1",
+        period_id: "p-q1",
+      }),
+      goalFixture({
+        id: "g4",
+        period: "Extra time 1",
+        period_id: "p-et1",
+      }),
+    ];
+
+    expect(groupGoalsByPeriod(goals).map((group) => group.label)).toEqual([
+      "Quarter 1",
+      "Quarter 4",
+      "Extra time 1",
+      "Penalty Shootout",
+    ]);
+  });
+
+  it("lists every supplied period in order and marks empty periods", () => {
+    const periods = [
+      { id: "q1", name: "Quarter 1" },
+      { id: "q2", name: "Quarter 2" },
+      { id: "q3", name: "Quarter 3" },
+      { id: "q4", name: "Quarter 4" },
+      { id: "et1", name: "Extra time 1" },
+      { id: "et2", name: "Extra time 2" },
+      { id: "pen", name: "Penalty Shootout" },
+    ];
+    const goals = [
+      goalFixture({
+        id: "g-q4",
+        period: "Quarter 4",
+        period_id: "q4",
+      }),
+      goalFixture({
+        id: "g-q1",
+        period: "Quarter 1",
+        period_id: "q1",
+      }),
+    ];
+
+    const groups = groupGoalsByPeriod(goals, periods);
+
+    expect(groups.map((group) => group.label)).toEqual([
+      "Quarter 1",
+      "Quarter 2",
+      "Quarter 3",
+      "Quarter 4",
+      "Extra time 1",
+      "Extra time 2",
+      "Penalty Shootout",
+    ]);
+    expect(groups[0]?.goals).toEqual([goals[1]]);
+    expect(groups[1]?.goals).toEqual([]);
+    expect(groups[2]?.goals).toEqual([]);
+    expect(groups[3]?.goals).toEqual([goals[0]]);
+    expect(groups[4]?.goals).toEqual([]);
+    expect(groups[5]?.goals).toEqual([]);
+    expect(groups[6]?.goals).toEqual([]);
+  });
+
+  it("appends unmatched goals after the supplied periods", () => {
+    const periods = [{ id: "q1", name: "Quarter 1" }];
+    const goals = [
+      goalFixture({
+        id: "orphan",
+        period: "First half",
+        period_id: "old-half",
+      }),
+      goalFixture({
+        id: "linked",
+        period: "Quarter 1",
+        period_id: "q1",
+      }),
+    ];
+
+    const groups = groupGoalsByPeriod(goals, periods);
+    expect(groups.map((group) => group.label)).toEqual([
+      "Quarter 1",
+      "First half",
+    ]);
+    expect(groups[0]?.goals).toEqual([goals[1]]);
+    expect(groups[1]?.periodId).toBe("old-half");
+    expect(groups[1]?.goals).toEqual([goals[0]]);
   });
 });
