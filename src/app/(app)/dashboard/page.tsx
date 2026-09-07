@@ -280,9 +280,9 @@ function FixtureSection({
         <p className="text-muted-foreground text-center text-sm">
           {meta.dateTime}
         </p>
-        {meta.meetup ? (
+        {meta.times ? (
           <p className="text-muted-foreground text-center text-sm">
-            {meta.meetup}
+            {meta.times}
           </p>
         ) : null}
         {meta.venue ? (

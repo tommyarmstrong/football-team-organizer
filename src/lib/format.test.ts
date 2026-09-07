@@ -11,7 +11,7 @@ import {
   formatMatchDateTime,
   formatMatchTitle,
   formatMatchVersusTitle,
-  formatMeetupLine,
+  formatScheduledMatchTimes,
   formatScore,
   formatShortDate,
   formatTeamHeaderSummary,
@@ -129,13 +129,6 @@ describe("formatMatchDateTime", () => {
     );
   });
 
-  it("appends kick off when requested", () => {
-    const date = formatMatchDate("2026-03-15");
-    expect(
-      formatMatchDateTime("2026-03-15", "10:00", { kickoffSuffix: true }),
-    ).toBe(`${date} · 10:00 kick off`);
-  });
-
   it("returns only the date when kickoff is missing", () => {
     expect(formatMatchDateTime("2026-03-15", null)).toBe(
       formatMatchDate("2026-03-15"),
@@ -143,13 +136,17 @@ describe("formatMatchDateTime", () => {
   });
 });
 
-describe("formatMeetupLine", () => {
-  it("formats a meet-up time line", () => {
-    expect(formatMeetupLine("09:30:00")).toBe("Meet-up: 09:30");
+describe("formatScheduledMatchTimes", () => {
+  it("formats meet-up and kick-off on one line", () => {
+    expect(formatScheduledMatchTimes("09:30:00", "10:00:00")).toBe(
+      "Meet up: 09:30 . Kick off: 10:00",
+    );
   });
 
-  it("returns null when meet-up is missing", () => {
-    expect(formatMeetupLine(null)).toBeNull();
+  it("omits missing parts", () => {
+    expect(formatScheduledMatchTimes(null, "10:00")).toBe("Kick off: 10:00");
+    expect(formatScheduledMatchTimes("09:30", null)).toBe("Meet up: 09:30");
+    expect(formatScheduledMatchTimes(null, null)).toBeNull();
   });
 });
 
@@ -165,12 +162,12 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDateTime("2026-03-15", "10:00"),
-      meetup: null,
+      times: null,
       venue: "Wembley",
     });
   });
 
-  it("adds kick-off suffix and meet-up for scheduled matches", () => {
+  it("puts meet-up and kick-off on a row beneath the date for scheduled matches", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -182,15 +179,13 @@ describe("matchSummaryLines", () => {
       }),
     ).toEqual({
       competition: "Premier League",
-      dateTime: formatMatchDateTime("2026-03-15", "10:00", {
-        kickoffSuffix: true,
-      }),
-      meetup: "Meet-up: 09:30",
+      dateTime: formatMatchDate("2026-03-15"),
+      times: "Meet up: 09:30 . Kick off: 10:00",
       venue: "Wembley",
     });
   });
 
-  it("keeps kick-off suffix without meet-up when meet-up is unset", () => {
+  it("shows kick-off alone when meet-up is unset on scheduled matches", () => {
     expect(
       matchSummaryLines({
         date: "2026-03-15",
@@ -200,15 +195,13 @@ describe("matchSummaryLines", () => {
       }),
     ).toEqual({
       competition: null,
-      dateTime: formatMatchDateTime("2026-03-15", "10:00", {
-        kickoffSuffix: true,
-      }),
-      meetup: null,
+      dateTime: formatMatchDate("2026-03-15"),
+      times: "Kick off: 10:00",
       venue: null,
     });
   });
 
-  it("omits meet-up and kick-off suffix for non-scheduled matches", () => {
+  it("omits the times row for non-scheduled matches", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -221,7 +214,7 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDateTime("2026-03-15", "10:00"),
-      meetup: null,
+      times: null,
       venue: "Wembley",
     });
   });
@@ -237,7 +230,7 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
-      meetup: null,
+      times: null,
       venue: null,
     });
   });
