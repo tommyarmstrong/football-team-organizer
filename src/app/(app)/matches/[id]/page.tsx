@@ -130,6 +130,7 @@ export default async function MatchDetailPage({
           <MatchHeaderMeta
             date={match.date}
             kickoffTime={match.kickoff_time}
+            meetupTime={match.meetup_time}
             venueName={match.venue?.name ?? null}
             venueId={match.venue?.id ?? null}
             competitionName={
@@ -199,15 +200,13 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <>
-          <Section title="Players of the match">
-            <MatchPlayersOfTheMatchSection
-              matchId={match.id}
-              players={eventPlayers}
-              coachPlayerOfTheMatchId={match.player_of_the_match_id}
-              playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
-              canEdit={canEditPlayerOfTheMatch}
-            />
-          </Section>
+          <MatchPlayersOfTheMatchSection
+            matchId={match.id}
+            players={eventPlayers}
+            coachPlayerOfTheMatchId={match.player_of_the_match_id}
+            playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
+            canEdit={canEditPlayerOfTheMatch}
+          />
 
           <Section title="Cards">
             {cardsError ? <ErrorBanner message={cardsError} /> : null}

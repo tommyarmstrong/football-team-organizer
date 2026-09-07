@@ -11,6 +11,7 @@ import {
   formatMatchDateTime,
   formatMatchTitle,
   formatMatchVersusTitle,
+  formatMeetupLine,
   formatScore,
   formatShortDate,
   formatTeamHeaderSummary,
@@ -128,10 +129,27 @@ describe("formatMatchDateTime", () => {
     );
   });
 
+  it("appends kick off when requested", () => {
+    const date = formatMatchDate("2026-03-15");
+    expect(
+      formatMatchDateTime("2026-03-15", "10:00", { kickoffSuffix: true }),
+    ).toBe(`${date} · 10:00 kick off`);
+  });
+
   it("returns only the date when kickoff is missing", () => {
     expect(formatMatchDateTime("2026-03-15", null)).toBe(
       formatMatchDate("2026-03-15"),
     );
+  });
+});
+
+describe("formatMeetupLine", () => {
+  it("formats a meet-up time line", () => {
+    expect(formatMeetupLine("09:30:00")).toBe("Meet-up: 09:30");
+  });
+
+  it("returns null when meet-up is missing", () => {
+    expect(formatMeetupLine(null)).toBeNull();
   });
 });
 
@@ -147,6 +165,45 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      meetup: null,
+      venue: "Wembley",
+    });
+  });
+
+  it("adds kick-off suffix and meet-up for scheduled matches", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "scheduled",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDateTime("2026-03-15", "10:00", {
+        kickoffSuffix: true,
+      }),
+      meetup: "Meet-up: 09:30",
+      venue: "Wembley",
+    });
+  });
+
+  it("omits meet-up and kick-off suffix for non-scheduled matches", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "played",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      meetup: null,
       venue: "Wembley",
     });
   });
@@ -162,6 +219,7 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
+      meetup: null,
       venue: null,
     });
   });

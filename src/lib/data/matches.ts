@@ -257,6 +257,7 @@ export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
     opponent_name: row.opponent_name,
     date: row.date,
     kickoff_time: row.kickoff_time,
+    meetup_time: row.meetup_time,
     home_away: row.home_away,
     venue_id: row.venue_id,
     competition_id: row.competition_id,

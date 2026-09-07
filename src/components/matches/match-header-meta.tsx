@@ -48,6 +48,7 @@ const chipBaseClassName =
 export function MatchHeaderMeta({
   date,
   kickoffTime,
+  meetupTime,
   venueName,
   venueId,
   competitionName,
@@ -57,6 +58,7 @@ export function MatchHeaderMeta({
 }: {
   date: string;
   kickoffTime: string | null;
+  meetupTime?: string | null;
   venueName: string | null;
   venueId: string | null;
   competitionName?: string | null;
@@ -68,7 +70,9 @@ export function MatchHeaderMeta({
     competitionName,
     date,
     kickoffTime,
+    meetupTime,
     venueName: venueName ?? "Unknown",
+    status,
   });
 
   const showCancelledOrPostponed =
@@ -83,6 +87,7 @@ export function MatchHeaderMeta({
           <p className="font-bold">{meta.competition}</p>
         ) : null}
         <p>{meta.dateTime}</p>
+        {meta.meetup ? <p>{meta.meetup}</p> : null}
         {meta.venue ? (
           <p>
             {venueId ? (
@@ -102,7 +107,12 @@ export function MatchHeaderMeta({
             {labelMatchStatus(status)}
           </p>
         ) : null}
-        {showMatchExtras ? <p>Match day squad: {matchDaySquadCount}</p> : null}
+        {showMatchExtras ? (
+          <p>
+            Match day squad: {matchDaySquadCount}{" "}
+            {matchDaySquadCount === 1 ? "player" : "players"}
+          </p>
+        ) : null}
       </div>
 
       {visibleCards.length > 0 ? (

@@ -202,6 +202,22 @@ export function StatsPageContent({
         emptyFilterDescription={emptyFilterDescription}
       />
 
+      <Section title="Results">
+        {results.length === 0 ? (
+          <EmptyState
+            title="No results yet"
+            description="Played matches with scores will appear here."
+          />
+        ) : !hasResults ? (
+          <EmptyState
+            title="No results for this filter"
+            description={emptyFilterDescription}
+          />
+        ) : (
+          <ResultsOverTimeChart data={filteredResults} />
+        )}
+      </Section>
+
       <Section title="Goal difference">
         {results.length === 0 ? (
           <EmptyState
@@ -218,21 +234,17 @@ export function StatsPageContent({
         )}
       </Section>
 
-      <Section title="Results">
-        {results.length === 0 ? (
-          <EmptyState
-            title="No results yet"
-            description="Played matches with scores will appear here."
-          />
-        ) : !hasResults ? (
-          <EmptyState
-            title="No results for this filter"
-            description={emptyFilterDescription}
-          />
-        ) : (
-          <ResultsOverTimeChart data={filteredResults} />
-        )}
-      </Section>
+      <PlayerCountSection
+        title="Coach's player of the match"
+        emptyTitle="No awards yet"
+        emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
+        emptyFilterTitle="No awards for this filter"
+        data={potmByPlayer}
+        filtered={filteredPotm}
+        metricLabel="Awards"
+        ariaTitle="coach's player of the match"
+        emptyFilterDescription={emptyFilterDescription}
+      />
 
       <GoalsSection
         data={goalsByPlayer}
@@ -250,18 +262,6 @@ export function StatsPageContent({
         metricLabel="Assists"
         perGameLabel="Assists per game"
         ariaTitle="assists"
-        emptyFilterDescription={emptyFilterDescription}
-      />
-
-      <PlayerCountSection
-        title="Coach's player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
-        emptyFilterTitle="No awards for this filter"
-        data={potmByPlayer}
-        filtered={filteredPotm}
-        metricLabel="Awards"
-        ariaTitle="coach's player of the match"
         emptyFilterDescription={emptyFilterDescription}
       />
 
