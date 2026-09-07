@@ -100,7 +100,7 @@ export function MatchForm({
             disabled={pending}
           />
         </div>
-        <div className="grid min-w-0 gap-4 sm:col-span-2 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:col-span-2">
           <div className="min-w-0 space-y-2">
             <Label htmlFor="date">
               Date <span className="text-muted-foreground">(required)</span>
@@ -115,17 +115,31 @@ export function MatchForm({
               disabled={pending}
             />
           </div>
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="kickoff_time">
-              Kick-off <OptionalHint />
-            </Label>
-            <Input
-              id="kickoff_time"
-              name="kickoff_time"
-              type="time"
-              defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
-              disabled={pending}
-            />
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="kickoff_time">
+                Kick-off <OptionalHint />
+              </Label>
+              <Input
+                id="kickoff_time"
+                name="kickoff_time"
+                type="time"
+                defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="meetup_time">
+                Meet-up <OptionalHint />
+              </Label>
+              <Input
+                id="meetup_time"
+                name="meetup_time"
+                type="time"
+                defaultValue={match?.meetup_time?.slice(0, 5) ?? ""}
+                disabled={pending}
+              />
+            </div>
           </div>
         </div>
         <div className="space-y-2">

@@ -71,6 +71,7 @@ export async function createMatchAction(
   const opponent_name = str(formData, "opponent_name");
   const date = str(formData, "date");
   const kickoff_time = str(formData, "kickoff_time") || null;
+  const meetup_time = str(formData, "meetup_time") || null;
   const home_away = str(formData, "home_away") as MatchHomeAway;
   const status = (str(formData, "status") || "scheduled") as MatchStatus;
   const competitionRaw = str(formData, "competition_id");
@@ -106,6 +107,7 @@ export async function createMatchAction(
     opponent_name,
     date,
     kickoff_time,
+    meetup_time,
     home_away,
     venue_id: venueResult.venue_id,
     competition_id,
@@ -144,6 +146,7 @@ export async function updateMatchAction(
   const opponent_name = str(formData, "opponent_name");
   const date = str(formData, "date");
   const kickoff_time = str(formData, "kickoff_time") || null;
+  const meetup_time = str(formData, "meetup_time") || null;
   const home_away = str(formData, "home_away") as MatchHomeAway;
   const status = str(formData, "status") as MatchStatus;
   const competitionRaw = str(formData, "competition_id");
@@ -188,6 +191,7 @@ export async function updateMatchAction(
     opponent_name,
     date,
     kickoff_time,
+    meetup_time,
     home_away,
     venue_id: venueResult.venue_id,
     status,

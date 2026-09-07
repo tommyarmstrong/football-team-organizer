@@ -157,6 +157,27 @@ describe("createMatchAction", () => {
     );
     expect(revalidatePathMock).toHaveBeenCalledWith("/matches");
   });
+
+  it("passes optional meet-up time through to createMatch", async () => {
+    createMatchMock.mockResolvedValue({
+      data: plainMatchFixture({ id: "match-new" }),
+      error: null,
+    });
+
+    await expect(
+      createMatchAction(
+        {},
+        validCreateForm({ kickoff_time: "10:00", meetup_time: "09:30" }),
+      ),
+    ).rejects.toThrow("redirect:/matches/match-new");
+
+    expect(createMatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kickoff_time: "10:00",
+        meetup_time: "09:30",
+      }),
+    );
+  });
 });
 
 describe("updateMatchStatusAction", () => {
@@ -333,6 +354,49 @@ describe("updateMatchAction", () => {
       ),
     ).rejects.toThrow("redirect:/matches/match-1");
     expect(updateMatchMock).toHaveBeenCalled();
+  });
+
+  it("passes optional meet-up time through to updateMatch", async () => {
+    await expect(
+      updateMatchAction(
+        "match-1",
+        {},
+        validCreateForm({
+          status: "scheduled",
+          kickoff_time: "10:00",
+          meetup_time: "09:15",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/matches/match-1");
+
+    expect(updateMatchMock).toHaveBeenCalledWith(
+      "match-1",
+      expect.objectContaining({
+        kickoff_time: "10:00",
+        meetup_time: "09:15",
+      }),
+    );
+  });
+
+  it("clears meet-up time when the field is left blank", async () => {
+    await expect(
+      updateMatchAction(
+        "match-1",
+        {},
+        validCreateForm({
+          status: "scheduled",
+          kickoff_time: "10:00",
+          meetup_time: "",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/matches/match-1");
+
+    expect(updateMatchMock).toHaveBeenCalledWith(
+      "match-1",
+      expect.objectContaining({
+        meetup_time: null,
+      }),
+    );
   });
 });
 

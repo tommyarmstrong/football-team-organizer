@@ -5,10 +5,12 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { RosterPlayer } from "@/lib/data/players";
 import { playerDisplayName } from "@/lib/format";
 import { updateMatchPlayersOfTheMatchAction } from "@/lib/matches/actions";
+import { PlayerOfTheMatchChip } from "@/components/matches/match-goals-section";
 import { Button } from "@/components/ui/button";
 import { Label, OptionalHint } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+import { Section } from "@/components/shared/section";
 
 export function MatchPlayersOfTheMatchSection({
   matchId,
@@ -32,32 +34,22 @@ export function MatchPlayersOfTheMatchSection({
 
   if (!canEdit) {
     return (
-      <dl className="grid gap-4 text-sm sm:grid-cols-2">
-        <div className="space-y-1">
-          <dt className="text-muted-foreground">
-            Coach&apos;s player of the match
-          </dt>
-          <dd className="font-medium">
-            {coachMotm
-              ? playerDisplayName(coachMotm, {
-                  shirtNumber: coachMotm.shirt_number,
-                })
-              : "Not selected"}
-          </dd>
-        </div>
-        <div className="space-y-1">
-          <dt className="text-muted-foreground">
-            Player&apos;s player of the match
-          </dt>
-          <dd className="font-medium">
-            {playersMotm
-              ? playerDisplayName(playersMotm, {
-                  shirtNumber: playersMotm.shirt_number,
-                })
-              : "Not selected"}
-          </dd>
-        </div>
-      </dl>
+      <>
+        <Section title="Coach's Player of the Match">
+          {coachMotm ? (
+            <PlayerOfTheMatchChip name={playerDisplayName(coachMotm)} />
+          ) : (
+            <p className="text-muted-foreground text-sm">Not selected</p>
+          )}
+        </Section>
+        <Section title="Players' Player of the Match">
+          {playersMotm ? (
+            <PlayerOfTheMatchChip name={playerDisplayName(playersMotm)} />
+          ) : (
+            <p className="text-muted-foreground text-sm">Not selected</p>
+          )}
+        </Section>
+      </>
     );
   }
 
@@ -97,11 +89,11 @@ function PlayersOfTheMatchForm({
   }));
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form action={formAction} className="space-y-8">
+      <Section title="Coach's Player of the Match">
         <div className="space-y-2">
           <Label htmlFor="coach-potm-player">
-            Coach&apos;s player of the match <OptionalHint />
+            Player <OptionalHint />
           </Label>
           <SearchableSelect
             id="coach-potm-player"
@@ -113,32 +105,37 @@ function PlayersOfTheMatchForm({
             options={playerOptions}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="players-potm-player">
-            Player&apos;s player of the match <OptionalHint />
-          </Label>
-          <SearchableSelect
-            id="players-potm-player"
-            name="players_player_of_the_match_id"
-            disabled={pending}
-            placeholder="Add player…"
-            emptyMessage="No players match that name."
-            defaultValue={playersPlayerOfTheMatchId ?? undefined}
-            options={playerOptions}
-          />
+      </Section>
+
+      <Section title="Players' Player of the Match">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="players-potm-player">
+              Player <OptionalHint />
+            </Label>
+            <SearchableSelect
+              id="players-potm-player"
+              name="players_player_of_the_match_id"
+              disabled={pending}
+              placeholder="Add player…"
+              emptyMessage="No players match that name."
+              defaultValue={playersPlayerOfTheMatchId ?? undefined}
+              options={playerOptions}
+            />
+          </div>
+
+          <Button type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save"}
+          </Button>
+
+          {state.error ? <ErrorBanner message={state.error} /> : null}
+          {state.success ? (
+            <p className="text-muted-foreground text-sm" role="status">
+              {state.success}
+            </p>
+          ) : null}
         </div>
-      </div>
-
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save"}
-      </Button>
-
-      {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
+      </Section>
     </form>
   );
 }
