@@ -4,10 +4,8 @@ import { useActionState, useState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { ExtraTimeOrPenaltyPeriodName } from "@/lib/constants";
 import { createPeriodAction } from "@/lib/match-periods/actions";
-import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
 import { PeriodStartersFields } from "@/components/matches/match-period-edit-section";
-import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -17,13 +15,11 @@ import { FormActions } from "@/components/shared/form-actions";
 export function MatchPeriodCreateSection({
   matchId,
   availablePeriodNames,
-  goals,
   squadPlayers,
   defaultStarterPlayerIds,
 }: {
   matchId: string;
   availablePeriodNames: ExtraTimeOrPenaltyPeriodName[];
-  goals: GoalWithPlayers[];
   squadPlayers: RosterPlayer[];
   defaultStarterPlayerIds: string[];
 }) {
@@ -74,11 +70,6 @@ export function MatchPeriodCreateSection({
           inputName="player_id"
         />
       )}
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Goals</h3>
-        <MatchGoalsSection matchId={matchId} goals={goals} canEdit={false} />
-      </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 

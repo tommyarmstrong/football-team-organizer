@@ -6,9 +6,10 @@ import { labelCompetitionKind } from "@/lib/format";
 import {
   ALL_COMPETITION_KINDS,
   ALL_COMPETITIONS,
+  ALL_COMPETITIVE,
+  ALL_LEAGUE_AND_CUP,
   COMPETITION_KIND_FILTER_OPTIONS,
   FRIENDLY_KIND,
-  FRIENDLY_MATCHES,
   NO_COMPETITION,
   type CompetitionFilterOption,
 } from "@/lib/stats/competition-filters";
@@ -30,20 +31,6 @@ export function StatsCompetitionFilters({
   onCompetitionKindChange: (value: string) => void;
   idPrefix: string;
 }) {
-  const friendlySelected = competitionId === FRIENDLY_MATCHES;
-  const kindValue = friendlySelected ? FRIENDLY_KIND : competitionKind;
-
-  function handleCompetitionIdChange(value: string) {
-    onCompetitionIdChange(value);
-    if (value === FRIENDLY_MATCHES) {
-      onCompetitionKindChange(FRIENDLY_KIND);
-      return;
-    }
-    if (competitionKind === FRIENDLY_KIND) {
-      onCompetitionKindChange(ALL_COMPETITION_KINDS);
-    }
-  }
-
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-2">
@@ -51,11 +38,10 @@ export function StatsCompetitionFilters({
         <NativeSelect
           id={`${idPrefix}-competition`}
           value={competitionId}
-          onChange={(event) => handleCompetitionIdChange(event.target.value)}
+          onChange={(event) => onCompetitionIdChange(event.target.value)}
         >
-          <option value={ALL_COMPETITIONS}>All competitions</option>
-          <option value={FRIENDLY_MATCHES}>Friendly</option>
-          <option value={NO_COMPETITION}>No competition</option>
+          <option value={ALL_COMPETITIONS}>All matches</option>
+          <option value={NO_COMPETITION}>Unknown competitions</option>
           {competitions.map((competition) => (
             <option key={competition.id} value={competition.id}>
               {competition.name}
@@ -67,23 +53,18 @@ export function StatsCompetitionFilters({
         <Label htmlFor={`${idPrefix}-competition-kind`}>Competition type</Label>
         <NativeSelect
           id={`${idPrefix}-competition-kind`}
-          value={kindValue}
+          value={competitionKind}
           onChange={(event) => onCompetitionKindChange(event.target.value)}
-          disabled={friendlySelected}
-          aria-disabled={friendlySelected}
         >
-          {friendlySelected ? (
-            <option value={FRIENDLY_KIND}>Friendly</option>
-          ) : (
-            <>
-              <option value={ALL_COMPETITION_KINDS}>All types</option>
-              {COMPETITION_KIND_FILTER_OPTIONS.map((kind) => (
-                <option key={kind} value={kind}>
-                  {labelCompetitionKind(kind)}
-                </option>
-              ))}
-            </>
-          )}
+          <option value={ALL_COMPETITION_KINDS}>All matches</option>
+          <option value={FRIENDLY_KIND}>Friendlies</option>
+          <option value={ALL_LEAGUE_AND_CUP}>All League and Cup</option>
+          <option value={ALL_COMPETITIVE}>All Competitive</option>
+          {COMPETITION_KIND_FILTER_OPTIONS.map((kind) => (
+            <option key={kind} value={kind}>
+              {labelCompetitionKind(kind)}
+            </option>
+          ))}
         </NativeSelect>
       </div>
     </div>

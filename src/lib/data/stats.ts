@@ -600,7 +600,7 @@ export async function getResultsOverTime(): Promise<{
   const { data, error } = await supabase
     .from("matches")
     .select(
-      "id, date, opponent_name, status, competition_id, is_friendly, competition:competitions(id, name, kind), goals(is_opposition)",
+      "id, date, opponent_name, status, competition_id, is_friendly, competition:competitions(id, name, display_name, kind), goals(is_opposition)",
     )
     .eq("team_id", team.id)
     .eq("status", "played")

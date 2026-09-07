@@ -13,6 +13,7 @@ import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
   formatMatchTitle,
+  matchCompetitionLabel,
   scoreFromGoals,
   teamDisplayName,
 } from "@/lib/format";
@@ -132,9 +133,7 @@ export default async function MatchDetailPage({
             meetupTime={match.meetup_time}
             venueName={match.venue?.name ?? null}
             venueId={match.venue?.id ?? null}
-            competitionName={
-              match.is_friendly ? "Friendly" : (match.competition?.name ?? null)
-            }
+            competitionName={matchCompetitionLabel(match)}
             status={match.status}
             matchDaySquadCount={matchSquadIds.size}
             cards={cards}

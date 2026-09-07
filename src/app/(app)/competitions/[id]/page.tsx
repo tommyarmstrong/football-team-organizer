@@ -67,6 +67,10 @@ export default async function CompetitionDetailPage({
             <CompetitionResultChip result={competition.result} />
             <dl className="grid gap-2 sm:grid-cols-2">
               <Detail
+                label="Display name"
+                value={competition.display_name?.trim() || "—"}
+              />
+              <Detail
                 label="Organizer"
                 value={competition.organizer?.trim() || "—"}
               />

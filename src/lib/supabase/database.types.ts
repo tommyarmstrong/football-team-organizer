@@ -707,6 +707,7 @@ export type Database = {
         Row: {
           age_group: string | null;
           created_at: string;
+          display_name: string | null;
           gender: Database["public"]["Enums"]["competition_gender"] | null;
           id: string;
           kind: Database["public"]["Enums"]["competition_kind"] | null;
@@ -726,6 +727,7 @@ export type Database = {
         Insert: {
           age_group?: string | null;
           created_at?: string;
+          display_name?: string | null;
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
@@ -745,6 +747,7 @@ export type Database = {
         Update: {
           age_group?: string | null;
           created_at?: string;
+          display_name?: string | null;
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;

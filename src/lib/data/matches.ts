@@ -16,7 +16,10 @@ import type {
 export type { Match };
 
 export type MatchWithRelations = Match & {
-  competition: Pick<Competition, "id" | "name" | "kind"> | null;
+  competition: Pick<
+    Competition,
+    "id" | "name" | "display_name" | "kind"
+  > | null;
   venue: Pick<Venue, "id" | "name"> | null;
   /** Derived from goal rows (not stored on matches). */
   goals_for: number;
@@ -25,7 +28,7 @@ export type MatchWithRelations = Match & {
 };
 
 const MATCH_SELECT =
-  "*, competition:competitions(id, name, kind), venue:venues(id, name), goals(is_opposition)";
+  "*, competition:competitions(id, name, display_name, kind), venue:venues(id, name), goals(is_opposition)";
 
 export async function listMatches(
   filter: MatchListFilter = "all",

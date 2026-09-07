@@ -509,6 +509,7 @@ function parseCompetitionUpdate(
 
   return {
     name,
+    display_name: str(formData, "display_name") || null,
     kind,
     season,
     knockout,

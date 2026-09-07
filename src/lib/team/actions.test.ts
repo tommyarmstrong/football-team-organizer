@@ -491,6 +491,29 @@ describe("competition actions", () => {
     );
   });
 
+  it("persists competition display_name", async () => {
+    await updateCompetitionAction(
+      "comp-1",
+      {},
+      formDataFrom({
+        name: "Cup",
+        display_name: "County Cup",
+        kind: "cup",
+        season: "2025/26",
+        periods: "2",
+        result: "ongoing",
+        venue: "unknown",
+      }),
+    );
+    expect(updateCompetitionMock).toHaveBeenCalledWith(
+      "comp-1",
+      expect.objectContaining({
+        name: "Cup",
+        display_name: "County Cup",
+      }),
+    );
+  });
+
   it("saves and creates competitions with redirect helpers", async () => {
     await expect(
       saveCompetitionAndReturnAction(

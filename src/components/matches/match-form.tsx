@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import { createMatchAction, updateMatchAction } from "@/lib/matches/actions";
 import {
+  competitionDisplayName,
   labelHomeAway,
   labelMatchStatus,
   playerDisplayName,
@@ -191,7 +192,7 @@ export function MatchForm({
             <option value={FRIENDLY_COMPETITION_VALUE}>Friendly</option>
             {competitions.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {competitionDisplayName(c)}
               </option>
             ))}
           </NativeSelect>
