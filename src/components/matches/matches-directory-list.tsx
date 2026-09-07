@@ -44,7 +44,9 @@ export function MatchesDirectoryList({
             : match.competition?.name,
           date: match.date,
           kickoffTime: match.kickoff_time,
+          meetupTime: match.meetup_time,
           venueName: match.venue?.name,
+          status: match.status,
         });
 
         return (
@@ -74,6 +76,11 @@ export function MatchesDirectoryList({
             <p className="text-muted-foreground text-center text-sm">
               {meta.dateTime}
             </p>
+            {meta.times ? (
+              <p className="text-muted-foreground text-center text-sm">
+                {meta.times}
+              </p>
+            ) : null}
             {meta.venue ? (
               <p className="text-muted-foreground text-center text-sm">
                 {meta.venue}

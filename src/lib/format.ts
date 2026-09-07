@@ -97,6 +97,22 @@ export function formatMatchDateTime(
     .join(" · ");
 }
 
+/**
+ * Scheduled fixture times on one line beneath the date,
+ * e.g. "Meet up: 09:30 . Kick off: 10:00".
+ */
+export function formatScheduledMatchTimes(
+  meetupTime: string | null,
+  kickoffTime: string | null,
+): string | null {
+  const parts: string[] = [];
+  const meetup = formatKickoffTime(meetupTime);
+  const kickoff = formatKickoffTime(kickoffTime);
+  if (meetup) parts.push(`Meet up: ${meetup}`);
+  if (kickoff) parts.push(`Kick off: ${kickoff}`);
+  return parts.length > 0 ? parts.join(" . ") : null;
+}
+
 /** Competition line for a fixture: friendlies show as "Friendly". */
 export function matchCompetitionLabel(match: {
   is_friendly?: boolean;
@@ -108,24 +124,37 @@ export function matchCompetitionLabel(match: {
 
 /**
  * Shared match summary lines used on the matches list, match page, and
- * dashboard: competition, then date and time, then venue — each optional
- * except date/time.
+ * dashboard: competition, then date, then optional scheduled times, then
+ * venue — each optional except date.
+ *
+ * For scheduled matches, date is shown alone and times appear on the next
+ * line as "Meet up: HH:MM . Kick off: HH:MM" (parts omitted when unset).
+ * Other statuses keep date and kick-off on one line and omit the times row.
  */
 export function matchSummaryLines(match: {
   competitionName?: string | null;
   date: string;
   kickoffTime: string | null;
+  meetupTime?: string | null;
   venueName?: string | null;
+  status?: MatchStatus;
 }): {
   competition: string | null;
   dateTime: string;
+  times: string | null;
   venue: string | null;
 } {
   const competition = match.competitionName?.trim() || null;
   const venue = match.venueName?.trim() || null;
+  const scheduled = match.status === "scheduled";
   return {
     competition,
-    dateTime: formatMatchDateTime(match.date, match.kickoffTime),
+    dateTime: scheduled
+      ? formatMatchDate(match.date)
+      : formatMatchDateTime(match.date, match.kickoffTime),
+    times: scheduled
+      ? formatScheduledMatchTimes(match.meetupTime ?? null, match.kickoffTime)
+      : null,
     venue,
   };
 }

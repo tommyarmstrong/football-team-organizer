@@ -831,6 +831,7 @@ export type Database = {
           id: string;
           is_friendly: boolean;
           kickoff_time: string | null;
+          meetup_time: string | null;
           notes: string | null;
           club_notes: string | null;
           opponent_name: string;
@@ -849,6 +850,7 @@ export type Database = {
           id?: string;
           is_friendly?: boolean;
           kickoff_time?: string | null;
+          meetup_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
           opponent_name: string;
@@ -867,6 +869,7 @@ export type Database = {
           id?: string;
           is_friendly?: boolean;
           kickoff_time?: string | null;
+          meetup_time?: string | null;
           notes?: string | null;
           club_notes?: string | null;
           opponent_name?: string;

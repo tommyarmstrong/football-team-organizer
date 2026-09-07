@@ -29,7 +29,6 @@ import {
   LiveIndicator,
   MatchHeaderMeta,
 } from "@/components/matches/match-header-meta";
-import { MatchPeriodsSection } from "@/components/matches/match-periods-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
@@ -130,6 +129,7 @@ export default async function MatchDetailPage({
           <MatchHeaderMeta
             date={match.date}
             kickoffTime={match.kickoff_time}
+            meetupTime={match.meetup_time}
             venueName={match.venue?.name ?? null}
             venueId={match.venue?.id ?? null}
             competitionName={
@@ -164,26 +164,16 @@ export default async function MatchDetailPage({
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {allowsEvents ? (
-        <>
-          <Section title="Goals">
-            {goalsError ? <ErrorBanner message={goalsError} /> : null}
-            <MatchGoalsSection
-              matchId={match.id}
-              goals={goals}
-              canEdit={canEdit}
-            />
-          </Section>
-
-          <Section title="Periods">
-            {periodsError ? <ErrorBanner message={periodsError} /> : null}
-            <MatchPeriodsSection
-              matchId={match.id}
-              periods={periods}
-              goals={goals}
-              canEdit={canEdit}
-            />
-          </Section>
-        </>
+        <Section title="Goals">
+          {goalsError ? <ErrorBanner message={goalsError} /> : null}
+          <MatchGoalsSection
+            matchId={match.id}
+            goals={goals}
+            periods={periods}
+            canEdit={canEdit}
+            showAddPeriod={canEdit}
+          />
+        </Section>
       ) : null}
 
       {!isCancelledOrPostponed ? (
@@ -199,15 +189,13 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <>
-          <Section title="Players of the match">
-            <MatchPlayersOfTheMatchSection
-              matchId={match.id}
-              players={eventPlayers}
-              coachPlayerOfTheMatchId={match.player_of_the_match_id}
-              playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
-              canEdit={canEditPlayerOfTheMatch}
-            />
-          </Section>
+          <MatchPlayersOfTheMatchSection
+            matchId={match.id}
+            players={eventPlayers}
+            coachPlayerOfTheMatchId={match.player_of_the_match_id}
+            playersPlayerOfTheMatchId={match.players_player_of_the_match_id}
+            canEdit={canEditPlayerOfTheMatch}
+          />
 
           <Section title="Cards">
             {cardsError ? <ErrorBanner message={cardsError} /> : null}

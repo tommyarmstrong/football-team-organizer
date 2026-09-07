@@ -11,6 +11,7 @@ import {
   formatMatchDateTime,
   formatMatchTitle,
   formatMatchVersusTitle,
+  formatScheduledMatchTimes,
   formatScore,
   formatShortDate,
   formatTeamHeaderSummary,
@@ -135,6 +136,20 @@ describe("formatMatchDateTime", () => {
   });
 });
 
+describe("formatScheduledMatchTimes", () => {
+  it("formats meet-up and kick-off on one line", () => {
+    expect(formatScheduledMatchTimes("09:30:00", "10:00:00")).toBe(
+      "Meet up: 09:30 . Kick off: 10:00",
+    );
+  });
+
+  it("omits missing parts", () => {
+    expect(formatScheduledMatchTimes(null, "10:00")).toBe("Kick off: 10:00");
+    expect(formatScheduledMatchTimes("09:30", null)).toBe("Meet up: 09:30");
+    expect(formatScheduledMatchTimes(null, null)).toBeNull();
+  });
+});
+
 describe("matchSummaryLines", () => {
   it("returns competition, date/time, and venue as separate lines", () => {
     expect(
@@ -147,6 +162,59 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      times: null,
+      venue: "Wembley",
+    });
+  });
+
+  it("puts meet-up and kick-off on a row beneath the date for scheduled matches", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "scheduled",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDate("2026-03-15"),
+      times: "Meet up: 09:30 . Kick off: 10:00",
+      venue: "Wembley",
+    });
+  });
+
+  it("shows kick-off alone when meet-up is unset on scheduled matches", () => {
+    expect(
+      matchSummaryLines({
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: null,
+        status: "scheduled",
+      }),
+    ).toEqual({
+      competition: null,
+      dateTime: formatMatchDate("2026-03-15"),
+      times: "Kick off: 10:00",
+      venue: null,
+    });
+  });
+
+  it("omits the times row for non-scheduled matches", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "played",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      times: null,
       venue: "Wembley",
     });
   });
@@ -162,6 +230,7 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
+      times: null,
       venue: null,
     });
   });

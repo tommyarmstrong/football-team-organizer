@@ -304,4 +304,338 @@ describe("people data writes", () => {
     const result = await getPersonByAuthUserId("auth-1");
     expect(result.data?.auth_user_id).toBe("auth-1");
   });
+
+  it("maps list and get errors, including missing people", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("list fail") }),
+    );
+    expect(await listPeople()).toEqual({ data: [], error: "list fail" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("get fail") }),
+    );
+    expect(await getPerson("person-1")).toEqual({
+      data: null,
+      error: "get fail",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: okResult(null) }),
+    );
+    expect(await getPerson("person-1")).toEqual({ data: null, error: null });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("auth lookup") }),
+    );
+    expect(await getPersonByAuthUserId("auth-1")).toEqual({
+      data: null,
+      error: "auth lookup",
+    });
+  });
+
+  it("maps generic create/update errors and clears email", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("insert failed") }),
+    );
+    expect(
+      await createPerson({
+        first_name: "Ada",
+        last_name: "Lovelace",
+        account_status: "none",
+      }),
+    ).toEqual({ data: null, error: "insert failed" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("update failed") }),
+    );
+    expect(await updatePerson("person-1", { email: null })).toEqual({
+      data: null,
+      error: "update failed",
+    });
+  });
+
+  it("maps directory emergency contacts and linked player teams", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult([
+          {
+            ...personFixture(),
+            managers: [{ id: "m1", active_role: true }],
+            coaches: [],
+            guardians: [
+              {
+                id: "g1",
+                active_role: true,
+                player_guardians: [{ player_id: "player-2" }],
+              },
+            ],
+            players: [
+              {
+                id: "player-1",
+                active_role: true,
+                team_players: [{ team_id: "team-1" }],
+                player_guardians: [
+                  { emergency_contact: false, guardian: null },
+                  {
+                    emergency_contact: true,
+                    guardian: {
+                      person: [
+                        {
+                          first_name: "Pat",
+                          last_name: "Parent",
+                          phone: "111",
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+              {
+                id: "player-2",
+                active_role: true,
+                team_players: [{ team_id: "team-2" }],
+                player_guardians: [],
+              },
+            ],
+          },
+        ]),
+      }),
+    );
+    const listed = await listPeople();
+    expect(listed.data[0]?.emergency_contact).toEqual({
+      first_name: "Pat",
+      last_name: "Parent",
+      phone: "111",
+    });
+    expect(listed.data[0]?.linkedPlayerTeamIds).toEqual(["team-2"]);
+    expect(listed.data[0]?.roles.manager).toBe(true);
+  });
+
+  it("maps deletePerson load, deactivate, invite, disable, and auth errors", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("load fail") }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: "load fail" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(null),
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({
+      error: "Person not found.",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ id: "person-1" })),
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: [
+          okResult([{ id: "g1", club_id: "club-1", active_role: true }]),
+          errResult("guardian write"),
+        ],
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({
+      error: "guardian write",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ id: "person-1" })),
+        managers: [
+          okResult([{ id: "m1", club_id: "club-1", active_role: true }]),
+          errResult("manager write"),
+        ],
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: "manager write" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ id: "person-1" })),
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: [
+          okResult([
+            {
+              id: "p1",
+              club_id: "club-1",
+              active_role: true,
+              position: null,
+              school: null,
+              date_of_birth: null,
+            },
+          ]),
+          errResult("player write"),
+        ],
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: "player write" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(personFixture({ id: "person-1" })),
+        managers: okResult([]),
+        coaches: [
+          okResult([{ id: "c1", club_id: "club-1", active_role: true }]),
+          errResult("coach write"),
+        ],
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: "coach write" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1" })),
+          errResult("disable fail"),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: [okResult([]), errResult("invite fail")],
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: "invite fail" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1" })),
+          errResult("disable fail"),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: [okResult([]), okResult(null)],
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({
+      error: "disable fail",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(personFixture({ id: "person-1", auth_user_id: "auth-1" })),
+          okResult(null),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    deleteAuthUserMock.mockResolvedValue({ error: "auth fail" });
+    expect(await deletePerson("person-1")).toEqual({ error: "auth fail" });
+  });
+
+  it("skips inactive roles on delete and maps reactivate edges", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [okResult(personFixture({ id: "person-1" })), okResult(null)],
+        managers: okResult([
+          { id: "m1", club_id: "club-1", active_role: false },
+        ]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: [okResult([]), okResult(null)],
+      }),
+    );
+    expect(await deletePerson("person-1")).toEqual({ error: null });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ people: errResult("load") }),
+    );
+    expect(await reactivatePerson("person-1")).toEqual({ error: "load" });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(null),
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await reactivatePerson("person-1")).toEqual({
+      error: "Person not found.",
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: [
+          okResult(
+            personFixture({
+              account_status: "disabled",
+              auth_user_id: "auth-1",
+            }),
+          ),
+          errResult("reactivate fail"),
+        ],
+        managers: okResult([]),
+        coaches: okResult([]),
+        guardians: okResult([]),
+        players: okResult([]),
+        person_invitations: okResult([]),
+      }),
+    );
+    expect(await reactivatePerson("person-1")).toEqual({
+      error: "reactivate fail",
+    });
+  });
+
+  it("links manager, guardian, and player roles", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        managers: okResult(null),
+        guardians: okResult(null),
+        players: okResult(null),
+      }),
+    );
+    expect(
+      await linkRoleToPerson({
+        personId: "person-1",
+        role: "manager",
+        roleId: "mgr-1",
+      }),
+    ).toEqual({ error: null });
+    expect(
+      await linkRoleToPerson({
+        personId: "person-1",
+        role: "guardian",
+        roleId: "g-1",
+      }),
+    ).toEqual({ error: null });
+    expect(
+      await linkRoleToPerson({
+        personId: "person-1",
+        role: "player",
+        roleId: "p-1",
+      }),
+    ).toEqual({ error: null });
+  });
 });

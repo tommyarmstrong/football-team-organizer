@@ -186,9 +186,7 @@ export default async function DashboardPage() {
         rows={scorers.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
-          name: playerDisplayName(row.player, {
-            shirtNumber: row.player.shirt_number,
-          }),
+          name: playerDisplayName(row.player),
           valueLabel: formatCountLabel(row.goals, "goal", "goals"),
         }))}
       />
@@ -201,9 +199,7 @@ export default async function DashboardPage() {
         rows={assists.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
-          name: playerDisplayName(row.player, {
-            shirtNumber: row.player.shirt_number,
-          }),
+          name: playerDisplayName(row.player),
           valueLabel: formatCountLabel(row.count, "assist", "assists"),
         }))}
       />
@@ -257,7 +253,9 @@ function FixtureSection({
     competitionName: matchCompetitionLabel(match),
     date: match.date,
     kickoffTime: match.kickoff_time,
+    meetupTime: match.meetup_time,
     venueName: match.venue?.name,
+    status: match.status,
   });
 
   return (
@@ -282,6 +280,11 @@ function FixtureSection({
         <p className="text-muted-foreground text-center text-sm">
           {meta.dateTime}
         </p>
+        {meta.times ? (
+          <p className="text-muted-foreground text-center text-sm">
+            {meta.times}
+          </p>
+        ) : null}
         {meta.venue ? (
           <p className="text-muted-foreground text-center text-sm">
             {meta.venue}
