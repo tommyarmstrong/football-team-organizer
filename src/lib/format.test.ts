@@ -190,6 +190,24 @@ describe("matchSummaryLines", () => {
     });
   });
 
+  it("keeps kick-off suffix without meet-up when meet-up is unset", () => {
+    expect(
+      matchSummaryLines({
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: null,
+        status: "scheduled",
+      }),
+    ).toEqual({
+      competition: null,
+      dateTime: formatMatchDateTime("2026-03-15", "10:00", {
+        kickoffSuffix: true,
+      }),
+      meetup: null,
+      venue: null,
+    });
+  });
+
   it("omits meet-up and kick-off suffix for non-scheduled matches", () => {
     expect(
       matchSummaryLines({

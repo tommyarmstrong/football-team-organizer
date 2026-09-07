@@ -52,8 +52,8 @@ describe("normalizeMatchRow", () => {
       team_id: "t1",
       opponent_name: "Rivals",
       date: "2025-09-01",
-      kickoff_time: null,
-      meetup_time: null,
+      kickoff_time: "10:00:00",
+      meetup_time: "09:30:00",
       home_away: "home",
       venue_id: "v1",
       competition_id: "c1",
@@ -76,6 +76,8 @@ describe("normalizeMatchRow", () => {
 
     expect(normalized.goals_for).toBe(2);
     expect(normalized.goals_against).toBe(1);
+    expect(normalized.kickoff_time).toBe("10:00:00");
+    expect(normalized.meetup_time).toBe("09:30:00");
     expect(normalized.competition).toEqual({
       id: "c1",
       name: "League",

@@ -77,4 +77,18 @@ describe("groupGoalsByPeriod", () => {
       { key: "label:—", label: "—", goals },
     ]);
   });
+
+  it("groups by period label when period_id is missing", () => {
+    const goals = [
+      goalFixture({ id: "g1", period: "Extra Time" }),
+      goalFixture({ id: "g2", period: "Extra Time" }),
+      goalFixture({ id: "g3", period: "Penalties" }),
+    ];
+
+    expect(groupGoalsByPeriod(goals).map((group) => group.key)).toEqual([
+      "label:Extra Time",
+      "label:Penalties",
+    ]);
+    expect(groupGoalsByPeriod(goals)[0]?.goals).toHaveLength(2);
+  });
 });
