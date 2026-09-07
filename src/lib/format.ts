@@ -98,8 +98,9 @@ export function formatMatchDateTime(
 }
 
 /**
- * Scheduled fixture times on one line beneath the date,
- * e.g. "Meet up: 09:30 . Kick off: 10:00".
+ * Fixture times on one line beneath the date,
+ * e.g. "Meet up: 09:30 · Kick off: 10:00".
+ * Meet-up is only included when provided (scheduled fixtures).
  */
 export function formatScheduledMatchTimes(
   meetupTime: string | null,
@@ -110,26 +111,36 @@ export function formatScheduledMatchTimes(
   const kickoff = formatKickoffTime(kickoffTime);
   if (meetup) parts.push(`Meet up: ${meetup}`);
   if (kickoff) parts.push(`Kick off: ${kickoff}`);
-  return parts.length > 0 ? parts.join(" . ") : null;
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** Prefer competition display_name when set; otherwise the official name. */
+export function competitionDisplayName(competition: {
+  name: string;
+  display_name?: string | null;
+}): string {
+  const display = competition.display_name?.trim();
+  return display || competition.name;
 }
 
 /** Competition line for a fixture: friendlies show as "Friendly". */
 export function matchCompetitionLabel(match: {
   is_friendly?: boolean;
-  competition?: { name: string } | null;
+  competition?: { name: string; display_name?: string | null } | null;
 }): string | null {
   if (match.is_friendly) return "Friendly";
-  return match.competition?.name?.trim() || null;
+  if (!match.competition) return null;
+  return competitionDisplayName(match.competition) || null;
 }
 
 /**
  * Shared match summary lines used on the matches list, match page, and
- * dashboard: competition, then date, then optional scheduled times, then
- * venue — each optional except date.
+ * dashboard: competition, then date, then optional times, then venue —
+ * each optional except date.
  *
- * For scheduled matches, date is shown alone and times appear on the next
- * line as "Meet up: HH:MM . Kick off: HH:MM" (parts omitted when unset).
- * Other statuses keep date and kick-off on one line and omit the times row.
+ * Kick-off (and meet-up for scheduled only) appear on a row under the date
+ * for scheduled and in-progress matches. Completed, cancelled, and postponed
+ * fixtures show the date alone with no times row.
  */
 export function matchSummaryLines(match: {
   competitionName?: string | null;
@@ -147,13 +158,16 @@ export function matchSummaryLines(match: {
   const competition = match.competitionName?.trim() || null;
   const venue = match.venueName?.trim() || null;
   const scheduled = match.status === "scheduled";
+  const inProgress = match.status === "in_progress";
+  const showKickoff = scheduled || inProgress;
   return {
     competition,
-    dateTime: scheduled
-      ? formatMatchDate(match.date)
-      : formatMatchDateTime(match.date, match.kickoffTime),
-    times: scheduled
-      ? formatScheduledMatchTimes(match.meetupTime ?? null, match.kickoffTime)
+    dateTime: formatMatchDate(match.date),
+    times: showKickoff
+      ? formatScheduledMatchTimes(
+          scheduled ? (match.meetupTime ?? null) : null,
+          match.kickoffTime,
+        )
       : null,
     venue,
   };

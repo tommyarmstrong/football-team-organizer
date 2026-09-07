@@ -111,6 +111,17 @@ export function CompetitionForm({
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="display_name">
+                Display Name <OptionalHint />
+              </Label>
+              <Input
+                id="display_name"
+                name="display_name"
+                defaultValue={competition?.display_name ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="organizer">
                 Organizer <OptionalHint />
               </Label>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TrophyIcon } from "lucide-react";
+import { competitionDisplayName } from "@/lib/format";
 import type { Competition } from "@/lib/supabase/database.types";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
@@ -41,7 +42,7 @@ export function CompetitionsSection({
                   <TrophyIcon className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium">
-                  {competition.name}
+                  {competitionDisplayName(competition)}
                 </span>
                 <CompetitionResultChip result={competition.result} />
               </Link>
