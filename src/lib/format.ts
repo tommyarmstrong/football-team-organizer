@@ -91,17 +91,26 @@ export function formatKickoffTime(time: string | null): string | null {
 export function formatMatchDateTime(
   date: string,
   kickoffTime: string | null,
-  options?: { kickoffSuffix?: boolean },
 ): string {
-  const time = formatKickoffTime(kickoffTime);
-  const timePart = time && options?.kickoffSuffix ? `${time} kick off` : time;
-  return [formatMatchDate(date), timePart].filter(Boolean).join(" · ");
+  return [formatMatchDate(date), formatKickoffTime(kickoffTime)]
+    .filter(Boolean)
+    .join(" · ");
 }
 
-/** Meet-up line for scheduled fixtures, e.g. "Meet-up: 09:30". */
-export function formatMeetupLine(meetupTime: string | null): string | null {
-  const time = formatKickoffTime(meetupTime);
-  return time ? `Meet-up: ${time}` : null;
+/**
+ * Scheduled fixture times on one line beneath the date,
+ * e.g. "Meet up: 09:30 . Kick off: 10:00".
+ */
+export function formatScheduledMatchTimes(
+  meetupTime: string | null,
+  kickoffTime: string | null,
+): string | null {
+  const parts: string[] = [];
+  const meetup = formatKickoffTime(meetupTime);
+  const kickoff = formatKickoffTime(kickoffTime);
+  if (meetup) parts.push(`Meet up: ${meetup}`);
+  if (kickoff) parts.push(`Kick off: ${kickoff}`);
+  return parts.length > 0 ? parts.join(" . ") : null;
 }
 
 /** Competition line for a fixture: friendlies show as "Friendly". */
@@ -115,11 +124,12 @@ export function matchCompetitionLabel(match: {
 
 /**
  * Shared match summary lines used on the matches list, match page, and
- * dashboard: competition, then date and time, then optional meet-up, then
- * venue — each optional except date/time.
+ * dashboard: competition, then date, then optional scheduled times, then
+ * venue — each optional except date.
  *
- * For scheduled matches, kick-off is shown as "HH:MM kick off" and meet-up
- * is included when set. Other statuses omit the kick-off suffix and meet-up.
+ * For scheduled matches, date is shown alone and times appear on the next
+ * line as "Meet up: HH:MM . Kick off: HH:MM" (parts omitted when unset).
+ * Other statuses keep date and kick-off on one line and omit the times row.
  */
 export function matchSummaryLines(match: {
   competitionName?: string | null;
@@ -131,7 +141,7 @@ export function matchSummaryLines(match: {
 }): {
   competition: string | null;
   dateTime: string;
-  meetup: string | null;
+  times: string | null;
   venue: string | null;
 } {
   const competition = match.competitionName?.trim() || null;
@@ -139,10 +149,12 @@ export function matchSummaryLines(match: {
   const scheduled = match.status === "scheduled";
   return {
     competition,
-    dateTime: formatMatchDateTime(match.date, match.kickoffTime, {
-      kickoffSuffix: scheduled,
-    }),
-    meetup: scheduled ? formatMeetupLine(match.meetupTime ?? null) : null,
+    dateTime: scheduled
+      ? formatMatchDate(match.date)
+      : formatMatchDateTime(match.date, match.kickoffTime),
+    times: scheduled
+      ? formatScheduledMatchTimes(match.meetupTime ?? null, match.kickoffTime)
+      : null,
     venue,
   };
 }

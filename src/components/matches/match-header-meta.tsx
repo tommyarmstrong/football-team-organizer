@@ -87,7 +87,7 @@ export function MatchHeaderMeta({
           <p className="font-bold">{meta.competition}</p>
         ) : null}
         <p>{meta.dateTime}</p>
-        {meta.meetup ? <p>{meta.meetup}</p> : null}
+        {meta.times ? <p>{meta.times}</p> : null}
         {meta.venue ? (
           <p>
             {venueId ? (
