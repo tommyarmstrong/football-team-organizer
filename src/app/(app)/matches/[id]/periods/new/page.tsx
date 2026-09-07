@@ -4,7 +4,6 @@ import {
   availableExtraTimeOrPenaltyPeriodNames,
   matchAllowsEvents,
 } from "@/lib/constants";
-import { listGoalsForMatch } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
 import { listPeriodsForMatch } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
@@ -51,12 +50,10 @@ export default async function NewMatchPeriodPage({
   }
 
   const [
-    { data: goals, error: goalsError },
     { data: players, error: playersError },
     { data: matchPlayerRows, error: matchPlayersError },
     { data: periods, error: periodsError },
   ] = await Promise.all([
-    listGoalsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
     listPeriodsForMatch(match.id),
@@ -74,7 +71,7 @@ export default async function NewMatchPeriodPage({
     periods.map((period) => period.name),
   );
 
-  const loadErrors = [goalsError, playersError, matchPlayersError, periodsError]
+  const loadErrors = [playersError, matchPlayersError, periodsError]
     .filter(Boolean)
     .join(" ");
 
@@ -92,14 +89,12 @@ export default async function NewMatchPeriodPage({
           <CardTitle>Period details</CardTitle>
           <CardDescription>
             Choose extra time or a penalty shootout and set starting players.
-            Goals already recorded on the match are listed below.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <MatchPeriodCreateSection
             matchId={match.id}
             availablePeriodNames={availablePeriodNames}
-            goals={goals}
             squadPlayers={eventPlayers}
             defaultStarterPlayerIds={defaultStarterPlayerIds}
           />

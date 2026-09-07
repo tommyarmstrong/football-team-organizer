@@ -16,12 +16,37 @@ export type CompetitionFilterOption = {
 export const ALL_COMPETITIONS = "all";
 export const ALL_COMPETITION_KINDS = "all";
 export const NO_COMPETITION = "none";
-/** Stats competitions filter value for friendly fixtures. */
+/** @deprecated Friendly fixtures are filtered via competition type. */
 export const FRIENDLY_MATCHES = "friendly";
-/** Locked competition-type display when filtering friendlies. */
+/** Competition-type filter for friendly fixtures. */
 export const FRIENDLY_KIND = "friendly";
+/** League and cup competitions (excludes tournaments, other, friendlies). */
+export const ALL_LEAGUE_AND_CUP = "league_and_cup";
+/** League, cup, and tournament competitions (excludes other and friendlies). */
+export const ALL_COMPETITIVE = "competitive";
 
 export const COMPETITION_KIND_FILTER_OPTIONS = COMPETITION_KINDS;
+
+const LEAGUE_AND_CUP_KINDS = new Set<CompetitionKind>(["league", "cup"]);
+const COMPETITIVE_KINDS = new Set<CompetitionKind>([
+  "league",
+  "cup",
+  "tournament",
+]);
+
+function matchesCompetitionKindFilter(
+  competitionKind: CompetitionKind | null,
+  selectedCompetitionKind: string,
+): boolean {
+  if (selectedCompetitionKind === ALL_COMPETITION_KINDS) return true;
+  if (selectedCompetitionKind === ALL_LEAGUE_AND_CUP) {
+    return competitionKind != null && LEAGUE_AND_CUP_KINDS.has(competitionKind);
+  }
+  if (selectedCompetitionKind === ALL_COMPETITIVE) {
+    return competitionKind != null && COMPETITIVE_KINDS.has(competitionKind);
+  }
+  return competitionKind === selectedCompetitionKind;
+}
 
 export function matchesCompetitionFilters(input: {
   competitionId: string | null;
@@ -32,7 +57,10 @@ export function matchesCompetitionFilters(input: {
 }): boolean {
   const isFriendly = input.isFriendly === true;
 
-  if (input.selectedCompetitionId === FRIENDLY_MATCHES) {
+  if (
+    input.selectedCompetitionId === FRIENDLY_MATCHES ||
+    input.selectedCompetitionKind === FRIENDLY_KIND
+  ) {
     return isFriendly;
   }
 
@@ -48,11 +76,10 @@ export function matchesCompetitionFilters(input: {
     if (input.competitionId !== input.selectedCompetitionId) return false;
   }
 
-  if (input.selectedCompetitionKind !== ALL_COMPETITION_KINDS) {
-    if (input.competitionKind !== input.selectedCompetitionKind) return false;
-  }
-
-  return true;
+  return matchesCompetitionKindFilter(
+    input.competitionKind,
+    input.selectedCompetitionKind,
+  );
 }
 
 export function filterStatCompetitions(

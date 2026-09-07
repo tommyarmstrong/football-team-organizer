@@ -41,10 +41,6 @@ export function MatchPeriodEditSection({
   if (!canEdit) {
     return (
       <div className="space-y-6">
-        <div className="space-y-1">
-          <p className="text-muted-foreground text-sm">Period</p>
-          <p className="font-medium">{period.name}</p>
-        </div>
         <PeriodStarters
           matchId={matchId}
           period={period}
@@ -96,16 +92,11 @@ function EditablePeriodSection({
   return (
     <div className="space-y-6">
       <form id={formId} action={formAction} className="space-y-2">
-        <Label htmlFor={`period-name-${period.id}`}>Period</Label>
         {knownName ? (
-          <>
-            <p id={`period-name-${period.id}`} className="font-medium">
-              {period.name}
-            </p>
-            <input type="hidden" name="name" value={period.name} />
-          </>
+          <input type="hidden" name="name" value={period.name} />
         ) : (
           <>
+            <Label htmlFor={`period-name-${period.id}`}>Period</Label>
             <NativeSelect
               id={`period-name-${period.id}`}
               name="name"
@@ -301,10 +292,6 @@ export function PeriodStartersFields({
     <div className="space-y-4">
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Starting players</h3>
-        <p className="text-muted-foreground text-xs">
-          Players who start this period are assumed to complete it. Remove a
-          player to deselect them, or add them back below.
-        </p>
       </div>
 
       {inputName

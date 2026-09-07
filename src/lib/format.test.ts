@@ -38,6 +38,7 @@ import {
   labelVenueSurface,
   managerDisplayName,
   matchCompetitionLabel,
+  competitionDisplayName,
   matchSummaryLines,
   playerDisplayName,
   resultLetter,
@@ -139,7 +140,7 @@ describe("formatMatchDateTime", () => {
 describe("formatScheduledMatchTimes", () => {
   it("formats meet-up and kick-off on one line", () => {
     expect(formatScheduledMatchTimes("09:30:00", "10:00:00")).toBe(
-      "Meet up: 09:30 . Kick off: 10:00",
+      "Meet up: 09:30 · Kick off: 10:00",
     );
   });
 
@@ -161,7 +162,7 @@ describe("matchSummaryLines", () => {
       }),
     ).toEqual({
       competition: "Premier League",
-      dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      dateTime: formatMatchDate("2026-03-15"),
       times: null,
       venue: "Wembley",
     });
@@ -180,7 +181,7 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDate("2026-03-15"),
-      times: "Meet up: 09:30 . Kick off: 10:00",
+      times: "Meet up: 09:30 · Kick off: 10:00",
       venue: "Wembley",
     });
   });
@@ -201,7 +202,25 @@ describe("matchSummaryLines", () => {
     });
   });
 
-  it("omits the times row for non-scheduled matches", () => {
+  it("shows kick-off without meet-up for in-progress matches", () => {
+    expect(
+      matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "in_progress",
+      }),
+    ).toEqual({
+      competition: "Premier League",
+      dateTime: formatMatchDate("2026-03-15"),
+      times: "Kick off: 10:00",
+      venue: "Wembley",
+    });
+  });
+
+  it("omits kick-off for completed matches", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -213,9 +232,25 @@ describe("matchSummaryLines", () => {
       }),
     ).toEqual({
       competition: "Premier League",
-      dateTime: formatMatchDateTime("2026-03-15", "10:00"),
+      dateTime: formatMatchDate("2026-03-15"),
       times: null,
       venue: "Wembley",
+    });
+  });
+
+  it("omits kick-off for cancelled matches", () => {
+    expect(
+      matchSummaryLines({
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        status: "cancelled",
+      }),
+    ).toEqual({
+      competition: null,
+      dateTime: formatMatchDate("2026-03-15"),
+      times: null,
+      venue: null,
     });
   });
 
@@ -246,11 +281,23 @@ describe("matchCompetitionLabel", () => {
     ).toBe("Friendly");
   });
 
-  it("returns the competition name for competitive fixtures", () => {
+  it("returns the competition display name for competitive fixtures", () => {
     expect(
       matchCompetitionLabel({
         is_friendly: false,
-        competition: { name: "Premier League" },
+        competition: {
+          name: "Premier League",
+          display_name: "PL",
+        },
+      }),
+    ).toBe("PL");
+  });
+
+  it("falls back to the competition name when display name is blank", () => {
+    expect(
+      matchCompetitionLabel({
+        is_friendly: false,
+        competition: { name: "Premier League", display_name: "  " },
       }),
     ).toBe("Premier League");
   });
@@ -259,6 +306,26 @@ describe("matchCompetitionLabel", () => {
     expect(
       matchCompetitionLabel({ is_friendly: false, competition: null }),
     ).toBeNull();
+  });
+});
+
+describe("competitionDisplayName", () => {
+  it("prefers display_name when set", () => {
+    expect(
+      competitionDisplayName({
+        name: "County Youth League Division 1",
+        display_name: "CYL Div 1",
+      }),
+    ).toBe("CYL Div 1");
+  });
+
+  it("falls back to name", () => {
+    expect(
+      competitionDisplayName({
+        name: "County Youth League",
+        display_name: null,
+      }),
+    ).toBe("County Youth League");
   });
 });
 

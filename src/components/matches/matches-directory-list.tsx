@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { matchAllowsEvents } from "@/lib/constants";
 import type { MatchWithRelations } from "@/lib/data/matches";
-import { labelMatchStatus, matchSummaryLines } from "@/lib/format";
+import {
+  competitionDisplayName,
+  labelMatchStatus,
+  matchSummaryLines,
+} from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { objectListRowClassName } from "@/components/shared/object-list";
 import { MatchScoreboard } from "@/components/matches/match-scoreboard";
@@ -26,7 +30,7 @@ export function MatchesDirectoryList({
           match.opponent_name,
           teamName,
           match.venue?.name ?? "",
-          match.competition?.name ?? "",
+          match.competition ? competitionDisplayName(match.competition) : "",
           match.is_friendly ? "Friendly" : "",
           labelMatchStatus(match.status),
         ].join(" ")
@@ -41,13 +45,17 @@ export function MatchesDirectoryList({
         const meta = matchSummaryLines({
           competitionName: match.is_friendly
             ? "Friendly"
-            : match.competition?.name,
+            : match.competition
+              ? competitionDisplayName(match.competition)
+              : null,
           date: match.date,
           kickoffTime: match.kickoff_time,
           meetupTime: match.meetup_time,
           venueName: match.venue?.name,
           status: match.status,
         });
+        const showStatusBelow =
+          !matchAllowsEvents(match.status) && match.status !== "scheduled";
 
         return (
           <Link
@@ -73,6 +81,11 @@ export function MatchesDirectoryList({
                 {meta.competition}
               </p>
             ) : null}
+            {match.status === "scheduled" ? (
+              <p className="text-center text-sm font-medium text-red-600 dark:text-red-400">
+                Scheduled
+              </p>
+            ) : null}
             <p className="text-muted-foreground text-center text-sm">
               {meta.dateTime}
             </p>
@@ -86,7 +99,7 @@ export function MatchesDirectoryList({
                 {meta.venue}
               </p>
             ) : null}
-            {!matchAllowsEvents(match.status) ? (
+            {showStatusBelow ? (
               <p className="text-muted-foreground text-center text-sm">
                 {labelMatchStatus(match.status)}
               </p>

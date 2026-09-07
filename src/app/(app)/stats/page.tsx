@@ -7,7 +7,7 @@ import {
   getPlayerOfTheMatchByPlayerStats,
   getResultsOverTime,
 } from "@/lib/data/stats";
-import { teamDisplayName } from "@/lib/format";
+import { competitionDisplayName, teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { StatsPageContent } from "@/components/stats/stats-page-content";
@@ -42,7 +42,7 @@ export default async function StatsPage() {
 
   const competitionOptions = competitions.data.map((competition) => ({
     id: competition.id,
-    name: competition.name,
+    name: competitionDisplayName(competition),
     kind: competition.kind,
   }));
 
