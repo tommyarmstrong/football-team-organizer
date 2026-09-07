@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
+import { loadVisibleTeams } from "@/lib/data/visible-teams";
 import type { AgeGroup } from "@/lib/constants";
 import {
   archivedTeamWriteError,
@@ -49,14 +50,9 @@ function mapTeamWriteError(message: string): string {
 /** All teams the signed-in user can see (RLS-filtered), ordered for display. */
 export const listVisibleTeams = cache(
   async (): Promise<{ data: Team[]; error: string | null }> => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("teams")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) return { data: [], error: error.message };
-    return { data: sortTeamsForDisplay(data ?? []), error: null };
+    const { data, error } = await loadVisibleTeams();
+    if (error) return { data: [], error };
+    return { data: sortTeamsForDisplay(data), error: null };
   },
 );
 

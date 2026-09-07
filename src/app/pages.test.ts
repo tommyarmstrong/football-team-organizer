@@ -81,6 +81,7 @@ vi.mock("@/lib/data/stats", () => ({
   getTopAssists: getTopAssistsMock,
   getTopPlayersOfTheMatch: getTopPlayersOfTheMatchMock,
   getResultsOverTime: getResultsOverTimeMock,
+  getRecentForm: getResultsOverTimeMock,
   getGoalsByPlayerStats: getGoalsByPlayerStatsMock,
   getAssistsByPlayerStats: getAssistsByPlayerStatsMock,
   getPlayerOfTheMatchByPlayerStats: getPlayerOfTheMatchByPlayerStatsMock,
@@ -178,7 +179,7 @@ vi.mock("@/components/ui/button", () => ({
 
 import HomePage from "@/app/page";
 import LoginPage from "@/app/login/page";
-import StatsPage from "@/app/(app)/stats/page";
+import StatsPage, { StatsBody } from "@/app/(app)/stats/page";
 import MatchesPage from "@/app/(app)/matches/page";
 import PeoplePage from "@/app/(app)/people/page";
 import DashboardPage from "@/app/(app)/dashboard/page";
@@ -238,7 +239,7 @@ describe("app pages", () => {
       data: [{ id: "c1", name: "League", kind: "league" }],
       error: null,
     });
-    const tree = await StatsPage();
+    const tree = await StatsBody({ team: teamFixture() });
     expect(JSON.stringify(tree)).toContain('"name":"League"');
     expect(JSON.stringify(tree)).toContain("goalsByPlayer");
   });

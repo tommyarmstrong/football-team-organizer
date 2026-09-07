@@ -19,6 +19,7 @@ import {
   getGoalsByPlayerStats,
   getMatchesPlayedByPlayerStats,
   getPlayerOfTheMatchByPlayerStats,
+  getRecentForm,
   getResultsOverTime,
   getTopAssists,
   getTopPlayersOfTheMatch,
@@ -40,6 +41,9 @@ describe("stats data", () => {
   it("returns no-team errors", async () => {
     getActiveTeamMock.mockResolvedValue(null);
     expect(await getTopScorers()).toMatchObject({
+      error: expect.stringMatching(/no team/i),
+    });
+    expect(await getRecentForm()).toMatchObject({
       error: expect.stringMatching(/no team/i),
     });
   });
@@ -651,5 +655,27 @@ describe("stats data", () => {
     expect(results.data[0]?.competitionName).toBe("League");
     expect(results.data[1]?.competitionName).toBe("Friendly");
     expect(results.form).toEqual(["W", "D"]);
+  });
+
+  it("builds recent form from the latest played matches", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-new",
+            date: "2025-09-08",
+            goals: [{ is_opposition: true }],
+          },
+          {
+            id: "m-old",
+            date: "2025-09-01",
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+          },
+        ]),
+      }),
+    );
+    const recent = await getRecentForm();
+    expect(recent.error).toBeNull();
+    expect(recent.form).toEqual(["W", "L"]);
   });
 });

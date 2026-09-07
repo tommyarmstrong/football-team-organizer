@@ -19,7 +19,11 @@ import {
 } from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
-import { getPlayerTeams, listPlayers } from "@/lib/data/players";
+import {
+  getPlayerTeams,
+  listPlayerTeamsByPlayerIds,
+  listPlayers,
+} from "@/lib/data/players";
 import { isPersonVisibleInDirectory } from "@/lib/people/directory";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
@@ -47,14 +51,17 @@ export default async function PersonDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ctx = await getViewerContext();
+  const [ctx, club, personResult] = await Promise.all([
+    getViewerContext(),
+    getPrimaryClub(),
+    getPerson(id),
+  ]);
   if (!ctx) notFound();
 
-  const club = await getPrimaryClub();
   const canEdit = Boolean(club && canManageClub(ctx, club.id));
   const clubStaff = Boolean(club && isClubStaff(ctx, club.id));
 
-  const { data: person, error } = await getPerson(id);
+  const { data: person, error } = personResult;
   if (error) {
     return (
       <div className="space-y-4">
@@ -211,11 +218,10 @@ export default async function PersonDetailPage({
 
   if (!canEdit && !self) {
     if (!club || !canAccessClubAndPeople(ctx)) redirect("/dashboard");
-    const linkedPlayerTeamIds = (
-      await Promise.all(
-        guardianPlayerLinks.map((link) => getPlayerTeams(link.player_id)),
-      )
-    ).flatMap((result) => result.data.map((team) => team.team_id));
+    const { data: linkedTeams } = await listPlayerTeamsByPlayerIds(
+      guardianPlayerLinks.map((link) => link.player_id),
+    );
+    const linkedPlayerTeamIds = linkedTeams.map((team) => team.team_id);
     const visible = isPersonVisibleInDirectory(
       {
         id: person.id,

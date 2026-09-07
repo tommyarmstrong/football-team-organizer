@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
 import { resultLetter, scoreFromGoals } from "@/lib/format";
@@ -70,19 +71,19 @@ export type ResultOverTimePoint = {
   isFriendly: boolean;
 };
 
-async function getShirtByPlayer(
-  teamId: string,
-): Promise<Map<string, number | null>> {
-  const supabase = await createClient();
-  const { data: roster } = await supabase
-    .from("team_players")
-    .select("player_id, shirt_number")
-    .eq("team_id", teamId);
+const getShirtByPlayer = cache(
+  async (teamId: string): Promise<Map<string, number | null>> => {
+    const supabase = await createClient();
+    const { data: roster } = await supabase
+      .from("team_players")
+      .select("player_id, shirt_number")
+      .eq("team_id", teamId);
 
-  return new Map<string, number | null>(
-    (roster ?? []).map((r) => [r.player_id, r.shirt_number]),
-  );
-}
+    return new Map<string, number | null>(
+      (roster ?? []).map((r) => [r.player_id, r.shirt_number]),
+    );
+  },
+);
 
 function rankPlayerCounts(
   counts: Map<string, PlayerStatLeader>,
@@ -152,7 +153,7 @@ export async function getTopScorers(
   if (!team) return { data: [], error: "No team selected." };
 
   const supabase = await createClient();
-  const [{ data, error }, { data: roster }] = await Promise.all([
+  const [{ data, error }, shirtByPlayer] = await Promise.all([
     supabase
       .from("goals")
       .select(
@@ -161,17 +162,10 @@ export async function getTopScorers(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("is_opposition", false),
-    supabase
-      .from("team_players")
-      .select("player_id, shirt_number")
-      .eq("team_id", team.id),
+    getShirtByPlayer(team.id),
   ]);
 
   if (error) return { data: [], error: error.message };
-
-  const shirtByPlayer = new Map<string, number | null>(
-    (roster ?? []).map((r) => [r.player_id, r.shirt_number]),
-  );
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
@@ -640,4 +634,34 @@ export async function getResultsOverTime(): Promise<{
   const recentForm = form.slice(-STATS_FORM_LIMIT);
 
   return { data: points, error: null, form: recentForm };
+}
+
+/** Last N played-match results for the dashboard form strip (oldest → newest). */
+export async function getRecentForm(
+  limit = STATS_FORM_LIMIT,
+): Promise<{ form: Array<"W" | "D" | "L">; error: string | null }> {
+  const team = await getActiveTeam();
+  if (!team) return { form: [], error: "No team selected." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select("id, date, goals(is_opposition)")
+    .eq("team_id", team.id)
+    .eq("status", "played")
+    .order("date", { ascending: false })
+    .limit(limit);
+
+  if (error) return { form: [], error: error.message };
+
+  const form: Array<"W" | "D" | "L"> = [];
+  for (const match of [...(data ?? [])].reverse()) {
+    const { goalsFor, goalsAgainst } = scoreFromGoals(
+      Array.isArray(match.goals) ? match.goals : [],
+    );
+    const letter = resultLetter(goalsFor, goalsAgainst);
+    if (letter) form.push(letter);
+  }
+
+  return { form, error: null };
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCurrentTeam } from "@/lib/data/team";
 import { listCompetitions } from "@/lib/data/competitions";
 import {
@@ -10,7 +11,9 @@ import {
 import { competitionDisplayName, teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { PageSkeleton } from "@/components/shared/skeleton";
 import { StatsPageContent } from "@/components/stats/stats-page-content";
+import type { Team } from "@/lib/supabase/database.types";
 
 export default async function StatsPage() {
   const team = await getCurrentTeam();
@@ -24,6 +27,20 @@ export default async function StatsPage() {
     );
   }
 
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Stats"
+        description={`${teamDisplayName(team)} · ${team.season_label}`}
+      />
+      <Suspense fallback={<PageSkeleton rows={4} />}>
+        <StatsBody team={team} />
+      </Suspense>
+    </div>
+  );
+}
+
+export async function StatsBody({ team }: { team: Team }) {
   const [
     goalsByPlayer,
     assistsByPlayer,
@@ -56,14 +73,8 @@ export default async function StatsPage() {
   ].filter(Boolean);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Stats"
-        description={`${teamDisplayName(team)} · ${team.season_label}`}
-      />
-
+    <>
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-
       <StatsPageContent
         goalsByPlayer={goalsByPlayer.data}
         assistsByPlayer={assistsByPlayer.data}
@@ -72,6 +83,6 @@ export default async function StatsPage() {
         results={results.data}
         competitions={competitionOptions}
       />
-    </div>
+    </>
   );
 }

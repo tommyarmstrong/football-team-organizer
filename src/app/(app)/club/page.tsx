@@ -7,24 +7,23 @@ import {
   getViewerContext,
 } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { listVisibleTeams } from "@/lib/data/team";
-import { partitionTeamsByArchiveStatus } from "@/lib/team/season";
+import {
+  partitionTeamsByArchiveStatus,
+  sortTeamsForDisplay,
+} from "@/lib/team/season";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ErrorBanner } from "@/components/shared/error-banner";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ClubHeaderMeta } from "@/components/clubs/club-header-meta";
 import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function ClubPage() {
-  const ctx = await getViewerContext();
+  const [ctx, club] = await Promise.all([getViewerContext(), getPrimaryClub()]);
   if (!ctx || !canAccessClubAndPeople(ctx)) {
     redirect("/dashboard");
   }
-
-  const club = await getPrimaryClub();
 
   if (!club) {
     return (
@@ -40,8 +39,9 @@ export default async function ClubPage() {
 
   const canEdit = canManageClub(ctx, club.id);
   const showTeams = canViewClubTeams(ctx, club.id);
-  const { data: allTeams, error: teamsError } = await listVisibleTeams();
-  const teams = allTeams.filter((t) => t.club_id === club.id);
+  const teams = sortTeamsForDisplay(
+    ctx.visibleTeams.filter((t) => t.club_id === club.id),
+  );
   const { current: currentTeams, archived: archivedTeams } =
     partitionTeamsByArchiveStatus(teams);
 
@@ -76,8 +76,7 @@ export default async function ClubPage() {
       {showTeams ? (
         <>
           <Section title="Current teams">
-            {teamsError ? <ErrorBanner message={teamsError} /> : null}
-            {!teamsError && currentTeams.length === 0 ? (
+            {currentTeams.length === 0 ? (
               <EmptyState
                 title="No current teams"
                 description={
@@ -86,10 +85,9 @@ export default async function ClubPage() {
                     : "No active teams are listed for this club yet."
                 }
               />
-            ) : null}
-            {!teamsError && currentTeams.length > 0 ? (
+            ) : (
               <ClubTeamsList teams={currentTeams} />
-            ) : null}
+            )}
             {canEdit ? (
               <Link href="/teams/new" className={buttonVariants()}>
                 Add team
@@ -98,21 +96,19 @@ export default async function ClubPage() {
           </Section>
 
           <Section title="Archived teams">
-            {teamsError ? <ErrorBanner message={teamsError} /> : null}
-            {!teamsError && archivedTeams.length === 0 ? (
+            {archivedTeams.length === 0 ? (
               <EmptyState
                 title="No archived teams"
                 description="Finished seasons appear here once they are archived."
               />
-            ) : null}
-            {!teamsError && archivedTeams.length > 0 ? (
+            ) : (
               <ClubTeamsList
                 teams={archivedTeams}
                 filterPlaceholder="Filter archived teams by name or season…"
                 emptyFilterTitle="No archived teams match"
                 emptyFilterDescription="Try a different name or season, or clear the filter."
               />
-            ) : null}
+            )}
           </Section>
         </>
       ) : null}
