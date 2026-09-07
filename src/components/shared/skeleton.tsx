@@ -24,3 +24,23 @@ export function PageSkeleton({ rows = 4 }: { rows?: number }) {
     </div>
   );
 }
+
+export function SectionSkeleton({
+  rows = 2,
+  columns = 1,
+}: {
+  rows?: number;
+  columns?: 1 | 2;
+}) {
+  return (
+    <div
+      className={columns === 2 ? "grid gap-8 sm:grid-cols-2" : "space-y-3"}
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      {Array.from({ length: columns === 2 ? 2 : rows }).map((_, i) => (
+        <Skeleton key={i} className="h-32 w-full" />
+      ))}
+    </div>
+  );
+}

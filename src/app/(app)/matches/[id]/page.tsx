@@ -40,8 +40,11 @@ export default async function MatchDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ctx = await getViewerContext();
-  const { data: match, error } = await getMatch(id);
+  const [ctx, matchResult] = await Promise.all([
+    getViewerContext(),
+    getMatch(id),
+  ]);
+  const { data: match, error } = matchResult;
 
   if (error) {
     return (

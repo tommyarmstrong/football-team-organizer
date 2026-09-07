@@ -36,6 +36,7 @@ import {
   listActiveRosterForActiveTeam,
   listPlayers,
   listPlayersNotOnTeam,
+  listPlayerTeamsByPlayerIds,
   listRosterForTeam,
   removePlayerFromTeam,
   setPlayerActiveRole,
@@ -155,6 +156,7 @@ describe("players data", () => {
       }),
     );
     expect((await getPlayerTeams("player-1")).data[0]?.team_id).toBe("team-1");
+    expect((await listPlayerTeamsByPlayerIds([])).data).toEqual([]);
     expect((await getPlayerContact("player-1")).data?.phone).toBe("07000");
     expect((await getPlayerGoals("player-1")).data).toHaveLength(1);
   });

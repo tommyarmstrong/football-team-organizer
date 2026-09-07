@@ -169,15 +169,19 @@ export async function getPlayer(
 export async function getPlayerTeams(
   playerId: string,
 ): Promise<{ data: PlayerTeamMembership[]; error: string | null }> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("team_players")
-    .select("id, team_id, shirt_number, active, team:teams(name)")
-    .eq("player_id", playerId);
+  return listPlayerTeamsByPlayerIds([playerId]);
+}
 
-  if (error) return { data: [], error: error.message };
-
-  const rows: PlayerTeamMembership[] = (data ?? []).map((tp) => {
+function mapTeamPlayerRows(
+  data: Array<{
+    id: string;
+    team_id: string;
+    shirt_number: number | null;
+    active: boolean;
+    team: { name: string } | { name: string }[] | null;
+  }> | null,
+): PlayerTeamMembership[] {
+  return (data ?? []).map((tp) => {
     const team = Array.isArray(tp.team) ? tp.team[0] : tp.team;
     return {
       team_player_id: tp.id,
@@ -187,8 +191,33 @@ export async function getPlayerTeams(
       active: tp.active,
     };
   });
+}
 
-  return { data: rows, error: null };
+export async function listPlayerTeamsByPlayerIds(
+  playerIds: string[],
+): Promise<{ data: PlayerTeamMembership[]; error: string | null }> {
+  if (playerIds.length === 0) return { data: [], error: null };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("team_players")
+    .select("id, team_id, shirt_number, active, team:teams(name)")
+    .in("player_id", playerIds);
+
+  if (error) return { data: [], error: error.message };
+
+  return {
+    data: mapTeamPlayerRows(
+      data as Array<{
+        id: string;
+        team_id: string;
+        shirt_number: number | null;
+        active: boolean;
+        team: { name: string } | { name: string }[] | null;
+      }>,
+    ),
+    error: null,
+  };
 }
 
 /** Sensitive contact details. Returns null when not present or not permitted (RLS). */
