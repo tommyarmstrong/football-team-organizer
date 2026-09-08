@@ -6,6 +6,8 @@ import {
   invitationExpiryDate,
   normalizeEmail,
   personDisplayName,
+  personMaySignIn,
+  signInDeniedMessage,
   unwrapPerson,
   unwrapPersonName,
   withPersonFields,
@@ -35,6 +37,16 @@ function person(overrides: Partial<Person> = {}): Person {
 describe("person helpers", () => {
   it("normalizes email", () => {
     expect(normalizeEmail("  Ada@Example.COM ")).toBe("ada@example.com");
+  });
+
+  it("allows sign-in only for invited or active people", () => {
+    expect(personMaySignIn("active")).toBe(true);
+    expect(personMaySignIn("invited")).toBe(true);
+    expect(personMaySignIn("none")).toBe(false);
+    expect(personMaySignIn("disabled")).toBe(false);
+    expect(personMaySignIn(null)).toBe(false);
+    expect(signInDeniedMessage("disabled")).toMatch(/disabled/i);
+    expect(signInDeniedMessage("none")).toMatch(/invitation/i);
   });
 
   it("formats display name", () => {

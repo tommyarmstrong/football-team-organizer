@@ -6,11 +6,16 @@ import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
 import { validateNewPassword } from "@/lib/auth/password";
 import { createClient } from "@/lib/supabase/server";
 import {
+  findPersonForAuthUserId,
   findPersonForVerifiedEmail,
   linkAuthUserToPerson,
   loadInvitationByToken,
 } from "@/lib/people/invitations";
-import { normalizeEmail } from "@/lib/people/person";
+import {
+  normalizeEmail,
+  personMaySignIn,
+  signInDeniedMessage,
+} from "@/lib/people/person";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -80,4 +85,37 @@ export async function updatePasswordAndFinishAction(input: {
   const cookieStore = await cookies();
   cookieStore.delete(PASSWORD_SETUP_COOKIE);
   return {};
+}
+
+/**
+ * After password (or other non-OAuth) sign-in, ensure the session belongs to an
+ * invited or active person. Signs out and returns an error otherwise.
+ */
+export async function assertPersonMayRemainSignedIn(): Promise<{
+  error: string | null;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Not signed in." };
+  }
+
+  try {
+    let person = (await findPersonForAuthUserId(user.id)).data;
+    if (!person && user.email) {
+      person = (await findPersonForVerifiedEmail(user.email)).data;
+    }
+
+    if (!person || !personMaySignIn(person.account_status)) {
+      await supabase.auth.signOut();
+      return { error: signInDeniedMessage(person?.account_status) };
+    }
+  } catch {
+    await supabase.auth.signOut();
+    return { error: signInDeniedMessage(null) };
+  }
+
+  return { error: null };
 }
