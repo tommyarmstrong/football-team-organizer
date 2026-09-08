@@ -2,7 +2,13 @@
 
 ## Database backups (logical dump → S3)
 
-Daily logical backups are produced by [`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml) (cron + `workflow_dispatch`). The target database is whatever `SUPABASE_DB_URL` and `SUPABASE_PROJECT_REF` are configured to (set those to production in GitHub Actions settings). Dumps go to S3 only — never as GitHub Actions artifacts and never into git. Archives contain PII and medical notes.
+Daily logical backups are produced by
+[`.github/workflows/db-backup.yml`](../.github/workflows/db-backup.yml)
+(cron `15 2 * * *` — 02:15 UTC — plus `workflow_dispatch`). The target database
+is whatever `SUPABASE_DB_URL` and `SUPABASE_PROJECT_REF` are configured to (set
+those to production in GitHub Actions settings). Dumps go to S3 only — never as
+GitHub Actions artifacts and never into git. Archives contain PII and medical
+notes.
 
 ### Object layout
 

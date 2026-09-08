@@ -7,14 +7,31 @@ These are the roles for the football organizer app.
 3. Guardian
 4. Guardian assistant
 5. Player
-6. Admin
 
 Every signed-in person has a **login** (`auth.users`) and **one or more roles**.
 Roles are **additive** and **scoped**: the same login may be management at the
 club, coach on team A, and guardian on team B.
 
-Permissions below describe the intended model. Fine-grained enforcement is
-still evolving; do not assume every rule is fully applied in RLS/UI yet.
+Permissions below describe the intended model. Some fine-grained rules are still
+evolving in RLS/UI; callouts note what is already enforced.
+
+## Access gates (current behaviour)
+
+- **Invite-only:** new accounts start via invitation
+  (`person_invitations` / Auth invite). There is no public register UI. Uninvited
+  Auth users are signed out or denied.
+- **Account status:** only `invited` or `active` may remain signed in.
+  `none` and `disabled` are rejected. Disabled people are also excluded from
+  `has_app_access` / management helpers in RLS.
+- **App access:** a linked person needs a club manager row, a `team_members` row,
+  a guardian role, or a player role (with non-disabled status). Otherwise they
+  land on `/no-access`.
+- **Club create:** `create_club_with_management` requires existing club
+  management (`can_manage_any_club()`). The first club/manager must come from
+  seed or SQL — `/no-access` does not bootstrap a club.
+
+Practical “site admin” today is club **management** (plus the service role for
+Auth invites). A separate IT Admin role is not modelled.
 
 ## How roles are stored
 
@@ -23,15 +40,22 @@ still evolving; do not assume every rule is fully applied in RLS/UI yet.
   `auth_user_id`, and account status (`none` | `invited` | `active` |
   `disabled`)
 - Domain roles: `managers`, `coaches`, `guardians`, `players` — each links to
-  `people` via `person_id` and keeps only role-specific attributes. A person may
-  hold multiple roles.
+  `people` via `person_id`, has `active_role` (default true), and keeps only
+  role-specific attributes. A person may hold multiple roles.
 - Invitations: `person_invitations` — secure, expiring, single-use invite tokens
   (hashed) for invite-only onboarding
 - Linking a login to a person (`people.auth_user_id`) associates every linked
-  role with that login. Coaches may also appear in `team_members.role = coach`.
+  role with that login
 - Team roles: `team_members` — one row per `(team, user, role)`; multiple rows
   per user on the same team are allowed
-- Team role values: `management` | `coach` | `guardian` | `guardian_assistant` | `player`
+- Team role values: `management` | `coach` | `guardian` | `guardian_assistant` |
+  `player`
+
+**Coach nuance:** the `coaches` / `team_coaches` tables hold staff profile data.
+Coach **write** access and several RLS helpers key off
+`team_members.role = 'coach'` (and club managers). A coach-only person without a
+`team_members` coach row (and without manager/guardian/player access) hits
+`/no-access`.
 
 ## Management
 
@@ -46,6 +70,11 @@ Club management has full read and write access to all club data (current
 behaviour). Team management write access is intended to be limited to that team;
 cross-team write should follow the user’s roles on each team.
 
+**Enforcement gap:** the UI may treat team `management` as editable, but RLS
+`can_edit_team` is currently club management **or**
+`team_members.role = coach` (not team `management`). Do not assume team-only
+management can write everything the UI offers.
+
 ## Coach
 
 ### Permissions
@@ -53,7 +82,7 @@ cross-team write should follow the user’s roles on each team.
 Coaches have full read and write access to:
 
 - Their own user profile
-- Team data for every team they are assigned as coach
+- Team data for every team they are assigned as coach (`team_members`)
 - Match data for every match their team plays (including player of the match)
 
 Coaches have full read (but not write) access to:
@@ -85,7 +114,8 @@ Guardians have read (but not write) access to:
 
 ### Permissions
 
-Guardian assistants assist coaches. They have all the access of Guardians, and in addition they can record match-day data for their team:
+Guardian assistants assist coaches. They have all the access of Guardians, and in
+addition they can record match-day data for their team:
 
 - Add and edit matches
 - Write access to match-day squad
@@ -94,6 +124,9 @@ Guardian assistants assist coaches. They have all the access of Guardians, and i
 - Write access to match cards
 
 They cannot add or edit player of the match (coach or management only).
+
+Match-day write and the POTM restriction are **enforced** in RLS/UI
+(`can_edit_match_day` and related policies).
 
 ## Player
 
@@ -104,8 +137,3 @@ Players have read (but not write) access to:
 - Their own team dashboard
 - Their own team's match data
 - Their own team's stats data
-
-## Admin
-
-This is the IT Admin for the site. They have full admin rights at this stage.
-Not yet modelled as a dedicated enum/table value.

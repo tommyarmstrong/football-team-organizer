@@ -1,6 +1,10 @@
 # Data objects
 
-Attribute lists for each domain object, based on the current database schema. Fields marked **(required)** are `NOT NULL`. Unmarked fields are optional / nullable. System fields (`id`, `created_at`, `updated_at`) are omitted unless noted.
+Attribute lists for each domain object, based on the current database schema
+(`supabase/migrations/` + `src/lib/supabase/database.types.ts`). Fields marked
+**(required)** are `NOT NULL`. Unmarked fields are optional / nullable. System
+fields (`id`, `created_at`, `updated_at`) are omitted unless noted. Enum values
+below use the labels shown in the UI; DB stores snake_case where noted.
 
 ---
 
@@ -12,6 +16,10 @@ Attribute lists for each domain object, based on the current database schema. Fi
 - Website
 - Email
 - Phone
+- Icon URL
+- Colour — `#RRGGBB`
+- Established — year (1800–2100)
+- About
 
 ---
 
@@ -29,6 +37,9 @@ club association lives on role rows (`managers`, `coaches`, `guardians`,
 - Phone
 - Auth user — optional Supabase Auth UUID
 - Account status (required) — `none` | `invited` | `active` | `disabled`
+
+Sign-in is allowed only for `invited` or `active`. `disabled` (and `none`) are
+signed out / denied. See [Roles](roles.md).
 
 ### Invitations (`person_invitations`)
 
@@ -52,6 +63,7 @@ apply when the linked person has an Auth login.
 
 - Club (required)
 - Person (required)
+- Active role (required) — default `true` (soft-deactivate without deleting)
 - Notes
 
 ---
@@ -68,27 +80,37 @@ Club-level place used as a home or training ground.
 - Address line 2
 - Town / city
 - Postcode
-- Surface (required) — `Astro` | `Grass` | `Indoor` | `Varies` | `Unknown` (default `Unknown`)
-- Food & Drink — zero or more of `BBQ` | `Cafe` | `Tuck shop` | `Local outlets` | `Ice cream van`
+- Surfaces (required) — zero or more of `Astro` | `Grass` | `Hard court` |
+  `Indoor` | `Varies` | `Unknown` (default empty array)
+- Parking (required) — `Usually fine` | `Weekend parking` | `Paid parking` |
+  `No parking` | `Unknown` (default `Unknown`)
+- Food & Drink / amenities — zero or more of `BBQ` | `Cafe` | `Tuck shop` |
+  `Local outlets` | `Ice cream van` | `Bar` | `Toilets` | `Rain shelter`
 
 ---
 
 ## Team
 
 Belongs to a club. Squad, fixtures, and competitions are scoped to a team.
+Unique on `(club, name, season label)`.
 
 ### Attributes
 
 - Club (required)
 - Name (required)
-- Age group (required) — `U7`…`U16` | `Adults`
-- Gender (required) — `boys` | `girls` | `mixed`
+- Display name — short label for lists/headers; falls back to name
+- Age group (required) — app-enforced `U7`…`U16` | `Adults` (DB is free text)
+- Gender (required) — `boys` | `girls` | `men` | `women` | `mixed` (forms offer
+  boys/girls/men/women; `mixed` is legacy)
 - Home venue — linked venue
 - Training venue — linked venue
 - Training days — weekdays (`mon`…`sun`)
 - Season label (required) — e.g. `2025/26`
+- Photo URL
+- Archived at — null means active season; set when the team is soft-archived
 
-Head coach is assigned via team coaches with role `Head Coach` (not a free-text field on the team).
+Head coach is assigned via team coaches with role `Head Coach` (not a free-text
+field on the team).
 
 ---
 
@@ -102,9 +124,13 @@ player + management on team A and only coach on team B.
 
 - Team (required)
 - User (required)
-- Role (required) — `management` | `coach` | `guardian` | `guardian_assistant` | `player`
+- Role (required) — `management` | `coach` | `guardian` | `guardian_assistant` |
+  `player`
 
 Unique on `(team, user, role)`.
+
+Coach write access and several RLS helpers key off `team_members.role = coach`,
+not the `coaches` domain table alone. See [Roles](roles.md).
 
 ---
 
@@ -117,6 +143,7 @@ membership. Players get a `people` row but are not invited to log in by default.
 
 - Club (required)
 - Person (required)
+- Active role (required) — default `true`
 - Position
 - School
 - Date of birth
@@ -128,14 +155,18 @@ Zero, one, or many objectives per player (`player_development_objectives`).
 #### Attributes
 
 - Body / objective text (required)
-- Type (required) — `Skills` | `Confidence` | `Team work` | `Positional` | `Following coaching` | `Other` (default `Other`)
-- Status (required) — `Emerging` | `Expected` | `Exceeding` | `Complete` (default `Emerging`)
+- Type (required) — `Skills` | `Confidence` | `Team work` | `Positional` |
+  `Following coaching` | `Other` (default `Other`)
+- Status (required) — `Emerging` | `Expected` | `Exceeding` | `Complete`
+  (default `Emerging`)
+- Sort order (required) — default `0`
 
 ---
 
 ## Player contact
 
-Sensitive contact details (1:1 with player). Stricter access than the player profile.
+Sensitive contact details (1:1 with player). Stricter access than the player
+profile.
 
 ### Attributes
 
@@ -146,7 +177,8 @@ Sensitive contact details (1:1 with player). Stricter access than the player pro
 - Emergency contact — linked guardian
 - Medical notes
 
-Emergency phone is taken from the linked guardian’s phone (not stored separately).
+Emergency phone is taken from the linked guardian’s phone (not stored
+separately).
 
 ---
 
@@ -159,6 +191,7 @@ players.
 
 - Club (required)
 - Person (required)
+- Active role (required) — default `true`
 - Notes
 
 ### Player links (`player_guardians`)
@@ -166,8 +199,9 @@ players.
 For each linked player:
 
 - Player (required)
-- Relationship (required) — `Parent` | `Guardian` | `Responsible adult` | `Other`
+- Relationship (required) — `Parent` | `Guardian` | `Football contact` | `Other`
 - Legal guardian — checkbox (default off)
+- Emergency contact — checkbox (default off)
 
 ---
 
@@ -193,6 +227,7 @@ team membership).
 
 - Club (required)
 - Person (required)
+- Active role (required) — default `true`
 - Date of birth
 - Date joined (required)
 - DBS checked (required) — default `false`
@@ -209,9 +244,12 @@ Zero, one, or many objectives per coach (`coach_development_objectives`).
 #### Attributes
 
 - Body / objective text (required)
-- Type (required) — `Coaching` | `Communications` | `Time Management` | `Admin` | `Other` (default `Other`)
+- Type (required) — `Coaching` | `Communications` | `Time Management` | `Admin` |
+  `Other` (default `Other`)
 - Target date
-- Status (required) — `In Progress` | `Ready for Review` | `Complete` | `Deferred` (default `In Progress`)
+- Status (required) — `In Progress` | `Ready for Review` | `Complete` |
+  `Deferred` (default `In Progress`)
+- Sort order (required) — default `0`
 
 ---
 
@@ -223,7 +261,8 @@ Assigns a club coach to a team.
 
 - Team (required)
 - Coach (required)
-- Role — `Head Coach` | `Assistant Coach` | `Sporting Director` | `Head of Year` | `Head of Boys` | `Head of Girls`
+- Role — free text; app offers `Head Coach` | `Assistant Coach` |
+  `Sporting Director` | `Head of Year` | `Head of Boys` | `Head of Girls`
 
 ---
 
@@ -235,33 +274,51 @@ Competitions a team enters this season.
 
 - Team (required)
 - Name (required)
-- Kind — `league` | `cup` | `tournament` | `other` (default `league`)
+- Display name — short label for lists/headers; falls back to name
+- Kind — `league` | `cup` | `tournament` | `other` (nullable; no DB default)
+- Season
+- Knockout (required) — default `false`
+- Age group
+- Gender — `female` | `male` | `mixed`
+- Players per team
+- Periods (required) — `1` | `2` (halves, default) | `4` (quarters) | `other`
+- Minutes per period
+- Result (required) — `champions` | `runner_up` | `third_place` | `semi_final` |
+  `knock_outs` | `group_stage` | `promoted` | `relegated` | `none` | `ongoing`
+  (default) | `completed` | `cancelled`
+- Organizer
+- Notes
+- Venue mode (required) — `unknown` (default) | `multiple` | `venue`
+- Venue — linked venue when mode is `venue`
 
 ---
 
 ## Match
 
-Fixture / result for a team.
+Fixture / result for a team. Aggregate score is derived from `goals` rows (there
+are no `goals_for` / `goals_against` columns).
 
 ### Attributes
 
 - Team (required)
 - Opponent name (required)
-- Friendly — boolean; when true the fixture is a friendly (not a competitions row, no competition result)
+- Friendly (`is_friendly`, required) — default `false`; when true the fixture is
+  a friendly (no competition row; competition must be null)
 - Date (required)
 - Kick-off time
+- Meet-up time — optional time before kick-off
 - Home / away (required) — `home` | `away` | `neutral`
 - Venue — linked venue, or unknown when unset
 - Competition
 - Coach's player of the match
 - Player's player of the match
-- Status (required) — `scheduled` | `in_progress` | `played` | `postponed` | `cancelled` (default `scheduled`)
-- Goals for
-- Goals against — opponent aggregate score only
+- Status (required) — `scheduled` | `in_progress` | `played` | `postponed` |
+  `cancelled` (default `scheduled`)
 - Coach's notes
 - Club notes
 
-Goals, cards, scores, and both players of the match are editable when status is `in_progress` or `played`.
+Goals, cards, scores, and both players of the match are editable when status is
+`in_progress` or `played`.
 
 ---
 
@@ -290,7 +347,8 @@ A half, quarter, or other segment of a match. Multiple periods per match.
 
 ### Starting players (`match_period_starters`)
 
-Players who start the period (assumed to complete it). Linked to players in the match-day squad.
+Players who start the period (assumed to complete it). Linked to players in the
+match-day squad.
 
 - Period (required)
 - Player (required)
@@ -301,16 +359,20 @@ Unique on `(period, player)`.
 
 ## Goal
 
-Goal scored by one of our players. Opposition scorers are not recorded.
+Goal recorded against a match. Our scorers, opposition goals, and own goals are
+supported.
 
 ### Attributes
 
 - Match (required)
-- Player (required) — scorer
+- Player — scorer (required unless opposition / own-goal rules apply)
 - Assist player
-- Period — optional free-text label (auto-filled from the linked period name when set)
+- Period — optional free-text label (auto-filled from the linked period name when
+  set)
 - Period link — optional FK to match period
 - Minute
+- Opposition (required) — default `false` (no scorer / assist when true)
+- Own goal (required) — default `false`
 - Penalty (required) — default `false`
 - Free kick (required) — default `false`
 - From set piece (required) — default `false`
@@ -319,13 +381,30 @@ Goal scored by one of our players. Opposition scorers are not recorded.
 
 ## Card
 
-Disciplinary / other card recorded against a match. Add zero, one, or many cards per match.
+Disciplinary / other card recorded against a match. Add zero, one, or many cards
+per match.
 
 ### Attributes
 
 - Match (required)
 - Linked person (required) — exactly one of: Player | Coach | Guardian
-- Type (required) — `Yellow card (1st)` | `Yellow card (2nd)` | `Red card` | `Timeout` | `Other`
+- Type (required) — `Yellow card (1st)` | `Yellow card (2nd)` | `Red card` |
+  `Timeout` | `Other`
 - Coach notes
 - Referee notes
 - Club notes
+
+---
+
+## Player of the month
+
+Monthly award for a team squad member.
+
+### Attributes
+
+- Team (required)
+- Player (required)
+- Month (required) — first-of-month date
+- Notes
+
+Unique on `(team, month)`.
