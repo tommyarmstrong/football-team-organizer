@@ -292,4 +292,105 @@ describe("handleEmailAuthRequest", () => {
       decodeURIComponent(response.headers.get("location") ?? ""),
     ).toContain("invitation");
   });
+
+  it("denies OAuth when the email is linked to a different auth user", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: { ...person, auth_user_id: "other-auth" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(
+      decodeURIComponent(response.headers.get("location") ?? ""),
+    ).toContain("already linked");
+  });
+
+  it("allows OAuth when email lookup misses but auth user is already linked", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: { ...person, auth_user_id: "auth-1" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBe(
+      "https://tracker.example.com/dashboard",
+    );
+  });
+
+  it("denies OAuth when an invite token cannot be loaded", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    loadInvitationByTokenMock.mockResolvedValue({
+      invitation: null,
+      person: null,
+      error: "Invitation not found.",
+    });
+    findPersonForAuthUserIdMock.mockResolvedValue({ data: null, error: null });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&invite_token=bad"),
+    );
+
+    expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(response.headers.get("location")).toContain("/login?error=");
+  });
+
+  it("redirects invite link failures back to onboarding accept", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    linkAuthUserToPersonMock.mockResolvedValue({
+      error: "This login is already linked to a different person.",
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&invite_token=tok"),
+    );
+
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toContain(
+      "/onboarding/accept?token=tok",
+    );
+    expect(response.headers.get("location")).toContain(
+      "already%20linked%20to%20a%20different%20person",
+    );
+  });
+
+  it("allows OAuth for users without email when auth user id is linked", async () => {
+    const client = authClient({
+      sessionUser: { id: "auth-1", email: undefined as unknown as string },
+    });
+    createClientMock.mockResolvedValue(client);
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: { ...person, auth_user_id: "auth-1" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(findPersonForVerifiedEmailMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBe(
+      "https://tracker.example.com/dashboard",
+    );
+  });
 });

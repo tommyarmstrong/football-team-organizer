@@ -16,6 +16,7 @@ vi.mock("@/lib/auth/origin", () => ({
 
 import {
   findAuthUserIdByEmail,
+  findPersonForAuthUserId,
   findPersonForVerifiedEmail,
   linkAuthUserToPerson,
   loadInvitationByToken,
@@ -145,7 +146,7 @@ describe("people invitations", () => {
     expect(loaded.person?.id).toBe("person-1");
   });
 
-  it("links auth users and finds people by verified email", async () => {
+  it("links auth users and finds people by verified email or auth user id", async () => {
     createAdminClientMock.mockReturnValue(
       adminClient(
         mockFromClient({
@@ -174,6 +175,29 @@ describe("people invitations", () => {
     expect(
       (await findPersonForVerifiedEmail("Ada@Example.com")).data?.email,
     ).toBe("ada@example.com");
+
+    createAdminClientMock.mockReturnValue(
+      adminClient(
+        mockFromClient({
+          people: okResult(
+            personFixture({ id: "person-1", auth_user_id: "auth-1" }),
+          ),
+        }),
+      ),
+    );
+    expect((await findPersonForAuthUserId("auth-1")).data?.id).toBe("person-1");
+
+    createAdminClientMock.mockReturnValue(
+      adminClient(
+        mockFromClient({
+          people: okResult(null),
+        }),
+      ),
+    );
+    expect(await findPersonForAuthUserId("missing")).toEqual({
+      data: null,
+      error: null,
+    });
   });
 
   it("maps listUsers errors", async () => {
