@@ -1,69 +1,86 @@
-# Install locally
+# Installation
 
 Run Football Team Organizer on your machine against a Supabase project.
 
-The public overview is in the [README](../README.md). Production hosting is in
-[Deploy](deploy.md).
+- [Development](development.md) — running tests, linting, branching, PRs
+- [Configuration](configuration.md) — full environment variable reference
+- [Deployment](deployment.md) — Vercel and Supabase hosting
+
+---
 
 ## Prerequisites
 
-- Node.js 20+
-- npm
+- **Node.js 20+** and **npm**
 - A [Supabase](https://supabase.com) project (hosted, or local CLI + Docker)
+- Git
 
-## Stack
+---
 
-Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Supabase (PostgreSQL +
-Auth)
-
-## Setup
+## Repository setup
 
 ```bash
+git clone https://github.com/tommyarmstrong/football-team-organizer
+cd football-team-organizer
 npm install
 cp .env.example .env.local
 ```
 
-In Supabase **Project Settings → API**, set:
+Fill in `.env.local` — see [Configuration](configuration.md).
 
-- `NEXT_PUBLIC_SUPABASE_URL` — Project URL only, e.g. `https://xxxxx.supabase.co`
-  (no `/rest/v1/` suffix)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — **Publishable** key
+---
 
-`SUPABASE_SERVICE_ROLE_KEY` is **server-only**. Do not prefix it with
-`NEXT_PUBLIC_`. It is required for invite and onboarding admin APIs (even for
-local invite testing).
+## Environment variables
 
-Optional:
+| Variable                                | Where to find it                                     |
+| --------------------------------------- | ---------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`              | Supabase → Project Settings → API → Project URL      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase → Project Settings → API → Publishable key  |
+| `SUPABASE_SERVICE_ROLE_KEY`             | Supabase → Project Settings → API → Service role key |
+| `NEXT_PUBLIC_APP_URL`                   | `http://localhost:3000` locally                      |
+| `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY` | Google Cloud Console (optional)                      |
+| `VERCEL_OIDC_TOKEN`                     | Written by `vercel env pull` into `.env.local`       |
 
-- `NEXT_PUBLIC_APP_URL` — public origin used in invitation redirect links (local
-  default `http://localhost:3000`)
-- `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY` — venue map iframes; without it, venue
-  pages still embed via a maps search query
+Full variable reference and security notes: [Configuration](configuration.md).
 
-In Supabase **Authentication → Providers**, ensure **Email** is enabled
-(password).
+### `VERCEL_OIDC_TOKEN` in `.env.local`
 
-### Access model (invite-only)
+After linking the project to Vercel, pull Development env into `.env.local`:
 
-The app does **not** offer public registration. Login is sign-in only. A signed-in
-Auth user can use the app only when:
+```bash
+npx vercel link
+npx vercel env pull .env.local
+```
+
+That writes `VERCEL_OIDC_TOKEN` (and any other Development-scoped Vercel env
+vars). The token is short-lived (about 12 hours); re-run `vercel env pull` if
+local Vercel-authenticated calls start failing. Never commit the real token —
+`.env.local` is gitignored; `.env.example` only documents the placeholder.
+
+---
+
+## Access model
+
+The app does **not** offer public registration. Sign-in only. A signed-in Auth
+user can use the app only when:
 
 1. They are linked to a `people` row with `account_status` of `invited` or
    `active`, and
-2. That person has app access (club manager, `team_members` row, guardian, or
-   player — see [Roles](roles.md)).
+2. That person has app access — a club manager row, a `team_members` row, a
+   guardian role, or a player role. See [Roles](roles.md).
 
-New logins come from the People invite flow (`person_invitations` →
-`/onboarding/accept`, or Supabase Auth invite → `/auth/invite`). Creating an Auth
-user alone is not enough.
+New logins come from the invite flow (`person_invitations` → `/onboarding/accept`,
+or Supabase Auth invite → `/auth/invite`). Creating an Auth user alone is not
+enough.
 
-The first club manager cannot be created from the empty `/no-access` UI (club
-create is restricted to existing managers). Bootstrap via seed or SQL as below.
+The first club manager cannot be bootstrapped from the empty `/no-access` UI —
+use the seed or SQL as described below.
 
-## Database
+---
 
-Apply **all** migrations under `supabase/migrations/` in timestamp order (not
-only the baseline file). Then seed.
+## Local database
+
+Apply **all** migrations under `supabase/migrations/` in timestamp order, then
+seed.
 
 ### Option A — Supabase CLI (preferred)
 
@@ -73,11 +90,15 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Then load the seed (SQL Editor, or):
+Then seed:
 
 ```bash
 npx supabase db query --linked -f supabase/seed.sql
 ```
+
+If a project already applied an older migration history, don't re-run recorded
+files. Use `npx supabase migration list` / `npx supabase migration repair` to
+align the CLI state.
 
 ### Option B — SQL Editor
 
@@ -85,56 +106,80 @@ npx supabase db query --linked -f supabase/seed.sql
 2. Run every file in `supabase/migrations/` in filename order
 3. Run `supabase/seed.sql`
 
-If a project already applied an older migration history, do not re-run files that
-are already recorded; use `npx supabase migration list` /
-`npx supabase migration repair` to align CLI history.
+### Option C — local Supabase via Docker
 
-### After seeding — link the first manager
-
-The seed creates club manager **John Hall**
-(`people.id` `b0000000-0000-4000-8000-000000000001`) with
-`account_status = 'none'` and **no** `auth_user_id`. It does not insert Auth
-users or `team_members` for a login.
-
-1. Create a user in Supabase **Authentication → Users** (Add user). For local
-   MVP, disabling “Confirm email” under Auth settings avoids confirmation
-   friction.
-2. In **Table Editor → people**, set John Hall’s `auth_user_id` to that Auth
-   user UUID and `account_status` to `active`.
-
-Without that link (or an equivalent invited/active person with a role), sign-in
-is rejected or the user lands on `/no-access`.
-
-Regenerate TypeScript types after schema changes (optional; checked-in types live
-at `src/lib/supabase/database.types.ts`):
-
-```bash
-npx supabase gen types typescript --linked > src/lib/supabase/database.types.ts
-```
-
-## Run the app
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) — you should be redirected to
-`/login`.
-
-## Local Supabase (optional)
+Requires Docker.
 
 ```bash
 npx supabase start
 ```
 
-That applies `supabase/migrations/`. Auto-seed is disabled in
-`supabase/config.toml` — load `supabase/seed.sql` yourself, then link John Hall
-as above.
+This applies all files under `supabase/migrations/` automatically. Auto-seed is
+disabled — load the seed manually:
 
-Read URL and keys from `npx supabase status` into `.env.local`.
+```bash
+npx supabase db query -f supabase/seed.sql
+```
 
-Local `config.toml` may still allow Auth signup; the app still gates uninvited
-users. Prefer invite flows that match production.
+Read the local URL and keys into `.env.local`:
+
+```bash
+npx supabase status
+```
+
+Local `config.toml` may allow Auth signup; the app still gates uninvited users.
+Prefer invite flows that match production.
+
+### After seeding — link the first manager
+
+The seed creates club manager **John Hall**
+(`people.id` = `b0000000-0000-4000-8000-000000000001`) with `account_status =
+'none'` and no `auth_user_id`.
+
+1. Create an Auth user in the Supabase dashboard (Authentication → Users → Add
+   user). For local work, disable "Confirm email" under Auth settings to skip
+   the confirmation step.
+2. In Table Editor → `people`, set John Hall's `auth_user_id` to that UUID and
+   `account_status` to `active`.
+
+Without this step, every sign-in lands on `/no-access`.
+
+### Creating migrations
+
+```bash
+npx supabase migration new <migration-name>
+```
+
+This creates a new timestamped file in `supabase/migrations/`. Keep migrations
+idempotent where possible. Push with:
+
+```bash
+npx supabase db push
+```
+
+Migrations are the authoritative schema source — do not edit the database
+directly in production.
+
+### Regenerating TypeScript types
+
+After a schema change, regenerate the checked-in types:
+
+```bash
+npx supabase gen types typescript --linked > src/lib/supabase/database.types.ts
+```
+
+---
+
+## Starting the application
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — the app redirects to
+`/login`.
+
+---
 
 ## Scripts
 
@@ -150,22 +195,10 @@ users. Prefer invite flows that match production.
 | `npm run test:watch`           | Vitest watch mode                                        |
 | `npm run check:client-secrets` | Assert service-role key is not in the client bundle (CI) |
 
-`next build` can compile without a real backend if you pass placeholder env:
+`next build` compiles without a real backend using placeholder env vars:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
 NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder \
 npm run build
 ```
-
-Pre-commit hooks run `lint-staged` (ESLint + Prettier on staged files) via Husky.
-They do **not** run the full test suite.
-
-## Further reading
-
-- [Deploy](deploy.md) — Vercel, CI, Auth URLs, email templates
-- [Roles](roles.md)
-- [Product brief](requirements.md)
-- [Data objects](data_objects.md)
-- [People, auth, and onboarding](people_auth_onboarding_design.md)
-- [Operations runbook](operations-runbook.md) — database backups
