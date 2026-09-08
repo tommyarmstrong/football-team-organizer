@@ -252,7 +252,7 @@ Supabase Auth (email/password). Access is derived from membership tables and lin
 
 A user may hold any combination of roles on one team and a different set on another.
 
-**`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they appear in any of `managers.user_id`, `team_members`, `guardians.user_id`, or `players.user_id` (checked via the `has_app_access` RPC in middleware).
+**`player_guardians`** — guardian ↔ player links with relationship and legal-guardian flag (see Guardian). A user has app access if they are an active club manager, an active guardian, or have a `team_members` row with role `management` / `coach` / `guardian` / `guardian_assistant` (checked via the `has_app_access` RPC in middleware). Player-only linked accounts do not get app access.
 
 RLS uses SECURITY DEFINER helper functions (`is_club_management`, `is_club_staff`, `can_read_club`, `can_read_team`, `can_read_team_row`, `can_edit_team`, `can_edit_match_day`, `can_edit_match_goals`, `can_read_player`, `can_read_player_row`, `can_edit_player`, `can_view_player_contact`, `player_club_id`) to enforce these rules on every table. `can_edit_match_day` covers fixtures, squad, periods, goals/assists, and cards (including guardian assistants). Player of the match stays on `can_edit_team` (coach/management).
 
@@ -301,9 +301,9 @@ Team-scoped screens act on the **active team** chosen in the header switcher. Th
 ### Auth
 
 1. Users sign in with **email/password** only (Supabase Auth)
-2. Protected routes require a session **and** club/team access (`has_app_access`); users without access see `/no-access`, where they can create a new club
+2. Protected routes require a session **and** allowed role access (`has_app_access`: manager, coach, guardian, or guardian assistant); users without access (including player-only) see `/no-access`
 3. Sign out from the app chrome
-4. Guardians and players get authenticated, read-only access scoped to their teams
+4. Guardians get authenticated, read-only access scoped to their teams; player-only accounts cannot use the app
 
 ### Club & team
 
