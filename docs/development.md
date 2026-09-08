@@ -38,8 +38,23 @@ Fill in `.env.local` — see [Configuration](configuration.md).
 | `SUPABASE_SERVICE_ROLE_KEY`             | Supabase → Project Settings → API → Service role key |
 | `NEXT_PUBLIC_APP_URL`                   | `http://localhost:3000` locally                      |
 | `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY` | Google Cloud Console (optional)                      |
+| `VERCEL_OIDC_TOKEN`                     | Written by `vercel env pull` into `.env.local`       |
 
 Full variable reference and security notes: [Configuration](configuration.md).
+
+### `VERCEL_OIDC_TOKEN` in `.env.local`
+
+After linking the project to Vercel, pull Development env into `.env.local`:
+
+```bash
+npx vercel link
+npx vercel env pull .env.local
+```
+
+That writes `VERCEL_OIDC_TOKEN` (and any other Development-scoped Vercel env
+vars). The token is short-lived (about 12 hours); re-run `vercel env pull` if
+local Vercel-authenticated calls start failing. Never commit the real token —
+`.env.local` is gitignored; `.env.example` only documents the placeholder.
 
 ---
 
@@ -137,11 +152,36 @@ Open [http://localhost:3000](http://localhost:3000) — the app redirects to
 ## Running tests
 
 ```bash
-npm test           # run once
-npm run test:watch # watch mode
+npm test           # run once (CI uses this)
+npm run test:watch # watch mode while developing
 ```
 
-Tests use [Vitest](https://vitest.dev/).
+Tests use [Vitest](https://vitest.dev/) (`vitest.config.ts`). Suites live next to
+source as `src/**/*.test.ts`. The suite mocks Supabase — it does not need a live
+database.
+
+### Coverage
+
+Coverage uses the Vitest **v8** provider (`@vitest/coverage-v8`). Config lives
+under `coverage` in `vitest.config.ts`: it includes `src/**/*.{ts,tsx}` and
+excludes Supabase generated/client helpers, shadcn UI primitives, test helpers,
+and `*.test.ts` files themselves.
+
+```bash
+npx vitest run --coverage
+```
+
+Open the HTML report under `coverage/` (gitignored) after a run. There is no
+enforced coverage threshold in CI today — CI runs `npm test` without
+`--coverage`. Treat coverage as a local / PR hygiene signal:
+
+- Prefer a colocated `*.test.ts` for new logic under `src/lib/` (parsers,
+  actions, data helpers, authz).
+- When changing behaviour, extend the nearest existing test rather than only
+  adding a manual check.
+- Do not chase 100% on UI shells or generated types; focus on branching logic
+  and security-sensitive paths (auth, invites, RLS-shaped helpers, archive /
+  season migration).
 
 ---
 

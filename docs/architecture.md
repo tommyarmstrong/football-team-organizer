@@ -16,12 +16,15 @@ Browser (React / Next.js RSC + Client Components)
    ▼
 Vercel (Next.js App Router — SSR + edge middleware)
    │
-   ├── Supabase Auth   (email/password sessions, invite-only)
+   ├── Supabase Auth   (email/password + Google OAuth, invite-only)
    ├── PostgreSQL       (all application data, RLS-protected)
    └── Supabase Storage (club crest / team photo uploads)
 
-Google
-   └── Maps Embed API   (venue map iframes — optional, read-only)
+External
+   ├── Email relay (SMTP)     — invite / Auth emails (tested with Resend)
+   ├── DNS domain             — public app origin and Auth redirect URLs
+   ├── Google Cloud Platform  — Google OAuth client; optional Maps Embed
+   └── GitHub                 — CI/CD (Actions) and source control
 ```
 
 No separate API server. The Next.js app is the only server-side process; all
@@ -105,8 +108,8 @@ bundle small). Custom shared components (skeletons, `EmptyState`, `ErrorBanner`,
 
 ### Authentication
 
-Supabase Auth handles sessions. The app uses **email/password** only. Magic
-links and OAuth providers (including Google) are out of scope for the current
+Supabase Auth handles sessions. The app uses **email/password** and **Google OAuth** only. Magic
+links and OAuth providers (with the exception of Google) are out of scope for the current
 version.
 
 Access is **invite-only**. There is no public registration UI. A signed-in user
@@ -150,7 +153,7 @@ Roles are additive and scoped. A single login can be:
 - Team **coach** (write own teams, read all club teams)
 - **Guardian** (read their player's teams; write linked player contact)
 - **Guardian assistant** (coach read/write for match-day data, minus POTM)
-- **Player** (read own teams; write own contact)
+- **Player** (read own teams; write own contact) - although Players do not currently have ability to login
 
 Team roles live in `team_members` (one row per `(team, user, role)`). Coach
 write access keys off `team_members.role = 'coach'`, not the `coaches` profile
@@ -183,15 +186,19 @@ Browser
 
 ## External dependencies
 
-| Dependency            | Purpose                                       | Required                          |
-| --------------------- | --------------------------------------------- | --------------------------------- |
-| Supabase (hosted)     | Auth, PostgreSQL, Storage                     | Yes                               |
-| Vercel                | Hosting, edge middleware, preview deployments | Yes (for hosted)                  |
-| Google Maps Embed API | Venue map iframes                             | No — degrades gracefully          |
-| AWS S3                | Daily database backup destination             | No — only for the backup workflow |
+| Dependency            | Purpose                                                                                                                                      | Required                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Supabase (hosted)     | Auth, PostgreSQL, Storage                                                                                                                    | Yes                                                   |
+| Vercel                | Hosting, edge middleware, preview deployments                                                                                                | Yes (for hosted)                                      |
+| Email relay (SMTP)    | Invite and Auth emails via Supabase SMTP. Tested with [Resend](https://resend.com); other SMTP providers work if Auth is configured for them | Yes (for invites / Auth email)                        |
+| DNS domain            | Public app origin (`NEXT_PUBLIC_APP_URL`), Auth Site URL, and redirect allow-list                                                            | Yes (for hosted)                                      |
+| Google Cloud Platform | Google OAuth client credentials for Supabase Auth; optional Maps Embed API key for venue iframes                                             | OAuth yes if Google sign-in is enabled; Maps optional |
+| GitHub                | Source control and CI/CD (lint / test / build, production-source gate, database backups)                                                     | Yes (for hosted workflow)                             |
+| AWS S3                | Daily database backup destination                                                                                                            | No — only for the backup workflow                     |
 
-The application has **no runtime dependency on external services other than
-Supabase**. Google Maps and S3 are optional or background-only.
+Supabase remains the primary runtime dependency for data and auth. Email relay,
+DNS, GCP (OAuth), and GitHub are required for a complete hosted setup; Maps and
+S3 are optional or background-only.
 
 ---
 
@@ -222,11 +229,19 @@ Server Components are the default. Client Components are opted into
 the client bundle small and avoids unnecessarily re-fetching data the server
 already has.
 
-### One season per team
+### Seasons via archive and migrate (no `seasons` table)
 
-The MVP does not model multiple seasons. Each team has a `season_label` string.
-A `seasons` table is explicitly deferred; do not introduce one without a
-requirements update.
+There is no separate `seasons` table. Each `teams` row carries a
+`season_label` (e.g. `2025/26`) and an optional `archived_at`.
+
+When a season ends, management **archives** the team and **starts a new season**
+(`startNewTeamSeason`): create a successor team for the next label, optionally
+migrate squad and coaching staff, always copy coach/management app access, then
+archive the source. Match history stays on the archived team record.
+
+Archived teams remain selectable and **read-only** (historical fixtures, results,
+stats). Do not invent a global seasons entity without an explicit design change;
+season progression is team-row archive + successor, not overwrite-in-place.
 
 ### No per-team URL prefixes
 
