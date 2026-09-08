@@ -49,6 +49,7 @@ const person = {
   id: "person-1",
   first_name: "Ada",
   last_name: "Lovelace",
+  account_status: "active",
 } as Person;
 
 function authClient({
@@ -392,5 +393,82 @@ describe("handleEmailAuthRequest", () => {
     expect(response.headers.get("location")).toBe(
       "https://tracker.example.com/dashboard",
     );
+  });
+
+  it("allows OAuth when the person is invited", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: { ...person, auth_user_id: null, account_status: "invited" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(linkAuthUserToPersonMock).toHaveBeenCalled();
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBe(
+      "https://tracker.example.com/dashboard",
+    );
+  });
+
+  it("denies OAuth when the person account_status is none", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: { ...person, auth_user_id: null, account_status: "none" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(
+      decodeURIComponent(response.headers.get("location") ?? ""),
+    ).toContain("invitation");
+  });
+
+  it("denies OAuth when the person account_status is disabled", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: { ...person, auth_user_id: "auth-1", account_status: "disabled" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(
+      decodeURIComponent(response.headers.get("location") ?? ""),
+    ).toContain("disabled");
+  });
+
+  it("denies invite-token OAuth when the person is disabled", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    loadInvitationByTokenMock.mockResolvedValue({
+      invitation,
+      person: { ...person, account_status: "disabled" },
+      error: null,
+    });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&invite_token=tok"),
+    );
+
+    expect(linkAuthUserToPersonMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(
+      decodeURIComponent(response.headers.get("location") ?? ""),
+    ).toContain("disabled");
   });
 });

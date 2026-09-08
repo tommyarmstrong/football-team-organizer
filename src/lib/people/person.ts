@@ -98,3 +98,19 @@ export function evaluateInvitation(invite: {
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
+
+/** OAuth/password sign-in is allowed only for invited or active people. */
+export function personMaySignIn(
+  status: Person["account_status"] | null | undefined,
+): boolean {
+  return status === "active" || status === "invited";
+}
+
+export function signInDeniedMessage(
+  status: Person["account_status"] | null | undefined,
+): string {
+  if (status === "disabled") {
+    return "This account has been disabled. Contact your club for help.";
+  }
+  return "You need an invitation before you can sign in. Ask your club to invite you.";
+}
