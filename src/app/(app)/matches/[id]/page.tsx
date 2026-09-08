@@ -154,7 +154,7 @@ export default async function MatchDetailPage({
             <>
               {postcard ? (
                 <SharePostcardButton
-                  imageUrl={`/matches/${match.id}/postcard.png`}
+                  imageUrl={`/matches/${match.id}/postcard`}
                   caption={postcard.caption}
                   fileName={postcard.fileName}
                 />

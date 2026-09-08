@@ -16,18 +16,47 @@ vi.mock("@/lib/postcards/postcard-image", () => ({
 
 vi.mock("next/og", () => ({
   ImageResponse: class ImageResponse extends Response {
-    constructor() {
+    constructor(
+      _element: unknown,
+      options: { headers?: Record<string, string> } = {},
+    ) {
       super("png-bytes", {
         status: 200,
-        headers: { "Content-Type": "image/png" },
+        headers: { "Content-Type": "image/png", ...options.headers },
       });
     }
   },
 }));
 
-import { GET } from "@/app/(app)/matches/[id]/postcard.png/route";
+import { GET } from "@/app/(app)/matches/[id]/postcard/route";
 
-describe("GET /matches/[id]/postcard.png", () => {
+const playedPayload = {
+  matchId: "match-1",
+  clubName: "MGA",
+  clubColour: "#146C4A",
+  clubIconUrl: null,
+  teamName: "U11 Girls",
+  seasonLabel: "2025/26",
+  opponentName: "Riverside",
+  dateLabel: "Sun 8 Mar 2026",
+  homeAwayLabel: "Home",
+  competitionLabel: "League",
+  homeName: "U11 Girls",
+  awayName: "Riverside",
+  homeScore: 1,
+  awayScore: 0,
+  scoreLabel: "1–0",
+  result: "W" as const,
+  story: "Kept a clean sheet.",
+  goalList: { kind: "none" as const },
+  coachPotmLabel: null,
+  playersPotmLabel: null,
+  form: ["W"] as Array<"W" | "D" | "L">,
+  caption: "U11 Girls 1–0 Riverside",
+  fileName: "u11-girls-2026-03-08-vs-riverside.png",
+};
+
+describe("GET /matches/[id]/postcard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -38,7 +67,7 @@ describe("GET /matches/[id]/postcard.png", () => {
       error: null,
     });
     const response = await GET(
-      new Request("http://localhost/matches/missing/postcard.png"),
+      new Request("http://localhost/matches/missing/postcard"),
       {
         params: Promise.resolve({ id: "missing" }),
       },
@@ -52,7 +81,7 @@ describe("GET /matches/[id]/postcard.png", () => {
       error: "Postcard is only available for played matches.",
     });
     const response = await GET(
-      new Request("http://localhost/matches/match-1/postcard.png"),
+      new Request("http://localhost/matches/match-1/postcard"),
       { params: Promise.resolve({ id: "match-1" }) },
     );
     expect(response.status).toBe(404);
@@ -60,35 +89,11 @@ describe("GET /matches/[id]/postcard.png", () => {
 
   it("returns a private PNG for a played match", async () => {
     buildMatchPostcardPayloadMock.mockResolvedValue({
-      data: {
-        matchId: "match-1",
-        clubName: "MGA",
-        clubColour: "#146C4A",
-        clubIconUrl: null,
-        teamName: "U11 Girls",
-        seasonLabel: "2025/26",
-        opponentName: "Riverside",
-        dateLabel: "Sun 8 Mar 2026",
-        homeAwayLabel: "Home",
-        competitionLabel: "League",
-        homeName: "U11 Girls",
-        awayName: "Riverside",
-        homeScore: 1,
-        awayScore: 0,
-        scoreLabel: "1–0",
-        result: "W",
-        story: "Kept a clean sheet.",
-        goalList: { kind: "none" },
-        coachPotmLabel: null,
-        playersPotmLabel: null,
-        form: ["W"],
-        caption: "U11 Girls 1–0 Riverside",
-        fileName: "u11-girls-2026-03-08-vs-riverside.png",
-      },
+      data: playedPayload,
       error: null,
     });
     const response = await GET(
-      new Request("http://localhost/matches/match-1/postcard.png"),
+      new Request("http://localhost/matches/match-1/postcard"),
       { params: Promise.resolve({ id: "match-1" }) },
     );
     expect(response.status).toBe(200);
