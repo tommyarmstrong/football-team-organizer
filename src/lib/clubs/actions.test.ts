@@ -72,6 +72,23 @@ describe("club actions", () => {
     });
   });
 
+  it("rejects create when the viewer is not club management", async () => {
+    getViewerContextMock.mockResolvedValue(null);
+    expect(
+      await createClubAction({}, formDataFrom({ name: "New Club" })),
+    ).toMatchObject({ error: expect.stringMatching(/not signed in/i) });
+
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ managementClubIds: [], isManagement: false }),
+    );
+    expect(
+      await createClubAction({}, formDataFrom({ name: "New Club" })),
+    ).toMatchObject({
+      error: expect.stringMatching(/only club management/i),
+    });
+    expect(createClubMock).not.toHaveBeenCalled();
+  });
+
   it("creates a club and redirects", async () => {
     await expect(
       createClubAction({}, formDataFrom({ name: "New Club" })),
