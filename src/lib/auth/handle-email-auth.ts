@@ -14,23 +14,32 @@ import {
   linkAuthUserToPerson,
   loadInvitationByToken,
 } from "@/lib/people/invitations";
-import { normalizeEmail } from "@/lib/people/person";
+import {
+  normalizeEmail,
+  personMaySignIn,
+  signInDeniedMessage,
+} from "@/lib/people/person";
+import type { Person } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
-
-const NOT_INVITED_MESSAGE =
-  "You need an invitation before you can sign in. Ask your club to invite you.";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-async function denyUninvitedAccess(
+async function denySignIn(
   supabase: SupabaseServerClient,
   origin: string,
-  message: string = NOT_INVITED_MESSAGE,
+  message: string,
 ): Promise<NextResponse> {
   await supabase.auth.signOut();
   return NextResponse.redirect(
     `${origin}/login?error=${encodeURIComponent(message)}`,
   );
+}
+
+function denyForPersonStatus(
+  person: Pick<Person, "account_status">,
+): { deny: string } | null {
+  if (personMaySignIn(person.account_status)) return null;
+  return { deny: signInDeniedMessage(person.account_status) };
 }
 
 /**
@@ -55,6 +64,9 @@ async function linkUserFromInviteSession(input: {
     if (inviteError || !invitation || !person) {
       return { linked: false };
     }
+
+    const statusDeny = denyForPersonStatus(person);
+    if (statusDeny) return statusDeny;
 
     const email = user.email ? normalizeEmail(user.email) : null;
     if (email && email !== normalizeEmail(invitation.email)) {
@@ -88,8 +100,14 @@ async function linkUserFromInviteSession(input: {
     if (error) return { linked: false };
     if (!person) {
       const { data: byAuth } = await findPersonForAuthUserId(user.id);
-      return { linked: Boolean(byAuth) };
+      if (!byAuth) return { linked: false };
+      const statusDeny = denyForPersonStatus(byAuth);
+      if (statusDeny) return statusDeny;
+      return { linked: true };
     }
+
+    const statusDeny = denyForPersonStatus(person);
+    if (statusDeny) return statusDeny;
 
     if (!person.auth_user_id) {
       const { error: linkError } = await linkAuthUserToPerson({
@@ -111,7 +129,10 @@ async function linkUserFromInviteSession(input: {
   }
 
   const { data: byAuth } = await findPersonForAuthUserId(user.id);
-  return { linked: Boolean(byAuth) };
+  if (!byAuth) return { linked: false };
+  const statusDeny = denyForPersonStatus(byAuth);
+  if (statusDeny) return statusDeny;
+  return { linked: true };
 }
 
 async function markPasswordSetup(kind: "invite" | "recovery") {
@@ -185,7 +206,7 @@ export async function handleEmailAuthRequest(
 
     if ("redirect" in linkResult) return linkResult.redirect;
     if ("deny" in linkResult) {
-      return denyUninvitedAccess(supabase, origin, linkResult.deny);
+      return denySignIn(supabase, origin, linkResult.deny);
     }
 
     // Password recovery must still reach the reset form even if the account
@@ -195,13 +216,19 @@ export async function handleEmailAuthRequest(
       if (!linked) {
         try {
           const { data: person } = await findPersonForAuthUserId(user.id);
-          linked = Boolean(person);
+          if (person) {
+            const statusDeny = denyForPersonStatus(person);
+            if (statusDeny) {
+              return denySignIn(supabase, origin, statusDeny.deny);
+            }
+            linked = true;
+          }
         } catch {
           linked = false;
         }
       }
       if (!linked) {
-        return denyUninvitedAccess(supabase, origin);
+        return denySignIn(supabase, origin, signInDeniedMessage(null));
       }
     }
 
