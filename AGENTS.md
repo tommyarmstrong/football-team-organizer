@@ -66,10 +66,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Dependencies are refreshed automatically by the startup script (`npm install`). Node 20+ is required.
 
+Full local/hosted setup: `docs/install.md` and `docs/deploy.md`. Roles and
+invite-only access: `docs/roles.md`.
+
 ### Services
 
-- **Web app** — Next.js (App Router). Standard scripts live in `package.json`: `npm run dev` (http://localhost:3000), `npm run build`, `npm run lint`, `npm run format:check`, `npm test`. CI (`.github/workflows/ci.yml`) runs `lint` → `format:check` → `test` → `build`.
-- **Supabase** (Postgres + Auth) — required for anything past `/login`. The repo targets a hosted Supabase project by default (see `docs/install.md` and `docs/deploy.md`), but for local end‑to‑end work run the Supabase CLI stack (`npx supabase start`), which needs Docker.
+- **Web app** — Next.js (App Router). Standard scripts live in `package.json`: `npm run dev` (http://localhost:3000), `npm run build`, `npm run lint`, `npm run format:check`, `npm test`, `npm run check:client-secrets`. CI (`.github/workflows/ci.yml`) runs `lint` → `format:check` → `test` → `build` → client-bundle secret scan.
+- **Supabase** (Postgres + Auth) — required for anything past `/login`. The repo targets a hosted Supabase project by default, but for local end‑to‑end work run the Supabase CLI stack (`npx supabase start`), which needs Docker.
 
 ### `npm run build` without a real backend
 
@@ -77,9 +80,16 @@ Dependencies are refreshed automatically by the startup script (`npm install`). 
 
 ### Running the app end-to-end against local Supabase (non-obvious gotchas)
 
-`npx supabase start` applies `supabase/migrations/` (a single baseline schema file) but two gotchas can still block a working login:
+Access is **invite-only**. There is no public register UI. Sign-in requires a
+`people` row with `account_status` of `invited` or `active`, plus app access
+(manager / `team_members` / guardian / player). Club create requires an existing
+manager — `/no-access` cannot bootstrap the first club.
 
-1. **Seed needs a matching Auth user.** `supabase/seed.sql` hardcodes an Auth user UUID and inserts `team_members` for it; without that Auth user the seed fails FK checks and a logged-in user has no team. Create an Auth user first (e.g. via `POST /auth/v1/admin/users` with the service role key), then substitute its id for the placeholder `05b5a111-…397b` when loading the seed. Auto-seed is disabled in `supabase/config.toml` for this reason.
-2. **Seed row ordering.** `seed.sql` inserts `team_members` for the England team (`bbbb…`) before that team is created later in the same transaction, so a straight load fails on `team_members_team_id_fkey`. Load it with FK triggers off: prepend `set session_replication_role = replica;` and append `reset session_replication_role;` around the seed when applying it locally.
+`npx supabase start` applies **all** files under `supabase/migrations/` (not
+only the baseline). Auto-seed is disabled in `supabase/config.toml`.
 
-`.env.local` (gitignored) needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` — read the values from `npx supabase status`. Test login used during setup: `coach@example.com` / `Password123!`.
+1. Load `supabase/seed.sql` (SQL Editor or `npx supabase db query -f supabase/seed.sql`). The seed does **not** create Auth users or set `auth_user_id`.
+2. Create an Auth user (Dashboard → Authentication → Users, or Admin API with the service role key).
+3. Link club manager **John Hall** (`people.id` `b0000000-0000-4000-8000-000000000001`): set `auth_user_id` to that Auth UUID and `account_status` to `active`.
+
+`.env.local` (gitignored) needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (required for invites) — read the values from `npx supabase status`.

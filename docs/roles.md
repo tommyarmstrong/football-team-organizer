@@ -7,14 +7,13 @@ These are the roles for the football organizer app.
 3. Guardian
 4. Guardian assistant
 5. Player
-6. Admin
 
-Every signed-in person has a **login** (`auth.users`) and **one or more roles**.
+Signed-in people have a **login** (`auth.users`) and **one or more roles**.
 Roles are **additive** and **scoped**: the same login may be management at the
 club, coach on team A, and guardian on team B.
 
-Permissions below describe the intended model. Fine-grained enforcement is
-still evolving; do not assume every rule is fully applied in RLS/UI yet.
+Permissions below describe the intended model. Some fine-grained rules are still
+evolving in RLS/UI; callouts note what is already enforced.
 
 ## Access gates (current behaviour)
 
@@ -31,6 +30,10 @@ still evolving; do not assume every rule is fully applied in RLS/UI yet.
   account (`players` and/or `team_members.role = player` with no allowed role)
   is denied and lands on `/no-access`. Roles are additive: player plus any
   allowed role still has access.
+- **Who can be invited today:** the app invites managers, coaches, and
+  guardians (including guardian assistants via team access). It does **not**
+  expose inviting players to create linked Auth accounts, so players do not
+  currently log in through the product UI.
 - **Club create:** `create_club_with_management` requires existing club
   management (`can_manage_any_club()`). The first club/manager must come from
   seed or SQL — `/no-access` does not bootstrap a club.
@@ -75,6 +78,12 @@ Club management has full read and write access to all club data (current
 behaviour). Team management write access is intended to be limited to that team;
 cross-team write should follow the user’s roles on each team.
 
+**Enforcement gap:** the UI may treat team `management` as editable, but RLS
+`can_edit_team` is currently club management **or**
+`team_members.role = coach` (not team `management`). Do not assume team-only
+management can write everything the UI offers. Match-day RLS
+(`can_edit_match_day`) does include team `management`.
+
 ## Coach
 
 ### Permissions
@@ -82,14 +91,14 @@ cross-team write should follow the user’s roles on each team.
 Coaches have full read and write access to:
 
 - Their own user profile
-- Team data for every team they are assigned as coach
+- Team data for every team they are assigned as coach (`team_members`)
 - Match data for every match their team plays (including player of the match)
 
 Coaches have full read (but not write) access to:
 
 - Every team's data in the same club
 - Every team's match data in the same club
-- Every player's data (some fields may be restricted later)
+- Every player's data (sensitive `player_contacts` remain restricted)
 
 A coach of team A who is not a coach (or other write role) on team B can read
 team B’s player of the match but cannot set it.
@@ -114,7 +123,8 @@ Guardians have read (but not write) access to:
 
 ### Permissions
 
-Guardian assistants assist coaches. They have all the access of Guardians, and in addition they can record match-day data for their team:
+Guardian assistants assist coaches. They have all the access of Guardians, and in
+addition they can record match-day data for their team:
 
 - Add and edit matches
 - Write access to match-day squad
@@ -124,20 +134,22 @@ Guardian assistants assist coaches. They have all the access of Guardians, and i
 
 They cannot add or edit player of the match (coach or management only).
 
+Match-day write and the POTM restriction are **enforced** in RLS/UI
+(`can_edit_match_day` and related policies).
+
 ## Player
 
-Players are modelled in `players` / `team_members.role = player` for squad and
-match data, but a **player-only** linked login does **not** get app access
-(`has_app_access` is false → `/no-access`). Intended in-app player permissions
-(if a future player client is added) are read-only:
+Players are modelled in `players` / `team_members.role = player` (and assigned
+to teams via `team_players`) for squad and match data. They are **not invited
+to log in** today: the invite UI does not create linked Auth accounts for
+player-only people. A **player-only** linked login also does **not** get app
+access (`has_app_access` is false → `/no-access`).
 
-- Their own user profile
+Intended in-app player permissions (if a future player client is added) are
+read-only:
+
+- Their own user profile (name / email / phone may be self-editable when linked)
 - Their own team data
 - Their own team dashboard
 - Their own team's match data
 - Their own team's stats data
-
-## Admin
-
-This is the IT Admin for the site. They have full admin rights at this stage.
-Not yet modelled as a dedicated enum/table value.

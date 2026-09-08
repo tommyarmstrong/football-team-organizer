@@ -16,8 +16,8 @@
 <p align="center">
   <a href="#what-you-can-do">Features</a> ·
   <a href="#who-its-for">Roles</a> ·
-  <a href="docs/install.md">Install locally</a> ·
-  <a href="docs/deploy.md">Deploy</a>
+  <a href="docs/development.md">Development</a> ·
+  <a href="docs/deployment.md">Deploy</a>
 </p>
 
 ---
@@ -83,12 +83,24 @@ Each club can set a crest and a club colour. The header, cards, and pitch wash p
 
 This repository is the app. To stand up your own club instance:
 
-| Guide          | What you need                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| **Local**      | Node.js, a Supabase project, and a few env vars — [`docs/install.md`](docs/install.md)        |
-| **Production** | Vercel + hosted Supabase, auth URLs, and email templates — [`docs/deploy.md`](docs/deploy.md) |
+| Guide          | What you need                                                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| **Local**      | Node.js, a Supabase project, and a few env vars — [`docs/development.md`](docs/development.md)        |
+| **Production** | Vercel + hosted Supabase, auth URLs, and email templates — [`docs/deployment.md`](docs/deployment.md) |
 
-Product brief: [`docs/requirements.md`](docs/requirements.md) · Operations (backups): [`docs/operations-runbook.md`](docs/operations-runbook.md)
+## Documentation
+
+| Document                                         | Contents                                               |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| [`docs/product.md`](docs/product.md)             | Product brief — what the app does and who it's for     |
+| [`docs/roles.md`](docs/roles.md)                 | Role definitions and permission detail                 |
+| [`docs/architecture.md`](docs/architecture.md)   | System design, components, key decisions               |
+| [`docs/database.md`](docs/database.md)           | Data model and RLS strategy                            |
+| [`docs/development.md`](docs/development.md)     | Local setup, testing, branching                        |
+| [`docs/deployment.md`](docs/deployment.md)       | Environments, CI/CD, Vercel and Supabase configuration |
+| [`docs/configuration.md`](docs/configuration.md) | Environment variables                                  |
+| [`docs/operations.md`](docs/operations.md)       | Database backups and restore                           |
+| [`docs/security.md`](security.md)                | Vulnerability reporting and security guidelines        |
 
 ## License
 
