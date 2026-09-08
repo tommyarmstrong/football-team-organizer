@@ -8,12 +8,14 @@ const {
   loadInvitationByTokenMock,
   linkAuthUserToPersonMock,
   findPersonForVerifiedEmailMock,
+  findPersonForAuthUserIdMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   cookiesSetMock: vi.fn(),
   loadInvitationByTokenMock: vi.fn(),
   linkAuthUserToPersonMock: vi.fn(),
   findPersonForVerifiedEmailMock: vi.fn(),
+  findPersonForAuthUserIdMock: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -31,6 +33,7 @@ vi.mock("@/lib/people/invitations", () => ({
   loadInvitationByToken: loadInvitationByTokenMock,
   linkAuthUserToPerson: linkAuthUserToPersonMock,
   findPersonForVerifiedEmail: findPersonForVerifiedEmailMock,
+  findPersonForAuthUserId: findPersonForAuthUserIdMock,
 }));
 
 import { handleEmailAuthRequest } from "@/lib/auth/handle-email-auth";
@@ -79,6 +82,7 @@ function authClient({
         data: { user: sessionUser },
         error: null,
       })),
+      signOut: vi.fn(async () => ({ error: null })),
     },
   };
 }
@@ -94,6 +98,7 @@ describe("handleEmailAuthRequest", () => {
     loadInvitationByTokenMock.mockReset();
     linkAuthUserToPersonMock.mockReset();
     findPersonForVerifiedEmailMock.mockReset();
+    findPersonForAuthUserIdMock.mockReset();
     loadInvitationByTokenMock.mockResolvedValue({
       invitation,
       person,
@@ -104,6 +109,7 @@ describe("handleEmailAuthRequest", () => {
       data: { ...person, auth_user_id: null },
       error: null,
     });
+    findPersonForAuthUserIdMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("exchanges a PKCE code, links the invite, and sets the invite cookie", async () => {
@@ -135,6 +141,10 @@ describe("handleEmailAuthRequest", () => {
   it("verifies a token_hash recovery link and sets the recovery cookie", async () => {
     const client = authClient();
     createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: null,
+      error: null,
+    });
 
     const response = await handleEmailAuthRequest(
       request("/auth/confirm?token_hash=hash&type=recovery"),
@@ -144,6 +154,7 @@ describe("handleEmailAuthRequest", () => {
       type: "recovery",
       token_hash: "hash",
     });
+    expect(client.auth.signOut).not.toHaveBeenCalled();
     expect(cookiesSetMock).toHaveBeenCalledWith(
       PASSWORD_SETUP_COOKIE,
       "recovery",
@@ -229,29 +240,56 @@ describe("handleEmailAuthRequest", () => {
     });
   });
 
-  it("still redirects when linking throws (missing service role)", async () => {
-    createClientMock.mockResolvedValue(authClient());
+  it("signs out and denies access when linking throws (missing service role)", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
     loadInvitationByTokenMock.mockRejectedValue(new Error("no service role"));
 
     const response = await handleEmailAuthRequest(
       request("/auth/callback?code=abc&type=invite&invite_token=tok"),
     );
 
-    expect(response.headers.get("location")).toBe(
-      "https://tracker.example.com/auth/invite",
-    );
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(response.headers.get("location")).toContain("/login?error=");
+    expect(response.headers.get("location")).toContain("invitation");
   });
 
-  it("does not set a password-setup cookie for ordinary OAuth", async () => {
-    createClientMock.mockResolvedValue(authClient());
+  it("allows ordinary OAuth when the person is already linked", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: { ...person, auth_user_id: "auth-1" },
+      error: null,
+    });
 
     const response = await handleEmailAuthRequest(
       request("/auth/callback?code=abc&next=%2Fdashboard"),
     );
 
     expect(cookiesSetMock).not.toHaveBeenCalled();
+    expect(client.auth.signOut).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toBe(
       "https://tracker.example.com/dashboard",
     );
+  });
+
+  it("signs out uninvited Google users with no people row", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    findPersonForAuthUserIdMock.mockResolvedValue({ data: null, error: null });
+
+    const response = await handleEmailAuthRequest(
+      request("/auth/callback?code=abc&next=%2Fdashboard"),
+    );
+
+    expect(client.auth.signOut).toHaveBeenCalled();
+    expect(response.headers.get("location")).toContain("/login?error=");
+    expect(
+      decodeURIComponent(response.headers.get("location") ?? ""),
+    ).toContain("invitation");
   });
 });

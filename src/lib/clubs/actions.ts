@@ -19,6 +19,12 @@ export async function createClubAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const ctx = await getViewerContext();
+  if (!ctx) return { error: "Not signed in." };
+  if (!ctx.isManagement) {
+    return { error: "Only club management can create clubs." };
+  }
+
   const name = str(formData, "name");
   if (!name) return { error: "Club name is required." };
 
