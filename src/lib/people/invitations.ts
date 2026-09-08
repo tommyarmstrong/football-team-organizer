@@ -263,3 +263,17 @@ export async function findPersonForVerifiedEmail(
   if (error) return { data: null, error: error.message };
   return { data, error: null };
 }
+
+export async function findPersonForAuthUserId(
+  authUserId: string,
+): Promise<{ data: Person | null; error: string | null }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("people")
+    .select("*")
+    .eq("auth_user_id", authUserId)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
+}

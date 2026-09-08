@@ -26,7 +26,7 @@ export default async function EditClubPage() {
         <PageHeader title="Edit club" />
         <EmptyState
           title="No club found"
-          description="Create a club from the no-access page, or ask an administrator for help."
+          description="Ask an administrator to link your account to a club."
         />
       </div>
     );

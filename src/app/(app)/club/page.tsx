@@ -31,7 +31,7 @@ export default async function ClubPage() {
         <PageHeader title="Club" />
         <EmptyState
           title="No club found"
-          description="Create a club from the no-access page, or ask an administrator for help."
+          description="Ask an administrator to link your account to a club."
         />
       </div>
     );

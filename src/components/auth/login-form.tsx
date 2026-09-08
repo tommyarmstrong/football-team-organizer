@@ -10,6 +10,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { createClient } from "@/lib/supabase/client";
 import { validateNewPassword } from "@/lib/auth/password";
 import { acceptInvitationWithPassword } from "@/lib/people/onboarding-actions";
+import { assertPersonMayRemainSignedIn } from "@/lib/auth/actions";
 
 export function AcceptInvitationForm({
   token,
@@ -151,10 +152,17 @@ export function LoginFormWithGoogle() {
       password,
     });
 
+    if (signInError) {
+      setPending(false);
+      setError(signInError.message);
+      return;
+    }
+
+    const access = await assertPersonMayRemainSignedIn();
     setPending(false);
 
-    if (signInError) {
-      setError(signInError.message);
+    if (access.error) {
+      setError(access.error);
       return;
     }
 

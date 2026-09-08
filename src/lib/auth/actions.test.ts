@@ -8,6 +8,7 @@ const {
   loadInvitationByTokenMock,
   linkAuthUserToPersonMock,
   findPersonForVerifiedEmailMock,
+  findPersonForAuthUserIdMock,
   redirectMock,
   signOutMock,
 } = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const {
   loadInvitationByTokenMock: vi.fn(),
   linkAuthUserToPersonMock: vi.fn(),
   findPersonForVerifiedEmailMock: vi.fn(),
+  findPersonForAuthUserIdMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
@@ -37,13 +39,18 @@ vi.mock("@/lib/people/invitations", () => ({
   loadInvitationByToken: loadInvitationByTokenMock,
   linkAuthUserToPerson: linkAuthUserToPersonMock,
   findPersonForVerifiedEmail: findPersonForVerifiedEmailMock,
+  findPersonForAuthUserId: findPersonForAuthUserIdMock,
 }));
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-import { signOut, updatePasswordAndFinishAction } from "@/lib/auth/actions";
+import {
+  assertPersonMayRemainSignedIn,
+  signOut,
+  updatePasswordAndFinishAction,
+} from "@/lib/auth/actions";
 
 const user = { id: "auth-1", email: "ada@example.com" };
 
@@ -95,6 +102,7 @@ describe("updatePasswordAndFinishAction", () => {
     loadInvitationByTokenMock.mockReset();
     linkAuthUserToPersonMock.mockReset();
     findPersonForVerifiedEmailMock.mockReset();
+    findPersonForAuthUserIdMock.mockReset();
   });
 
   afterEach(() => {
@@ -234,5 +242,62 @@ describe("updatePasswordAndFinishAction", () => {
 
     expect(result).toEqual({});
     expect(cookiesDeleteMock).toHaveBeenCalledWith(PASSWORD_SETUP_COOKIE);
+  });
+});
+
+describe("assertPersonMayRemainSignedIn", () => {
+  beforeEach(() => {
+    createClientMock.mockReset();
+    signOutMock.mockReset();
+    findPersonForAuthUserIdMock.mockReset();
+    findPersonForVerifiedEmailMock.mockReset();
+  });
+
+  it("allows active people to remain signed in", async () => {
+    createClientMock.mockResolvedValue(authClient());
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: {
+        id: "person-1",
+        account_status: "active",
+      } as Person,
+      error: null,
+    });
+
+    expect(await assertPersonMayRemainSignedIn()).toEqual({ error: null });
+    expect(signOutMock).not.toHaveBeenCalled();
+  });
+
+  it("signs out disabled people", async () => {
+    createClientMock.mockResolvedValue(authClient());
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: {
+        id: "person-1",
+        account_status: "disabled",
+      } as Person,
+      error: null,
+    });
+
+    const result = await assertPersonMayRemainSignedIn();
+    expect(result.error).toMatch(/disabled/i);
+    expect(signOutMock).toHaveBeenCalled();
+  });
+
+  it("signs out people with account_status none", async () => {
+    createClientMock.mockResolvedValue(authClient());
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    findPersonForVerifiedEmailMock.mockResolvedValue({
+      data: {
+        id: "person-1",
+        account_status: "none",
+      } as Person,
+      error: null,
+    });
+
+    const result = await assertPersonMayRemainSignedIn();
+    expect(result.error).toMatch(/invitation/i);
+    expect(signOutMock).toHaveBeenCalled();
   });
 });

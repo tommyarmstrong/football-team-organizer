@@ -105,10 +105,23 @@ vi.mock("@/lib/authz/context", async (importOriginal) => {
 });
 
 vi.mock("@/components/brand/auth-shell", () => ({
-  AuthShell: ({ children, title }: { children: unknown; title: string }) => ({
+  AuthShell: ({
+    children,
+    title,
+    description,
+  }: {
+    children: unknown;
+    title: string;
+    description?: unknown;
+  }) => ({
     type: "AuthShell",
-    props: { title, children },
+    props: { title, description, children },
   }),
+}));
+vi.mock("@/components/clubs/create-club-form", () => ({
+  CreateClubForm: () => {
+    throw new Error("CreateClubForm must not render on invite-only pages");
+  },
 }));
 vi.mock("@/components/auth/login-auth-redirect", () => ({
   LoginAuthRedirect: () => ({ type: "LoginAuthRedirect" }),
@@ -175,10 +188,15 @@ vi.mock("@/components/team/competitions-section", () => ({
 vi.mock("@/components/stats/form-strip", () => ({ FormStrip: () => null }));
 vi.mock("@/components/ui/button", () => ({
   buttonVariants: () => "btn",
+  Button: (props: Record<string, unknown>) => ({ type: "Button", props }),
+}));
+vi.mock("@/lib/auth/actions", () => ({
+  signOut: vi.fn(),
 }));
 
 import HomePage from "@/app/page";
 import LoginPage from "@/app/login/page";
+import NoAccessPage from "@/app/no-access/page";
 import StatsPage, { StatsBody } from "@/app/(app)/stats/page";
 import MatchesPage from "@/app/(app)/matches/page";
 import PeoplePage from "@/app/(app)/people/page";
@@ -226,6 +244,16 @@ describe("app pages", () => {
   it("login page renders the auth shell title", () => {
     const tree = LoginPage() as { props: { title: string } };
     expect(tree.props.title).toBe("Sign in");
+  });
+
+  it("no-access page is invite-only and does not offer club creation", () => {
+    const tree = NoAccessPage() as {
+      props: { title: string; description: unknown; children: unknown };
+    };
+    expect(tree.props.title).toBe("No club access");
+    expect(JSON.stringify(tree.props.description)).toContain("invite");
+    expect(JSON.stringify(tree)).not.toContain("CreateClubForm");
+    expect(JSON.stringify(tree)).not.toContain("Create a club");
   });
 
   it("stats page shows a no-team error", async () => {
