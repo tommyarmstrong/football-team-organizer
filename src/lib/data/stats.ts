@@ -665,3 +665,48 @@ export async function getRecentForm(
 
   return { form, error: null };
 }
+
+function isMatchOnOrBefore(
+  row: { id: string; date: string; created_at: string },
+  through: { id: string; date: string; created_at: string },
+): boolean {
+  if (row.id === through.id) return true;
+  if (row.date < through.date) return true;
+  if (row.date > through.date) return false;
+  return row.created_at <= through.created_at;
+}
+
+/**
+ * Form strip for a postcard: played matches up to and including `through`,
+ * oldest → newest, with this match always last.
+ */
+export async function getFormThroughMatch(
+  teamId: string,
+  through: { id: string; date: string; created_at: string },
+  thisResult: "W" | "D" | "L",
+  limit = STATS_FORM_LIMIT,
+): Promise<{ form: Array<"W" | "D" | "L">; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select("id, date, created_at, goals(is_opposition)")
+    .eq("team_id", teamId)
+    .eq("status", "played")
+    .lte("date", through.date)
+    .order("date", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { form: [thisResult], error: error.message };
+
+  const prior: Array<"W" | "D" | "L"> = [];
+  for (const row of data ?? []) {
+    if (!isMatchOnOrBefore(row, through) || row.id === through.id) continue;
+    const { goalsFor, goalsAgainst } = scoreFromGoals(
+      Array.isArray(row.goals) ? row.goals : [],
+    );
+    const letter = resultLetter(goalsFor, goalsAgainst);
+    if (letter) prior.push(letter);
+  }
+
+  return { form: [...prior, thisResult].slice(-limit), error: null };
+}
