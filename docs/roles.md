@@ -16,6 +16,28 @@ club, coach on team A, and guardian on team B.
 Permissions below describe the intended model. Fine-grained enforcement is
 still evolving; do not assume every rule is fully applied in RLS/UI yet.
 
+## Access gates (current behaviour)
+
+- **Invite-only:** new accounts start via invitation
+  (`person_invitations` / Auth invite). There is no public register UI. Uninvited
+  Auth users are signed out or denied.
+- **Account status:** only `invited` or `active` may remain signed in.
+  `none` and `disabled` are rejected. Disabled people are also excluded from
+  `has_app_access` / management helpers in RLS.
+- **App access:** middleware calls `has_app_access`. A linked person needs at
+  least one of: an active club `managers` row, an active `guardians` row, or a
+  `team_members` row with role `management`, `coach`, `guardian`, or
+  `guardian_assistant` (and a non-disabled people status). A **player-only**
+  account (`players` and/or `team_members.role = player` with no allowed role)
+  is denied and lands on `/no-access`. Roles are additive: player plus any
+  allowed role still has access.
+- **Club create:** `create_club_with_management` requires existing club
+  management (`can_manage_any_club()`). The first club/manager must come from
+  seed or SQL — `/no-access` does not bootstrap a club.
+
+Practical “site admin” today is club **management** (plus the service role for
+Auth invites). A separate IT Admin role is not modelled.
+
 ## How roles are stored
 
 - Auth identity: Supabase `auth.users` (the login)
@@ -23,15 +45,22 @@ still evolving; do not assume every rule is fully applied in RLS/UI yet.
   `auth_user_id`, and account status (`none` | `invited` | `active` |
   `disabled`)
 - Domain roles: `managers`, `coaches`, `guardians`, `players` — each links to
-  `people` via `person_id` and keeps only role-specific attributes. A person may
-  hold multiple roles.
+  `people` via `person_id`, has `active_role` (default true), and keeps only
+  role-specific attributes. A person may hold multiple roles.
 - Invitations: `person_invitations` — secure, expiring, single-use invite tokens
   (hashed) for invite-only onboarding
 - Linking a login to a person (`people.auth_user_id`) associates every linked
-  role with that login. Coaches may also appear in `team_members.role = coach`.
+  role with that login
 - Team roles: `team_members` — one row per `(team, user, role)`; multiple rows
   per user on the same team are allowed
-- Team role values: `management` | `coach` | `guardian` | `guardian_assistant` | `player`
+- Team role values: `management` | `coach` | `guardian` | `guardian_assistant` |
+  `player`
+
+**Coach nuance:** the `coaches` / `team_coaches` tables hold staff profile data.
+Coach **write** access and several RLS helpers key off
+`team_members.role = 'coach'` (and club managers). A coach-only person without a
+`team_members` coach row (and without manager/guardian access) hits
+`/no-access`.
 
 ## Management
 
@@ -97,7 +126,10 @@ They cannot add or edit player of the match (coach or management only).
 
 ## Player
 
-Players have read (but not write) access to:
+Players are modelled in `players` / `team_members.role = player` for squad and
+match data, but a **player-only** linked login does **not** get app access
+(`has_app_access` is false → `/no-access`). Intended in-app player permissions
+(if a future player client is added) are read-only:
 
 - Their own user profile
 - Their own team data

@@ -116,6 +116,23 @@ describe("updateSession auth gates", () => {
     );
   });
 
+  it("sends player-only sessions (has_app_access false) to /no-access", async () => {
+    // RPC returns false for player-only roles after the role-gate migration.
+    mockAuth({ user: { id: "player-auth" }, hasAccess: false });
+
+    const response = await updateSession(request("/team"));
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/no-access",
+    );
+  });
+
+  it("allows coach/guardian/manager sessions when has_app_access is true", async () => {
+    mockAuth({ user: { id: "coach-auth" }, hasAccess: true });
+
+    const response = await updateSession(request("/dashboard"));
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it("sends signed-in users without membership away from /login", async () => {
     mockAuth({ user: { id: "auth-1" }, hasAccess: false });
 
