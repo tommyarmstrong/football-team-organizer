@@ -72,14 +72,18 @@ or Supabase Auth invite → `/auth/invite`). Creating an Auth user alone is not
 enough.
 
 The first club manager cannot be bootstrapped from the empty `/no-access` UI —
-use the seed or SQL as described below.
+use `supabase/seed.sql` or `supabase/england.sql` as described below.
 
 ---
 
 ## Local database
 
 Apply **all** migrations under `supabase/migrations/` in timestamp order, then
-seed.
+seed. There are two seed files — see [Database](database.md#seed-and-test-data):
+
+- `supabase/seed.sql` — bootstrap only (Demo Club + John Hall)
+- `supabase/england.sql` — optional England / FA demo dataset (alone or after
+  `seed.sql`)
 
 ### Option A — Supabase CLI (preferred)
 
@@ -89,10 +93,17 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Then seed:
+Bootstrap (club + first manager only):
 
 ```bash
 npx supabase db query --linked -f supabase/seed.sql
+```
+
+Optional England demo (venues, squads, matches, FA branding) — alone or after
+`seed.sql`:
+
+```bash
+npx supabase db query --linked -f supabase/england.sql
 ```
 
 If a project already applied an older migration history, don't re-run recorded
@@ -103,7 +114,8 @@ align the CLI state.
 
 1. Open Supabase Dashboard → **SQL** → New query
 2. Run every file in `supabase/migrations/` in filename order
-3. Run `supabase/seed.sql`
+3. Run `supabase/seed.sql` (bootstrap). Optionally run `supabase/england.sql`
+   for demo data.
 
 ### Option C — local Supabase via Docker
 
@@ -114,10 +126,12 @@ npx supabase start
 ```
 
 This applies all files under `supabase/migrations/` automatically. Auto-seed is
-disabled — load the seed manually:
+disabled — load seeds manually:
 
 ```bash
 npx supabase db query -f supabase/seed.sql
+# optional demo data:
+npx supabase db query -f supabase/england.sql
 ```
 
 Read the local URL and keys into `.env.local`:
@@ -131,7 +145,7 @@ Prefer invite flows that match production.
 
 ### After seeding — link the first manager
 
-The seed creates club manager **John Hall**
+Both `seed.sql` and `england.sql` create club manager **John Hall**
 (`people.id` = `b0000000-0000-4000-8000-000000000001`) with `account_status =
 'none'` and no `auth_user_id`.
 

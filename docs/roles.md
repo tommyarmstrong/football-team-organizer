@@ -36,7 +36,9 @@ evolving in RLS/UI; callouts note what is already enforced.
   currently log in through the product UI.
 - **Club create:** `create_club_with_management` requires existing club
   management (`can_manage_any_club()`). The first club/manager must come from
-  seed or SQL — `/no-access` does not bootstrap a club.
+  `supabase/seed.sql` or `supabase/england.sql` (or equivalent SQL) —
+  `/no-access` does not bootstrap a club. See
+  [Database](database.md#seed-and-test-data).
 
 Practical “site admin” today is club **management** (plus the service role for
 Auth invites). A separate IT Admin role is not modelled.
