@@ -77,7 +77,7 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
       style={{
         fontSize: 24,
         fontWeight: 700,
-        letterSpacing: "0.08em",
+        letterSpacing: 2,
         textTransform: "uppercase",
         color: MUTED,
         marginBottom: 12,
@@ -292,7 +292,7 @@ export function MatchPostcardImage({
               fontWeight: 700,
               padding: "12px 22px",
               borderRadius: 18,
-              letterSpacing: "-0.04em",
+              letterSpacing: -2,
             }}
           >
             {payload.scoreLabel}
@@ -315,7 +315,7 @@ export function MatchPostcardImage({
             textAlign: "center",
             marginBottom: 8,
             textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            letterSpacing: 2,
           }}
         >
           {payload.homeAwayLabel}
@@ -386,7 +386,7 @@ export function MatchPostcardImage({
         <div
           style={{
             display: "flex",
-            marginTop: "auto",
+            marginTop: 36,
             justifyContent: "center",
           }}
         >
