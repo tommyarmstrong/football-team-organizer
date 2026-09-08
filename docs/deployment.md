@@ -163,6 +163,8 @@ Apply migrations **before** deploying new application code that depends on them.
 
 1. Apply all migrations (`npx supabase db push`).
 2. Run `supabase/seed.sql` to create the first club and manager person.
+   Optionally load `supabase/england.sql` for the England demo dataset (alone
+   or after `seed.sql`).
 3. Create an Auth user in the Supabase dashboard (Authentication → Users).
 4. In Table Editor → `people`, set John Hall's `auth_user_id` to that UUID and
    `account_status` to `active`.

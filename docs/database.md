@@ -162,14 +162,17 @@ Full permission tables: [`docs/roles.md`](roles.md).
 
 ## Seed and test data
 
-`supabase/seed.sql` creates:
+`supabase/seed.sql` is the bootstrap seed. It creates:
 
-- One club (MGA Academy)
-- One team (with age group, gender, season label)
+- One generic club (**Demo Club**, id `11111111-1111-1111-1111-111111111111`)
 - Club manager **John Hall** (`people.id` = `b0000000-0000-4000-8000-000000000001`)
   with `account_status = 'none'` and no `auth_user_id`
 
-The seed does **not** create Auth users or `team_members` rows. After seeding,
+`supabase/england.sql` is the optional England demo dataset (venues, teams,
+coaches, players, competitions, matches, FA club branding). It uses the same
+club and John Hall ids, so it can run alone or after `seed.sql`.
+
+Neither file creates Auth users or `team_members` rows. After seeding,
 manually link an Auth user to John Hall (see [Development](development.md)).
 
 For automated tests, Vitest mocks the Supabase client — the test suite does not

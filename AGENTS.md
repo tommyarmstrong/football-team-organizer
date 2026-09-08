@@ -88,7 +88,7 @@ manager — `/no-access` cannot bootstrap the first club.
 `npx supabase start` applies **all** files under `supabase/migrations/` (not
 only the baseline). Auto-seed is disabled in `supabase/config.toml`.
 
-1. Load `supabase/seed.sql` (SQL Editor or `npx supabase db query -f supabase/seed.sql`). The seed does **not** create Auth users or set `auth_user_id`.
+1. Load `supabase/seed.sql` for bootstrap (Demo Club + John Hall), and/or `supabase/england.sql` for the England demo dataset (SQL Editor or `npx supabase db query -f …`). Neither file creates Auth users or sets `auth_user_id`. `england.sql` can run alone or after `seed.sql` (same fixed ids).
 2. Create an Auth user (Dashboard → Authentication → Users, or Admin API with the service role key).
 3. Link club manager **John Hall** (`people.id` `b0000000-0000-4000-8000-000000000001`): set `auth_user_id` to that Auth UUID and `account_status` to `active`.
 

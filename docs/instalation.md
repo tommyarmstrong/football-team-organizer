@@ -89,10 +89,17 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Then seed:
+Then seed (bootstrap — club + first manager only):
 
 ```bash
 npx supabase db query --linked -f supabase/seed.sql
+```
+
+For the England demo dataset (venues, squads, matches, FA branding), load
+`supabase/england.sql` alone or after `seed.sql`:
+
+```bash
+npx supabase db query --linked -f supabase/england.sql
 ```
 
 If a project already applied an older migration history, don't re-run recorded
@@ -103,7 +110,7 @@ align the CLI state.
 
 1. Open Supabase Dashboard → **SQL** → New query
 2. Run every file in `supabase/migrations/` in filename order
-3. Run `supabase/seed.sql`
+3. Run `supabase/seed.sql` (bootstrap). Optionally run `supabase/england.sql`.
 
 ### Option C — local Supabase via Docker
 
@@ -114,10 +121,12 @@ npx supabase start
 ```
 
 This applies all files under `supabase/migrations/` automatically. Auto-seed is
-disabled — load the seed manually:
+disabled — load seeds manually:
 
 ```bash
 npx supabase db query -f supabase/seed.sql
+# optional demo data:
+npx supabase db query -f supabase/england.sql
 ```
 
 Read the local URL and keys into `.env.local`:
@@ -131,7 +140,7 @@ Prefer invite flows that match production.
 
 ### After seeding — link the first manager
 
-The seed creates club manager **John Hall**
+Both `seed.sql` and `england.sql` create club manager **John Hall**
 (`people.id` = `b0000000-0000-4000-8000-000000000001`) with `account_status =
 'none'` and no `auth_user_id`.
 
