@@ -7,11 +7,6 @@
       <stop offset="52%" stop-color="#146C4A"/>
       <stop offset="100%" stop-color="#9ED63F"/>
     </linearGradient>
-    <radialGradient id="ball" cx="32%" cy="28%" r="70%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="45%" stop-color="#f4f4f5"/>
-      <stop offset="100%" stop-color="#a1a1aa"/>
-    </radialGradient>
   </defs>
 
   <rect width="1280" height="400" fill="url(#hero)"/>
@@ -29,11 +24,9 @@
     <path d="M296 86a36 36 0 0 0 0 48" stroke-width="2"/>
   </g>
 
-  <g transform="translate(64, 48)">
-    <circle cx="22" cy="22" r="20" fill="url(#ball)"/>
-    <path fill="#18181b" d="M22 13.5 26.4 16.8 24.7 22H19.3L17.6 16.8Z"/>
-    <path stroke="#18181b" stroke-width="1.2" stroke-linejoin="round" fill="none" d="M22 13.5 17.6 16.8 12.4 15.2 10.6 9.1 17.1 7.9ZM22 13.5 26.4 16.8 31.6 15.2 33.4 9.1 26.9 7.9ZM17.6 16.8 19.3 22 15.2 25.8 9.8 23.3 12.4 15.2ZM26.4 16.8 24.7 22 28.8 25.8 34.2 23.3 31.6 15.2ZM19.3 22H24.7L28.8 25.8 22 30.4 15.2 25.8Z"/>
-  </g>
+  <svg x="64" y="44" width="48" height="48" viewBox="0 0 100 100" aria-hidden="true">
+    <text y=".9em" font-size="90">⚽</text>
+  </svg>
 
   <rect x="64" y="108" width="168" height="28" rx="14" fill="#C6EB63" fill-opacity="0.22"/>
   <text x="148" y="127" text-anchor="middle" fill="#C6EB63" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="2.4">MATCHDAY READY</text>

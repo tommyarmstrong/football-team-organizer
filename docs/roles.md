@@ -23,18 +23,17 @@ evolving in RLS/UI; callouts note what is already enforced.
 - **Account status:** only `invited` or `active` may remain signed in.
   `none` and `disabled` are rejected. Disabled people are also excluded from
   `has_app_access` / management helpers in RLS.
-- **App access:** a linked person needs a club manager row, a `team_members` row,
-  a guardian role, or a player role (with non-disabled status). Otherwise they
-  land on `/no-access`.
+- **App access:** middleware calls `has_app_access`. A linked person needs at
+  least one of: an active club `managers` row, an active `guardians` row, or a
+  `team_members` row with role `management`, `coach`, `guardian`, or
+  `guardian_assistant` (and a non-disabled people status). A **player-only**
+  account (`players` and/or `team_members.role = player` with no allowed role)
+  is denied and lands on `/no-access`. Roles are additive: player plus any
+  allowed role still has access.
 - **Who can be invited today:** the app invites managers, coaches, and
   guardians (including guardian assistants via team access). It does **not**
   expose inviting players to create linked Auth accounts, so players do not
-  currently log in — even though RLS/`has_app_access` can still treat a linked
-  player role as sufficient if one were created out of band.
-- **Planned login gate:** work in progress will require a **manager**,
-  **coach**, and/or **guardian** role (including guardian assistant via team
-  membership) to sign in. A player-only linked account would then be denied
-  even if `has_app_access` historically allowed it.
+  currently log in through the product UI.
 - **Club create:** `create_club_with_management` requires existing club
   management (`can_manage_any_club()`). The first club/manager must come from
   seed or SQL — `/no-access` does not bootstrap a club.
@@ -140,18 +139,17 @@ Match-day write and the POTM restriction are **enforced** in RLS/UI
 
 ## Player
 
-Players are club-level people assigned to teams via `team_players`. They are
-**not invited to log in** today: the invite UI does not create linked Auth
-accounts for player-only people.
+Players are modelled in `players` / `team_members.role = player` (and assigned
+to teams via `team_players`) for squad and match data. They are **not invited
+to log in** today: the invite UI does not create linked Auth accounts for
+player-only people. A **player-only** linked login also does **not** get app
+access (`has_app_access` is false → `/no-access`).
 
-If a player were linked out of band (or later invited), intended access is
-read-only for:
+Intended in-app player permissions (if a future player client is added) are
+read-only:
 
 - Their own user profile (name / email / phone may be self-editable when linked)
 - Their own team data
 - Their own team dashboard
 - Their own team's match data
 - Their own team's stats data
-
-Player-only login is expected to be rejected once the planned manager / coach /
-guardian sign-in gate lands.
