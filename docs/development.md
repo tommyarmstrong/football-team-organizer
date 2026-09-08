@@ -1,0 +1,213 @@
+# Development
+
+Everything you need to work on Football Team Organizer locally.
+
+- [Architecture](architecture.md) — system design and decisions
+- [Deployment](deployment.md) — Vercel and Supabase hosting
+- [Configuration](configuration.md) — environment variables
+
+---
+
+## Prerequisites
+
+- **Node.js 20+** and **npm**
+- A [Supabase](https://supabase.com) project (hosted, or local CLI + Docker)
+- Git
+
+---
+
+## Repository setup
+
+```bash
+git clone https://github.com/tommyarmstrong/football-team-organizer
+cd football-team-organizer
+npm install
+cp .env.example .env.local
+```
+
+Fill in `.env.local` — see [Configuration](configuration.md).
+
+---
+
+## Environment variables
+
+| Variable                                | Where to find it                                     |
+| --------------------------------------- | ---------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`              | Supabase → Project Settings → API → Project URL      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase → Project Settings → API → Publishable key  |
+| `SUPABASE_SERVICE_ROLE_KEY`             | Supabase → Project Settings → API → Service role key |
+| `NEXT_PUBLIC_APP_URL`                   | `http://localhost:3000` locally                      |
+| `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY` | Google Cloud Console (optional)                      |
+
+Full variable reference and security notes: [Configuration](configuration.md).
+
+---
+
+## Local database
+
+### Option A — hosted Supabase project (simplest)
+
+Point `.env.local` at a hosted Supabase project and push migrations:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
+```
+
+Then seed:
+
+```bash
+npx supabase db query --linked -f supabase/seed.sql
+```
+
+### Option B — local Supabase via Docker
+
+Requires Docker.
+
+```bash
+npx supabase start
+```
+
+This applies all files under `supabase/migrations/` automatically.
+Auto-seed is disabled — load the seed manually:
+
+```bash
+npx supabase db query -f supabase/seed.sql
+```
+
+Read the local URL and keys:
+
+```bash
+npx supabase status
+```
+
+Copy those values into `.env.local`.
+
+### After seeding — link the first manager
+
+The seed creates club manager **John Hall**
+(`people.id` = `b0000000-0000-4000-8000-000000000001`) with no Auth user linked.
+
+1. Create an Auth user in the Supabase dashboard (Authentication → Users → Add
+   user). For local work, disable "Confirm email" under Auth settings to skip
+   the confirmation step.
+2. In Table Editor → `people`, set John Hall's `auth_user_id` to that UUID and
+   `account_status` to `active`.
+
+Without this step, every sign-in lands on `/no-access`.
+
+### Creating migrations
+
+```bash
+npx supabase migration new <migration-name>
+```
+
+This creates a new timestamped file in `supabase/migrations/`. Write your SQL
+there. Keep migrations idempotent where possible. Push with:
+
+```bash
+npx supabase db push
+```
+
+Migrations are the authoritative schema source — do not edit the database
+directly in production.
+
+### Regenerating TypeScript types
+
+After a schema change, regenerate the checked-in types:
+
+```bash
+npx supabase gen types typescript --linked > src/lib/supabase/database.types.ts
+```
+
+---
+
+## Starting the application
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — the app redirects to
+`/login`.
+
+---
+
+## Running tests
+
+```bash
+npm test           # run once
+npm run test:watch # watch mode
+```
+
+Tests use [Vitest](https://vitest.dev/).
+
+---
+
+## Linting
+
+```bash
+npm run lint
+```
+
+[ESLint](https://eslint.org/) with Next.js and TypeScript rules. Pre-commit hooks
+run ESLint on staged files automatically (via Husky + lint-staged).
+
+---
+
+## Formatting
+
+```bash
+npm run format         # write
+npm run format:check   # check only (used in CI)
+```
+
+[Prettier](https://prettier.io/) is the formatter. Pre-commit hooks also run
+Prettier on staged files. The CI pipeline fails if `format:check` finds
+unformatted files.
+
+---
+
+## Branching
+
+Use the `feat/<description>` branch naming convention (or
+`feat/<ticket-id>-<description>` when there is a ticket).
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feat/my-feature
+```
+
+### Environments and branches
+
+| Branch       | Deploys to            | Supabase project |
+| ------------ | --------------------- | ---------------- |
+| `main`       | Integration (Vercel)  | Integration      |
+| `production` | Production (Vercel)   | Production       |
+| PR branches  | Vercel preview per PR | —                |
+
+`main` is the integration environment. **Do not deploy directly to production**
+— promote via PR from `main` into `production` (see [Deployment](deployment.md)).
+
+---
+
+## Pull requests
+
+1. Open a PR from your feature branch into `main`.
+2. GitHub Actions runs: `lint` → `format:check` → `test` → `build` → client
+   bundle secret scan.
+3. A Vercel preview deployment is created for the PR.
+4. `main` is protected — a green **Lint, test, and build** check is required
+   before merge.
+5. To promote to production, open a PR from `main` into `production`. The
+   `production-source` check enforces that the head branch is `main`.
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat(matches): add meet-up time to fixture
+fix(rls): correct guardian assistant policy
+docs(readme): update install steps
+```
