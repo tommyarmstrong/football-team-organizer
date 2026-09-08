@@ -162,9 +162,10 @@ Apply migrations **before** deploying new application code that depends on them.
 ## First-time production bootstrap
 
 1. Apply all migrations (`npx supabase db push`).
-2. Run `supabase/seed.sql` to create the first club and manager person.
-   Optionally load `supabase/england.sql` for the England demo dataset (alone
-   or after `seed.sql`).
+2. Run `supabase/seed.sql` to create the first club (**Demo Club**) and manager
+   person (**John Hall**). Do **not** load `supabase/england.sql` on production
+   unless you intentionally want the England demo dataset; that file is for
+   local/staging demos and can also run alone on a non-production project.
 3. Create an Auth user in the Supabase dashboard (Authentication → Users).
 4. In Table Editor → `people`, set John Hall's `auth_user_id` to that UUID and
    `account_status` to `active`.
@@ -173,3 +174,5 @@ Apply migrations **before** deploying new application code that depends on them.
 
 Club creation via `create_club_with_management` requires an existing manager.
 The empty `/no-access` page cannot bootstrap the first club.
+
+Full seed contents: [Database](database.md#seed-and-test-data).

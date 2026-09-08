@@ -218,9 +218,11 @@ secret — never shipped to the client bundle.
 
 ### No public registration
 
-Bootstrap requires a seed + SQL step to create the first club manager. All
+Bootstrap requires `supabase/seed.sql` (or `supabase/england.sql`, which
+includes the same first manager) plus a manual Auth link for John Hall. All
 subsequent users arrive via the invite flow. This limits attack surface and
-keeps the user list controlled.
+keeps the user list controlled. See [Database](database.md#seed-and-test-data)
+and [Installation](instalation.md).
 
 ### Server-first rendering
 

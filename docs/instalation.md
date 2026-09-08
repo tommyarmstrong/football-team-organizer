@@ -72,14 +72,18 @@ or Supabase Auth invite → `/auth/invite`). Creating an Auth user alone is not
 enough.
 
 The first club manager cannot be bootstrapped from the empty `/no-access` UI —
-use the seed or SQL as described below.
+use `supabase/seed.sql` or `supabase/england.sql` as described below.
 
 ---
 
 ## Local database
 
 Apply **all** migrations under `supabase/migrations/` in timestamp order, then
-seed.
+seed. There are two seed files — see [Database](database.md#seed-and-test-data):
+
+- `supabase/seed.sql` — bootstrap only (Demo Club + John Hall)
+- `supabase/england.sql` — optional England / FA demo dataset (alone or after
+  `seed.sql`)
 
 ### Option A — Supabase CLI (preferred)
 
@@ -89,14 +93,14 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Then seed (bootstrap — club + first manager only):
+Bootstrap (club + first manager only):
 
 ```bash
 npx supabase db query --linked -f supabase/seed.sql
 ```
 
-For the England demo dataset (venues, squads, matches, FA branding), load
-`supabase/england.sql` alone or after `seed.sql`:
+Optional England demo (venues, squads, matches, FA branding) — alone or after
+`seed.sql`:
 
 ```bash
 npx supabase db query --linked -f supabase/england.sql
@@ -110,7 +114,8 @@ align the CLI state.
 
 1. Open Supabase Dashboard → **SQL** → New query
 2. Run every file in `supabase/migrations/` in filename order
-3. Run `supabase/seed.sql` (bootstrap). Optionally run `supabase/england.sql`.
+3. Run `supabase/seed.sql` (bootstrap). Optionally run `supabase/england.sql`
+   for demo data.
 
 ### Option C — local Supabase via Docker
 

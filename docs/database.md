@@ -162,18 +162,36 @@ Full permission tables: [`docs/roles.md`](roles.md).
 
 ## Seed and test data
 
-`supabase/seed.sql` is the bootstrap seed. It creates:
+Two SQL files under `supabase/` load domain data after migrations. Auto-seed is
+disabled in `supabase/config.toml` — apply them manually (SQL Editor or
+`npx supabase db query -f …`). Both are idempotent for fixed ids and never set
+or clear `people.auth_user_id`.
+
+### `supabase/seed.sql` (bootstrap)
+
+Bare minimum for a new deployment:
 
 - One generic club (**Demo Club**, id `11111111-1111-1111-1111-111111111111`)
 - Club manager **John Hall** (`people.id` = `b0000000-0000-4000-8000-000000000001`)
   with `account_status = 'none'` and no `auth_user_id`
 
-`supabase/england.sql` is the optional England demo dataset (venues, teams,
-coaches, players, competitions, matches, FA club branding). It uses the same
-club and John Hall ids, so it can run alone or after `seed.sql`.
+No teams, venues, players, coaches, or matches. Use this for production (or any
+empty project) before the first login.
 
-Neither file creates Auth users or `team_members` rows. After seeding,
-manually link an Auth user to John Hall (see [Development](development.md)).
+### `supabase/england.sql` (optional demo)
+
+Full England / FA sample dataset for local and staging demos:
+
+- Club **The Football Association** (same club id as the bootstrap seed), with
+  website, colour, crest `icon_url`, established year, and about text
+- Venues, England Men/Women teams across several seasons, coaches, players,
+  competitions, matches, periods, goals, cards, and match-day squads
+
+Uses the same club and John Hall ids as `seed.sql`, so it can run **alone** or
+**after** `seed.sql`. If both are loaded, run `seed.sql` first.
+
+Neither file creates Auth users or `team_members` rows. After seeding, manually
+link an Auth user to John Hall (see [Installation](instalation.md)).
 
 For automated tests, Vitest mocks the Supabase client — the test suite does not
 connect to a live database.
