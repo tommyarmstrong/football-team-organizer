@@ -33,6 +33,8 @@ import {
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
+import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
+import { buildMatchPostcardPayload } from "@/lib/postcards/match-postcard";
 
 export default async function MatchDetailPage({
   params,
@@ -75,13 +77,18 @@ export default async function MatchDetailPage({
     { data: players, error: playersError },
     { data: matchPlayerRows, error: matchPlayersError },
     { data: periods, error: periodsError },
+    postcardResult,
   ] = await Promise.all([
     listGoalsForMatch(match.id),
     listCardsForMatch(match.id),
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
     listPeriodsForMatch(match.id),
+    match.status === "played"
+      ? buildMatchPostcardPayload(match.id)
+      : Promise.resolve({ data: null, error: null }),
   ]);
+  const postcard = postcardResult.data;
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
   const hasMatchSquad = matchSquadIds.size > 0;
@@ -143,17 +150,28 @@ export default async function MatchDetailPage({
           />
         }
         actions={
-          canEdit ? (
+          postcard || canEdit ? (
             <>
-              <EditIconLink
-                href={`/matches/${match.id}/edit`}
-                label="Edit match"
-              />
-              <ListDeleteButton
-                label={`Delete match vs ${opponentName}`}
-                confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
-                deleteAction={deleteMatchAction.bind(null, match.id)}
-              />
+              {postcard ? (
+                <SharePostcardButton
+                  imageUrl={`/matches/${match.id}/postcard.png`}
+                  caption={postcard.caption}
+                  fileName={postcard.fileName}
+                />
+              ) : null}
+              {canEdit ? (
+                <>
+                  <EditIconLink
+                    href={`/matches/${match.id}/edit`}
+                    label="Edit match"
+                  />
+                  <ListDeleteButton
+                    label={`Delete match vs ${opponentName}`}
+                    confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
+                    deleteAction={deleteMatchAction.bind(null, match.id)}
+                  />
+                </>
+              ) : null}
             </>
           ) : undefined
         }
