@@ -100,7 +100,7 @@ This repository is the app. To stand up your own club instance:
 | [`docs/deployment.md`](docs/deployment.md) | Environments, CI/CD, Vercel and Supabase configuration |
 | [`docs/configuration.md`](docs/configuration.md) | Environment variables |
 | [`docs/operations.md`](docs/operations.md) | Database backups and restore |
-| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting and security guidelines |
+| [`docs/security.md`](security.md) | Vulnerability reporting and security guidelines |
 
 ## License
 

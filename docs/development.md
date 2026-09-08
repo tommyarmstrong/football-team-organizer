@@ -9,63 +9,9 @@ Working on Football Team Organizer day-to-day.
 
 ---
 
-## Running tests
+## Instalation and Deployment
 
-```bash
-npm test           # run once (CI uses this)
-npm run test:watch # watch mode while developing
-```
-
-Tests use [Vitest](https://vitest.dev/) (`vitest.config.ts`). Suites live next to
-source as `src/**/*.test.ts`. The suite mocks Supabase — it does not need a live
-database.
-
-### Coverage
-
-Coverage uses the Vitest **v8** provider (`@vitest/coverage-v8`). Config lives
-under `coverage` in `vitest.config.ts`: it includes `src/**/*.{ts,tsx}` and
-excludes Supabase generated/client helpers, shadcn UI primitives, test helpers,
-and `*.test.ts` files themselves.
-
-```bash
-npx vitest run --coverage
-```
-
-Open the HTML report under `coverage/` (gitignored) after a run. There is no
-enforced coverage threshold in CI today — CI runs `npm test` without
-`--coverage`. Treat coverage as a local / PR hygiene signal:
-
-- Prefer a colocated `*.test.ts` for new logic under `src/lib/` (parsers,
-  actions, data helpers, authz).
-- When changing behaviour, extend the nearest existing test rather than only
-  adding a manual check.
-- Do not chase 100% on UI shells or generated types; focus on branching logic
-  and security-sensitive paths (auth, invites, RLS-shaped helpers, archive /
-  season migration).
-
----
-
-## Linting
-
-```bash
-npm run lint
-```
-
-[ESLint](https://eslint.org/) with Next.js and TypeScript rules. Pre-commit hooks
-run ESLint on staged files automatically (via Husky + lint-staged).
-
----
-
-## Formatting
-
-```bash
-npm run format         # write
-npm run format:check   # check only (used in CI)
-```
-
-[Prettier](https://prettier.io/) is the formatter. Pre-commit hooks also run
-Prettier on staged files. The CI pipeline fails if `format:check` finds
-unformatted files.
+Install the software and database locally by following [Installation](instalation.md) or in the cloud by following [Deployment](deployment.md).
 
 ---
 
@@ -111,3 +57,65 @@ feat(matches): add meet-up time to fixture
 fix(rls): correct guardian assistant policy
 docs(readme): update install steps
 ```
+
+---
+
+## Linting
+
+```bash
+npm run lint
+```
+
+[ESLint](https://eslint.org/) with Next.js and TypeScript rules. Pre-commit hooks
+run ESLint on staged files automatically (via Husky + lint-staged).
+
+---
+
+## Formatting
+
+```bash
+npm run format         # write
+npm run format:check   # check only (used in CI)
+```
+
+[Prettier](https://prettier.io/) is the formatter. Pre-commit hooks also run
+Prettier on staged files. The CI pipeline fails if `format:check` finds
+unformatted files.
+
+---
+
+## Running tests
+
+```bash
+npm test           # run once (CI uses this)
+npm run test:watch # watch mode while developing
+```
+
+Tests use [Vitest](https://vitest.dev/) (`vitest.config.ts`). Suites live next to
+source as `src/**/*.test.ts`. The suite mocks Supabase — it does not need a live
+database.
+
+### Coverage
+
+Coverage uses the Vitest **v8** provider (`@vitest/coverage-v8`). Config lives
+under `coverage` in `vitest.config.ts`: it includes `src/**/*.{ts,tsx}` and
+excludes Supabase generated/client helpers, shadcn UI primitives, test helpers,
+and `*.test.ts` files themselves.
+
+```bash
+npx vitest run --coverage
+```
+
+Open the HTML report under `coverage/` (gitignored) after a run. There is no
+enforced coverage threshold in CI today — CI runs `npm test` without
+`--coverage`. Treat coverage as a local / PR hygiene signal:
+
+- Prefer a colocated `*.test.ts` for new logic under `src/lib/` (parsers,
+  actions, data helpers, authz).
+- When changing behaviour, extend the nearest existing test rather than only
+  adding a manual check.
+- Do not chase 100% on UI shells or generated types; focus on branching logic
+  and security-sensitive paths (auth, invites, RLS-shaped helpers, archive /
+  season migration).
+
+---

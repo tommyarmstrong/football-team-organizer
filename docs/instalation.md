@@ -2,9 +2,8 @@
 
 Run Football Team Organizer on your machine against a Supabase project.
 
-- [Development](development.md) — running tests, linting, branching, PRs
 - [Configuration](configuration.md) — full environment variable reference
-- [Deployment](deployment.md) — Vercel and Supabase hosting
+- [Development](development.md) — running tests, linting, branching, PRs
 
 ---
 
