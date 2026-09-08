@@ -61,9 +61,9 @@ Supabase Auth settings for each hosted project.
 
 ### Credential policy
 
-- **Email/password only** in the current version.
+- **Email/password** and **Google OAuth** only in the current version.
 - Password minimum length 8; requires lowercase, uppercase, and digits.
-- Google OAuth and magic links are out of scope for the current version.
+- Magic links are out of scope for the current version.
 
 ---
 
