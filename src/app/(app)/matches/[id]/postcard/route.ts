@@ -54,15 +54,19 @@ export async function GET(
   const origin = new URL(request.url).origin;
   const crestSrc = await crestDataUrl(data.clubIconUrl, origin);
 
-  const image = new ImageResponse(
-    createElement(MatchPostcardImage, { payload: data, crestSrc }),
-    {
-      width: POSTCARD_WIDTH,
-      height: POSTCARD_HEIGHT,
-    },
-  );
-
-  const headers = new Headers(image.headers);
-  headers.set("Cache-Control", "private, no-store");
-  return new Response(image.body, { status: image.status, headers });
+  try {
+    return new ImageResponse(
+      createElement(MatchPostcardImage, { payload: data, crestSrc }),
+      {
+        width: POSTCARD_WIDTH,
+        height: POSTCARD_HEIGHT,
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
+    );
+  } catch (cause) {
+    console.error("Failed to generate match postcard", cause);
+    return new Response("Failed to generate postcard", { status: 500 });
+  }
 }
