@@ -8,7 +8,7 @@ These are the roles for the football organizer app.
 4. Guardian assistant
 5. Player
 
-Every signed-in person has a **login** (`auth.users`) and **one or more roles**.
+Signed-in people have a **login** (`auth.users`) and **one or more roles**.
 Roles are **additive** and **scoped**: the same login may be management at the
 club, coach on team A, and guardian on team B.
 
@@ -26,6 +26,15 @@ evolving in RLS/UI; callouts note what is already enforced.
 - **App access:** a linked person needs a club manager row, a `team_members` row,
   a guardian role, or a player role (with non-disabled status). Otherwise they
   land on `/no-access`.
+- **Who can be invited today:** the app invites managers, coaches, and
+  guardians (including guardian assistants via team access). It does **not**
+  expose inviting players to create linked Auth accounts, so players do not
+  currently log in — even though RLS/`has_app_access` can still treat a linked
+  player role as sufficient if one were created out of band.
+- **Planned login gate:** work in progress will require a **manager**,
+  **coach**, and/or **guardian** role (including guardian assistant via team
+  membership) to sign in. A player-only linked account would then be denied
+  even if `has_app_access` historically allowed it.
 - **Club create:** `create_club_with_management` requires existing club
   management (`can_manage_any_club()`). The first club/manager must come from
   seed or SQL — `/no-access` does not bootstrap a club.
@@ -54,7 +63,7 @@ Auth invites). A separate IT Admin role is not modelled.
 **Coach nuance:** the `coaches` / `team_coaches` tables hold staff profile data.
 Coach **write** access and several RLS helpers key off
 `team_members.role = 'coach'` (and club managers). A coach-only person without a
-`team_members` coach row (and without manager/guardian/player access) hits
+`team_members` coach row (and without manager/guardian access) hits
 `/no-access`.
 
 ## Management
@@ -73,7 +82,8 @@ cross-team write should follow the user’s roles on each team.
 **Enforcement gap:** the UI may treat team `management` as editable, but RLS
 `can_edit_team` is currently club management **or**
 `team_members.role = coach` (not team `management`). Do not assume team-only
-management can write everything the UI offers.
+management can write everything the UI offers. Match-day RLS
+(`can_edit_match_day`) does include team `management`.
 
 ## Coach
 
@@ -89,7 +99,7 @@ Coaches have full read (but not write) access to:
 
 - Every team's data in the same club
 - Every team's match data in the same club
-- Every player's data (some fields may be restricted later)
+- Every player's data (sensitive `player_contacts` remain restricted)
 
 A coach of team A who is not a coach (or other write role) on team B can read
 team B’s player of the match but cannot set it.
@@ -130,10 +140,18 @@ Match-day write and the POTM restriction are **enforced** in RLS/UI
 
 ## Player
 
-Players have read (but not write) access to:
+Players are club-level people assigned to teams via `team_players`. They are
+**not invited to log in** today: the invite UI does not create linked Auth
+accounts for player-only people.
 
-- Their own user profile
+If a player were linked out of band (or later invited), intended access is
+read-only for:
+
+- Their own user profile (name / email / phone may be self-editable when linked)
 - Their own team data
 - Their own team dashboard
 - Their own team's match data
 - Their own team's stats data
+
+Player-only login is expected to be rejected once the planned manager / coach /
+guardian sign-in gate lands.
