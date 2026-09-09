@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { getPrimaryClub } from "@/lib/data/clubs";
+import { parseClubColourHint } from "@/lib/clubs/colour-hint";
 import {
   findPersonForAuthUserId,
   findPersonForVerifiedEmail,
@@ -38,4 +40,13 @@ export async function verifySignedInPersonAccess(): Promise<{
   }
 
   return { error: null };
+}
+
+/**
+ * Resolve a best-effort club colour hint for the signed-in user.
+ * Null means no valid colour is currently available.
+ */
+export async function resolveSignedInClubColourHint(): Promise<string | null> {
+  const club = await getPrimaryClub();
+  return parseClubColourHint(club?.colour ?? null);
 }

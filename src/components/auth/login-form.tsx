@@ -157,7 +157,7 @@ export function LoginFormWithGoogle() {
         return;
       }
 
-      const accessResponse = await fetch("/auth/session/verify", {
+      const accessResponse = await fetch("/auth/session/bootstrap", {
         method: "POST",
       });
 
