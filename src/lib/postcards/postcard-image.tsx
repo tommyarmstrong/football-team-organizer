@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { postcardPotmLine } from "@/lib/postcards/content";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
 
 export const POSTCARD_WIDTH = 1080;
@@ -413,37 +414,25 @@ export function MatchPostcardImage({
           <div style={stackStyle({ marginBottom: 28 })}>
             {payload.coachPotmLabel ? (
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                style={ellipsisStyle({
                   fontSize: 32,
-                  marginBottom: 13,
-                }}
+                  fontWeight: 700,
+                  marginBottom: payload.playersPotmLabel ? 13 : 0,
+                  maxWidth: 984,
+                })}
               >
-                <div style={{ color: INK, fontWeight: 700 }}>
-                  {"🏆 Coach's Player of the Match"}
-                </div>
-                <div style={ellipsisStyle({ maxWidth: 380 })}>
-                  {payload.coachPotmLabel}
-                </div>
+                {postcardPotmLine(payload.coachPotmLabel, "coach")}
               </div>
             ) : null}
             {payload.playersPotmLabel ? (
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                style={ellipsisStyle({
                   fontSize: 32,
-                }}
+                  fontWeight: 700,
+                  maxWidth: 984,
+                })}
               >
-                <div style={{ color: INK, fontWeight: 700 }}>
-                  {"🏆 Players' Player of the Match"}
-                </div>
-                <div style={ellipsisStyle({ maxWidth: 380 })}>
-                  {payload.playersPotmLabel}
-                </div>
+                {postcardPotmLine(payload.playersPotmLabel, "players")}
               </div>
             ) : null}
           </div>
@@ -466,7 +455,7 @@ export function MatchPostcardImage({
                 marginBottom: 12,
               }}
             >
-              Squad
+              Matchday Squad
             </div>
             {payload.squadLines.map((line, index) => (
               <div

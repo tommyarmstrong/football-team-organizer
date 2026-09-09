@@ -3,7 +3,6 @@ import type { RosterPlayer } from "@/lib/data/players";
 import { formatScore, playerDisplayName } from "@/lib/format";
 import type { TeamGender } from "@/lib/supabase/database.types";
 import type { PostcardGoalList } from "@/lib/postcards/types";
-import type { StoryEvent } from "@/lib/postcards/story";
 
 const FULL_GOAL_MAX = 6;
 const COMPACT_GOAL_MAX = 10;
@@ -222,6 +221,17 @@ function captionGoalLine(
   return parts.join(" ");
 }
 
+export function postcardPotmLine(
+  name: string,
+  kind: "coach" | "players",
+): string {
+  const award =
+    kind === "coach"
+      ? "Coach's Player of the Match"
+      : "Players' Player of the Match";
+  return `🏆 ${name} · ${award}`;
+}
+
 export function postcardCaption(input: {
   teamName: string;
   opponentName: string;
@@ -249,10 +259,10 @@ export function postcardCaption(input: {
 
   const potm: string[] = [];
   if (input.coachPotmLabel) {
-    potm.push(`🏆 Coach's Player of the Match: ${input.coachPotmLabel}`);
+    potm.push(postcardPotmLine(input.coachPotmLabel, "coach"));
   }
   if (input.playersPotmLabel) {
-    potm.push(`🏆 Players' Player of the Match: ${input.playersPotmLabel}`);
+    potm.push(postcardPotmLine(input.playersPotmLabel, "players"));
   }
   if (potm.length > 0) {
     lines.push("");
@@ -260,15 +270,4 @@ export function postcardCaption(input: {
   }
 
   return lines.join("\n");
-}
-
-export function toStoryEvents(goals: GoalWithPlayers[]): StoryEvent[] {
-  return goals.map((goal) => ({
-    isOpposition: goal.is_opposition,
-    isOwnGoal: goal.is_own_goal,
-    playerId: goal.player_id,
-    firstName: goal.scorer?.first_name ?? "",
-    minute: goal.minute,
-    createdAt: goal.created_at,
-  }));
 }

@@ -25,7 +25,6 @@ import {
   postcardCaption,
   postcardFileName,
   postcardSquadLines,
-  toStoryEvents,
 } from "@/lib/postcards/content";
 import { postcardStory } from "@/lib/postcards/story";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
@@ -90,8 +89,6 @@ export async function buildMatchPostcardPayload(
   const story = postcardStory({
     goalsFor,
     goalsAgainst,
-    isFriendly: match.is_friendly,
-    events: toStoryEvents(goals),
   });
   const coachPotmLabel = nameOnlyLabelFor(
     playerFromRoster(roster, match.player_of_the_match_id),
