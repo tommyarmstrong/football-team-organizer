@@ -1,11 +1,6 @@
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
-import {
-  formatGoalMinute,
-  formatScore,
-  goalKindLabel,
-  playerDisplayName,
-} from "@/lib/format";
+import { formatScore, playerDisplayName } from "@/lib/format";
 import type { TeamGender } from "@/lib/supabase/database.types";
 import type { PostcardGoalList } from "@/lib/postcards/types";
 import type { StoryEvent } from "@/lib/postcards/story";
@@ -93,20 +88,6 @@ function ourNamedGoals(goals: GoalWithPlayers[]): GoalWithPlayers[] {
   return goals.filter((goal) => !goal.is_opposition && !goal.is_own_goal);
 }
 
-function goalDetail(
-  goal: GoalWithPlayers,
-  includeKind: boolean,
-): string | null {
-  const parts: string[] = [];
-  const minute = formatGoalMinute(goal.minute);
-  if (minute) parts.push(minute);
-  if (includeKind) {
-    const kind = goalKindLabel(goal);
-    if (kind) parts.push(kind);
-  }
-  return parts.length > 0 ? parts.join(" ") : null;
-}
-
 export function buildPostcardGoalList(
   goals: GoalWithPlayers[],
   options: {
@@ -135,8 +116,7 @@ export function buildPostcardGoalList(
       : null;
     return {
       label: labelFor(scorer, options.gender) ?? "Player",
-      detailFull: goalDetail(goal, true),
-      detailCompact: goalDetail(goal, false),
+      isPenalty: goal.is_penalty,
       assistLabel: labelFor(assist, options.gender),
       playerId: goal.player_id,
     };
@@ -147,7 +127,7 @@ export function buildPostcardGoalList(
       kind: "full",
       rows: labeled.map((row) => ({
         label: row.label,
-        detail: row.detailFull,
+        isPenalty: row.isPenalty,
         assistLabel: row.assistLabel,
       })),
     };
@@ -158,7 +138,8 @@ export function buildPostcardGoalList(
       kind: "compact",
       rows: labeled.map((row) => ({
         label: row.label,
-        detail: row.detailCompact,
+        isPenalty: row.isPenalty,
+        assistLabel: row.assistLabel,
       })),
     };
   }
@@ -202,11 +183,12 @@ function captionGoalLine(
         shirtNumber: shirts.get(goal.assist.id) ?? null,
       }
     : null;
-  const parts = [labelFor(scorer, gender) ?? "Player"];
-  const detail = goalDetail(goal, true);
-  if (detail) parts.push(detail);
+  const scorerLabel = `${labelFor(scorer, gender) ?? "Player"}${
+    goal.is_penalty ? " (P)" : ""
+  }`;
+  const parts = [`⚽ ${scorerLabel}`];
   const assistLabel = labelFor(assist, gender);
-  if (assistLabel) parts.push(`— ${assistLabel}`);
+  if (assistLabel) parts.push(`🤝 ${assistLabel}`);
   return parts.join(" ");
 }
 
@@ -236,9 +218,11 @@ export function postcardCaption(input: {
   }
 
   const potm: string[] = [];
-  if (input.coachPotmLabel) potm.push(`Coach's POTM: ${input.coachPotmLabel}`);
+  if (input.coachPotmLabel) {
+    potm.push(`🏆 Coach's Player of the Match: ${input.coachPotmLabel}`);
+  }
   if (input.playersPotmLabel) {
-    potm.push(`Players' POTM: ${input.playersPotmLabel}`);
+    potm.push(`🏆 Players' Player of the Match: ${input.playersPotmLabel}`);
   }
   if (potm.length > 0) {
     lines.push("");

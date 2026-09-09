@@ -59,9 +59,9 @@ const goalLists: Array<[string, PostcardGoalList]> = [
     {
       kind: "full",
       rows: [
-        { label: "Amara (7)", detail: "12'", assistLabel: "Assist: Niamh (4)" },
-        { label: "Priya (9)", detail: "38'", assistLabel: null },
-        { label: "Own goal", detail: "71'", assistLabel: null },
+        { label: "Amara 7", isPenalty: false, assistLabel: "Niamh 4" },
+        { label: "Priya 9", isPenalty: true, assistLabel: null },
+        { label: "Own goal", isPenalty: false, assistLabel: null },
       ],
     },
   ],
@@ -70,8 +70,8 @@ const goalLists: Array<[string, PostcardGoalList]> = [
     {
       kind: "compact",
       rows: [
-        { label: "Amara (7)", detail: "×2" },
-        { label: "Priya (9)", detail: null },
+        { label: "Amara 7", isPenalty: false, assistLabel: "Niamh 4" },
+        { label: "Priya 9", isPenalty: true, assistLabel: null },
       ],
     },
   ],

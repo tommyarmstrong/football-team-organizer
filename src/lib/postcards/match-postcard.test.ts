@@ -103,6 +103,7 @@ describe("postcardCaption", () => {
       goals: [
         goal({
           id: "g1",
+          is_freekick: true,
           assist_player_id: "p-luca",
           assist: {
             id: "p-luca",
@@ -139,10 +140,12 @@ describe("postcardCaption", () => {
 
     expect(caption).toContain("U11 Girls 2–1 Riverside");
     expect(caption).toContain("Took all three points.");
-    expect(caption).toContain("Maya 7 '12 — Luca 4");
-    expect(caption).toContain("Luca 4 '38 (Penalty)");
-    expect(caption).toContain("Coach's POTM: Maya 7");
-    expect(caption).not.toContain("Players' POTM");
+    expect(caption).toContain("⚽ Maya 7 🤝 Luca 4");
+    expect(caption).toContain("⚽ Luca 4 (P)");
+    expect(caption).not.toContain("(Penalty)");
+    expect(caption).not.toContain("(Direct Free Kick)");
+    expect(caption).toContain("🏆 Coach's Player of the Match: Maya 7");
+    expect(caption).not.toContain("Players' Player of the Match");
     expect(caption).not.toContain("Hall");
     expect(caption).not.toContain("Patel");
     expect(caption).not.toContain("Riverside scored");
@@ -162,7 +165,7 @@ describe("postcardCaption", () => {
       playersPotmLabel: null,
     });
     expect(caption).toContain("7 Maya Hall");
-    expect(caption).not.toContain("Coach's POTM");
+    expect(caption).not.toContain("Coach's Player of the Match");
   });
 });
 
@@ -205,10 +208,10 @@ describe("buildPostcardGoalList crowding", () => {
     if (list.kind !== "full") return;
     expect(list.rows).toHaveLength(6);
     expect(list.rows[0]?.assistLabel).toBe("Luca 4");
-    expect(list.rows[0]?.detail).toBe("'1");
+    expect(list.rows[0]?.isPenalty).toBe(false);
   });
 
-  it("drops assists and kinds from seven to ten goals", () => {
+  it("keeps assists and penalty markers from seven to ten goals", () => {
     const goals = Array.from({ length: 7 }, (_, i) =>
       goal({
         id: `g${i}`,
@@ -230,8 +233,8 @@ describe("buildPostcardGoalList crowding", () => {
     expect(list.kind).toBe("compact");
     if (list.kind !== "compact") return;
     expect(list.rows).toHaveLength(7);
-    expect(list.rows[0]?.detail).toBe("'1");
-    expect(list).not.toHaveProperty("rows.0.assistLabel");
+    expect(list.rows[0]?.isPenalty).toBe(true);
+    expect(list.rows[0]?.assistLabel).toBe("Luca 4");
   });
 
   it("summarises eleven or more our goals as top scorers", () => {
