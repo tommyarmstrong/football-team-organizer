@@ -161,6 +161,13 @@ describe("updateSession auth gates", () => {
     );
   });
 
+  it("allows signed-in users to hit /auth/session/verify", async () => {
+    mockAuth({ user: { id: "auth-1" }, hasAccess: true });
+
+    const response = await updateSession(request("/auth/session/verify"));
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it("does not bounce members off /auth/reset-password", async () => {
     mockAuth({ user: { id: "auth-1" }, hasAccess: true });
 

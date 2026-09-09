@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Person, PersonInvitation } from "@/lib/supabase/database.types";
 import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
+import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
 
 const {
   createClientMock,
@@ -91,6 +92,7 @@ describe("signOut", () => {
 
     expect(signOutMock).toHaveBeenCalled();
     expect(cookiesDeleteMock).toHaveBeenCalledWith(PASSWORD_SETUP_COOKIE);
+    expect(cookiesDeleteMock).toHaveBeenCalledWith(CLUB_COLOUR_HINT_COOKIE);
     expect(redirectMock).toHaveBeenCalledWith("/login");
   });
 });
