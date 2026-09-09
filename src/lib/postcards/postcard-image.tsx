@@ -40,6 +40,28 @@ function ellipsisStyle(extra?: CSSProperties): CSSProperties {
   };
 }
 
+/**
+ * Satori refuses to lay out a div with more than one child unless `display` is
+ * set explicitly, so every stacking wrapper below declares a column flexbox.
+ */
+function stackStyle(extra?: CSSProperties): CSSProperties {
+  return {
+    display: "flex",
+    flexDirection: "column",
+    ...extra,
+  };
+}
+
+/** Satori ignores `text-align`, so centred lines need flex centring instead. */
+function centredStyle(extra?: CSSProperties): CSSProperties {
+  return {
+    display: "flex",
+    justifyContent: "center",
+    textAlign: "center",
+    ...extra,
+  };
+}
+
 function FormBox({
   letter,
   colors,
@@ -89,7 +111,7 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
 
   if (list.kind === "summary") {
     return (
-      <div style={{ marginBottom: 28 }}>
+      <div style={stackStyle({ marginBottom: 28 })}>
         {heading}
         <div style={{ fontSize: 24, color: PAPER, lineHeight: 1.35 }}>
           {list.text}
@@ -106,7 +128,10 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
   const rows =
     list.kind === "full"
       ? list.rows.map((row, index) => (
-          <div key={`${row.label}-${index}`} style={{ marginBottom: 8 }}>
+          <div
+            key={`${row.label}-${index}`}
+            style={stackStyle({ marginBottom: 8 })}
+          >
             <div
               style={{
                 display: "flex",
@@ -137,7 +162,10 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
           </div>
         ))
       : list.rows.map((row, index) => (
-          <div key={`${row.label}-${index}`} style={{ marginBottom: 8 }}>
+          <div
+            key={`${row.label}-${index}`}
+            style={stackStyle({ marginBottom: 8 })}
+          >
             <div
               style={{
                 display: "flex",
@@ -157,7 +185,7 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
         ));
 
   return (
-    <div style={{ marginBottom: 28 }}>
+    <div style={stackStyle({ marginBottom: 28 })}>
       {heading}
       {rows}
     </div>
@@ -253,7 +281,7 @@ export function MatchPostcardImage({
               opacity: 0.9,
             })}
           >
-            {payload.teamName} · {payload.seasonLabel}
+            {`${payload.teamName} · ${payload.seasonLabel}`}
           </div>
         </div>
       </div>
@@ -274,15 +302,16 @@ export function MatchPostcardImage({
           }}
         >
           <div
-            style={ellipsisStyle({
+            style={{
               flex: 1,
-              textAlign: "right",
-              fontSize: 32,
-              fontWeight: 700,
+              display: "flex",
+              justifyContent: "flex-end",
               paddingRight: 20,
-            })}
+            }}
           >
-            {payload.homeName}
+            <div style={ellipsisStyle({ fontSize: 32, fontWeight: 700 })}>
+              {payload.homeName}
+            </div>
           </div>
           <div
             style={{
@@ -297,37 +326,30 @@ export function MatchPostcardImage({
           >
             {payload.scoreLabel}
           </div>
-          <div
-            style={ellipsisStyle({
-              flex: 1,
-              fontSize: 32,
-              fontWeight: 700,
-              paddingLeft: 20,
-            })}
-          >
-            {payload.awayName}
+          <div style={{ flex: 1, display: "flex", paddingLeft: 20 }}>
+            <div style={ellipsisStyle({ fontSize: 32, fontWeight: 700 })}>
+              {payload.awayName}
+            </div>
           </div>
         </div>
         <div
-          style={{
+          style={centredStyle({
             fontSize: 24,
             color: MUTED,
-            textAlign: "center",
             marginBottom: 8,
             textTransform: "uppercase",
             letterSpacing: 2,
-          }}
+          })}
         >
           {payload.homeAwayLabel}
         </div>
         {context ? (
           <div
-            style={{
+            style={centredStyle({
               fontSize: 24,
               color: MUTED,
-              textAlign: "center",
               marginBottom: 28,
-            }}
+            })}
           >
             {context}
           </div>
@@ -336,13 +358,14 @@ export function MatchPostcardImage({
         )}
 
         <div
-          style={{
+          style={centredStyle({
             fontSize: 32,
             fontWeight: 700,
-            textAlign: "center",
             marginBottom: 32,
             lineHeight: 1.25,
-          }}
+            paddingLeft: 40,
+            paddingRight: 40,
+          })}
         >
           {payload.story}
         </div>
@@ -350,7 +373,7 @@ export function MatchPostcardImage({
         <GoalRows payload={payload} />
 
         {hasPotm ? (
-          <div style={{ marginBottom: 28 }}>
+          <div style={stackStyle({ marginBottom: 28 })}>
             {payload.coachPotmLabel ? (
               <div
                 style={{

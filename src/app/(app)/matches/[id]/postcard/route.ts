@@ -55,16 +55,19 @@ export async function GET(
   const crestSrc = await crestDataUrl(data.clubIconUrl, origin);
 
   try {
-    return new ImageResponse(
+    // Satori renders lazily as the body streams, so a layout error would reach
+    // the client as a dropped connection. Buffer it to fail as a plain 500.
+    const png = await new ImageResponse(
       createElement(MatchPostcardImage, { payload: data, crestSrc }),
-      {
-        width: POSTCARD_WIDTH,
-        height: POSTCARD_HEIGHT,
-        headers: {
-          "Cache-Control": "private, no-store",
-        },
+      { width: POSTCARD_WIDTH, height: POSTCARD_HEIGHT },
+    ).arrayBuffer();
+
+    return new Response(png, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "private, no-store",
       },
-    );
+    });
   } catch (cause) {
     console.error("Failed to generate match postcard", cause);
     return new Response("Failed to generate postcard", { status: 500 });
