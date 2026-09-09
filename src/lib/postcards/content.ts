@@ -84,6 +84,44 @@ export function labelFor(
   return postcardPlayerLabel(player, { gender });
 }
 
+function goalLabelFor(
+  player: PostcardPlayerLabelInput | null,
+  gender: TeamGender,
+): string | null {
+  if (!player) return null;
+  return postcardPlayerLabel({ ...player, shirtNumber: null }, { gender });
+}
+
+export function postcardSquadLines(
+  roster: RosterPlayer[],
+  selectedPlayerIds: string[],
+): string[] {
+  const selected = new Set(selectedPlayerIds);
+  const squad = roster
+    .filter((player) => selected.has(player.id))
+    .sort(
+      (a, b) =>
+        (a.shirt_number ?? Number.MAX_SAFE_INTEGER) -
+          (b.shirt_number ?? Number.MAX_SAFE_INTEGER) ||
+        a.first_name.localeCompare(b.first_name),
+    )
+    .map((player) =>
+      player.shirt_number == null
+        ? player.first_name
+        : `${player.shirt_number} ${player.first_name}`,
+    );
+  const lines: string[] = [];
+  for (const player of squad) {
+    const current = lines.at(-1);
+    if (!current || `${current}, ${player}`.length > 55) {
+      lines.push(player);
+    } else {
+      lines[lines.length - 1] = `${current}, ${player}`;
+    }
+  }
+  return lines;
+}
+
 function ourNamedGoals(goals: GoalWithPlayers[]): GoalWithPlayers[] {
   return goals.filter((goal) => !goal.is_opposition && !goal.is_own_goal);
 }
@@ -115,9 +153,9 @@ export function buildPostcardGoalList(
         }
       : null;
     return {
-      label: labelFor(scorer, options.gender) ?? "Player",
+      label: goalLabelFor(scorer, options.gender) ?? "Player",
       isPenalty: goal.is_penalty,
-      assistLabel: labelFor(assist, options.gender),
+      assistLabel: goalLabelFor(assist, options.gender),
       playerId: goal.player_id,
     };
   });
@@ -183,11 +221,11 @@ function captionGoalLine(
         shirtNumber: shirts.get(goal.assist.id) ?? null,
       }
     : null;
-  const scorerLabel = `${labelFor(scorer, gender) ?? "Player"}${
+  const scorerLabel = `${goalLabelFor(scorer, gender) ?? "Player"}${
     goal.is_penalty ? " (P)" : ""
   }`;
   const parts = [`⚽ ${scorerLabel}`];
-  const assistLabel = labelFor(assist, gender);
+  const assistLabel = goalLabelFor(assist, gender);
   if (assistLabel) parts.push(`🤝 ${assistLabel}`);
   return parts.join(" ");
 }

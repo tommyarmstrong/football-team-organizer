@@ -46,6 +46,7 @@ const playedPayload = {
   goalList: { kind: "none" as const },
   coachPotmLabel: null,
   playersPotmLabel: null,
+  squadLines: [],
   form: ["W"] as Array<"W" | "D" | "L">,
   caption: "U11 Girls 1–0 Riverside",
   fileName: "u11-girls-2026-03-08-vs-riverside.png",

@@ -43,6 +43,7 @@ export type MatchPostcardPayload = {
   goalList: PostcardGoalList;
   coachPotmLabel: string | null;
   playersPotmLabel: string | null;
+  squadLines: string[];
   form: Array<"W" | "D" | "L">;
   caption: string;
   fileName: string;

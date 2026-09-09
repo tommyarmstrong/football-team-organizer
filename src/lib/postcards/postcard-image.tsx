@@ -449,6 +449,41 @@ export function MatchPostcardImage({
           </div>
         ) : null}
 
+        {payload.squadLines.length > 0 ? (
+          <div
+            style={stackStyle({
+              alignItems: "center",
+              marginBottom: 10,
+            })}
+          >
+            <div
+              style={{
+                fontSize: 30,
+                color: MUTED,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 12,
+              }}
+            >
+              Squad
+            </div>
+            {payload.squadLines.map((line, index) => (
+              <div
+                key={`${line}-${index}`}
+                style={centredStyle({
+                  width: "100%",
+                  fontSize: 30,
+                  color: INK,
+                  lineHeight: 1.35,
+                })}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         {payload.form.length > 0 ? (
           <div
             style={stackStyle({
