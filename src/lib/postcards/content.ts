@@ -222,6 +222,17 @@ function captionGoalLine(
   return parts.join(" ");
 }
 
+export function postcardPotmLine(
+  name: string,
+  kind: "coach" | "players",
+): string {
+  const award =
+    kind === "coach"
+      ? "Coach's Player of the Match"
+      : "Players' Player of the Match";
+  return `🏆 ${name} · ${award}`;
+}
+
 export function postcardCaption(input: {
   teamName: string;
   opponentName: string;
@@ -249,10 +260,10 @@ export function postcardCaption(input: {
 
   const potm: string[] = [];
   if (input.coachPotmLabel) {
-    potm.push(`🏆 Coach's Player of the Match: ${input.coachPotmLabel}`);
+    potm.push(postcardPotmLine(input.coachPotmLabel, "coach"));
   }
   if (input.playersPotmLabel) {
-    potm.push(`🏆 Players' Player of the Match: ${input.playersPotmLabel}`);
+    potm.push(postcardPotmLine(input.playersPotmLabel, "players"));
   }
   if (potm.length > 0) {
     lines.push("");
