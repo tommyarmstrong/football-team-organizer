@@ -4,24 +4,22 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
 import { validateNewPassword } from "@/lib/auth/password";
+import { verifySignedInPersonAccess } from "@/lib/auth/session-access";
+import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
 import { createClient } from "@/lib/supabase/server";
 import {
-  findPersonForAuthUserId,
   findPersonForVerifiedEmail,
   linkAuthUserToPerson,
   loadInvitationByToken,
 } from "@/lib/people/invitations";
-import {
-  normalizeEmail,
-  personMaySignIn,
-  signInDeniedMessage,
-} from "@/lib/people/person";
+import { normalizeEmail } from "@/lib/people/person";
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   const cookieStore = await cookies();
   cookieStore.delete(PASSWORD_SETUP_COOKIE);
+  cookieStore.delete(CLUB_COLOUR_HINT_COOKIE);
   redirect("/login");
 }
 
@@ -94,28 +92,5 @@ export async function updatePasswordAndFinishAction(input: {
 export async function assertPersonMayRemainSignedIn(): Promise<{
   error: string | null;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Not signed in." };
-  }
-
-  try {
-    let person = (await findPersonForAuthUserId(user.id)).data;
-    if (!person && user.email) {
-      person = (await findPersonForVerifiedEmail(user.email)).data;
-    }
-
-    if (!person || !personMaySignIn(person.account_status)) {
-      await supabase.auth.signOut();
-      return { error: signInDeniedMessage(person?.account_status) };
-    }
-  } catch {
-    await supabase.auth.signOut();
-    return { error: signInDeniedMessage(null) };
-  }
-
-  return { error: null };
+  return verifySignedInPersonAccess();
 }
