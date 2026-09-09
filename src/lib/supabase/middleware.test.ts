@@ -161,10 +161,10 @@ describe("updateSession auth gates", () => {
     );
   });
 
-  it("allows signed-in users to hit /auth/session/verify", async () => {
+  it("allows signed-in users to hit /auth/session/bootstrap", async () => {
     mockAuth({ user: { id: "auth-1" }, hasAccess: true });
 
-    const response = await updateSession(request("/auth/session/verify"));
+    const response = await updateSession(request("/auth/session/bootstrap"));
     expect(response.headers.get("location")).toBeNull();
   });
 
