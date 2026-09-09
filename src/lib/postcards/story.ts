@@ -1,149 +1,109 @@
+import { isMatchPeriodName, matchPeriodSortOrder } from "@/lib/constants";
+
 export type StoryEvent = {
   isOpposition: boolean;
-  isOwnGoal: boolean;
-  playerId: string | null;
-  firstName: string;
-  minute: number | null;
-  createdAt: string;
+  period: string | null;
 };
 
 export type StoryInput = {
   goalsFor: number;
   goalsAgainst: number;
-  isFriendly: boolean;
   events: StoryEvent[];
 };
 
-function isOurNamedGoal(event: StoryEvent): boolean {
-  return !event.isOpposition && !event.isOwnGoal && Boolean(event.playerId);
-}
-
-function sortEvents(events: StoryEvent[]): StoryEvent[] {
-  return [...events].sort((a, b) => {
-    const minuteDiff = (a.minute ?? 0) - (b.minute ?? 0);
-    if (minuteDiff !== 0) return minuteDiff;
-    return a.createdAt.localeCompare(b.createdAt);
-  });
-}
-
 /**
- * Chronology-based claims are only safe when every score event has a unique
- * minute. `created_at` is when a coach entered a goal, not when it happened,
- * so it must never be used to reconstruct a partially timed match.
+ * Score progression at the end of each recorded period. Events within the
+ * same period are deliberately aggregated: their entry order and minute are
+ * not reliable enough to support chronology claims.
  */
-function reliableTimeline(input: StoryInput): StoryEvent[] | null {
+function periodScores(
+  input: StoryInput,
+): Array<{ for: number; against: number }> | null {
   const { events, goalsFor, goalsAgainst } = input;
   if (events.length !== goalsFor + goalsAgainst) return null;
-  if (events.some((event) => event.minute == null)) return null;
-  const minutes = events.map((event) => event.minute as number);
-  if (new Set(minutes).size !== minutes.length) return null;
-  return sortEvents(events);
-}
-
-function applyEventScore(
-  event: StoryEvent,
-  score: { for: number; against: number },
-): { for: number; against: number } {
-  if (event.isOpposition) {
-    return { for: score.for, against: score.against + 1 };
+  if (
+    events.some((event) => !event.period || !isMatchPeriodName(event.period))
+  ) {
+    return null;
   }
-  return { for: score.for + 1, against: score.against };
-}
 
-function cameFromBehind(events: StoryEvent[]): boolean {
+  const regulationFamilies = new Set(
+    events
+      .map((event) => event.period)
+      .filter(
+        (period): period is string =>
+          period?.startsWith("Quarter") === true ||
+          period === "First half" ||
+          period === "Second half" ||
+          period === "Single period match",
+      )
+      .map((period) =>
+        period.startsWith("Quarter")
+          ? "quarters"
+          : period.endsWith("half")
+            ? "halves"
+            : "single",
+      ),
+  );
+  if (regulationFamilies.size > 1) return null;
+
+  const periodGoals = new Map<
+    string,
+    { name: string; for: number; against: number }
+  >();
+  for (const event of events) {
+    const name = event.period as string;
+    const current = periodGoals.get(name) ?? { name, for: 0, against: 0 };
+    if (event.isOpposition) current.against += 1;
+    else current.for += 1;
+    periodGoals.set(name, current);
+  }
+
+  const ordered = [...periodGoals.values()].sort(
+    (a, b) => matchPeriodSortOrder(a.name) - matchPeriodSortOrder(b.name),
+  );
+  const progression: Array<{ for: number; against: number }> = [];
   let score = { for: 0, against: 0 };
-  let wasBehind = false;
-  for (const event of events) {
-    score = applyEventScore(event, score);
-    if (score.against > score.for) wasBehind = true;
+  for (const period of ordered) {
+    score = {
+      for: score.for + period.for,
+      against: score.against + period.against,
+    };
+    progression.push(score);
   }
-  return wasBehind;
-}
-
-function letALeadSlip(events: StoryEvent[]): boolean {
-  let score = { for: 0, against: 0 };
-  let wasAhead = false;
-  for (const event of events) {
-    score = applyEventScore(event, score);
-    if (score.for > score.against) wasAhead = true;
-  }
-  return wasAhead;
-}
-
-function winningGoalMinute(
-  events: StoryEvent[],
-  goalsAgainst: number,
-): number | null {
-  let ourGoals = 0;
-  for (const event of events) {
-    if (event.isOpposition) continue;
-    ourGoals += 1;
-    if (ourGoals === goalsAgainst + 1) return event.minute;
-  }
-  return null;
-}
-
-function hatTrickFirstName(events: StoryEvent[]): string | null {
-  const counts = new Map<string, { count: number; firstName: string }>();
-  for (const event of events) {
-    if (!isOurNamedGoal(event) || !event.playerId) continue;
-    const current = counts.get(event.playerId);
-    if (current) {
-      current.count += 1;
-    } else {
-      counts.set(event.playerId, {
-        count: 1,
-        firstName: event.firstName.trim() || "They",
-      });
-    }
-  }
-  let best: { count: number; firstName: string } | null = null;
-  for (const entry of counts.values()) {
-    if (entry.count < 3) continue;
-    if (!best || entry.count > best.count) best = entry;
-  }
-  return best?.firstName ?? null;
+  return progression;
 }
 
 export function postcardStory(input: StoryInput): string {
-  const { goalsFor, goalsAgainst, isFriendly, events } = input;
-  const timeline = reliableTimeline(input);
+  const { goalsFor, goalsAgainst } = input;
+  const progression = periodScores(input);
   const win = goalsFor > goalsAgainst;
   const draw = goalsFor === goalsAgainst;
   const loss = goalsFor < goalsAgainst;
+  const margin = Math.abs(goalsFor - goalsAgainst);
 
   if (goalsFor === 0 && goalsAgainst === 0) {
     return "A tight stalemate.";
   }
 
-  if (win && goalsAgainst === 0 && goalsFor >= 1) {
-    return "Kept a clean sheet.";
-  }
-
-  if (win && timeline && cameFromBehind(timeline)) {
+  if (win && progression?.some((score) => score.against > score.for)) {
     return "Came from behind to win.";
   }
 
-  const decisiveMinute = timeline
-    ? winningGoalMinute(timeline, goalsAgainst)
-    : null;
-  if (win && decisiveMinute != null && decisiveMinute >= 80) {
-    return "A late winner.";
+  if (win && margin === 1) {
+    return "Edged a close contest.";
   }
 
-  const hatTrickName = hatTrickFirstName(events);
-  if (win && hatTrickName) {
-    return isFriendly
-      ? `${hatTrickName} had a day to remember.`
-      : `${hatTrickName} took the match.`;
-  }
-
-  if (win && goalsFor - goalsAgainst >= 3) {
+  if (win && margin >= 3) {
     return "Ran out comfortable winners.";
   }
 
+  if (win && goalsAgainst === 0) {
+    return "Won without conceding.";
+  }
+
   if (win) {
-    return isFriendly ? "A good win." : "Took all three points.";
+    return "Finished two goals clear.";
   }
 
   if (draw && goalsFor >= 3) {
@@ -151,16 +111,16 @@ export function postcardStory(input: StoryInput): string {
   }
 
   if (draw) {
-    return "Shared the points.";
+    return "Nothing between the teams.";
   }
 
-  if (loss && goalsAgainst - goalsFor === 1) {
-    return "Narrow defeat.";
+  if (loss && progression?.some((score) => score.for > score.against)) {
+    return "Led earlier before the game turned.";
   }
 
-  if (loss && timeline && letALeadSlip(timeline)) {
-    return "Let it slip.";
+  if (loss && margin === 1) {
+    return "Edged out in a close contest.";
   }
 
-  return "On the wrong end of it.";
+  return "A tough result.";
 }

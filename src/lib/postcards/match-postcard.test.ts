@@ -439,7 +439,7 @@ describe("buildMatchPostcardPayload", () => {
       await import("@/lib/postcards/match-postcard");
     const { data, error } = await buildMatchPostcardPayload("match-1");
     expect(error).toBeNull();
-    expect(data?.story).toBe("Took all three points.");
+    expect(data?.story).toBe("Edged a close contest.");
     expect(data?.scoreLabel).toBe("2–1");
     expect(data?.homeName).toBe("U11 Girls");
     expect(data?.awayName).toBe("Riverside");

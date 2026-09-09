@@ -90,7 +90,6 @@ export async function buildMatchPostcardPayload(
   const story = postcardStory({
     goalsFor,
     goalsAgainst,
-    isFriendly: match.is_friendly,
     events: toStoryEvents(goals),
   });
   const coachPotmLabel = nameOnlyLabelFor(

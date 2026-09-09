@@ -265,10 +265,6 @@ export function postcardCaption(input: {
 export function toStoryEvents(goals: GoalWithPlayers[]): StoryEvent[] {
   return goals.map((goal) => ({
     isOpposition: goal.is_opposition,
-    isOwnGoal: goal.is_own_goal,
-    playerId: goal.player_id,
-    firstName: goal.scorer?.first_name ?? "",
-    minute: goal.minute,
-    createdAt: goal.created_at,
+    period: goal.period,
   }));
 }
