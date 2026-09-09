@@ -179,7 +179,7 @@ describe("postcardCaption", () => {
     expect(caption).toContain("⚽ Luca (P)");
     expect(caption).not.toContain("(Penalty)");
     expect(caption).not.toContain("(Direct Free Kick)");
-    expect(caption).toContain("🏆 Coach's Player of the Match: Maya");
+    expect(caption).toContain("🏆 Maya · Coach's Player of the Match");
     expect(caption).not.toContain("Players' Player of the Match");
     expect(caption).not.toContain("Hall");
     expect(caption).not.toContain("Patel");
@@ -201,6 +201,23 @@ describe("postcardCaption", () => {
     });
     expect(caption).toContain("⚽ Maya Hall");
     expect(caption).not.toContain("Coach's Player of the Match");
+  });
+
+  it("formats POTM as trophy, name, middot, then award", () => {
+    const caption = postcardCaption({
+      teamName: "U11 Girls",
+      opponentName: "Riverside",
+      goalsFor: 0,
+      goalsAgainst: 0,
+      story: "Shared the points.",
+      goals: [],
+      gender: "girls",
+      roster: youthRoster,
+      coachPotmLabel: "Maya",
+      playersPotmLabel: "Luca",
+    });
+    expect(caption).toContain("🏆 Maya · Coach's Player of the Match");
+    expect(caption).toContain("🏆 Luca · Players' Player of the Match");
   });
 });
 
