@@ -18,23 +18,26 @@ function isOurNamedGoal(event: StoryEvent): boolean {
   return !event.isOpposition && !event.isOwnGoal && Boolean(event.playerId);
 }
 
-function eventsAreUnordered(events: StoryEvent[]): boolean {
-  if (events.length <= 1) return false;
-  const allMinutesNull = events.every((event) => event.minute == null);
-  if (!allMinutesNull) return false;
-  const firstTs = events[0]?.createdAt;
-  return events.every((event) => event.createdAt === firstTs);
-}
-
 function sortEvents(events: StoryEvent[]): StoryEvent[] {
-  const allHaveMinute = events.every((event) => event.minute != null);
   return [...events].sort((a, b) => {
-    if (allHaveMinute) {
-      const minuteDiff = (a.minute ?? 0) - (b.minute ?? 0);
-      if (minuteDiff !== 0) return minuteDiff;
-    }
+    const minuteDiff = (a.minute ?? 0) - (b.minute ?? 0);
+    if (minuteDiff !== 0) return minuteDiff;
     return a.createdAt.localeCompare(b.createdAt);
   });
+}
+
+/**
+ * Chronology-based claims are only safe when every score event has a unique
+ * minute. `created_at` is when a coach entered a goal, not when it happened,
+ * so it must never be used to reconstruct a partially timed match.
+ */
+function reliableTimeline(input: StoryInput): StoryEvent[] | null {
+  const { events, goalsFor, goalsAgainst } = input;
+  if (events.length !== goalsFor + goalsAgainst) return null;
+  if (events.some((event) => event.minute == null)) return null;
+  const minutes = events.map((event) => event.minute as number);
+  if (new Set(minutes).size !== minutes.length) return null;
+  return sortEvents(events);
 }
 
 function applyEventScore(
@@ -48,10 +51,9 @@ function applyEventScore(
 }
 
 function cameFromBehind(events: StoryEvent[]): boolean {
-  if (eventsAreUnordered(events)) return false;
   let score = { for: 0, against: 0 };
   let wasBehind = false;
-  for (const event of sortEvents(events)) {
+  for (const event of events) {
     score = applyEventScore(event, score);
     if (score.against > score.for) wasBehind = true;
   }
@@ -59,22 +61,26 @@ function cameFromBehind(events: StoryEvent[]): boolean {
 }
 
 function letALeadSlip(events: StoryEvent[]): boolean {
-  if (eventsAreUnordered(events)) return false;
   let score = { for: 0, against: 0 };
   let wasAhead = false;
-  for (const event of sortEvents(events)) {
+  for (const event of events) {
     score = applyEventScore(event, score);
     if (score.for > score.against) wasAhead = true;
   }
   return wasAhead;
 }
 
-function lastOurGoalMinute(events: StoryEvent[]): number | null {
-  const ours = events.filter(isOurNamedGoal);
-  if (!ours.some((event) => event.minute != null)) return null;
-  const sorted = sortEvents(ours);
-  const last = sorted[sorted.length - 1];
-  return last?.minute ?? null;
+function winningGoalMinute(
+  events: StoryEvent[],
+  goalsAgainst: number,
+): number | null {
+  let ourGoals = 0;
+  for (const event of events) {
+    if (event.isOpposition) continue;
+    ourGoals += 1;
+    if (ourGoals === goalsAgainst + 1) return event.minute;
+  }
+  return null;
 }
 
 function hatTrickFirstName(events: StoryEvent[]): string | null {
@@ -101,6 +107,7 @@ function hatTrickFirstName(events: StoryEvent[]): string | null {
 
 export function postcardStory(input: StoryInput): string {
   const { goalsFor, goalsAgainst, isFriendly, events } = input;
+  const timeline = reliableTimeline(input);
   const win = goalsFor > goalsAgainst;
   const draw = goalsFor === goalsAgainst;
   const loss = goalsFor < goalsAgainst;
@@ -113,12 +120,14 @@ export function postcardStory(input: StoryInput): string {
     return "Kept a clean sheet.";
   }
 
-  if (win && cameFromBehind(events)) {
+  if (win && timeline && cameFromBehind(timeline)) {
     return "Came from behind to win.";
   }
 
-  const lateMinute = lastOurGoalMinute(events);
-  if (win && lateMinute != null && lateMinute >= 80) {
+  const decisiveMinute = timeline
+    ? winningGoalMinute(timeline, goalsAgainst)
+    : null;
+  if (win && decisiveMinute != null && decisiveMinute >= 80) {
     return "A late winner.";
   }
 
@@ -149,7 +158,7 @@ export function postcardStory(input: StoryInput): string {
     return "Narrow defeat.";
   }
 
-  if (loss && letALeadSlip(events)) {
+  if (loss && timeline && letALeadSlip(timeline)) {
     return "Let it slip.";
   }
 

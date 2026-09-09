@@ -76,15 +76,7 @@ export function playerFromRoster(
   };
 }
 
-export function labelFor(
-  player: PostcardPlayerLabelInput | null,
-  gender: TeamGender,
-): string | null {
-  if (!player) return null;
-  return postcardPlayerLabel(player, { gender });
-}
-
-function goalLabelFor(
+export function nameOnlyLabelFor(
   player: PostcardPlayerLabelInput | null,
   gender: TeamGender,
 ): string | null {
@@ -153,9 +145,9 @@ export function buildPostcardGoalList(
         }
       : null;
     return {
-      label: goalLabelFor(scorer, options.gender) ?? "Player",
+      label: nameOnlyLabelFor(scorer, options.gender) ?? "Player",
       isPenalty: goal.is_penalty,
-      assistLabel: goalLabelFor(assist, options.gender),
+      assistLabel: nameOnlyLabelFor(assist, options.gender),
       playerId: goal.player_id,
     };
   });
@@ -221,11 +213,11 @@ function captionGoalLine(
         shirtNumber: shirts.get(goal.assist.id) ?? null,
       }
     : null;
-  const scorerLabel = `${goalLabelFor(scorer, gender) ?? "Player"}${
+  const scorerLabel = `${nameOnlyLabelFor(scorer, gender) ?? "Player"}${
     goal.is_penalty ? " (P)" : ""
   }`;
   const parts = [`⚽ ${scorerLabel}`];
-  const assistLabel = goalLabelFor(assist, gender);
+  const assistLabel = nameOnlyLabelFor(assist, gender);
   if (assistLabel) parts.push(`🤝 ${assistLabel}`);
   return parts.join(" ");
 }

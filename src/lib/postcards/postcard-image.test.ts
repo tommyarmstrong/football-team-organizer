@@ -95,8 +95,8 @@ describe("MatchPostcardImage", () => {
   it("renders a PNG with both player of the match awards", async () => {
     const png = await renderPostcard({
       ...basePayload,
-      coachPotmLabel: "Amara (7)",
-      playersPotmLabel: "Niamh (4)",
+      coachPotmLabel: "Amara",
+      playersPotmLabel: "Niamh",
     });
     expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
   });
