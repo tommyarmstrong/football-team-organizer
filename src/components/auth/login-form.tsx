@@ -10,7 +10,6 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { createClient } from "@/lib/supabase/client";
 import { validateNewPassword } from "@/lib/auth/password";
 import { acceptInvitationWithPassword } from "@/lib/people/onboarding-actions";
-import { assertPersonMayRemainSignedIn } from "@/lib/auth/actions";
 
 export function AcceptInvitationForm({
   token,
@@ -146,28 +145,39 @@ export function LoginFormWithGoogle() {
     setError(null);
     setPending(true);
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+
+      const accessResponse = await fetch("/auth/session/bootstrap", {
+        method: "POST",
+      });
+
+      if (!accessResponse.ok && accessResponse.status !== 403) {
+        throw new Error("Could not verify access.");
+      }
+
+      const access = (await accessResponse.json()) as { error: string | null };
+      if (access.error) {
+        setError(access.error);
+        return;
+      }
+
+      router.replace(nextPath.startsWith("/") ? nextPath : "/dashboard");
+      router.refresh();
+    } catch {
+      setError("Could not finish sign-in. Refresh and try again.");
+    } finally {
       setPending(false);
-      setError(signInError.message);
-      return;
     }
-
-    const access = await assertPersonMayRemainSignedIn();
-    setPending(false);
-
-    if (access.error) {
-      setError(access.error);
-      return;
-    }
-
-    router.replace(nextPath.startsWith("/") ? nextPath : "/dashboard");
-    router.refresh();
   }
 
   async function onGoogle() {
