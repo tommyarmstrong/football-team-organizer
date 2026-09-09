@@ -20,6 +20,7 @@ import {
   getMatchesPlayedByPlayerStats,
   getPlayerOfTheMatchByPlayerStats,
   getRecentForm,
+  getFormThroughMatch,
   getResultsOverTime,
   getTopAssists,
   getTopPlayersOfTheMatch,
@@ -677,5 +678,43 @@ describe("stats data", () => {
     const recent = await getRecentForm();
     expect(recent.error).toBeNull();
     expect(recent.form).toEqual(["W", "L"]);
+  });
+
+  it("builds form through a specific match, always ending with that result", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-old",
+            date: "2025-09-01",
+            created_at: "2025-09-01T10:00:00Z",
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+          },
+          {
+            id: "m-this",
+            date: "2025-09-08",
+            created_at: "2025-09-08T10:00:00Z",
+            goals: [{ is_opposition: true }],
+          },
+          {
+            id: "m-same-day-later",
+            date: "2025-09-08",
+            created_at: "2025-09-08T18:00:00Z",
+            goals: [{ is_opposition: false }],
+          },
+        ]),
+      }),
+    );
+    const result = await getFormThroughMatch(
+      "team-1",
+      {
+        id: "m-this",
+        date: "2025-09-08",
+        created_at: "2025-09-08T10:00:00Z",
+      },
+      "L",
+    );
+    expect(result.error).toBeNull();
+    expect(result.form).toEqual(["W", "L"]);
   });
 });

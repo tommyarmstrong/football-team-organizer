@@ -11,7 +11,14 @@ Working on Football Team Organizer day-to-day.
 
 ## Instalation and Deployment
 
-Install the software and database locally by following [Installation](instalation.md) or in the cloud by following [Deployment](deployment.md).
+Install the software and database locally by following [Installation](instalation.md)
+or in the cloud by following [Deployment](deployment.md).
+
+After migrations, load `supabase/seed.sql` for a bootstrap club + John Hall
+manager, or `supabase/england.sql` for the full England demo dataset (alone or
+after the bootstrap seed). Then link an Auth user to John Hall before the first
+login — steps are in [Installation](instalation.md#after-seeding--link-the-first-manager).
+Seed contents: [Database](database.md#seed-and-test-data).
 
 ---
 

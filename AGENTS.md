@@ -59,7 +59,10 @@ Further commits for the same open PR go on that same feature branch (or a stacke
 
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Cursor Cloud specific instructions
@@ -88,7 +91,7 @@ manager — `/no-access` cannot bootstrap the first club.
 `npx supabase start` applies **all** files under `supabase/migrations/` (not
 only the baseline). Auto-seed is disabled in `supabase/config.toml`.
 
-1. Load `supabase/seed.sql` (SQL Editor or `npx supabase db query -f supabase/seed.sql`). The seed does **not** create Auth users or set `auth_user_id`.
+1. Load `supabase/seed.sql` for bootstrap (Demo Club + John Hall), and/or `supabase/england.sql` for the England demo dataset (SQL Editor or `npx supabase db query -f …`). Neither file creates Auth users or sets `auth_user_id`. `england.sql` can run alone or after `seed.sql` (same fixed ids).
 2. Create an Auth user (Dashboard → Authentication → Users, or Admin API with the service role key).
 3. Link club manager **John Hall** (`people.id` `b0000000-0000-4000-8000-000000000001`): set `auth_user_id` to that Auth UUID and `account_status` to `active`.
 

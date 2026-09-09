@@ -62,3 +62,4 @@ supabase/seed.private.sql
 docs/feature_requests_1.md
 docs/roadmap.md
 docs/production-readiness-report.md
+design_docs/*
