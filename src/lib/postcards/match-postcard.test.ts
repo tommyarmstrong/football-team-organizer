@@ -169,7 +169,7 @@ describe("postcardCaption", () => {
       ],
       gender: "girls",
       roster: youthRoster,
-      coachPotmLabel: "Maya 7",
+      coachPotmLabel: "Maya",
       playersPotmLabel: null,
     });
 
@@ -179,7 +179,7 @@ describe("postcardCaption", () => {
     expect(caption).toContain("⚽ Luca (P)");
     expect(caption).not.toContain("(Penalty)");
     expect(caption).not.toContain("(Direct Free Kick)");
-    expect(caption).toContain("🏆 Coach's Player of the Match: Maya 7");
+    expect(caption).toContain("🏆 Coach's Player of the Match: Maya");
     expect(caption).not.toContain("Players' Player of the Match");
     expect(caption).not.toContain("Hall");
     expect(caption).not.toContain("Patel");
@@ -443,8 +443,8 @@ describe("buildMatchPostcardPayload", () => {
     expect(data?.scoreLabel).toBe("2–1");
     expect(data?.homeName).toBe("U11 Girls");
     expect(data?.awayName).toBe("Riverside");
-    expect(data?.coachPotmLabel).toBe("Maya 7");
-    expect(data?.playersPotmLabel).toBe("Luca 4");
+    expect(data?.coachPotmLabel).toBe("Maya");
+    expect(data?.playersPotmLabel).toBe("Luca");
     expect(data?.squadLines).toEqual(["4 Luca, 7 Maya"]);
     expect(data?.clubColour).toBe("#146C4A");
     expect(data?.caption).not.toContain("Hall");

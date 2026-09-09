@@ -80,7 +80,7 @@ describe("postcardStory", () => {
     ).toBe("Came from behind to win.");
   });
 
-  it("uses created_at only when some minutes are missing", () => {
+  it("does not infer a comeback from goal entry order when minutes are missing", () => {
     expect(
       story({
         goalsFor: 2,
@@ -102,7 +102,7 @@ describe("postcardStory", () => {
           }),
         ],
       }),
-    ).toBe("Came from behind to win.");
+    ).toBe("Took all three points.");
   });
 
   it("skips comeback detection when minutes and timestamps are tied", () => {
@@ -124,7 +124,27 @@ describe("postcardStory", () => {
     ).toBe("Took all three points.");
   });
 
-  it("uses a late winner when the last our goal is in minute 80 or later", () => {
+  it("skips chronology claims when two goals share a minute", () => {
+    expect(
+      story({
+        goalsFor: 2,
+        goalsAgainst: 1,
+        events: [
+          event({
+            createdAt: "a",
+            minute: 10,
+            isOpposition: true,
+            playerId: null,
+            firstName: "",
+          }),
+          event({ createdAt: "b", minute: 10 }),
+          event({ createdAt: "c", minute: 20, playerId: "p2" }),
+        ],
+      }),
+    ).toBe("Took all three points.");
+  });
+
+  it("uses a late winner when the decisive goal is in minute 80 or later", () => {
     expect(
       story({
         goalsFor: 2,
@@ -147,6 +167,28 @@ describe("postcardStory", () => {
         ],
       }),
     ).toBe("A late winner.");
+  });
+
+  it("does not call a late final goal the winner when the match was already won", () => {
+    expect(
+      story({
+        goalsFor: 4,
+        goalsAgainst: 1,
+        events: [
+          event({ createdAt: "a", minute: 10, playerId: "a", firstName: "A" }),
+          event({ createdAt: "b", minute: 30, playerId: "b", firstName: "B" }),
+          event({
+            createdAt: "c",
+            minute: 50,
+            isOpposition: true,
+            playerId: null,
+            firstName: "",
+          }),
+          event({ createdAt: "d", minute: 60, playerId: "c", firstName: "C" }),
+          event({ createdAt: "e", minute: 85, playerId: "d", firstName: "D" }),
+        ],
+      }),
+    ).toBe("Ran out comfortable winners.");
   });
 
   it("does not guess a late winner without minutes", () => {

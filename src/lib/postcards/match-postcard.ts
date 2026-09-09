@@ -20,7 +20,7 @@ import {
 } from "@/lib/format";
 import {
   buildPostcardGoalList,
-  labelFor,
+  nameOnlyLabelFor,
   playerFromRoster,
   postcardCaption,
   postcardFileName,
@@ -93,11 +93,11 @@ export async function buildMatchPostcardPayload(
     isFriendly: match.is_friendly,
     events: toStoryEvents(goals),
   });
-  const coachPotmLabel = labelFor(
+  const coachPotmLabel = nameOnlyLabelFor(
     playerFromRoster(roster, match.player_of_the_match_id),
     gender,
   );
-  const playersPotmLabel = labelFor(
+  const playersPotmLabel = nameOnlyLabelFor(
     playerFromRoster(roster, match.players_player_of_the_match_id),
     gender,
   );
