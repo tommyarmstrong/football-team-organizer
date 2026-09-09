@@ -4,13 +4,17 @@ export type PostcardGoalList =
       kind: "full";
       rows: Array<{
         label: string;
-        detail: string | null;
+        isPenalty: boolean;
         assistLabel: string | null;
       }>;
     }
   | {
       kind: "compact";
-      rows: Array<{ label: string; detail: string | null }>;
+      rows: Array<{
+        label: string;
+        isPenalty: boolean;
+        assistLabel: string | null;
+      }>;
     }
   | {
       kind: "summary";
@@ -39,6 +43,7 @@ export type MatchPostcardPayload = {
   goalList: PostcardGoalList;
   coachPotmLabel: string | null;
   playersPotmLabel: string | null;
+  squadLines: string[];
   form: Array<"W" | "D" | "L">;
   caption: string;
   fileName: string;

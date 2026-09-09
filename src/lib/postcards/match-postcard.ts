@@ -3,6 +3,7 @@ import "server-only";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import { getClub } from "@/lib/data/clubs";
 import { listGoalsForMatch } from "@/lib/data/goals";
+import { listMatchPlayers } from "@/lib/data/match-players";
 import { getMatch } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getFormThroughMatch } from "@/lib/data/stats";
@@ -23,6 +24,7 @@ import {
   playerFromRoster,
   postcardCaption,
   postcardFileName,
+  postcardSquadLines,
   toStoryEvents,
 } from "@/lib/postcards/content";
 import { postcardStory } from "@/lib/postcards/story";
@@ -49,20 +51,29 @@ export async function buildMatchPostcardPayload(
     };
   }
 
-  const [teamResult, goalsResult, rosterResult] = await Promise.all([
-    getTeam(match.team_id),
-    listGoalsForMatch(match.id),
-    listRosterForTeam(match.team_id, { includeInactive: true }),
-  ]);
+  const [teamResult, goalsResult, rosterResult, matchPlayersResult] =
+    await Promise.all([
+      getTeam(match.team_id),
+      listGoalsForMatch(match.id),
+      listRosterForTeam(match.team_id, { includeInactive: true }),
+      listMatchPlayers(match.id),
+    ]);
 
   if (teamResult.error) return { data: null, error: teamResult.error };
   if (!teamResult.data) return { data: null, error: "Team not found." };
   if (goalsResult.error) return { data: null, error: goalsResult.error };
   if (rosterResult.error) return { data: null, error: rosterResult.error };
+  if (matchPlayersResult.error) {
+    return { data: null, error: matchPlayersResult.error };
+  }
 
   const team = teamResult.data;
   const goals = goalsResult.data;
   const roster = rosterResult.data;
+  const squadLines = postcardSquadLines(
+    roster,
+    matchPlayersResult.data.map((row) => row.player_id),
+  );
   const { data: club } = await getClub(team.club_id);
 
   const { goalsFor, goalsAgainst } = scoreFromGoals(goals);
@@ -129,6 +140,7 @@ export async function buildMatchPostcardPayload(
       goalList: buildPostcardGoalList(goals, { gender, roster }),
       coachPotmLabel,
       playersPotmLabel,
+      squadLines,
       form,
       caption,
       fileName: postcardFileName({

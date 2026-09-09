@@ -34,6 +34,7 @@ const basePayload: MatchPostcardPayload = {
   goalList: { kind: "none" },
   coachPotmLabel: null,
   playersPotmLabel: null,
+  squadLines: ["1 Ali, 4 Dexter, 5 Theo, 6 Ceyone"],
   form: ["W", "D", "L", "W", "W"],
   caption: "U11 Girls 3–1 Riverside Rovers",
   fileName: "u11-girls-2026-03-08-vs-riverside-rovers.png",
@@ -59,9 +60,9 @@ const goalLists: Array<[string, PostcardGoalList]> = [
     {
       kind: "full",
       rows: [
-        { label: "Amara (7)", detail: "12'", assistLabel: "Assist: Niamh (4)" },
-        { label: "Priya (9)", detail: "38'", assistLabel: null },
-        { label: "Own goal", detail: "71'", assistLabel: null },
+        { label: "Amara", isPenalty: false, assistLabel: "Niamh" },
+        { label: "Priya", isPenalty: true, assistLabel: null },
+        { label: "Own goal", isPenalty: false, assistLabel: null },
       ],
     },
   ],
@@ -70,8 +71,8 @@ const goalLists: Array<[string, PostcardGoalList]> = [
     {
       kind: "compact",
       rows: [
-        { label: "Amara (7)", detail: "×2" },
-        { label: "Priya (9)", detail: null },
+        { label: "Amara", isPenalty: false, assistLabel: "Niamh" },
+        { label: "Priya", isPenalty: true, assistLabel: null },
       ],
     },
   ],

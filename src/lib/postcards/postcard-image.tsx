@@ -5,8 +5,11 @@ export const POSTCARD_WIDTH = 1080;
 export const POSTCARD_HEIGHT = 1350;
 
 const PITCH_DEEP = "#143328";
+const BACKGROUND = "#F6FAF4";
+const INK = "#183B2B";
+const MUTED = "#537261";
+const PITCH_LINE = "#146C4A";
 const PAPER = "#F4FBF5";
-const MUTED = "#D7E8DA";
 const WIN_BG = "#1B7A4A";
 const WIN_FG = "#F4FFF8";
 const DRAW_BG = "#E8C44A";
@@ -72,16 +75,16 @@ function FormBox({
   return (
     <div
       style={{
-        width: 48,
-        height: 48,
-        marginRight: 8,
-        borderRadius: 10,
+        width: 60,
+        height: 60,
+        marginRight: 10,
+        borderRadius: 12,
         backgroundColor: colors.bg,
         color: colors.fg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 24,
+        fontSize: 30,
         fontWeight: 700,
       }}
     >
@@ -90,34 +93,99 @@ function FormBox({
   );
 }
 
+/** The same low-contrast pitch motif used behind the app shell. */
+function PitchLines() {
+  return (
+    <svg
+      width={1080}
+      height={1190}
+      viewBox="0 0 1080 1190"
+      fill="none"
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        color: PITCH_LINE,
+        opacity: 0.08,
+      }}
+    >
+      <rect
+        x="42"
+        y="38"
+        width="996"
+        height="1114"
+        rx="16"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <line
+        x1="42"
+        y1="595"
+        x2="1038"
+        y2="595"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <circle cx="540" cy="595" r="138" stroke="currentColor" strokeWidth="5" />
+      <circle cx="540" cy="595" r="8" fill="currentColor" />
+      <rect
+        x="302"
+        y="38"
+        width="476"
+        height="176"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <rect
+        x="408"
+        y="38"
+        width="264"
+        height="76"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <path
+        d="M420 214a138 138 0 0 0 240 0"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <rect
+        x="302"
+        y="976"
+        width="476"
+        height="176"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <rect
+        x="408"
+        y="1076"
+        width="264"
+        height="76"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+      <path
+        d="M420 976a138 138 0 0 1 240 0"
+        stroke="currentColor"
+        strokeWidth="5"
+      />
+    </svg>
+  );
+}
+
 function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
   const list = payload.goalList;
   if (list.kind === "none") return null;
 
-  const heading = (
-    <div
-      style={{
-        fontSize: 24,
-        fontWeight: 700,
-        letterSpacing: 2,
-        textTransform: "uppercase",
-        color: MUTED,
-        marginBottom: 12,
-      }}
-    >
-      Goals
-    </div>
-  );
-
   if (list.kind === "summary") {
     return (
-      <div style={stackStyle({ marginBottom: 28 })}>
-        {heading}
-        <div style={{ fontSize: 24, color: PAPER, lineHeight: 1.35 }}>
-          {list.text}
+      <div style={stackStyle({ marginBottom: 32 })}>
+        <div style={{ fontSize: 34, color: INK, lineHeight: 1.35 }}>
+          {`⚽ ${list.text}`}
         </div>
         {list.extra ? (
-          <div style={{ fontSize: 24, color: MUTED, marginTop: 4 }}>
+          <div style={{ fontSize: 30, color: MUTED, marginTop: 6 }}>
             {list.extra}
           </div>
         ) : null}
@@ -125,71 +193,32 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
     );
   }
 
-  const rows =
-    list.kind === "full"
-      ? list.rows.map((row, index) => (
-          <div
-            key={`${row.label}-${index}`}
-            style={stackStyle({ marginBottom: 8 })}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 24,
-                color: PAPER,
-              }}
-            >
-              <div style={ellipsisStyle({ maxWidth: 640, marginRight: 16 })}>
-                {row.label}
-              </div>
-              {row.detail ? (
-                <div style={{ color: MUTED, flexShrink: 0 }}>{row.detail}</div>
-              ) : null}
-            </div>
-            {row.assistLabel ? (
-              <div
-                style={{
-                  fontSize: 24,
-                  color: MUTED,
-                  marginLeft: 24,
-                  marginTop: 2,
-                }}
-              >
-                {row.assistLabel}
-              </div>
-            ) : null}
-          </div>
-        ))
-      : list.rows.map((row, index) => (
-          <div
-            key={`${row.label}-${index}`}
-            style={stackStyle({ marginBottom: 8 })}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 24,
-                color: PAPER,
-              }}
-            >
-              <div style={ellipsisStyle({ maxWidth: 640, marginRight: 16 })}>
-                {row.label}
-              </div>
-              {row.detail ? (
-                <div style={{ color: MUTED, flexShrink: 0 }}>{row.detail}</div>
-              ) : null}
-            </div>
-          </div>
-        ));
-
-  return (
-    <div style={stackStyle({ marginBottom: 28 })}>
-      {heading}
-      {rows}
+  const fontSize = list.kind === "full" ? 36 : 31;
+  const rows = list.rows.map((row, index) => (
+    <div
+      key={`${row.label}-${index}`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        fontSize,
+        color: INK,
+        marginBottom: list.kind === "full" ? 12 : 7,
+      }}
+    >
+      <div style={{ marginRight: 12 }}>⚽</div>
+      <div style={ellipsisStyle({ maxWidth: 500, fontWeight: 700 })}>
+        {`${row.label}${row.isPenalty ? " (P)" : ""}`}
+      </div>
+      {row.assistLabel ? (
+        <>
+          <div style={{ marginLeft: 18, marginRight: 12 }}>🤝</div>
+          <div style={ellipsisStyle({ maxWidth: 360 })}>{row.assistLabel}</div>
+        </>
+      ) : null}
     </div>
-  );
+  ));
+
+  return <div style={stackStyle({ marginBottom: 32 })}>{rows}</div>;
 }
 
 export function MatchPostcardImage({
@@ -202,9 +231,6 @@ export function MatchPostcardImage({
   const masthead = payload.clubColour ?? PITCH_DEEP;
   const mastheadInk = contrastingInk(masthead);
   const scoreColors = resultColors(payload.result);
-  const context = [payload.competitionLabel, payload.dateLabel]
-    .filter(Boolean)
-    .join(" · ");
   const hasPotm = Boolean(payload.coachPotmLabel || payload.playersPotmLabel);
   const clubInitial = (payload.clubName.trim()[0] ?? "F").toUpperCase();
 
@@ -215,8 +241,8 @@ export function MatchPostcardImage({
         height: POSTCARD_HEIGHT,
         display: "flex",
         flexDirection: "column",
-        backgroundColor: PITCH_DEEP,
-        color: PAPER,
+        backgroundColor: BACKGROUND,
+        color: INK,
         fontFamily: "sans-serif",
       }}
     >
@@ -226,20 +252,20 @@ export function MatchPostcardImage({
           alignItems: "center",
           backgroundColor: masthead,
           color: mastheadInk,
-          padding: "40px 48px",
+          padding: "34px 48px",
         }}
       >
         {crestSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={crestSrc}
-            width={72}
-            height={72}
+            width={84}
+            height={84}
             alt=""
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
+              width: 84,
+              height: 84,
+              borderRadius: 18,
               objectFit: "cover",
               marginRight: 20,
             }}
@@ -247,15 +273,15 @@ export function MatchPostcardImage({
         ) : (
           <div
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
+              width: 84,
+              height: 84,
+              borderRadius: 18,
               backgroundColor: mastheadInk,
               color: masthead,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 32,
+              fontSize: 38,
               fontWeight: 700,
               marginRight: 20,
             }}
@@ -266,7 +292,7 @@ export function MatchPostcardImage({
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div
             style={ellipsisStyle({
-              fontSize: 28,
+              fontSize: 36,
               fontWeight: 700,
               maxWidth: 860,
             })}
@@ -275,7 +301,7 @@ export function MatchPostcardImage({
           </div>
           <div
             style={ellipsisStyle({
-              fontSize: 24,
+              fontSize: 29,
               marginTop: 4,
               maxWidth: 860,
               opacity: 0.9,
@@ -290,15 +316,18 @@ export function MatchPostcardImage({
         style={{
           display: "flex",
           flexDirection: "column",
-          padding: "40px 48px 48px",
+          position: "relative",
+          padding: "34px 48px 42px",
           flex: 1,
+          backgroundColor: BACKGROUND,
         }}
       >
+        <PitchLines />
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            marginBottom: 12,
+            marginBottom: 10,
           }}
         >
           <div
@@ -309,7 +338,7 @@ export function MatchPostcardImage({
               paddingRight: 20,
             }}
           >
-            <div style={ellipsisStyle({ fontSize: 32, fontWeight: 700 })}>
+            <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
               {payload.homeName}
             </div>
           </div>
@@ -317,7 +346,7 @@ export function MatchPostcardImage({
             style={{
               backgroundColor: scoreColors.bg,
               color: scoreColors.fg,
-              fontSize: 72,
+              fontSize: 82,
               fontWeight: 700,
               padding: "12px 22px",
               borderRadius: 18,
@@ -327,41 +356,49 @@ export function MatchPostcardImage({
             {payload.scoreLabel}
           </div>
           <div style={{ flex: 1, display: "flex", paddingLeft: 20 }}>
-            <div style={ellipsisStyle({ fontSize: 32, fontWeight: 700 })}>
+            <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
               {payload.awayName}
             </div>
           </div>
         </div>
         <div
           style={centredStyle({
-            fontSize: 24,
+            fontSize: 29,
             color: MUTED,
-            marginBottom: 8,
+            marginBottom: 10,
             textTransform: "uppercase",
             letterSpacing: 2,
           })}
         >
           {payload.homeAwayLabel}
         </div>
-        {context ? (
+        {payload.competitionLabel ? (
           <div
             style={centredStyle({
-              fontSize: 24,
-              color: MUTED,
-              marginBottom: 28,
+              fontSize: 32,
+              color: INK,
+              fontWeight: 700,
+              marginBottom: 7,
             })}
           >
-            {context}
+            {payload.competitionLabel}
           </div>
-        ) : (
-          <div style={{ height: 28 }} />
-        )}
+        ) : null}
+        <div
+          style={centredStyle({
+            fontSize: 29,
+            color: MUTED,
+            marginBottom: 28,
+          })}
+        >
+          {payload.dateLabel}
+        </div>
 
         <div
           style={centredStyle({
-            fontSize: 32,
+            fontSize: 42,
             fontWeight: 700,
-            marginBottom: 32,
+            marginBottom: 34,
             lineHeight: 1.25,
             paddingLeft: 40,
             paddingRight: 40,
@@ -379,12 +416,15 @@ export function MatchPostcardImage({
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: 24,
-                  marginBottom: 8,
+                  alignItems: "center",
+                  fontSize: 32,
+                  marginBottom: 13,
                 }}
               >
-                <div style={{ color: MUTED }}>{"Coach's POTM"}</div>
-                <div style={ellipsisStyle({ maxWidth: 560 })}>
+                <div style={{ color: INK, fontWeight: 700 }}>
+                  {"🏆 Coach's Player of the Match"}
+                </div>
+                <div style={ellipsisStyle({ maxWidth: 380 })}>
                   {payload.coachPotmLabel}
                 </div>
               </div>
@@ -394,11 +434,14 @@ export function MatchPostcardImage({
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: 24,
+                  alignItems: "center",
+                  fontSize: 32,
                 }}
               >
-                <div style={{ color: MUTED }}>{"Players' POTM"}</div>
-                <div style={ellipsisStyle({ maxWidth: 560 })}>
+                <div style={{ color: INK, fontWeight: 700 }}>
+                  {"🏆 Players' Player of the Match"}
+                </div>
+                <div style={ellipsisStyle({ maxWidth: 380 })}>
                   {payload.playersPotmLabel}
                 </div>
               </div>
@@ -406,21 +449,71 @@ export function MatchPostcardImage({
           </div>
         ) : null}
 
-        <div
-          style={{
-            display: "flex",
-            marginTop: 36,
-            justifyContent: "center",
-          }}
-        >
-          {payload.form.map((letter, index) => (
-            <FormBox
-              key={`${letter}-${index}`}
-              letter={letter}
-              colors={resultColors(letter)}
-            />
-          ))}
-        </div>
+        {payload.squadLines.length > 0 ? (
+          <div
+            style={stackStyle({
+              alignItems: "center",
+              marginBottom: 10,
+            })}
+          >
+            <div
+              style={{
+                fontSize: 30,
+                color: MUTED,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 12,
+              }}
+            >
+              Squad
+            </div>
+            {payload.squadLines.map((line, index) => (
+              <div
+                key={`${line}-${index}`}
+                style={centredStyle({
+                  width: "100%",
+                  fontSize: 30,
+                  color: INK,
+                  lineHeight: 1.35,
+                })}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {payload.form.length > 0 ? (
+          <div
+            style={stackStyle({
+              marginTop: 28,
+              alignItems: "center",
+            })}
+          >
+            <div
+              style={{
+                fontSize: 30,
+                color: MUTED,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 14,
+              }}
+            >
+              Form
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {payload.form.map((letter, index) => (
+                <FormBox
+                  key={`${letter}-${index}`}
+                  letter={letter}
+                  colors={resultColors(letter)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
