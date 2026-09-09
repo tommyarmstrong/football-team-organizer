@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { buildMatchPostcardPayloadMock } = vi.hoisted(() => ({
+const { buildMatchPostcardPayloadMock, renderedBodyMock } = vi.hoisted(() => ({
   buildMatchPostcardPayloadMock: vi.fn(),
+  renderedBodyMock: vi.fn<() => BodyInit>(() => "png-bytes"),
 }));
 
 vi.mock("@/lib/postcards/match-postcard", () => ({
@@ -16,14 +17,8 @@ vi.mock("@/lib/postcards/postcard-image", () => ({
 
 vi.mock("next/og", () => ({
   ImageResponse: class ImageResponse extends Response {
-    constructor(
-      _element: unknown,
-      options: { headers?: Record<string, string> } = {},
-    ) {
-      super("png-bytes", {
-        status: 200,
-        headers: { "Content-Type": "image/png", ...options.headers },
-      });
+    constructor() {
+      super(renderedBodyMock(), { status: 200 });
     }
   },
 }));
@@ -99,5 +94,25 @@ describe("GET /matches/[id]/postcard", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toMatch(/image\/png/);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("returns 500 when the image body fails mid-render", async () => {
+    buildMatchPostcardPayloadMock.mockResolvedValue({
+      data: playedPayload,
+      error: null,
+    });
+    renderedBodyMock.mockImplementationOnce(
+      () =>
+        new ReadableStream({
+          start(controller) {
+            controller.error(new Error("satori layout error"));
+          },
+        }),
+    );
+    const response = await GET(
+      new Request("http://localhost/matches/match-1/postcard"),
+      { params: Promise.resolve({ id: "match-1" }) },
+    );
+    expect(response.status).toBe(500);
   });
 });
