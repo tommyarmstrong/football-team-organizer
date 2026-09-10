@@ -11,7 +11,10 @@ vi.mock("@/lib/auth/session-access", () => ({
   resolveSignedInClubColourHint: resolveSignedInClubColourHintMock,
 }));
 
-import { POST } from "@/app/auth/session/bootstrap/route";
+import {
+  CLUB_COLOUR_LOOKUP_TIMEOUT_MS,
+  POST,
+} from "@/app/auth/session/bootstrap/route";
 import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
 
 describe("POST /auth/session/bootstrap", () => {
@@ -52,5 +55,42 @@ describe("POST /auth/session/bootstrap", () => {
 
     expect(cookie?.value).toBe("");
     expect(cookie?.maxAge).toBe(0);
+  });
+
+  it("returns 200 without changing hint cookie when colour lookup errors", async () => {
+    verifySignedInPersonAccessMock.mockResolvedValueOnce({ error: null });
+    resolveSignedInClubColourHintMock.mockRejectedValueOnce(
+      new Error("db timeout"),
+    );
+
+    const response = await POST();
+
+    expect(response.status).toBe(200);
+    expect(response.cookies.get(CLUB_COLOUR_HINT_COOKIE)).toBeUndefined();
+  });
+
+  it("returns quickly when colour lookup is too slow", async () => {
+    vi.useFakeTimers();
+    try {
+      verifySignedInPersonAccessMock.mockResolvedValueOnce({ error: null });
+      resolveSignedInClubColourHintMock.mockImplementationOnce(
+        () =>
+          new Promise<string | null>((resolve) => {
+            setTimeout(
+              () => resolve("#1B4D3E"),
+              CLUB_COLOUR_LOOKUP_TIMEOUT_MS + 50,
+            );
+          }),
+      );
+
+      const responsePromise = POST();
+      await vi.advanceTimersByTimeAsync(CLUB_COLOUR_LOOKUP_TIMEOUT_MS + 1);
+      const response = await responsePromise;
+
+      expect(response.status).toBe(200);
+      expect(response.cookies.get(CLUB_COLOUR_HINT_COOKIE)).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
