@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import { createPerson, updatePerson } from "@/lib/data/people";
@@ -98,25 +100,18 @@ export async function listPlayers(): Promise<{
   return { data: rows, error: null };
 }
 
-/** Active roster for a team, used for goal scorer pickers. */
-export async function listRosterForTeam(
-  teamId: string,
-  options?: { includeInactive?: boolean },
-): Promise<{ data: RosterPlayer[]; error: string | null }> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("team_players")
-    .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
-    .eq("team_id", teamId);
-
-  if (!options?.includeInactive) {
-    query = query.eq("active", true);
-  }
-
-  const { data, error } = await query;
-  if (error) return { data: [], error: error.message };
-
-  const rows: RosterPlayer[] = (data ?? [])
+function mapRosterRows(
+  data: Array<{
+    id: string;
+    shirt_number: number | null;
+    active: boolean;
+    player:
+      | (Player & { person: Person | Person[] | null })
+      | (Player & { person: Person | Person[] | null })[]
+      | null;
+  }> | null,
+): RosterPlayer[] {
+  return (data ?? [])
     .map((row) => {
       const playerRaw = (
         Array.isArray(row.player) ? row.player[0] : row.player
@@ -144,8 +139,48 @@ export async function listRosterForTeam(
       if (an !== bn) return an - bn;
       return a.last_name.localeCompare(b.last_name);
     });
+}
 
-  return { data: rows, error: null };
+/**
+ * Active roster for a team, used for goal scorer pickers.
+ *
+ * §5.6: the active-only result is cross-request cached per team (tagged
+ * `roster:<teamId>`) so roster mutations can invalidate with `revalidateTag`.
+ * `includeInactive: true` bypasses the cache (admin path; changes frequently
+ * during season setup).
+ */
+export async function listRosterForTeam(
+  teamId: string,
+  options?: { includeInactive?: boolean },
+): Promise<{ data: RosterPlayer[]; error: string | null }> {
+  // Skip cross-request cache when inactive players are requested.
+  if (options?.includeInactive) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("team_players")
+      .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
+      .eq("team_id", teamId);
+    if (error) return { data: [], error: error.message };
+    return { data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]), error: null };
+  }
+
+  return unstable_cache(
+    async (tId: string) => {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from("team_players")
+        .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
+        .eq("team_id", tId)
+        .eq("active", true);
+      if (error) return { data: [] as RosterPlayer[], error: error.message };
+      return {
+        data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]),
+        error: null,
+      };
+    },
+    ["roster", teamId],
+    { tags: [`roster:${teamId}`], revalidate: 3600 },
+  )(teamId);
 }
 
 export async function getPlayer(

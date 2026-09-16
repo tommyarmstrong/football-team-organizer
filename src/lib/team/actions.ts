@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { ActionState } from "@/lib/action-state";
@@ -405,12 +405,14 @@ export async function createCompetitionAction(
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 
+  const team = await getActiveTeam();
   const { error } = await createCompetition({
     ...parsed,
     name: parsed.name!,
   });
   if (error) return { error };
 
+  if (team) revalidateTag(`competitions:${team.id}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
@@ -526,7 +528,8 @@ function parseCompetitionUpdate(
   };
 }
 
-function revalidateCompetitionPaths(id: string) {
+function revalidateCompetitionPaths(id: string, teamId?: string) {
+  if (teamId) revalidateTag(`competitions:${teamId}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
@@ -544,10 +547,11 @@ export async function updateCompetitionAction(
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 
+  const team = await getActiveTeam();
   const { error } = await updateCompetition(id, parsed);
   if (error) return { error };
 
-  revalidateCompetitionPaths(id);
+  revalidateCompetitionPaths(id, team?.id);
   return { success: "Competition updated." };
 }
 
@@ -560,10 +564,11 @@ export async function saveCompetitionAndReturnAction(
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 
+  const team = await getActiveTeam();
   const { error } = await updateCompetition(id, parsed);
   if (error) return { error };
 
-  revalidateCompetitionPaths(id);
+  revalidateCompetitionPaths(id, team?.id);
   redirect(`/competitions/${id}`);
 }
 
@@ -575,6 +580,7 @@ export async function createCompetitionAndReturnAction(
   const parsed = parseCompetitionUpdate(formData);
   if ("error" in parsed) return parsed;
 
+  const team = await getActiveTeam();
   const { data, error } = await createCompetition({
     ...parsed,
     name: parsed.name!,
@@ -582,7 +588,7 @@ export async function createCompetitionAndReturnAction(
   if (error) return { error };
   if (!data) return { error: "Could not create competition." };
 
-  revalidateCompetitionPaths(data.id);
+  revalidateCompetitionPaths(data.id, team?.id);
   redirect(`/competitions/${data.id}`);
 }
 
@@ -598,9 +604,11 @@ export async function saveCompetitionAndReturnToTeamAction(
 export async function deleteCompetitionAction(
   id: string,
 ): Promise<ActionState> {
+  const team = await getActiveTeam();
   const { error } = await deleteCompetition(id);
   if (error) return { error };
 
+  if (team) revalidateTag(`competitions:${team.id}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");

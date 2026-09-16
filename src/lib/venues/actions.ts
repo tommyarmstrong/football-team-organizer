@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { getViewerContext } from "@/lib/authz/context";
@@ -25,7 +25,8 @@ function canEditVenues(
   );
 }
 
-function revalidateVenue(venueId?: string) {
+function revalidateVenue(venueId?: string, clubId?: string) {
+  if (clubId) revalidateTag(`venues:${clubId}`);
   revalidatePath("/venues");
   if (venueId) {
     revalidatePath(`/venues/${venueId}`);
@@ -58,7 +59,7 @@ export async function createVenueAction(
   if (error) return { error };
   if (!data) return { error: "Could not create venue." };
 
-  revalidateVenue(data.id);
+  revalidateVenue(data.id, club.id);
   redirect(`/venues/${data.id}`);
 }
 
@@ -83,7 +84,7 @@ export async function updateVenueAction(
   const { error } = await updateVenue(id, parsed);
   if (error) return { error };
 
-  revalidateVenue(id);
+  revalidateVenue(id, existing.club_id);
   redirect(`/venues/${id}`);
 }
 
@@ -101,6 +102,6 @@ export async function deleteVenueAction(id: string): Promise<ActionState> {
   const { error } = await deleteVenue(id);
   if (error) return { error };
 
-  revalidateVenue();
+  revalidateVenue(undefined, existing.club_id);
   redirect("/venues");
 }

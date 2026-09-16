@@ -133,6 +133,13 @@ const eslintConfig = defineConfig([
       "src/lib/people/invitations.ts",
       "src/lib/people/onboarding-actions.ts",
       "src/lib/people/delete-auth-user.ts",
+      // Data layer: uses admin client inside unstable_cache callbacks for
+      // cross-request caching of club/team-scoped data. These modules are
+      // server-only (they import next/headers or server-only packages).
+      "src/lib/data/clubs.ts",
+      "src/lib/data/venues.ts",
+      "src/lib/data/competitions.ts",
+      "src/lib/data/players.ts",
       "src/**/*.test.ts",
     ],
     rules: {
