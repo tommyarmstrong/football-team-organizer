@@ -28,6 +28,15 @@ export function playerEventNameClassName(className?: string): string {
   );
 }
 
+export function goalScorerNameClassName(
+  goal: { is_opposition: boolean },
+  className?: string,
+): string {
+  return playerEventNameClassName(
+    cn(goal.is_opposition && "text-red-600 dark:text-red-400", className),
+  );
+}
+
 export function goalAssistPlayer(
   goal: GoalWithPlayers,
 ): { first_name: string; last_name: string } | null {
@@ -43,11 +52,7 @@ export function GoalScorerName({
   className?: string;
 }) {
   return (
-    <span
-      className={playerEventNameClassName(
-        cn(goal.is_opposition && "text-red-600 dark:text-red-400", className),
-      )}
-    >
+    <span className={goalScorerNameClassName(goal, className)}>
       <span aria-hidden="true">⚽</span>
       <span className="truncate">{goalScorerLabel(goal)}</span>
     </span>

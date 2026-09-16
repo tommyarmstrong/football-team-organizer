@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateMatchStatusAction } from "@/lib/matches/actions";
 import type { MatchStatus } from "@/lib/supabase/database.types";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +14,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/shared/error-banner";
+
+/** Stack on mobile, row on desktop. */
+export function matchStatusActionsRowClassName(className?: string): string {
+  return cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap", className);
+}
+
+export function matchStatusActionButtonClassName(className?: string): string {
+  return cn("min-w-28 w-full sm:w-auto", className);
+}
 
 export function MatchStatusActions({
   matchId,
@@ -42,11 +52,11 @@ export function MatchStatusActions({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <div className={matchStatusActionsRowClassName()}>
         {showKickOff ? (
           <Button
             type="button"
-            className="w-full min-w-28 sm:w-auto"
+            className={matchStatusActionButtonClassName()}
             disabled={pending}
             onClick={() => setStatus("in_progress")}
           >
@@ -56,7 +66,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant={showFullTimePrimary ? "default" : "outline"}
-          className="w-full min-w-28 sm:w-auto"
+          className={matchStatusActionButtonClassName()}
           disabled={pending}
           onClick={() => setStatus("played")}
         >
@@ -65,7 +75,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant="destructive"
-          className="w-full min-w-28 sm:w-auto"
+          className={matchStatusActionButtonClassName()}
           disabled={pending}
           aria-haspopup="dialog"
           onClick={() => setCancelOpen(true)}

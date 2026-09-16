@@ -326,6 +326,33 @@ describe("scheduledPostcardCaption", () => {
     expect(caption).not.toContain("Meet up");
     expect(caption).not.toContain("Kick off");
   });
+
+  it("keeps emoji lines when only kickoff or only address is set", () => {
+    expect(
+      scheduledPostcardCaption({
+        teamName: "U11 Girls",
+        opponentName: "Riverside",
+        homeAway: "home",
+        competitionLabel: null,
+        dateLabel: "Sun 8 Mar 2026",
+        meetupTime: null,
+        kickoffTime: "10:00:00",
+        venueName: null,
+        venueAddress: "1 Windmill Road, London, N18 1NB",
+      }),
+    ).toBe(
+      [
+        "U11 Girls vs Riverside",
+        "",
+        "Home",
+        "Sun 8 Mar 2026",
+        "",
+        "👟 Kick off: 10:00",
+        "",
+        "📍 1 Windmill Road, London, N18 1NB",
+      ].join("\n"),
+    );
+  });
 });
 
 describe("buildPostcardGoalList crowding", () => {
@@ -364,6 +391,25 @@ describe("buildPostcardGoalList crowding", () => {
         { label: "Maya", isPenalty: false, assistLabel: null },
         { label: "Own Goal", isPenalty: false, assistLabel: null },
       ],
+    });
+  });
+
+  it("shows a goals block when the only our goal is an own goal", () => {
+    expect(
+      buildPostcardGoalList(
+        [
+          goal({
+            id: "g-og",
+            is_own_goal: true,
+            player_id: null,
+            scorer: null,
+          }),
+        ],
+        { gender: "girls", roster: youthRoster },
+      ),
+    ).toEqual({
+      kind: "full",
+      rows: [{ label: "Own Goal", isPenalty: false, assistLabel: null }],
     });
   });
 

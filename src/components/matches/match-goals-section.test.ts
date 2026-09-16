@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   goalAssistPlayer,
+  goalScorerNameClassName,
   groupGoalsByPeriod,
   periodEndScores,
   playerEventNameClassName,
@@ -83,6 +84,20 @@ describe("playerEventNameClassName", () => {
     expect(className).not.toContain("rounded-lg");
     expect(className).not.toContain("border");
     expect(className).not.toContain("px-2");
+  });
+});
+
+describe("goalScorerNameClassName", () => {
+  it("colours opposition goals red", () => {
+    const className = goalScorerNameClassName({ is_opposition: true });
+    expect(className).toContain("text-red-600");
+    expect(className).toContain("dark:text-red-400");
+  });
+
+  it("leaves our goals and own goals uncoloured", () => {
+    expect(goalScorerNameClassName({ is_opposition: false })).not.toContain(
+      "text-red-600",
+    );
   });
 });
 
