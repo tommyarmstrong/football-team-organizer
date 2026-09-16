@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { getViewerContext } from "@/lib/authz/context";
@@ -26,7 +26,7 @@ function canEditVenues(
 }
 
 function revalidateVenue(venueId?: string, clubId?: string) {
-  if (clubId) revalidateTag(`venues:${clubId}`);
+  if (clubId) updateTag(`venues:${clubId}`);
   revalidatePath("/venues");
   if (venueId) {
     revalidatePath(`/venues/${venueId}`);

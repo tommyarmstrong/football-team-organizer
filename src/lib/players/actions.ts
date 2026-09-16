@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import {
@@ -183,7 +183,7 @@ export async function addRosterPlayerAction(
   );
   if (error) return { error };
 
-  revalidateTag(`roster:${teamId}`);
+  updateTag(`roster:${teamId}`);
   revalidatePath("/team");
   revalidatePath("/club");
   await revalidatePersonForPlayer(playerId);
@@ -229,7 +229,7 @@ export async function createRosterPlayerAction(
   );
   if (rosterError) return { error: rosterError };
 
-  revalidateTag(`roster:${teamId}`);
+  updateTag(`roster:${teamId}`);
   revalidatePath("/team");
   revalidatePath("/club");
   revalidatePath("/people");
@@ -256,7 +256,7 @@ export async function updateRosterEntryAction(
   });
   if (error) return { error };
 
-  if (teamId) revalidateTag(`roster:${teamId}`);
+  if (teamId) updateTag(`roster:${teamId}`);
   await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "ok" };
@@ -270,7 +270,7 @@ export async function removePlayerFromTeamAction(
   const { error } = await removePlayerFromTeam(teamPlayerId);
   if (error) return { error };
 
-  if (teamId) revalidateTag(`roster:${teamId}`);
+  if (teamId) updateTag(`roster:${teamId}`);
   await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "Player removed from team." };

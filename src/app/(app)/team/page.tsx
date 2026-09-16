@@ -17,6 +17,7 @@ import {
 import {
   listPlayersNotOnTeam,
   listRosterForTeam,
+  type PlayerWithPerson,
 } from "@/lib/data/players";
 import {
   listGuardianAssistantCandidates,

@@ -19,7 +19,7 @@ vi.mock("next/cache", () => ({
     (...args: T) =>
       fn(...args),
   revalidatePath: vi.fn(),
-  revalidateTag: vi.fn(),
+  revalidateTag: vi.fn(), updateTag: vi.fn(),
 }));
 vi.mock("@/lib/data/team", () => ({
   getCurrentTeam: getCurrentTeamMock,

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { ActionState } from "@/lib/action-state";
@@ -412,7 +412,7 @@ export async function createCompetitionAction(
   });
   if (error) return { error };
 
-  if (team) revalidateTag(`competitions:${team.id}`);
+  if (team) updateTag(`competitions:${team.id}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
@@ -529,7 +529,7 @@ function parseCompetitionUpdate(
 }
 
 function revalidateCompetitionPaths(id: string, teamId?: string) {
-  if (teamId) revalidateTag(`competitions:${teamId}`);
+  if (teamId) updateTag(`competitions:${teamId}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
@@ -608,7 +608,7 @@ export async function deleteCompetitionAction(
   const { error } = await deleteCompetition(id);
   if (error) return { error };
 
-  if (team) revalidateTag(`competitions:${team.id}`);
+  if (team) updateTag(`competitions:${team.id}`);
   revalidatePath("/team");
   revalidatePath("/dashboard");
   revalidatePath("/matches");
