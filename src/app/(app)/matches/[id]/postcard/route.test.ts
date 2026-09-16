@@ -11,8 +11,7 @@ vi.mock("@/lib/postcards/match-postcard", () => ({
 
 vi.mock("@/lib/postcards/postcard-image", () => ({
   MatchPostcardImage: () => null,
-  POSTCARD_WIDTH: 1080,
-  POSTCARD_HEIGHT: 1350,
+  postcardImageOptions: () => ({ width: 1080, height: 1350 }),
 }));
 
 vi.mock("next/og", () => ({

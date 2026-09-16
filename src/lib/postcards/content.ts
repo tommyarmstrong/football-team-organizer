@@ -15,6 +15,17 @@ const FULL_GOAL_MAX = 6;
 const COMPACT_GOAL_MAX = 10;
 const SUMMARY_TOP_SCORERS = 4;
 
+export const SCHEDULED_POSTCARD_MEETUP_EMOJI = "⏰";
+export const SCHEDULED_POSTCARD_KICKOFF_EMOJI = "👟";
+
+export function scheduledPostcardMeetupLine(time: string): string {
+  return `${SCHEDULED_POSTCARD_MEETUP_EMOJI} Meet up: ${time}`;
+}
+
+export function scheduledPostcardKickoffLine(time: string): string {
+  return `${SCHEDULED_POSTCARD_KICKOFF_EMOJI} Kick off: ${time}`;
+}
+
 export type PostcardPlayerLabelInput = {
   firstName: string;
   lastName: string;
@@ -327,8 +338,8 @@ export function scheduledPostcardCaption(input: {
   const meetup = formatKickoffTime(input.meetupTime);
   const kickoff = formatKickoffTime(input.kickoffTime);
   if (meetup || kickoff) lines.push("");
-  if (meetup) lines.push(`⏰ Meet up: ${meetup}`);
-  if (kickoff) lines.push(`👟 Kick off: ${kickoff}`);
+  if (meetup) lines.push(scheduledPostcardMeetupLine(meetup));
+  if (kickoff) lines.push(scheduledPostcardKickoffLine(kickoff));
 
   if (input.venueName || input.venueAddress) lines.push("");
   if (input.venueName) lines.push(input.venueName);
