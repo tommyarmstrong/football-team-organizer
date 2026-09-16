@@ -4,8 +4,7 @@ import { clubIconSrc } from "@/lib/clubs/branding";
 import { buildMatchPostcardPayload } from "@/lib/postcards/match-postcard";
 import {
   MatchPostcardImage,
-  POSTCARD_HEIGHT,
-  POSTCARD_WIDTH,
+  postcardImageOptions,
 } from "@/lib/postcards/postcard-image";
 
 export const runtime = "nodejs";
@@ -59,7 +58,7 @@ export async function GET(
     // the client as a dropped connection. Buffer it to fail as a plain 500.
     const png = await new ImageResponse(
       createElement(MatchPostcardImage, { payload: data, crestSrc }),
-      { width: POSTCARD_WIDTH, height: POSTCARD_HEIGHT },
+      postcardImageOptions(data.kind),
     ).arrayBuffer();
 
     return new Response(png, {

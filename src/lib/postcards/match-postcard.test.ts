@@ -9,6 +9,8 @@ import {
   postcardPlayerLabel,
   postcardSquadLines,
   scheduledPostcardCaption,
+  scheduledPostcardKickoffLine,
+  SCHEDULED_POSTCARD_KICKOFF_EMOJI,
 } from "@/lib/postcards/content";
 
 function rosterPlayer(
@@ -325,6 +327,11 @@ describe("scheduledPostcardCaption", () => {
     expect(caption).toBe("Riverside vs U11 Girls\n\nAway\nSun 8 Mar 2026");
     expect(caption).not.toContain("Meet up");
     expect(caption).not.toContain("Kick off");
+  });
+
+  it("uses the white trainer emoji for kick off", () => {
+    expect(SCHEDULED_POSTCARD_KICKOFF_EMOJI).toBe("👟");
+    expect(scheduledPostcardKickoffLine("10:00")).toBe("👟 Kick off: 10:00");
   });
 
   it("keeps emoji lines when only kickoff or only address is set", () => {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { setActiveTeamAction } from "@/lib/team/actions";
 import { isTeamArchived } from "@/lib/team/season";
@@ -16,6 +16,22 @@ import {
 import type { Team } from "@/lib/supabase/database.types";
 
 type TeamOption = Pick<Team, "id" | "name" | "season_label" | "archived_at">;
+
+/** Destination after switching team so the new squad’s home screen loads. */
+export const TEAM_PICKER_DASHBOARD_HREF = "/dashboard";
+
+export type TeamPickerSelection = "ignore" | "dismiss" | "switch-to-dashboard";
+
+/** Close the menu on any choice; only a different team loads that team’s dashboard. */
+export function teamPickerSelection(
+  teamId: string,
+  activeTeamId: string | null,
+  pending = false,
+): TeamPickerSelection {
+  if (pending) return "ignore";
+  if (teamId === activeTeamId) return "dismiss";
+  return "switch-to-dashboard";
+}
 
 function teamSwitcherLabel(team: TeamOption): string {
   const base = `${team.name} · ${team.season_label}`;
@@ -34,17 +50,24 @@ export function TeamPickerList({
   className?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
 
   if (teams.length < 2) return null;
 
   function selectTeam(teamId: string) {
-    if (teamId === activeTeamId || pending) return;
+    const result = teamPickerSelection(teamId, activeTeamId, pending);
+    if (result === "ignore") return;
+    onSelected?.();
+    if (result === "dismiss") return;
     startTransition(async () => {
       await setActiveTeamAction(teamId);
-      router.refresh();
+      if (pathname === TEAM_PICKER_DASHBOARD_HREF) {
+        router.refresh();
+      } else {
+        router.push(TEAM_PICKER_DASHBOARD_HREF);
+      }
     });
-    onSelected?.();
   }
 
   return (
@@ -106,13 +129,14 @@ export function TeamSwitcher({
   align?: "start" | "center" | "end";
   triggerClassName?: string;
 }) {
+  const [open, setOpen] = useState(false);
   if (teams.length < 2) return null;
 
   const activeTeam = teams.find((team) => team.id === activeTeamId) ?? null;
   const activeName = activeTeam ? teamSwitcherLabel(activeTeam) : "Team";
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <button
@@ -138,7 +162,11 @@ export function TeamSwitcher({
             Switch team
           </PopoverTitle>
         </PopoverHeader>
-        <TeamPickerList teams={teams} activeTeamId={activeTeamId} />
+        <TeamPickerList
+          teams={teams}
+          activeTeamId={activeTeamId}
+          onSelected={() => setOpen(false)}
+        />
       </PopoverContent>
     </Popover>
   );

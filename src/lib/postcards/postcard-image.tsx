@@ -1,9 +1,22 @@
 import type { CSSProperties, ReactNode } from "react";
-import { postcardPotmLine } from "@/lib/postcards/content";
+import {
+  postcardPotmLine,
+  scheduledPostcardKickoffLine,
+  scheduledPostcardMeetupLine,
+} from "@/lib/postcards/content";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
 
 export const POSTCARD_WIDTH = 1080;
 export const POSTCARD_HEIGHT = 1350;
+
+/** Noto’s 👟 is a pale trainer; Twemoji’s is a red runner. */
+export function postcardImageOptions(kind: MatchPostcardPayload["kind"]) {
+  return {
+    width: POSTCARD_WIDTH,
+    height: POSTCARD_HEIGHT,
+    ...(kind === "scheduled" ? { emoji: "noto" as const } : {}),
+  };
+}
 
 const PITCH_DEEP = "#143328";
 const BACKGROUND = "#F6FAF4";
@@ -578,7 +591,7 @@ function ScheduledPostcardBody({
             marginBottom: payload.kickoffLabel ? 8 : 28,
           })}
         >
-          {`⏰ Meet up: ${payload.meetupLabel}`}
+          {scheduledPostcardMeetupLine(payload.meetupLabel)}
         </div>
       ) : null}
       {payload.kickoffLabel ? (
@@ -590,7 +603,7 @@ function ScheduledPostcardBody({
             marginBottom: 28,
           })}
         >
-          {`👟 Kick off: ${payload.kickoffLabel}`}
+          {scheduledPostcardKickoffLine(payload.kickoffLabel)}
         </div>
       ) : null}
 
