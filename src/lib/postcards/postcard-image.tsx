@@ -304,7 +304,7 @@ function FixtureMeta({
   dateLabel: string;
 }) {
   return (
-    <>
+    <div style={stackStyle({ width: "100%" })}>
       <div
         style={centredStyle({
           fontSize: 29,
@@ -337,7 +337,7 @@ function FixtureMeta({
       >
         {dateLabel}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -401,7 +401,7 @@ function PlayedPostcardBody({
   const hasPotm = Boolean(payload.coachPotmLabel || payload.playersPotmLabel);
 
   return (
-    <>
+    <div style={stackStyle({ width: "100%" })}>
       <ScoreboardNames
         homeName={payload.homeName}
         awayName={payload.awayName}
@@ -535,7 +535,7 @@ function PlayedPostcardBody({
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -545,7 +545,7 @@ function ScheduledPostcardBody({
   payload: Extract<MatchPostcardPayload, { kind: "scheduled" }>;
 }) {
   return (
-    <>
+    <div style={stackStyle({ width: "100%" })}>
       <ScoreboardNames
         homeName={payload.homeName}
         awayName={payload.awayName}
@@ -659,7 +659,7 @@ function ScheduledPostcardBody({
           {payload.venueAddress}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
