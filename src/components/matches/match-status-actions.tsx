@@ -42,11 +42,11 @@ export function MatchStatusActions({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {showKickOff ? (
           <Button
             type="button"
-            className="min-w-28"
+            className="w-full min-w-28 sm:w-auto"
             disabled={pending}
             onClick={() => setStatus("in_progress")}
           >
@@ -56,7 +56,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant={showFullTimePrimary ? "default" : "outline"}
-          className="min-w-28"
+          className="w-full min-w-28 sm:w-auto"
           disabled={pending}
           onClick={() => setStatus("played")}
         >
@@ -65,7 +65,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant="destructive"
-          className="min-w-28"
+          className="w-full min-w-28 sm:w-auto"
           disabled={pending}
           aria-haspopup="dialog"
           onClick={() => setCancelOpen(true)}

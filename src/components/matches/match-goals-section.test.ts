@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   goalAssistPlayer,
   groupGoalsByPeriod,
+  periodEndScores,
   playerEventNameClassName,
 } from "@/components/matches/match-goals-section";
 import type { GoalWithPlayers } from "@/lib/data/goals";
@@ -248,5 +249,69 @@ describe("groupGoalsByPeriod", () => {
     expect(groups[0]?.goals).toEqual([goals[1]]);
     expect(groups[1]?.periodId).toBe("old-half");
     expect(groups[1]?.goals).toEqual([goals[0]]);
+  });
+});
+
+describe("periodEndScores", () => {
+  it("accumulates a home-first score after each period", () => {
+    const periods = [
+      { id: "q1", name: "Quarter 1" },
+      { id: "q2", name: "Quarter 2" },
+      { id: "q3", name: "Quarter 3" },
+      { id: "q4", name: "Quarter 4" },
+    ];
+    const goals = [
+      goalFixture({
+        id: "g1",
+        period: "Quarter 1",
+        period_id: "q1",
+      }),
+      goalFixture({
+        id: "g2",
+        period: "Quarter 1",
+        period_id: "q1",
+        is_opposition: true,
+        player_id: null,
+        scorer: null,
+      }),
+      goalFixture({
+        id: "g3",
+        period: "Quarter 2",
+        period_id: "q2",
+      }),
+      goalFixture({
+        id: "g4",
+        period: "Quarter 4",
+        period_id: "q4",
+        is_opposition: true,
+        player_id: null,
+        scorer: null,
+      }),
+    ];
+    const groups = groupGoalsByPeriod(goals, periods);
+
+    expect(periodEndScores(groups, "home")).toEqual([
+      "1–1",
+      "2–1",
+      "2–1",
+      "2–2",
+    ]);
+    expect(periodEndScores(groups, "away")).toEqual([
+      "1–1",
+      "1–2",
+      "1–2",
+      "2–2",
+    ]);
+  });
+
+  it("shows 0–0 when no goals have been scored yet", () => {
+    const groups = groupGoalsByPeriod(
+      [],
+      [
+        { id: "q1", name: "Quarter 1" },
+        { id: "q2", name: "Quarter 2" },
+      ],
+    );
+    expect(periodEndScores(groups, "home")).toEqual(["0–0", "0–0"]);
   });
 });
