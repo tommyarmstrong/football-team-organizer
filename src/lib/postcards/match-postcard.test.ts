@@ -10,6 +10,7 @@ import {
   postcardSquadLines,
   scheduledPostcardCaption,
   scheduledPostcardKickoffLine,
+  scheduledPostcardKickoffText,
   SCHEDULED_POSTCARD_KICKOFF_EMOJI,
 } from "@/lib/postcards/content";
 
@@ -329,9 +330,10 @@ describe("scheduledPostcardCaption", () => {
     expect(caption).not.toContain("Kick off");
   });
 
-  it("uses the white trainer emoji for kick off", () => {
+  it("uses the trainer emoji in the caption and plain kick-off text on the image", () => {
     expect(SCHEDULED_POSTCARD_KICKOFF_EMOJI).toBe("👟");
     expect(scheduledPostcardKickoffLine("10:00")).toBe("👟 Kick off: 10:00");
+    expect(scheduledPostcardKickoffText("10:00")).toBe("Kick off: 10:00");
   });
 
   it("keeps emoji lines when only kickoff or only address is set", () => {
