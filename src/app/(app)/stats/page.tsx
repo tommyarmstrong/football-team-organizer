@@ -1,13 +1,7 @@
 import { Suspense } from "react";
 import { getCurrentTeam } from "@/lib/data/team";
 import { listCompetitions } from "@/lib/data/competitions";
-import {
-  getAssistsByPlayerStats,
-  getGoalsByPlayerStats,
-  getMatchesPlayedByPlayerStats,
-  getPlayerOfTheMatchByPlayerStats,
-  getResultsOverTime,
-} from "@/lib/data/stats";
+import { getAllTeamStats } from "@/lib/data/stats";
 import { competitionDisplayName, teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -41,19 +35,10 @@ export default async function StatsPage() {
 }
 
 export async function StatsBody({ team }: { team: Team }) {
-  const [
-    goalsByPlayer,
-    assistsByPlayer,
-    potmByPlayer,
-    matchesPlayed,
-    results,
-    competitions,
-  ] = await Promise.all([
-    getGoalsByPlayerStats(),
-    getAssistsByPlayerStats(),
-    getPlayerOfTheMatchByPlayerStats(),
-    getMatchesPlayedByPlayerStats(),
-    getResultsOverTime(),
+  // §5.1 + §6.4 — Single composite RPC replaces 5 separate stat functions
+  // (which collectively made ~11 DB queries). Now: 1 RPC + 1 competitions query.
+  const [stats, competitions] = await Promise.all([
+    getAllTeamStats(team.id),
     listCompetitions(team.id),
   ]);
 
@@ -63,24 +48,17 @@ export async function StatsBody({ team }: { team: Team }) {
     kind: competition.kind,
   }));
 
-  const errors = [
-    goalsByPlayer.error,
-    assistsByPlayer.error,
-    potmByPlayer.error,
-    matchesPlayed.error,
-    results.error,
-    competitions.error,
-  ].filter(Boolean);
+  const errors = [stats.error, competitions.error].filter(Boolean);
 
   return (
     <>
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
       <StatsPageContent
-        goalsByPlayer={goalsByPlayer.data}
-        assistsByPlayer={assistsByPlayer.data}
-        potmByPlayer={potmByPlayer.data}
-        matchesPlayed={matchesPlayed.data}
-        results={results.data}
+        goalsByPlayer={stats.goalsByPlayer}
+        assistsByPlayer={stats.assistsByPlayer}
+        potmByPlayer={stats.potmByPlayer}
+        matchesPlayed={stats.matchesPlayed}
+        results={stats.resultsOverTime}
         competitions={competitionOptions}
       />
     </>

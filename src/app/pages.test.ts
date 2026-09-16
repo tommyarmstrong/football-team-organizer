@@ -24,6 +24,7 @@ const {
   getAssistsByPlayerStatsMock,
   getPlayerOfTheMatchByPlayerStatsMock,
   getMatchesPlayedByPlayerStatsMock,
+  getAllTeamStatsMock,
   canAccessClubAndPeopleMock,
 } = vi.hoisted(() => ({
   redirectMock: vi.fn((path: string) => {
@@ -50,6 +51,7 @@ const {
   getAssistsByPlayerStatsMock: vi.fn(),
   getPlayerOfTheMatchByPlayerStatsMock: vi.fn(),
   getMatchesPlayedByPlayerStatsMock: vi.fn(),
+  getAllTeamStatsMock: vi.fn(),
   canAccessClubAndPeopleMock: vi.fn(),
 }));
 
@@ -86,6 +88,7 @@ vi.mock("@/lib/data/stats", () => ({
   getAssistsByPlayerStats: getAssistsByPlayerStatsMock,
   getPlayerOfTheMatchByPlayerStats: getPlayerOfTheMatchByPlayerStatsMock,
   getMatchesPlayedByPlayerStats: getMatchesPlayedByPlayerStatsMock,
+  getAllTeamStats: getAllTeamStatsMock,
 }));
 vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
@@ -230,6 +233,15 @@ describe("app pages", () => {
     getAssistsByPlayerStatsMock.mockResolvedValue(emptyStats());
     getPlayerOfTheMatchByPlayerStatsMock.mockResolvedValue(emptyStats());
     getMatchesPlayedByPlayerStatsMock.mockResolvedValue(emptyStats());
+    getAllTeamStatsMock.mockResolvedValue({
+      goalsByPlayer: [],
+      assistsByPlayer: [],
+      potmByPlayer: [],
+      matchesPlayed: [],
+      resultsOverTime: [],
+      form: [],
+      error: null,
+    });
     getViewerContextMock.mockResolvedValue(viewerFixture());
     canAccessClubAndPeopleMock.mockReturnValue(true);
     getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
@@ -265,6 +277,15 @@ describe("app pages", () => {
   it("stats page composes competition options", async () => {
     listCompetitionsMock.mockResolvedValue({
       data: [{ id: "c1", name: "League", kind: "league" }],
+      error: null,
+    });
+    getAllTeamStatsMock.mockResolvedValue({
+      goalsByPlayer: [{ playerId: "p1", name: "Sam", goals: 1 }],
+      assistsByPlayer: [],
+      potmByPlayer: [],
+      matchesPlayed: [],
+      resultsOverTime: [],
+      form: [],
       error: null,
     });
     const tree = await StatsBody({ team: teamFixture() });

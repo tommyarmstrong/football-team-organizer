@@ -15,6 +15,7 @@ vi.mock("@/lib/data/team", () => ({
 }));
 
 import {
+  getAllTeamStats,
   getAssistsByPlayerStats,
   getGoalsByPlayerStats,
   getMatchesPlayedByPlayerStats,
@@ -716,5 +717,382 @@ describe("stats data", () => {
     );
     expect(result.error).toBeNull();
     expect(result.form).toEqual(["W", "L"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// §5.1 + §6.4 — getAllTeamStats (composite RPC)
+// ---------------------------------------------------------------------------
+
+describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const baseRpcResult = {
+    shirt_numbers: { "player-1": 7, "player-2": null },
+    goals_by_player: [
+      {
+        player_id: "player-1",
+        first_name: "Sam",
+        last_name: "Striker",
+        position: "Forward",
+        goals: 3,
+        matches_played: 5,
+        periods_played: 8,
+        goal_competitions: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+          { competitionId: null, competitionKind: null, isFriendly: true },
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+        ],
+      },
+    ],
+    assists_by_player: [
+      {
+        player_id: "player-2",
+        first_name: "Bea",
+        last_name: "Bench",
+        assists: 2,
+        matches_played: 4,
+        competitions: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+          { competitionId: null, competitionKind: null, isFriendly: true },
+        ],
+      },
+    ],
+    potm_by_player: [
+      {
+        player_id: "player-1",
+        first_name: "Sam",
+        last_name: "Striker",
+        count: 2,
+        competitions: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+          { competitionId: null, competitionKind: null, isFriendly: true },
+        ],
+      },
+    ],
+    matches_played_by_player: [
+      {
+        player_id: "player-1",
+        first_name: "Sam",
+        last_name: "Striker",
+        count: 5,
+        competitions: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+        ],
+      },
+    ],
+    results_over_time: [
+      {
+        match_id: "match-1",
+        date: "2025-09-01",
+        opponent_name: "Rivals",
+        goals_for: 2,
+        goals_against: 1,
+        competition_id: "comp-1",
+        competition_kind: "league",
+        competition_name: "Premier League",
+        is_friendly: false,
+      },
+      {
+        match_id: "match-2",
+        date: "2025-09-08",
+        opponent_name: "Friends",
+        goals_for: 1,
+        goals_against: 1,
+        competition_id: null,
+        competition_kind: null,
+        competition_name: null,
+        is_friendly: true,
+      },
+    ],
+  };
+
+  it("calls get_team_stats RPC and maps goals, assists, potm, appearances, and results", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        { rpcResults: { get_team_stats: okResult(baseRpcResult) } },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+
+    expect(result.error).toBeNull();
+
+    // Goals
+    expect(result.goalsByPlayer).toHaveLength(1);
+    expect(result.goalsByPlayer[0]).toMatchObject({
+      playerId: "player-1",
+      name: "Sam Striker",
+      goals: 3,
+      position: "Forward",
+      matchesPlayed: 5,
+      periodsPlayed: 8,
+    });
+    expect(result.goalsByPlayer[0]?.goalCompetitions).toHaveLength(3);
+    expect(result.goalsByPlayer[0]?.goalCompetitions[0]).toMatchObject({
+      competitionId: "comp-1",
+      competitionKind: "league",
+      isFriendly: false,
+    });
+
+    // Assists
+    expect(result.assistsByPlayer).toHaveLength(1);
+    expect(result.assistsByPlayer[0]).toMatchObject({
+      playerId: "player-2",
+      name: "Bea Bench",
+      count: 2,
+      matchesPlayed: 4,
+    });
+    expect(result.assistsByPlayer[0]?.events).toHaveLength(2);
+
+    // POTM
+    expect(result.potmByPlayer).toHaveLength(1);
+    expect(result.potmByPlayer[0]).toMatchObject({
+      playerId: "player-1",
+      name: "Sam Striker",
+      count: 2,
+    });
+    expect(result.potmByPlayer[0]?.events).toHaveLength(2);
+
+    // Appearances
+    expect(result.matchesPlayed).toHaveLength(1);
+    expect(result.matchesPlayed[0]).toMatchObject({
+      playerId: "player-1",
+      name: "Sam Striker",
+      count: 5,
+    });
+
+    // Results
+    expect(result.resultsOverTime).toHaveLength(2);
+    expect(result.resultsOverTime[0]).toMatchObject({
+      matchId: "match-1",
+      date: "2025-09-01",
+      label: "Rivals",
+      goalsFor: 2,
+      goalsAgainst: 1,
+      result: "W",
+      competitionId: "comp-1",
+      competitionKind: "league",
+      competitionName: "Premier League",
+      isFriendly: false,
+    });
+    expect(result.resultsOverTime[1]).toMatchObject({
+      result: "D",
+      competitionName: "Friendly",
+      isFriendly: true,
+    });
+  });
+
+  it("builds form strip from results, capped to STATS_FORM_LIMIT", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        { rpcResults: { get_team_stats: okResult(baseRpcResult) } },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    expect(result.form).toEqual(["W", "D"]);
+  });
+
+  it("returns empty arrays and null error for a team with no data", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_team_stats: okResult({
+              shirt_numbers: {},
+              goals_by_player: [],
+              assists_by_player: [],
+              potm_by_player: [],
+              matches_played_by_player: [],
+              results_over_time: [],
+            }),
+          },
+        },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    expect(result.error).toBeNull();
+    expect(result.goalsByPlayer).toEqual([]);
+    expect(result.assistsByPlayer).toEqual([]);
+    expect(result.potmByPlayer).toEqual([]);
+    expect(result.matchesPlayed).toEqual([]);
+    expect(result.resultsOverTime).toEqual([]);
+    expect(result.form).toEqual([]);
+  });
+
+  it("returns error when RPC fails", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        { rpcResults: { get_team_stats: errResult("stats rpc failed") } },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    expect(result.error).toBe("stats rpc failed");
+    expect(result.goalsByPlayer).toEqual([]);
+    expect(result.resultsOverTime).toEqual([]);
+    expect(result.form).toEqual([]);
+  });
+
+  it("converts Postgres numeric strings to JS numbers", async () => {
+    // Postgres may return aggregated counts as strings in some drivers
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_team_stats: okResult({
+              shirt_numbers: {},
+              goals_by_player: [
+                {
+                  player_id: "p1",
+                  first_name: "A",
+                  last_name: "B",
+                  position: null,
+                  goals: "5",
+                  matches_played: "10",
+                  periods_played: "15",
+                  goal_competitions: [],
+                },
+              ],
+              assists_by_player: [],
+              potm_by_player: [],
+              matches_played_by_player: [
+                {
+                  player_id: "p1",
+                  first_name: "A",
+                  last_name: "B",
+                  count: "10",
+                  competitions: [],
+                },
+              ],
+              results_over_time: [
+                {
+                  match_id: "m1",
+                  date: "2025-09-01",
+                  opponent_name: "X",
+                  goals_for: "3",
+                  goals_against: "1",
+                  competition_id: null,
+                  competition_kind: null,
+                  competition_name: null,
+                  is_friendly: false,
+                },
+              ],
+            }),
+          },
+        },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    expect(result.goalsByPlayer[0]?.goals).toBe(5);
+    expect(result.goalsByPlayer[0]?.matchesPlayed).toBe(10);
+    expect(result.goalsByPlayer[0]?.periodsPlayed).toBe(15);
+    expect(result.matchesPlayed[0]?.count).toBe(10);
+    expect(result.resultsOverTime[0]?.goalsFor).toBe(3);
+    expect(result.resultsOverTime[0]?.goalsAgainst).toBe(1);
+  });
+
+  it("omits results with no W/D/L outcome (e.g. both sides 0 but is a draw that has no result letter)", async () => {
+    // A match that resultLetter returns null for is excluded from form/results
+    // (This shouldn't happen with real data but we guard against it)
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_team_stats: okResult({
+              shirt_numbers: {},
+              goals_by_player: [],
+              assists_by_player: [],
+              potm_by_player: [],
+              matches_played_by_player: [],
+              results_over_time: [
+                {
+                  match_id: "m1",
+                  date: "2025-09-01",
+                  opponent_name: "X",
+                  goals_for: 0,
+                  goals_against: 0,
+                  competition_id: null,
+                  competition_kind: null,
+                  competition_name: null,
+                  is_friendly: false,
+                },
+              ],
+            }),
+          },
+        },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    // 0-0 is a draw — resultLetter returns "D"
+    expect(result.resultsOverTime).toHaveLength(1);
+    expect(result.resultsOverTime[0]?.result).toBe("D");
+    expect(result.form).toEqual(["D"]);
+  });
+
+  it("handles null goal_competitions arrays gracefully", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_team_stats: okResult({
+              shirt_numbers: {},
+              goals_by_player: [
+                {
+                  player_id: "p1",
+                  first_name: "A",
+                  last_name: "B",
+                  position: null,
+                  goals: 1,
+                  matches_played: 1,
+                  periods_played: 0,
+                  goal_competitions: null,
+                },
+              ],
+              assists_by_player: [],
+              potm_by_player: [],
+              matches_played_by_player: [],
+              results_over_time: [],
+            }),
+          },
+        },
+      ),
+    );
+
+    const result = await getAllTeamStats("team-1");
+    expect(result.goalsByPlayer[0]?.goalCompetitions).toEqual([]);
   });
 });

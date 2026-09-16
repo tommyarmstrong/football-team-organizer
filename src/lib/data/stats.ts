@@ -9,6 +9,256 @@ import {
 import type { CompetitionKind } from "@/lib/supabase/database.types";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 
+// ---------------------------------------------------------------------------
+// §5.1 + §6.4 — Composite stats RPC
+// ---------------------------------------------------------------------------
+
+/**
+ * Raw shape returned by each element of the `goals_by_player` array in the
+ * `get_team_stats` RPC response.
+ */
+type RpcGoalsEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  position: string | null;
+  goals: number;
+  matches_played: number;
+  periods_played: number;
+  goal_competitions: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
+  }>;
+};
+
+type RpcAssistsEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  assists: number;
+  matches_played: number;
+  competitions: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
+  }>;
+};
+
+type RpcPotmEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  count: number;
+  competitions: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
+  }>;
+};
+
+type RpcMatchesPlayedEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  count: number;
+  competitions: Array<{
+    competitionId: string | null;
+    competitionKind: CompetitionKind | null;
+    isFriendly: boolean;
+  }>;
+};
+
+type RpcResultEntry = {
+  match_id: string;
+  date: string;
+  opponent_name: string;
+  goals_for: number;
+  goals_against: number;
+  competition_id: string | null;
+  competition_kind: CompetitionKind | null;
+  competition_name: string | null;
+  is_friendly: boolean;
+};
+
+type TeamStatsRpcResult = {
+  shirt_numbers: Record<string, number | null>;
+  goals_by_player: RpcGoalsEntry[];
+  assists_by_player: RpcAssistsEntry[];
+  potm_by_player: RpcPotmEntry[];
+  matches_played_by_player: RpcMatchesPlayedEntry[];
+  results_over_time: RpcResultEntry[];
+};
+
+/**
+ * §5.1 + §6.4 — Calls the `get_team_stats` Postgres RPC and maps the result
+ * into the existing TypeScript stat types.  One DB call replaces ~11 separate
+ * queries.
+ *
+ * Cached per request with `React.cache()` so multiple callers (e.g. different
+ * sections of a page) share the same result without re-fetching.
+ */
+export const getAllTeamStats = cache(
+  async (
+    teamId: string,
+  ): Promise<{
+    goalsByPlayer: GoalsByPlayerPoint[];
+    assistsByPlayer: PlayerCountPoint[];
+    potmByPlayer: PlayerCountPoint[];
+    matchesPlayed: PlayerCountPoint[];
+    resultsOverTime: ResultOverTimePoint[];
+    form: Array<"W" | "D" | "L">;
+    error: string | null;
+  }> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_team_stats", {
+      p_team_id: teamId,
+    });
+
+    if (error) {
+      return {
+        goalsByPlayer: [],
+        assistsByPlayer: [],
+        potmByPlayer: [],
+        matchesPlayed: [],
+        resultsOverTime: [],
+        form: [],
+        error: error.message,
+      };
+    }
+
+    const raw = data as TeamStatsRpcResult;
+
+    // ------------------------------------------------------------------
+    // Map shirt numbers from the flat object to a Map<playerId, shirt>
+    // ------------------------------------------------------------------
+    const shirtByPlayer = new Map<string, number | null>(
+      Object.entries(raw.shirt_numbers ?? {}),
+    );
+
+    // ------------------------------------------------------------------
+    // Map goals_by_player
+    // ------------------------------------------------------------------
+    const goalsByPlayer: GoalsByPlayerPoint[] = (raw.goals_by_player ?? []).map(
+      (entry) => ({
+        playerId: entry.player_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        goals: Number(entry.goals),
+        position: entry.position ?? null,
+        matchesPlayed: Number(entry.matches_played),
+        periodsPlayed: Number(entry.periods_played),
+        goalCompetitions: (entry.goal_competitions ?? []).map((gc) => ({
+          competitionId: gc.competitionId,
+          competitionKind: gc.competitionKind,
+          isFriendly: gc.isFriendly,
+        })),
+      }),
+    );
+
+    // Inject shirt number from the team roster lookup
+    for (const row of goalsByPlayer) {
+      // shirt_number is not in GoalsByPlayerPoint; it lives on the player object
+      // in TopScorer / PlayerStatLeader. GoalsByPlayerPoint uses positional data only.
+      void row; // nothing to patch — shirt is unused in this type
+    }
+
+    // ------------------------------------------------------------------
+    // Map assists_by_player
+    // ------------------------------------------------------------------
+    const assistsByPlayer: PlayerCountPoint[] = (
+      raw.assists_by_player ?? []
+    ).map((entry) => ({
+      playerId: entry.player_id,
+      name: `${entry.first_name} ${entry.last_name}`,
+      count: Number(entry.assists),
+      matchesPlayed: Number(entry.matches_played),
+      events: (entry.competitions ?? []).map((c) => ({
+        competitionId: c.competitionId,
+        competitionKind: c.competitionKind,
+        isFriendly: c.isFriendly,
+      })),
+    }));
+
+    // ------------------------------------------------------------------
+    // Map potm_by_player
+    // ------------------------------------------------------------------
+    const potmByPlayer: PlayerCountPoint[] = (raw.potm_by_player ?? []).map(
+      (entry) => ({
+        playerId: entry.player_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        count: Number(entry.count),
+        events: (entry.competitions ?? []).map((c) => ({
+          competitionId: c.competitionId,
+          competitionKind: c.competitionKind,
+          isFriendly: c.isFriendly,
+        })),
+      }),
+    );
+
+    // ------------------------------------------------------------------
+    // Map matches_played_by_player
+    // ------------------------------------------------------------------
+    const matchesPlayed: PlayerCountPoint[] = (
+      raw.matches_played_by_player ?? []
+    ).map((entry) => ({
+      playerId: entry.player_id,
+      name: `${entry.first_name} ${entry.last_name}`,
+      count: Number(entry.count),
+      events: (entry.competitions ?? []).map((c) => ({
+        competitionId: c.competitionId,
+        competitionKind: c.competitionKind,
+        isFriendly: c.isFriendly,
+      })),
+    }));
+
+    // ------------------------------------------------------------------
+    // Map results_over_time
+    // ------------------------------------------------------------------
+    const resultsOverTime: ResultOverTimePoint[] = [];
+    const form: Array<"W" | "D" | "L"> = [];
+
+    for (const entry of raw.results_over_time ?? []) {
+      const goalsFor = Number(entry.goals_for);
+      const goalsAgainst = Number(entry.goals_against);
+      const letter = resultLetter(goalsFor, goalsAgainst);
+      if (!letter) continue;
+      form.push(letter);
+      resultsOverTime.push({
+        matchId: entry.match_id,
+        date: entry.date,
+        label: entry.opponent_name,
+        goalsFor,
+        goalsAgainst,
+        result: letter,
+        competitionId: entry.competition_id,
+        competitionKind: entry.competition_kind,
+        competitionName: entry.is_friendly
+          ? "Friendly"
+          : (entry.competition_name ?? null),
+        isFriendly: entry.is_friendly,
+      });
+    }
+
+    // Keep only the most recent N results for the form strip
+    const recentForm = form.slice(-STATS_FORM_LIMIT);
+
+    // shirtByPlayer is resolved at the RPC level for the team; it is only
+    // needed by getTopScorers / getTopAssists which keep their own queries for
+    // the dashboard sidebar (those functions are not called on the stats page).
+    void shirtByPlayer;
+
+    return {
+      goalsByPlayer,
+      assistsByPlayer,
+      potmByPlayer,
+      matchesPlayed,
+      resultsOverTime,
+      form: recentForm,
+      error: null,
+    };
+  },
+);
+
 export type TopScorer = {
   player: {
     id: string;
