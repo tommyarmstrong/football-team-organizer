@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Person, PersonInvitation } from "@/lib/supabase/database.types";
 import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
 import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
+import { FTO_ACCESS_COOKIE } from "@/lib/supabase/middleware";
 
 const {
   createClientMock,
@@ -61,6 +62,12 @@ function authClient({
 } = {}) {
   return {
     auth: {
+      // §1.2 — verifySignedInPersonAccess uses getSession() instead of getUser()
+      // to avoid a redundant network call when middleware already validated the JWT.
+      getSession: vi.fn(async () => ({
+        data: { session: sessionUser ? { user: sessionUser } : null },
+        error: null,
+      })),
       getUser: vi.fn(async () => ({
         data: { user: sessionUser },
         error: null,
@@ -93,6 +100,9 @@ describe("signOut", () => {
     expect(signOutMock).toHaveBeenCalled();
     expect(cookiesDeleteMock).toHaveBeenCalledWith(PASSWORD_SETUP_COOKIE);
     expect(cookiesDeleteMock).toHaveBeenCalledWith(CLUB_COLOUR_HINT_COOKIE);
+    // §3.1 — access cache cookie must be cleared so the next sign-in
+    // re-validates app access rather than trusting the stale cookie.
+    expect(cookiesDeleteMock).toHaveBeenCalledWith(FTO_ACCESS_COOKIE);
     expect(redirectMock).toHaveBeenCalledWith("/login");
   });
 });
@@ -253,6 +263,29 @@ describe("assertPersonMayRemainSignedIn", () => {
     signOutMock.mockReset();
     findPersonForAuthUserIdMock.mockReset();
     findPersonForVerifiedEmailMock.mockReset();
+  });
+
+  it("uses getSession() rather than getUser() to avoid a redundant network call (§1.2)", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: { id: "person-1", account_status: "active" } as Person,
+      error: null,
+    });
+
+    await assertPersonMayRemainSignedIn();
+
+    expect(client.auth.getSession).toHaveBeenCalledOnce();
+    expect(client.auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when there is no active session", async () => {
+    createClientMock.mockResolvedValue(authClient({ sessionUser: null }));
+
+    const result = await assertPersonMayRemainSignedIn();
+
+    expect(result.error).toBe("Not signed in.");
+    expect(signOutMock).not.toHaveBeenCalled();
   });
 
   it("allows active people to remain signed in", async () => {
