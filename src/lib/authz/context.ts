@@ -1,9 +1,8 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { loadVisibleTeams } from "@/lib/data/visible-teams";
 import { personDisplayName } from "@/lib/people/person";
 import { isTeamArchived } from "@/lib/team/season";
-import type { Team, TeamRole } from "@/lib/supabase/database.types";
+import type { Club, Team, TeamRole } from "@/lib/supabase/database.types";
 
 /**
  * Everything needed to make authorization decisions for the signed-in user in a
@@ -43,6 +42,12 @@ export type ViewerContext = {
   /** Subset of visible teams the user can edit. */
   editableTeamIds: string[];
   isManagement: boolean;
+  /**
+   * RLS-filtered clubs the user can read.
+   * Fetched alongside teams in the composite get_viewer_context() RPC (§4.1 + §6.2)
+   * so callers like getPrimaryClub() avoid a second DB round-trip.
+   */
+  visibleClubs: Club[];
 };
 
 /** Prefer auth metadata name; fall back to email local-part. */
@@ -65,6 +70,40 @@ export function resolveAuthDisplayName(user: {
   return localPart || null;
 }
 
+// ---------------------------------------------------------------------------
+// Raw shape returned by the get_viewer_context() Postgres RPC.
+// ---------------------------------------------------------------------------
+
+type RpcPerson = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+};
+type RpcManager = { club_id: string };
+type RpcTeamMember = { team_id: string; role: string };
+type RpcGuardian = {
+  id: string;
+  player_guardians: { player_id: string }[] | null;
+};
+type RpcSelfPlayer = { id: string };
+
+type ViewerContextRaw = {
+  person: RpcPerson | null;
+  managers: RpcManager[];
+  team_members: RpcTeamMember[];
+  guardians: RpcGuardian[];
+  self_players: RpcSelfPlayer[];
+  teams: Team[];
+  clubs: Club[];
+};
+
+/**
+ * Fetch all viewer context data in a single Postgres RPC call.
+ *
+ * §6.2: Replaces 7 individual DB queries (people, managers, team_members,
+ * guardians, player_guardians, players, teams) with one round-trip.
+ * §4.1: Includes clubs so getPrimaryClub() and AppHeader need no extra call.
+ */
 export const getViewerContext = cache(
   async (): Promise<ViewerContext | null> => {
     const supabase = await createClient();
@@ -74,12 +113,13 @@ export const getViewerContext = cache(
 
     if (!user) return null;
 
-    const { data: selfPerson } = await supabase
-      .from("people")
-      .select("id, first_name, last_name")
-      .eq("auth_user_id", user.id)
-      .maybeSingle();
+    const { data: raw, error } = await supabase.rpc("get_viewer_context");
 
+    if (error || !raw) return null;
+
+    const result = raw as ViewerContextRaw;
+
+    const selfPerson = result.person;
     const personId = selfPerson?.id ?? null;
     const firstName = selfPerson?.first_name?.trim() || null;
     const lastName = selfPerson?.last_name?.trim() || null;
@@ -88,59 +128,29 @@ export const getViewerContext = cache(
         ? personDisplayName({ first_name: firstName, last_name: lastName })
         : firstName || lastName || null;
 
-    const [managers, teamMembers, guardianLinks, selfPlayers, teams] =
-      await Promise.all([
-        personId
-          ? supabase
-              .from("managers")
-              .select("club_id")
-              .eq("person_id", personId)
-          : Promise.resolve({ data: [] as { club_id: string }[], error: null }),
-        supabase
-          .from("team_members")
-          .select("team_id, role")
-          .eq("user_id", user.id),
-        personId
-          ? supabase
-              .from("guardians")
-              .select("id, player_guardians(player_id)")
-              .eq("person_id", personId)
-          : Promise.resolve({
-              data: [] as {
-                id: string;
-                player_guardians: { player_id: string }[] | null;
-              }[],
-              error: null,
-            }),
-        personId
-          ? supabase.from("players").select("id").eq("person_id", personId)
-          : Promise.resolve({ data: [] as { id: string }[], error: null }),
-        loadVisibleTeams(),
-      ]);
-
-    const managementClubIds = (managers.data ?? []).map((row) => row.club_id);
+    const managementClubIds = (result.managers ?? []).map((row) => row.club_id);
 
     const memberTeamRoles: Record<string, TeamRole[]> = {};
     const coachTeamIds: string[] = [];
     const managementTeamIds: string[] = [];
-    for (const row of teamMembers.data ?? []) {
+    for (const row of result.team_members ?? []) {
       const roles = memberTeamRoles[row.team_id] ?? [];
-      roles.push(row.role);
+      roles.push(row.role as TeamRole);
       memberTeamRoles[row.team_id] = roles;
       if (row.role === "coach") coachTeamIds.push(row.team_id);
       if (row.role === "management") managementTeamIds.push(row.team_id);
     }
 
-    const guardianIds = (guardianLinks.data ?? []).map(
-      (guardian) => guardian.id,
-    );
-    const guardianPlayerIds = (guardianLinks.data ?? []).flatMap((guardian) => {
-      const links = guardian.player_guardians as
+    const guardianIds = (result.guardians ?? []).map((g) => g.id);
+    const guardianPlayerIds = (result.guardians ?? []).flatMap((g) => {
+      const links = g.player_guardians as
         { player_id: string }[] | null | undefined;
       return (links ?? []).map((link) => link.player_id);
     });
-    const selfPlayerIds = (selfPlayers.data ?? []).map((row) => row.id);
-    const visibleTeams = teams.data;
+
+    const selfPlayerIds = (result.self_players ?? []).map((row) => row.id);
+    const visibleTeams = (result.teams ?? []) as Team[];
+    const visibleClubs = (result.clubs ?? []) as Club[];
 
     const managementClubSet = new Set(managementClubIds);
     const coachTeamSet = new Set(coachTeamIds);
@@ -172,6 +182,7 @@ export const getViewerContext = cache(
       editableTeamIds,
       isManagement:
         managementClubIds.length > 0 || managementTeamIds.length > 0,
+      visibleClubs,
     };
   },
 );

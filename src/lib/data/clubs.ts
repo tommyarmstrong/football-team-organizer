@@ -54,18 +54,21 @@ function preferredClubIds(ctx: ViewerContext): string[] {
   return ids;
 }
 
-/** The club the user manages, or the club of their first visible team. */
+/**
+ * The club the user manages, or the club of their first visible team.
+ *
+ * §4.1 + §6.2 — clubs are now fetched inside getViewerContext() via the
+ * get_viewer_context() RPC, so this function needs no separate DB call.
+ */
 export const getPrimaryClub = cache(async (): Promise<Club | null> => {
   const ctx = await getViewerContext();
-  const { data: clubs } = await listVisibleClubs();
+  // ctx.visibleClubs is populated by the composite RPC (get_viewer_context).
+  const clubs = ctx?.visibleClubs ?? [];
 
   if (ctx) {
     for (const clubId of preferredClubIds(ctx)) {
       const fromList = clubs.find((c) => c.id === clubId);
       if (fromList) return fromList;
-
-      const { data: byId } = await getClub(clubId);
-      if (byId) return byId;
     }
   }
 

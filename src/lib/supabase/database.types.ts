@@ -1308,6 +1308,10 @@ export type Database = {
         Args: { p_player_id: string };
         Returns: boolean;
       };
+      get_viewer_context: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";

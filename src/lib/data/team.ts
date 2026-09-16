@@ -2,7 +2,6 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
-import { loadVisibleTeams } from "@/lib/data/visible-teams";
 import type { AgeGroup } from "@/lib/constants";
 import {
   archivedTeamWriteError,
@@ -47,12 +46,19 @@ function mapTeamWriteError(message: string): string {
   return message;
 }
 
-/** All teams the signed-in user can see (RLS-filtered), ordered for display. */
+/**
+ * All teams the signed-in user can see (RLS-filtered), ordered for display.
+ *
+ * §4.1 + §6.2 — teams are now fetched inside getViewerContext() via the
+ * composite get_viewer_context() RPC, so no separate DB call is needed.
+ */
 export const listVisibleTeams = cache(
   async (): Promise<{ data: Team[]; error: string | null }> => {
-    const { data, error } = await loadVisibleTeams();
-    if (error) return { data: [], error };
-    return { data: sortTeamsForDisplay(data), error: null };
+    const ctx = await getViewerContext();
+    return {
+      data: ctx ? sortTeamsForDisplay(ctx.visibleTeams) : [],
+      error: null,
+    };
   },
 );
 
@@ -60,9 +66,12 @@ export const listVisibleTeams = cache(
  * The active team for team-scoped screens. Resolved from the active-team cookie
  * when it points at a team the user can see; otherwise the first visible
  * non-archived team (falling back to any visible team).
+ *
+ * §4.1 + §6.2 — delegates to getViewerContext() so no extra DB call is made.
  */
 export const getActiveTeam = cache(async (): Promise<Team | null> => {
-  const { data: teams } = await listVisibleTeams();
+  const ctx = await getViewerContext();
+  const teams = ctx ? sortTeamsForDisplay(ctx.visibleTeams) : [];
   if (teams.length === 0) return null;
 
   const cookieStore = await cookies();

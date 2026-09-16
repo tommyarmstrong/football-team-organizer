@@ -2,7 +2,7 @@ import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
 import { canAccessClubAndPeople, getViewerContext } from "@/lib/authz/context";
 import { getPrimaryClub } from "@/lib/data/clubs";
-import { getActiveTeam, listVisibleTeams } from "@/lib/data/team";
+import { getActiveTeam, sortTeamsForDisplay } from "@/lib/data/team";
 import { isValidClubColour } from "@/lib/clubs/branding";
 import { ClubIcon } from "@/components/clubs/club-icon";
 import { AppNav, MobileTabBar } from "@/components/layout/app-nav";
@@ -51,12 +51,18 @@ export function AppHeaderFallback() {
 }
 
 export async function AppHeader() {
+  // §4.1 + §6.2 — getViewerContext() uses the composite get_viewer_context()
+  // RPC which returns teams and clubs alongside auth data in one DB round-trip.
+  // getActiveTeam() and getPrimaryClub() delegate to the cached context so no
+  // extra DB calls are made here.
   const ctx = await getViewerContext();
-  const [{ data: teams }, activeTeam, club] = await Promise.all([
-    listVisibleTeams(),
+  const [activeTeam, club] = await Promise.all([
     getActiveTeam(),
     getPrimaryClub(),
   ]);
+  // Derive the sorted team list from the already-cached context instead of a
+  // separate DB query.
+  const teams = ctx ? sortTeamsForDisplay(ctx.visibleTeams) : [];
 
   const showClubAndPeople = Boolean(ctx && canAccessClubAndPeople(ctx));
   const accountName = ctx ? viewerFullName(ctx) : null;

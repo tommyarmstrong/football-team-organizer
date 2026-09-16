@@ -46,6 +46,7 @@ function viewer(overrides: Partial<ViewerContext> = {}): ViewerContext {
     visibleTeams: [],
     editableTeamIds: [],
     isManagement: false,
+    visibleClubs: [],
     ...overrides,
   };
 }
