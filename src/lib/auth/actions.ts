@@ -6,6 +6,7 @@ import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
 import { validateNewPassword } from "@/lib/auth/password";
 import { verifySignedInPersonAccess } from "@/lib/auth/session-access";
 import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
+import { FTO_ACCESS_COOKIE } from "@/lib/supabase/middleware";
 import { createClient } from "@/lib/supabase/server";
 import {
   findPersonForVerifiedEmail,
@@ -20,6 +21,8 @@ export async function signOut() {
   const cookieStore = await cookies();
   cookieStore.delete(PASSWORD_SETUP_COOKIE);
   cookieStore.delete(CLUB_COLOUR_HINT_COOKIE);
+  // Clear the access cache cookie so the next sign-in re-validates app access.
+  cookieStore.delete(FTO_ACCESS_COOKIE);
   redirect("/login");
 }
 

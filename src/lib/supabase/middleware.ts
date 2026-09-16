@@ -9,6 +9,18 @@ import {
   passwordSetupDestination,
 } from "@/lib/auth/paths";
 import type { Database } from "@/lib/supabase/database.types";
+import {
+  CLUB_COLOUR_HINT_COOKIE,
+  CLUB_COLOUR_HINT_MAX_AGE_SECONDS,
+  parseClubColourHint,
+} from "@/lib/clubs/colour-hint";
+
+/**
+ * Short-lived cookie that caches the result of `has_app_access` so we skip the
+ * Postgres RPC on every request for known-good sessions (§3.1).
+ */
+export const FTO_ACCESS_COOKIE = "fto_access";
+const FTO_ACCESS_MAX_AGE = 300; // 5 minutes
 
 async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,
@@ -49,10 +61,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh the auth session; do not remove this call.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // §3.1 — Check the cached access cookie before firing any network calls.
+  const cachedAccess = request.cookies.get(FTO_ACCESS_COOKIE)?.value === "1";
+
+  // §3.2 — getUser() and has_app_access are independent: both rely only on the
+  // session cookies already present in the incoming request. Fire them
+  // concurrently so their latencies overlap rather than stack sequentially.
+  // When the access cookie is present (§3.1) the RPC is replaced with an
+  // already-resolved promise, leaving only the mandatory getUser() call.
+  const [
+    {
+      data: { user },
+    },
+    hasTeamFromRpc,
+  ] = await Promise.all([
+    supabase.auth.getUser(), // always required — do not remove this call
+    cachedAccess ? Promise.resolve(true) : userHasAppAccess(supabase),
+  ]);
 
   const { pathname } = request.nextUrl;
   const setupKind = parsePasswordSetupKind(
@@ -77,7 +102,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const hasTeam = await userHasAppAccess(supabase);
+    const hasTeam = cachedAccess || hasTeamFromRpc;
 
     if (!hasTeam && !isMembershipExemptPath(pathname)) {
       const redirectUrl = request.nextUrl.clone();
@@ -98,7 +123,17 @@ export async function updateSession(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
       redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
+      const res = NextResponse.redirect(redirectUrl);
+      // Carry the access cookie through the redirect so the next request is cached.
+      if (!cachedAccess && hasTeam) {
+        res.cookies.set(FTO_ACCESS_COOKIE, "1", {
+          path: "/",
+          maxAge: FTO_ACCESS_MAX_AGE,
+          sameSite: "lax",
+          httpOnly: true,
+        });
+      }
+      return res;
     }
 
     if (!hasTeam && pathname === "/login") {
@@ -106,6 +141,46 @@ export async function updateSession(request: NextRequest) {
       redirectUrl.pathname = "/no-access";
       redirectUrl.search = "";
       return NextResponse.redirect(redirectUrl);
+    }
+
+    // Persist the access result on pass-through responses.
+    if (!cachedAccess && hasTeam) {
+      supabaseResponse.cookies.set(FTO_ACCESS_COOKIE, "1", {
+        path: "/",
+        maxAge: FTO_ACCESS_MAX_AGE,
+        sameSite: "lax",
+        httpOnly: true,
+      });
+    }
+
+    // §2.1 — Set the club colour cookie in middleware so layout.tsx can apply
+    // the correct colour on the very first byte of HTML, eliminating the flash
+    // of default colour that occurred before ClubColourBinder hydrated.
+    if (hasTeam) {
+      const existingColour = request.cookies.get(
+        CLUB_COLOUR_HINT_COOKIE,
+      )?.value;
+      if (!existingColour || !parseClubColourHint(existingColour)) {
+        try {
+          const { data: club } = await supabase
+            .from("clubs")
+            .select("colour")
+            .order("name", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          const colour = parseClubColourHint(club?.colour ?? null);
+          if (colour) {
+            supabaseResponse.cookies.set(CLUB_COLOUR_HINT_COOKIE, colour, {
+              path: "/",
+              maxAge: CLUB_COLOUR_HINT_MAX_AGE_SECONDS,
+              sameSite: "lax",
+            });
+          }
+        } catch {
+          // Non-fatal — ClubColourBinder will set the cookie client-side on
+          // the next render if the colour lookup fails here.
+        }
+      }
     }
   }
 
