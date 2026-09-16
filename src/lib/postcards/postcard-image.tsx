@@ -175,7 +175,177 @@ function PitchLines() {
   );
 }
 
-function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
+function ClubMasthead({
+  payload,
+  crestSrc,
+}: {
+  payload: MatchPostcardPayload;
+  crestSrc: string | null;
+}) {
+  const masthead = payload.clubColour ?? PITCH_DEEP;
+  const mastheadInk = contrastingInk(masthead);
+  const clubInitial = (payload.clubName.trim()[0] ?? "F").toUpperCase();
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        backgroundColor: masthead,
+        color: mastheadInk,
+        padding: "34px 48px",
+      }}
+    >
+      {crestSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={crestSrc}
+          width={84}
+          height={84}
+          alt=""
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: 18,
+            objectFit: "cover",
+            marginRight: 20,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: 18,
+            backgroundColor: mastheadInk,
+            color: masthead,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 38,
+            fontWeight: 700,
+            marginRight: 20,
+          }}
+        >
+          {clubInitial}
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div
+          style={ellipsisStyle({
+            fontSize: 36,
+            fontWeight: 700,
+            maxWidth: 860,
+          })}
+        >
+          {payload.clubName}
+        </div>
+        <div
+          style={ellipsisStyle({
+            fontSize: 29,
+            marginTop: 4,
+            maxWidth: 860,
+            opacity: 0.9,
+          })}
+        >
+          {`${payload.teamName} · ${payload.seasonLabel}`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreboardNames({
+  homeName,
+  awayName,
+  centre,
+}: {
+  homeName: string;
+  awayName: string;
+  centre: ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginBottom: 10,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "flex-end",
+          paddingRight: 20,
+        }}
+      >
+        <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
+          {homeName}
+        </div>
+      </div>
+      {centre}
+      <div style={{ flex: 1, display: "flex", paddingLeft: 20 }}>
+        <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
+          {awayName}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FixtureMeta({
+  homeAwayLabel,
+  competitionLabel,
+  dateLabel,
+}: {
+  homeAwayLabel: string;
+  competitionLabel: string | null;
+  dateLabel: string;
+}) {
+  return (
+    <div style={stackStyle({ width: "100%" })}>
+      <div
+        style={centredStyle({
+          fontSize: 29,
+          color: MUTED,
+          marginBottom: 10,
+          textTransform: "uppercase",
+          letterSpacing: 2,
+        })}
+      >
+        {homeAwayLabel}
+      </div>
+      {competitionLabel ? (
+        <div
+          style={centredStyle({
+            fontSize: 32,
+            color: INK,
+            fontWeight: 700,
+            marginBottom: 7,
+          })}
+        >
+          {competitionLabel}
+        </div>
+      ) : null}
+      <div
+        style={centredStyle({
+          fontSize: 29,
+          color: MUTED,
+          marginBottom: 28,
+        })}
+      >
+        {dateLabel}
+      </div>
+    </div>
+  );
+}
+
+function GoalRows({
+  payload,
+}: {
+  payload: Extract<MatchPostcardPayload, { kind: "played" }>;
+}): ReactNode {
   const list = payload.goalList;
   if (list.kind === "none") return null;
 
@@ -222,127 +392,20 @@ function GoalRows({ payload }: { payload: MatchPostcardPayload }): ReactNode {
   return <div style={stackStyle({ marginBottom: 32 })}>{rows}</div>;
 }
 
-export function MatchPostcardImage({
+function PlayedPostcardBody({
   payload,
-  crestSrc,
 }: {
-  payload: MatchPostcardPayload;
-  crestSrc: string | null;
+  payload: Extract<MatchPostcardPayload, { kind: "played" }>;
 }) {
-  const masthead = payload.clubColour ?? PITCH_DEEP;
-  const mastheadInk = contrastingInk(masthead);
   const scoreColors = resultColors(payload.result);
   const hasPotm = Boolean(payload.coachPotmLabel || payload.playersPotmLabel);
-  const clubInitial = (payload.clubName.trim()[0] ?? "F").toUpperCase();
 
   return (
-    <div
-      style={{
-        width: POSTCARD_WIDTH,
-        height: POSTCARD_HEIGHT,
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: BACKGROUND,
-        color: INK,
-        fontFamily: "sans-serif",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          backgroundColor: masthead,
-          color: mastheadInk,
-          padding: "34px 48px",
-        }}
-      >
-        {crestSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={crestSrc}
-            width={84}
-            height={84}
-            alt=""
-            style={{
-              width: 84,
-              height: 84,
-              borderRadius: 18,
-              objectFit: "cover",
-              marginRight: 20,
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 84,
-              height: 84,
-              borderRadius: 18,
-              backgroundColor: mastheadInk,
-              color: masthead,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 38,
-              fontWeight: 700,
-              marginRight: 20,
-            }}
-          >
-            {clubInitial}
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div
-            style={ellipsisStyle({
-              fontSize: 36,
-              fontWeight: 700,
-              maxWidth: 860,
-            })}
-          >
-            {payload.clubName}
-          </div>
-          <div
-            style={ellipsisStyle({
-              fontSize: 29,
-              marginTop: 4,
-              maxWidth: 860,
-              opacity: 0.9,
-            })}
-          >
-            {`${payload.teamName} · ${payload.seasonLabel}`}
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-          padding: "34px 48px 42px",
-          flex: 1,
-          backgroundColor: BACKGROUND,
-        }}
-      >
-        <PitchLines />
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: 10,
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "flex-end",
-              paddingRight: 20,
-            }}
-          >
-            <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
-              {payload.homeName}
-            </div>
-          </div>
+    <div style={stackStyle({ width: "100%" })}>
+      <ScoreboardNames
+        homeName={payload.homeName}
+        awayName={payload.awayName}
+        centre={
           <div
             style={{
               backgroundColor: scoreColors.bg,
@@ -356,153 +419,286 @@ export function MatchPostcardImage({
           >
             {payload.scoreLabel}
           </div>
-          <div style={{ flex: 1, display: "flex", paddingLeft: 20 }}>
-            <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
-              {payload.awayName}
+        }
+      />
+      <FixtureMeta
+        homeAwayLabel={payload.homeAwayLabel}
+        competitionLabel={payload.competitionLabel}
+        dateLabel={payload.dateLabel}
+      />
+
+      <div
+        style={centredStyle({
+          fontSize: 42,
+          fontWeight: 700,
+          marginBottom: 34,
+          lineHeight: 1.25,
+          paddingLeft: 40,
+          paddingRight: 40,
+        })}
+      >
+        {payload.story}
+      </div>
+
+      <GoalRows payload={payload} />
+
+      {hasPotm ? (
+        <div style={stackStyle({ marginBottom: 28 })}>
+          {payload.coachPotmLabel ? (
+            <div
+              style={ellipsisStyle({
+                fontSize: 32,
+                fontWeight: 700,
+                marginBottom: payload.playersPotmLabel ? 13 : 0,
+                maxWidth: 984,
+              })}
+            >
+              {postcardPotmLine(payload.coachPotmLabel, "coach")}
             </div>
-          </div>
+          ) : null}
+          {payload.playersPotmLabel ? (
+            <div
+              style={ellipsisStyle({
+                fontSize: 32,
+                fontWeight: 700,
+                maxWidth: 984,
+              })}
+            >
+              {postcardPotmLine(payload.playersPotmLabel, "players")}
+            </div>
+          ) : null}
         </div>
+      ) : null}
+
+      {payload.squadLines.length > 0 ? (
         <div
-          style={centredStyle({
-            fontSize: 29,
-            color: MUTED,
+          style={stackStyle({
+            alignItems: "center",
             marginBottom: 10,
-            textTransform: "uppercase",
-            letterSpacing: 2,
           })}
         >
-          {payload.homeAwayLabel}
-        </div>
-        {payload.competitionLabel ? (
           <div
-            style={centredStyle({
-              fontSize: 32,
-              color: INK,
+            style={{
+              fontSize: 30,
+              color: MUTED,
               fontWeight: 700,
-              marginBottom: 7,
-            })}
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              marginBottom: 12,
+            }}
           >
-            {payload.competitionLabel}
+            Matchday Squad
           </div>
-        ) : null}
+          {payload.squadLines.map((line, index) => (
+            <div
+              key={`${line}-${index}`}
+              style={centredStyle({
+                width: "100%",
+                fontSize: 30,
+                color: INK,
+                lineHeight: 1.35,
+              })}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {payload.form.length > 0 ? (
+        <div
+          style={stackStyle({
+            marginTop: 28,
+            alignItems: "center",
+          })}
+        >
+          <div
+            style={{
+              fontSize: 30,
+              color: MUTED,
+              fontWeight: 700,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              marginBottom: 14,
+            }}
+          >
+            Form
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            {payload.form.map((letter, index) => (
+              <FormBox
+                key={`${letter}-${index}`}
+                letter={letter}
+                colors={resultColors(letter)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ScheduledPostcardBody({
+  payload,
+}: {
+  payload: Extract<MatchPostcardPayload, { kind: "scheduled" }>;
+}) {
+  return (
+    <div style={stackStyle({ width: "100%" })}>
+      <ScoreboardNames
+        homeName={payload.homeName}
+        awayName={payload.awayName}
+        centre={
+          <div
+            style={{
+              fontSize: 42,
+              fontWeight: 700,
+              letterSpacing: 6,
+              color: MUTED,
+              padding: "12px 18px",
+            }}
+          >
+            VS
+          </div>
+        }
+      />
+      <FixtureMeta
+        homeAwayLabel={payload.homeAwayLabel}
+        competitionLabel={payload.competitionLabel}
+        dateLabel={payload.dateLabel}
+      />
+
+      {payload.meetupLabel ? (
         <div
           style={centredStyle({
-            fontSize: 29,
-            color: MUTED,
+            fontSize: 32,
+            color: INK,
+            fontWeight: 700,
+            marginBottom: payload.kickoffLabel ? 8 : 28,
+          })}
+        >
+          {`Meet up: ${payload.meetupLabel}`}
+        </div>
+      ) : null}
+      {payload.kickoffLabel ? (
+        <div
+          style={centredStyle({
+            fontSize: 32,
+            color: INK,
+            fontWeight: 700,
             marginBottom: 28,
           })}
         >
-          {payload.dateLabel}
+          {`Kick off: ${payload.kickoffLabel}`}
         </div>
+      ) : null}
 
+      {payload.venueName ? (
         <div
-          style={centredStyle({
-            fontSize: 42,
-            fontWeight: 700,
-            marginBottom: 34,
-            lineHeight: 1.25,
-            paddingLeft: 40,
-            paddingRight: 40,
+          style={stackStyle({
+            alignItems: "center",
+            marginTop: payload.kickoffLabel || payload.meetupLabel ? 8 : 0,
           })}
         >
-          {payload.story}
-        </div>
-
-        <GoalRows payload={payload} />
-
-        {hasPotm ? (
-          <div style={stackStyle({ marginBottom: 28 })}>
-            {payload.coachPotmLabel ? (
-              <div
-                style={ellipsisStyle({
-                  fontSize: 32,
-                  fontWeight: 700,
-                  marginBottom: payload.playersPotmLabel ? 13 : 0,
-                  maxWidth: 984,
-                })}
-              >
-                {postcardPotmLine(payload.coachPotmLabel, "coach")}
-              </div>
-            ) : null}
-            {payload.playersPotmLabel ? (
-              <div
-                style={ellipsisStyle({
-                  fontSize: 32,
-                  fontWeight: 700,
-                  maxWidth: 984,
-                })}
-              >
-                {postcardPotmLine(payload.playersPotmLabel, "players")}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {payload.squadLines.length > 0 ? (
           <div
-            style={stackStyle({
-              alignItems: "center",
-              marginBottom: 10,
+            style={{
+              fontSize: 30,
+              color: MUTED,
+              fontWeight: 700,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              marginBottom: 12,
+            }}
+          >
+            Venue
+          </div>
+          <div
+            style={centredStyle({
+              fontSize: 34,
+              fontWeight: 700,
+              color: INK,
+              marginBottom: payload.venueAddress ? 8 : 0,
+              maxWidth: 984,
             })}
           >
+            {payload.venueName}
+          </div>
+          {payload.venueAddress ? (
             <div
               style={{
-                fontSize: 30,
-                color: MUTED,
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                marginBottom: 12,
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
               }}
             >
-              Matchday Squad
-            </div>
-            {payload.squadLines.map((line, index) => (
               <div
-                key={`${line}-${index}`}
-                style={centredStyle({
-                  width: "100%",
-                  fontSize: 30,
-                  color: INK,
+                style={{
+                  display: "flex",
+                  fontSize: 29,
+                  color: MUTED,
+                  width: 900,
                   lineHeight: 1.35,
-                })}
+                  textAlign: "center",
+                  justifyContent: "center",
+                }}
               >
-                {line}
+                {payload.venueAddress}
               </div>
-            ))}
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : payload.venueAddress ? (
+        <div
+          style={centredStyle({
+            fontSize: 29,
+            color: MUTED,
+            maxWidth: 984,
+          })}
+        >
+          {payload.venueAddress}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
-        {payload.form.length > 0 ? (
-          <div
-            style={stackStyle({
-              marginTop: 28,
-              alignItems: "center",
-            })}
-          >
-            <div
-              style={{
-                fontSize: 30,
-                color: MUTED,
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                marginBottom: 14,
-              }}
-            >
-              Form
-            </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              {payload.form.map((letter, index) => (
-                <FormBox
-                  key={`${letter}-${index}`}
-                  letter={letter}
-                  colors={resultColors(letter)}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
+export function MatchPostcardImage({
+  payload,
+  crestSrc,
+}: {
+  payload: MatchPostcardPayload;
+  crestSrc: string | null;
+}) {
+  return (
+    <div
+      style={{
+        width: POSTCARD_WIDTH,
+        height: POSTCARD_HEIGHT,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: BACKGROUND,
+        color: INK,
+        fontFamily: "sans-serif",
+      }}
+    >
+      <ClubMasthead payload={payload} crestSrc={crestSrc} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          padding: "34px 48px 42px",
+          flex: 1,
+          backgroundColor: BACKGROUND,
+        }}
+      >
+        <PitchLines />
+        {payload.kind === "scheduled" ? (
+          <ScheduledPostcardBody payload={payload} />
+        ) : (
+          <PlayedPostcardBody payload={payload} />
+        )}
       </div>
     </div>
   );

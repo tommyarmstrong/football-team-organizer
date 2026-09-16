@@ -15,20 +15,21 @@ import {
   objectListRowClassName,
 } from "@/components/shared/object-list";
 
-export function goalChipClassName(
-  isOpposition: boolean,
-  className?: string,
-): string {
+export function playerEventNameClassName(className?: string): string {
   return cn(
-    "bg-background inline-flex w-fit max-w-full min-w-0 items-center gap-1 overflow-hidden rounded-lg border px-2 py-0.5 text-xs font-medium",
-    isOpposition
-      ? "border-red-600 text-red-800 dark:text-red-200"
-      : "border-green-600 text-green-800 dark:text-green-200",
+    "inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 text-sm font-medium",
     className,
   );
 }
 
-export function GoalScorerChip({
+export function goalAssistPlayer(
+  goal: GoalWithPlayers,
+): { first_name: string; last_name: string } | null {
+  if (!goal.assist || !goalAssistsAllowed(goal, goal)) return null;
+  return goal.assist;
+}
+
+export function GoalScorerName({
   goal,
   className,
 }: {
@@ -36,14 +37,14 @@ export function GoalScorerChip({
   className?: string;
 }) {
   return (
-    <span className={goalChipClassName(goal.is_opposition, className)}>
+    <span className={playerEventNameClassName(className)}>
       <span aria-hidden="true">⚽</span>
       <span className="truncate">{goalScorerLabel(goal)}</span>
     </span>
   );
 }
 
-export function GoalAssistChip({
+export function GoalAssistName({
   player,
   className,
 }: {
@@ -51,14 +52,14 @@ export function GoalAssistChip({
   className?: string;
 }) {
   return (
-    <span className={goalChipClassName(false, cn("self-start", className))}>
+    <span className={playerEventNameClassName(className)}>
       <span aria-hidden="true">🤝</span>
       <span className="truncate">{playerDisplayName(player)}</span>
     </span>
   );
 }
 
-export function PlayerOfTheMatchChip({
+export function PlayerOfTheMatchName({
   name,
   className,
 }: {
@@ -66,12 +67,7 @@ export function PlayerOfTheMatchChip({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "bg-background inline-flex w-fit max-w-full min-w-0 items-center gap-1 overflow-hidden rounded-lg border border-amber-400 px-2 py-0.5 text-xs font-medium text-amber-900 dark:border-amber-300 dark:text-amber-100",
-        className,
-      )}
-    >
+    <span className={playerEventNameClassName(className)}>
       <span aria-hidden="true">🏆</span>
       <span className="truncate">{name}</span>
     </span>
@@ -221,44 +217,53 @@ export function MatchGoalsSection({
                       No goals
                     </span>
                   ) : (
-                    group.goals.map((goal) => (
-                      <div
-                        key={goal.id}
-                        className="flex items-stretch gap-2 py-2 first:pt-0 last:pb-0"
-                      >
-                        <Link
-                          href={`/matches/${matchId}/goals/${goal.id}`}
-                          className={objectListRowClassName(
-                            "min-h-0 flex-1 items-start px-0 py-0 hover:bg-transparent focus-visible:ring-offset-2",
-                          )}
+                    group.goals.map((goal) => {
+                      const assist = goalAssistPlayer(goal);
+                      return (
+                        <div
+                          key={goal.id}
+                          className="flex items-start gap-2 py-2 first:pt-0 last:pb-0"
                         >
-                          <span className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                            <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                              <GoalScorerChip goal={goal} />
-                              {goal.is_penalty ? (
-                                <span className="text-muted-foreground text-xs font-medium">
-                                  (P)
-                                </span>
+                          <Link
+                            href={`/matches/${matchId}/goals/${goal.id}`}
+                            className={objectListRowClassName(
+                              "min-h-0 flex-1 items-start px-0 py-0 hover:bg-transparent focus-visible:ring-offset-2",
+                            )}
+                          >
+                            <span
+                              className={
+                                assist
+                                  ? "flex min-w-0 flex-1 flex-col items-start gap-1.5"
+                                  : "flex min-w-0 flex-1 flex-col items-start"
+                              }
+                            >
+                              <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                <GoalScorerName goal={goal} />
+                                {goal.is_penalty ? (
+                                  <span className="text-muted-foreground text-xs font-medium">
+                                    (P)
+                                  </span>
+                                ) : null}
+                              </span>
+                              {assist ? (
+                                <GoalAssistName player={assist} />
                               ) : null}
                             </span>
-                            {goal.assist && goalAssistsAllowed(goal, goal) ? (
-                              <GoalAssistChip player={goal.assist} />
-                            ) : null}
-                          </span>
-                        </Link>
-                        {canEdit ? (
-                          <div className="flex items-center">
-                            <ListDeleteButton
-                              label={`Delete goal by ${goalScorerLabel(goal)}`}
-                              confirmMessage="Remove this goal?"
-                              deleteAction={() =>
-                                deleteGoalAction(matchId, goal.id)
-                              }
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    ))
+                          </Link>
+                          {canEdit ? (
+                            <div className="flex items-start">
+                              <ListDeleteButton
+                                label={`Delete goal by ${goalScorerLabel(goal)}`}
+                                confirmMessage="Remove this goal?"
+                                deleteAction={() =>
+                                  deleteGoalAction(matchId, goal.id)
+                                }
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>

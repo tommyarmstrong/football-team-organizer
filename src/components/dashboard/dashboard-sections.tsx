@@ -190,9 +190,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         rows={potm.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
-          name: playerDisplayName(row.player, {
-            shirtNumber: row.player.shirt_number,
-          }),
+          name: playerDisplayName(row.player),
           valueLabel: formatCountLabel(row.count, "award", "awards"),
         }))}
       />
