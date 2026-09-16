@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Person, PersonInvitation } from "@/lib/supabase/database.types";
 import { PASSWORD_SETUP_COOKIE } from "@/lib/auth/paths";
 import { CLUB_COLOUR_HINT_COOKIE } from "@/lib/clubs/colour-hint";
+import { FTO_ACCESS_COOKIE } from "@/lib/supabase/middleware";
 
 const {
   createClientMock,
@@ -93,6 +94,9 @@ describe("signOut", () => {
     expect(signOutMock).toHaveBeenCalled();
     expect(cookiesDeleteMock).toHaveBeenCalledWith(PASSWORD_SETUP_COOKIE);
     expect(cookiesDeleteMock).toHaveBeenCalledWith(CLUB_COLOUR_HINT_COOKIE);
+    // §3.1 — access cache cookie must be cleared so the next sign-in
+    // re-validates app access rather than trusting the stale cookie.
+    expect(cookiesDeleteMock).toHaveBeenCalledWith(FTO_ACCESS_COOKIE);
     expect(redirectMock).toHaveBeenCalledWith("/login");
   });
 });
