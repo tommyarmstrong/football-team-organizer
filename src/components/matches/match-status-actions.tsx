@@ -15,13 +15,16 @@ import {
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
-/** Stack on mobile, row on desktop. */
+/** Stack on mobile, row on desktop; width follows the widest label. */
 export function matchStatusActionsRowClassName(className?: string): string {
-  return cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap", className);
+  return cn(
+    "inline-grid grid-cols-1 gap-2 sm:grid-flow-col sm:auto-cols-fr",
+    className,
+  );
 }
 
 export function matchStatusActionButtonClassName(className?: string): string {
-  return cn("min-w-28 w-full sm:w-auto", className);
+  return cn("w-full", className);
 }
 
 export function MatchStatusActions({
