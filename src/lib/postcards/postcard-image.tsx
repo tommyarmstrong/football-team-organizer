@@ -578,7 +578,7 @@ function ScheduledPostcardBody({
             marginBottom: payload.kickoffLabel ? 8 : 28,
           })}
         >
-          {`Meet up: ${payload.meetupLabel}`}
+          {`⏰ Meet up: ${payload.meetupLabel}`}
         </div>
       ) : null}
       {payload.kickoffLabel ? (
@@ -590,7 +590,7 @@ function ScheduledPostcardBody({
             marginBottom: 28,
           })}
         >
-          {`Kick off: ${payload.kickoffLabel}`}
+          {`👟 Kick off: ${payload.kickoffLabel}`}
         </div>
       ) : null}
 
@@ -643,7 +643,7 @@ function ScheduledPostcardBody({
                   justifyContent: "center",
                 }}
               >
-                {payload.venueAddress}
+                {`📍 ${payload.venueAddress}`}
               </div>
             </div>
           ) : null}
@@ -656,7 +656,7 @@ function ScheduledPostcardBody({
             maxWidth: 984,
           })}
         >
-          {payload.venueAddress}
+          {`📍 ${payload.venueAddress}`}
         </div>
       ) : null}
     </div>

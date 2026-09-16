@@ -4,8 +4,14 @@ import Link from "next/link";
 import { matchPeriodSortOrder } from "@/lib/constants";
 import { deleteGoalAction } from "@/lib/goals/actions";
 import { goalAssistsAllowed } from "@/lib/form-parse";
-import { goalScorerLabel, playerDisplayName } from "@/lib/format";
+import {
+  formatHomeFirstScore,
+  goalScorerLabel,
+  playerDisplayName,
+  scoreFromGoals,
+} from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
+import type { MatchHomeAway } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -19,6 +25,15 @@ export function playerEventNameClassName(className?: string): string {
   return cn(
     "inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 text-sm font-medium",
     className,
+  );
+}
+
+export function goalScorerNameClassName(
+  goal: { is_opposition: boolean },
+  className?: string,
+): string {
+  return playerEventNameClassName(
+    cn(goal.is_opposition && "text-red-600 dark:text-red-400", className),
   );
 }
 
@@ -37,7 +52,7 @@ export function GoalScorerName({
   className?: string;
 }) {
   return (
-    <span className={playerEventNameClassName(className)}>
+    <span className={goalScorerNameClassName(goal, className)}>
       <span aria-hidden="true">⚽</span>
       <span className="truncate">{goalScorerLabel(goal)}</span>
     </span>
@@ -150,6 +165,21 @@ export function groupGoalsByPeriod(
   return [...groups].sort(compareGoalPeriodGroups);
 }
 
+/** Running home-first score after each period group in display order. */
+export function periodEndScores(
+  groups: GoalPeriodGroup[],
+  homeAway: MatchHomeAway,
+): string[] {
+  let goalsFor = 0;
+  let goalsAgainst = 0;
+  return groups.map((group) => {
+    const periodScore = scoreFromGoals(group.goals);
+    goalsFor += periodScore.goalsFor;
+    goalsAgainst += periodScore.goalsAgainst;
+    return formatHomeFirstScore(goalsFor, goalsAgainst, homeAway);
+  });
+}
+
 export function MatchGoalsSection({
   matchId,
   goals,
@@ -157,6 +187,7 @@ export function MatchGoalsSection({
   periodId = null,
   periods,
   showAddPeriod = false,
+  homeAway,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
@@ -166,8 +197,11 @@ export function MatchGoalsSection({
   /** When set, every period is listed in this order, including those with no goals. */
   periods?: GoalPeriodRef[];
   showAddPeriod?: boolean;
+  /** When set, show the cumulative home-first score under each period name. */
+  homeAway?: MatchHomeAway;
 }) {
   const groups = groupGoalsByPeriod(goals, periods);
+  const endScores = homeAway ? periodEndScores(groups, homeAway) : null;
   const hasRows = groups.length > 0;
 
   if (!canEdit && !hasRows) {
@@ -196,7 +230,7 @@ export function MatchGoalsSection({
         />
       ) : (
         <ul className={objectListClassName}>
-          {groups.map((group) => (
+          {groups.map((group, index) => (
             <li key={group.key} className="flex items-stretch">
               <div className={objectListRowClassName("items-stretch")}>
                 {group.periodId ? (
@@ -204,11 +238,21 @@ export function MatchGoalsSection({
                     href={`/matches/${matchId}/periods/${group.periodId}`}
                     className="min-w-0 shrink-0 self-start pt-0.5 font-medium underline-offset-4 hover:underline"
                   >
-                    {group.label}
+                    <span className="block">{group.label}</span>
+                    {endScores ? (
+                      <span className="text-muted-foreground mt-0.5 block text-xs font-normal no-underline">
+                        {endScores[index]}
+                      </span>
+                    ) : null}
                   </Link>
                 ) : (
                   <span className="min-w-0 shrink-0 self-start pt-0.5 font-medium">
-                    {group.label}
+                    <span className="block">{group.label}</span>
+                    {endScores ? (
+                      <span className="text-muted-foreground mt-0.5 block text-xs font-normal">
+                        {endScores[index]}
+                      </span>
+                    ) : null}
                   </span>
                 )}
                 <div className="divide-border min-w-0 flex-1 divide-y">

@@ -1,3 +1,4 @@
+import { OWN_GOAL_LABEL } from "@/lib/constants";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
 import {
@@ -132,8 +133,9 @@ export function postcardSquadLines(
   return lines;
 }
 
-function ourNamedGoals(goals: GoalWithPlayers[]): GoalWithPlayers[] {
-  return goals.filter((goal) => !goal.is_opposition && !goal.is_own_goal);
+/** Goals that count for us: named scorers plus opposition own goals. */
+function ourPostcardGoals(goals: GoalWithPlayers[]): GoalWithPlayers[] {
+  return goals.filter((goal) => !goal.is_opposition);
 }
 
 export function buildPostcardGoalList(
@@ -144,10 +146,18 @@ export function buildPostcardGoalList(
   },
 ): PostcardGoalList {
   const shirts = shirtByPlayer(options.roster);
-  const ours = ourNamedGoals(goals);
+  const ours = ourPostcardGoals(goals);
   if (ours.length === 0) return { kind: "none" };
 
   const labeled = ours.map((goal) => {
+    if (goal.is_own_goal) {
+      return {
+        label: OWN_GOAL_LABEL,
+        isPenalty: false,
+        assistLabel: null,
+        playerId: null as string | null,
+      };
+    }
     const scorer: PostcardPlayerLabelInput | null = goal.scorer
       ? {
           firstName: goal.scorer.first_name,
@@ -216,6 +226,8 @@ function captionGoalLine(
   gender: TeamGender,
   roster: RosterPlayer[],
 ): string {
+  if (goal.is_own_goal) return `⚽ ${OWN_GOAL_LABEL}`;
+
   const shirts = shirtByPlayer(roster);
   const scorer: PostcardPlayerLabelInput | null = goal.scorer
     ? {
@@ -268,7 +280,7 @@ export function postcardCaption(input: {
     input.story,
   ];
 
-  const ours = ourNamedGoals(input.goals);
+  const ours = ourPostcardGoals(input.goals);
   if (ours.length > 0) {
     lines.push("");
     for (const goal of ours) {
@@ -304,6 +316,7 @@ export function scheduledPostcardCaption(input: {
 }): string {
   const lines = [
     formatMatchVersusTitle(input.teamName, input.opponentName, input.homeAway),
+    "",
   ];
   const meta = [labelHomeAway(input.homeAway), input.competitionLabel]
     .filter((part): part is string => Boolean(part))
@@ -313,10 +326,13 @@ export function scheduledPostcardCaption(input: {
 
   const meetup = formatKickoffTime(input.meetupTime);
   const kickoff = formatKickoffTime(input.kickoffTime);
-  if (meetup) lines.push(`Meet up: ${meetup}`);
-  if (kickoff) lines.push(`Kick off: ${kickoff}`);
+  if (meetup || kickoff) lines.push("");
+  if (meetup) lines.push(`⏰ Meet up: ${meetup}`);
+  if (kickoff) lines.push(`👟 Kick off: ${kickoff}`);
+
+  if (input.venueName || input.venueAddress) lines.push("");
   if (input.venueName) lines.push(input.venueName);
-  if (input.venueAddress) lines.push(input.venueAddress);
+  if (input.venueAddress) lines.push(`📍 ${input.venueAddress}`);
 
   return lines.join("\n");
 }

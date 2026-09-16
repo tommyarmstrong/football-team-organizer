@@ -200,6 +200,7 @@ export default async function MatchDetailPage({
             periods={periods}
             canEdit={canEdit}
             showAddPeriod={canEdit}
+            homeAway={match.home_away}
           />
         </Section>
       ) : null}
