@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import type {
@@ -9,6 +11,12 @@ import type {
 
 export type { Competition };
 
+/**
+ * List competitions for a team.
+ *
+ * §5.6: when a `teamId` is supplied the result is cross-request cached for up
+ * to one hour and tagged `competitions:<teamId>` for targeted invalidation.
+ */
 export async function listCompetitions(
   teamId?: string,
 ): Promise<{ data: Competition[]; error: string | null }> {
@@ -17,18 +25,20 @@ export async function listCompetitions(
     return { data: [], error: "No team found for your account." };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("competitions")
-    .select("*")
-    .eq("team_id", team.id)
-    .order("name", { ascending: true });
-
-  if (error) {
-    return { data: [], error: error.message };
-  }
-
-  return { data: data ?? [], error: null };
+  return unstable_cache(
+    async (tId: string) => {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from("competitions")
+        .select("*")
+        .eq("team_id", tId)
+        .order("name", { ascending: true });
+      if (error) return { data: [] as Competition[], error: error.message };
+      return { data: (data ?? []) as Competition[], error: null };
+    },
+    ["competitions", team.id],
+    { tags: [`competitions:${team.id}`], revalidate: 3600 },
+  )(team.id);
 }
 
 export async function getCompetition(

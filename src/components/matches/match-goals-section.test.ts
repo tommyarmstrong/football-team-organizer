@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { groupGoalsByPeriod } from "@/components/matches/match-goals-section";
+import {
+  goalAssistPlayer,
+  groupGoalsByPeriod,
+  playerEventNameClassName,
+} from "@/components/matches/match-goals-section";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 
 function goalFixture(
@@ -28,6 +32,58 @@ function goalFixture(
     ...overrides,
   };
 }
+
+describe("goalAssistPlayer", () => {
+  it("returns the assister when assists are allowed", () => {
+    const assist = {
+      id: "player-2",
+      person_id: "person-2",
+      first_name: "Sam",
+      last_name: "Lee",
+    };
+    expect(
+      goalAssistPlayer(
+        goalFixture({
+          id: "g1",
+          assist,
+          assist_player_id: "player-2",
+        }),
+      ),
+    ).toEqual(assist);
+  });
+
+  it("returns null when there is no assist so the row can end after the scorer", () => {
+    expect(goalAssistPlayer(goalFixture({ id: "g1" }))).toBeNull();
+  });
+
+  it("returns null for penalties even when an assist is stored", () => {
+    expect(
+      goalAssistPlayer(
+        goalFixture({
+          id: "g1",
+          is_penalty: true,
+          assist_player_id: "player-2",
+          assist: {
+            id: "player-2",
+            person_id: "person-2",
+            first_name: "Sam",
+            last_name: "Lee",
+          },
+        }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("playerEventNameClassName", () => {
+  it("uses plain text styles without chip chrome", () => {
+    const className = playerEventNameClassName();
+    expect(className).toContain("text-sm");
+    expect(className).not.toContain("rounded-lg");
+    expect(className).not.toContain("border");
+    expect(className).not.toContain("px-2");
+  });
+});
 
 describe("groupGoalsByPeriod", () => {
   it("groups goals by period and keeps insertion order for unknown labels", () => {

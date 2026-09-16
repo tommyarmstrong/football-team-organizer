@@ -145,6 +145,9 @@ export function LoginFormWithGoogle() {
     setError(null);
     setPending(true);
 
+    // Flag to skip setPending(false) in finally when navigation is underway.
+    let navigating = false;
+
     try {
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -157,26 +160,21 @@ export function LoginFormWithGoogle() {
         return;
       }
 
-      const accessResponse = await fetch("/auth/session/bootstrap", {
-        method: "POST",
-      });
-
-      if (!accessResponse.ok && accessResponse.status !== 403) {
-        throw new Error("Could not verify access.");
-      }
-
-      const access = (await accessResponse.json()) as { error: string | null };
-      if (access.error) {
-        setError(access.error);
-        return;
-      }
-
-      router.replace(nextPath.startsWith("/") ? nextPath : "/dashboard");
-      router.refresh();
+      // Redirect to the server-side verify route instead of making a separate
+      // bootstrap POST. The verify route checks person access and redirects to
+      // the destination in a single server hop, removing one round-trip (§1.1).
+      // Middleware will set the fto_access and club_colour_hint cookies on the
+      // same request (§3.1, §2.1).
+      const safeNext = nextPath.startsWith("/") ? nextPath : "/dashboard";
+      navigating = true;
+      router.replace(
+        `/auth/session/verify?next=${encodeURIComponent(safeNext)}`,
+      );
     } catch {
       setError("Could not finish sign-in. Refresh and try again.");
     } finally {
-      setPending(false);
+      // Leave pending=true while navigating so the button stays disabled.
+      if (!navigating) setPending(false);
     }
   }
 

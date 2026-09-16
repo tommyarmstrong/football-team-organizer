@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   getViewerContext,
@@ -13,7 +14,11 @@ import {
   listCoachesNotOnTeam,
   listTeamCoaches,
 } from "@/lib/data/coaches";
-import { listPlayersNotOnTeam, listRosterForTeam } from "@/lib/data/players";
+import {
+  listPlayersNotOnTeam,
+  listRosterForTeam,
+  type PlayerWithPerson,
+} from "@/lib/data/players";
 import {
   listGuardianAssistantCandidates,
   listGuardianAssistants,
@@ -106,26 +111,20 @@ export default async function TeamPage() {
   const canEdit = canEditTeam(ctx, team.id);
   const canEditHistory = canEditTeamHistory(ctx, team.id);
 
+  // §5.2: candidate/"not on team" queries are deferred to separate Suspense
+  // zones so they don't delay the primary team view.
   const [
     { data: clubVenues },
     { data: roster, error: rosterError },
-    { data: playerCandidates },
     { data: teamCoaches, error: teamCoachesError },
-    { data: coachCandidates },
     { data: assistants },
-    { data: assistantCandidates },
     { data: potmAwards, error: potmError },
     competitions,
   ] = await Promise.all([
     listVenues(team.club_id),
     listRosterForTeam(team.id, { includeInactive: true }),
-    club
-      ? listPlayersNotOnTeam(club.id, team.id)
-      : Promise.resolve({ data: [], error: null }),
     listTeamCoaches(team.id),
-    listCoachesNotOnTeam(team.club_id, team.id),
     listGuardianAssistants(team.id, team.club_id),
-    listGuardianAssistantCandidates(team.id, team.club_id),
     listPlayerOfTheMonth(team.id),
     listCompetitions(team.id),
   ]);
@@ -208,13 +207,25 @@ export default async function TeamPage() {
         {rosterError ? (
           <ErrorBanner message={rosterError} />
         ) : (
-          <TeamRosterSection
-            key={team.id}
-            teamId={team.id}
-            roster={roster}
-            candidates={playerCandidates}
-            canEdit={canEditHistory}
-          />
+          // §5.2: candidates streamed in via a deferred Suspense boundary.
+          <Suspense
+            fallback={
+              <TeamRosterSection
+                key={team.id}
+                teamId={team.id}
+                roster={roster}
+                candidates={[]}
+                canEdit={canEditHistory}
+              />
+            }
+          >
+            <DeferredRosterSection
+              teamId={team.id}
+              clubId={club?.id}
+              roster={roster}
+              canEdit={canEditHistory}
+            />
+          </Suspense>
         )}
       </Section>
 
@@ -222,13 +233,25 @@ export default async function TeamPage() {
         {teamCoachesError ? (
           <ErrorBanner message={teamCoachesError} />
         ) : (
-          <TeamStaffSection
-            key={team.id}
-            teamId={team.id}
-            assigned={teamCoaches}
-            candidates={coachCandidates}
-            canEdit={canEditHistory}
-          />
+          // §5.2: coach candidates deferred.
+          <Suspense
+            fallback={
+              <TeamStaffSection
+                key={team.id}
+                teamId={team.id}
+                assigned={teamCoaches}
+                candidates={[]}
+                canEdit={canEditHistory}
+              />
+            }
+          >
+            <DeferredStaffSection
+              teamId={team.id}
+              clubId={team.club_id}
+              assigned={teamCoaches}
+              canEdit={canEditHistory}
+            />
+          </Suspense>
         )}
       </Section>
 
@@ -236,13 +259,25 @@ export default async function TeamPage() {
         title="Guardian assistants"
         description="Guardians who can add fixtures and record match-day squad, periods, goals, assists, and cards. They cannot set player of the match."
       >
-        <GuardianAssistantsSection
-          key={team.id}
-          teamId={team.id}
-          assistants={assistants}
-          candidates={assistantCandidates}
-          canEdit={canEditHistory}
-        />
+        {/* §5.2: guardian assistant candidates deferred. */}
+        <Suspense
+          fallback={
+            <GuardianAssistantsSection
+              key={team.id}
+              teamId={team.id}
+              assistants={assistants}
+              candidates={[]}
+              canEdit={canEditHistory}
+            />
+          }
+        >
+          <DeferredAssistantsSection
+            teamId={team.id}
+            clubId={team.club_id}
+            assistants={assistants}
+            canEdit={canEditHistory}
+          />
+        </Suspense>
       </Section>
 
       <Section
@@ -259,5 +294,90 @@ export default async function TeamPage() {
         )}
       </Section>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// §5.2 — Deferred candidate loaders
+// These async server components fetch the "not on team" candidate lists and
+// render the full section. They are wrapped in Suspense boundaries so the
+// primary team view (roster, staff, assistants) can stream to the user while
+// the candidate queries complete independently.
+// ---------------------------------------------------------------------------
+
+async function DeferredRosterSection({
+  teamId,
+  clubId,
+  roster,
+  canEdit,
+}: {
+  teamId: string;
+  clubId: string | undefined;
+  roster: Awaited<ReturnType<typeof listRosterForTeam>>["data"];
+  canEdit: boolean;
+}) {
+  const { data: candidates } = clubId
+    ? await listPlayersNotOnTeam(clubId, teamId)
+    : { data: [] as PlayerWithPerson[] };
+
+  return (
+    <TeamRosterSection
+      key={teamId}
+      teamId={teamId}
+      roster={roster}
+      candidates={candidates}
+      canEdit={canEdit}
+    />
+  );
+}
+
+async function DeferredStaffSection({
+  teamId,
+  clubId,
+  assigned,
+  canEdit,
+}: {
+  teamId: string;
+  clubId: string;
+  assigned: Awaited<ReturnType<typeof listTeamCoaches>>["data"];
+  canEdit: boolean;
+}) {
+  const { data: candidates } = await listCoachesNotOnTeam(clubId, teamId);
+
+  return (
+    <TeamStaffSection
+      key={teamId}
+      teamId={teamId}
+      assigned={assigned}
+      candidates={candidates}
+      canEdit={canEdit}
+    />
+  );
+}
+
+async function DeferredAssistantsSection({
+  teamId,
+  clubId,
+  assistants,
+  canEdit,
+}: {
+  teamId: string;
+  clubId: string;
+  assistants: Awaited<ReturnType<typeof listGuardianAssistants>>["data"];
+  canEdit: boolean;
+}) {
+  const { data: candidates } = await listGuardianAssistantCandidates(
+    teamId,
+    clubId,
+  );
+
+  return (
+    <GuardianAssistantsSection
+      key={teamId}
+      teamId={teamId}
+      assistants={assistants}
+      candidates={candidates}
+      canEdit={canEdit}
+    />
   );
 }

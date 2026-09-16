@@ -25,10 +25,16 @@ export function SharePostcardButton({
   imageUrl,
   caption,
   fileName,
+  title = "Match postcard",
+  description = "Share a recap of this result. Player names follow the team’s privacy rules.",
+  previewAlt = "Match postcard",
 }: {
   imageUrl: string;
   caption: string;
   fileName: string;
+  title?: string;
+  description?: string;
+  previewAlt?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -132,11 +138,8 @@ export function SharePostcardButton({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <DialogTitle>Match postcard</DialogTitle>
-            <DialogDescription>
-              Share a recap of this result. Player names follow the team’s
-              privacy rules.
-            </DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
 
           {loadError ? <ErrorBanner message={loadError} /> : null}
@@ -145,7 +148,7 @@ export function SharePostcardButton({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={blobUrl}
-              alt="Match postcard"
+              alt={previewAlt}
               className="border-border h-auto w-full rounded-lg border"
             />
           ) : loadError ? null : (

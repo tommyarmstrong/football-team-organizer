@@ -8,7 +8,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-outfit);
-  --font-mono: var(--font-geist-mono);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   --font-heading: var(--font-outfit);
   --font-display: var(--font-barlow-condensed), var(--font-outfit), sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -147,6 +149,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* §8.1 — Paint the pitch pattern on a fixed layer so scroll does not
+     force a full-background repaint on mobile browsers. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
       url("/pitch-pattern.svg"),
       radial-gradient(
@@ -159,7 +170,6 @@
         color-mix(in srgb, var(--pitch-lime) 10%, var(--background)),
         var(--background) 22rem
       );
-    background-attachment: fixed;
   }
   html {
     @apply font-sans;

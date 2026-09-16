@@ -27,71 +27,43 @@ function team(overrides: Partial<Team> & Pick<Team, "id" | "club_id">): Team {
   };
 }
 
-type QueryResult = { data: unknown; error: null };
+// ---------------------------------------------------------------------------
+// Mock helper: builds a minimal Supabase client that returns a fixed RPC result
+// for get_viewer_context() and a fixed getUser() result.
+// ---------------------------------------------------------------------------
 
-function chain(result: QueryResult) {
-  const builder: Record<string, unknown> = {};
-  const self = () => builder;
-  builder.select = self;
-  builder.eq = self;
-  builder.order = self;
-  builder.maybeSingle = async () => result;
-  builder.then = (
-    resolve: (value: QueryResult) => unknown,
-    reject?: (reason: unknown) => unknown,
-  ) => Promise.resolve(result).then(resolve, reject);
-  return builder;
-}
+type RpcPayload = {
+  person: { id: string; first_name: string; last_name: string } | null;
+  managers: { club_id: string }[];
+  team_members: { team_id: string; role: string }[];
+  guardians: { id: string; player_guardians: { player_id: string }[] | null }[];
+  self_players: { id: string }[];
+  teams: Team[];
+  clubs: { id: string; name: string }[];
+};
 
 function mockSupabase({
   user,
-  person,
-  managers = [],
-  teamMembers = [],
-  guardianLinks = [],
-  selfPlayers = [],
-  teams = [],
+  rpc,
 }: {
   user: {
     id: string;
     email?: string | null;
     user_metadata?: Record<string, unknown>;
   } | null;
-  person?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-  } | null;
-  managers?: { club_id: string }[];
-  teamMembers?: { team_id: string; role: string }[];
-  guardianLinks?: {
-    id: string;
-    player_guardians: { player_id: string }[] | null;
-  }[];
-  selfPlayers?: { id: string }[];
-  teams?: Team[];
+  rpc?: RpcPayload | null;
 }) {
   createClientMock.mockResolvedValue({
     auth: {
       getUser: async () => ({ data: { user }, error: null }),
     },
-    from(table: string) {
-      switch (table) {
-        case "people":
-          return chain({ data: person ?? null, error: null });
-        case "managers":
-          return chain({ data: managers, error: null });
-        case "team_members":
-          return chain({ data: teamMembers, error: null });
-        case "guardians":
-          return chain({ data: guardianLinks, error: null });
-        case "players":
-          return chain({ data: selfPlayers, error: null });
-        case "teams":
-          return chain({ data: teams, error: null });
-        default:
-          return chain({ data: [], error: null });
+    async rpc(fn: string) {
+      if (fn === "get_viewer_context") {
+        if (rpc === null)
+          return { data: null, error: { message: "rpc error" } };
+        return { data: rpc ?? null, error: null };
       }
+      return { data: null, error: null };
     },
   });
 }
@@ -109,7 +81,17 @@ describe("getViewerContext", () => {
     expect(await freshGetViewerContext()).toBeNull();
   });
 
-  it("assembles club management, roles, and editable teams", async () => {
+  it("returns null when the RPC returns an error", async () => {
+    mockSupabase({
+      user: { id: "user-1", email: "coach@example.com" },
+      rpc: null,
+    });
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    expect(await freshGetViewerContext()).toBeNull();
+  });
+
+  it("assembles club management, roles, and editable teams from RPC result", async () => {
     const visible = [
       team({ id: "team-1", club_id: "club-1", name: "U10 Lions" }),
       team({ id: "team-2", club_id: "club-2", name: "U11 Tigers" }),
@@ -120,25 +102,27 @@ describe("getViewerContext", () => {
         email: "coach@example.com",
         user_metadata: { full_name: "Ignored Name" },
       },
-      person: {
-        id: "person-1",
-        first_name: "Sam",
-        last_name: "Coach",
+      rpc: {
+        person: { id: "person-1", first_name: "Sam", last_name: "Coach" },
+        managers: [{ club_id: "club-1" }],
+        team_members: [
+          { team_id: "team-1", role: "coach" },
+          { team_id: "team-1", role: "player" },
+          { team_id: "team-2", role: "management" },
+        ],
+        guardians: [
+          {
+            id: "guardian-1",
+            player_guardians: [{ player_id: "player-9" }],
+          },
+        ],
+        self_players: [{ id: "player-1" }],
+        teams: visible,
+        clubs: [
+          { id: "club-1", name: "Lions FC" },
+          { id: "club-2", name: "Tigers FC" },
+        ],
       },
-      managers: [{ club_id: "club-1" }],
-      teamMembers: [
-        { team_id: "team-1", role: "coach" },
-        { team_id: "team-1", role: "player" },
-        { team_id: "team-2", role: "management" },
-      ],
-      guardianLinks: [
-        {
-          id: "guardian-1",
-          player_guardians: [{ player_id: "player-9" }],
-        },
-      ],
-      selfPlayers: [{ id: "player-1" }],
-      teams: visible,
     });
 
     const { getViewerContext: freshGetViewerContext } =
@@ -166,6 +150,10 @@ describe("getViewerContext", () => {
       isManagement: true,
     });
     expect(ctx?.visibleTeams).toEqual(visible);
+    expect(ctx?.visibleClubs).toEqual([
+      { id: "club-1", name: "Lions FC" },
+      { id: "club-2", name: "Tigers FC" },
+    ]);
   });
 
   it("falls back to auth display name when no linked person exists", async () => {
@@ -175,8 +163,15 @@ describe("getViewerContext", () => {
         email: "alex@example.com",
         user_metadata: {},
       },
-      person: null,
-      teams: [team({ id: "team-3", club_id: "club-3" })],
+      rpc: {
+        person: null,
+        managers: [],
+        team_members: [],
+        guardians: [],
+        self_players: [],
+        teams: [team({ id: "team-3", club_id: "club-3" })],
+        clubs: [],
+      },
     });
 
     const { getViewerContext: freshGetViewerContext } =
@@ -203,8 +198,15 @@ describe("getViewerContext", () => {
   it("keeps guardian ids when a guardian has no player links yet", async () => {
     mockSupabase({
       user: { id: "user-3", email: "pat@example.com" },
-      person: { id: "person-g", first_name: "Pat", last_name: "Parent" },
-      guardianLinks: [{ id: "guardian-2", player_guardians: null }],
+      rpc: {
+        person: { id: "person-g", first_name: "Pat", last_name: "Parent" },
+        managers: [],
+        team_members: [],
+        guardians: [{ id: "guardian-2", player_guardians: null }],
+        self_players: [],
+        teams: [],
+        clubs: [],
+      },
     });
 
     const { getViewerContext: freshGetViewerContext } =
@@ -221,7 +223,15 @@ describe("getViewerContext", () => {
   it("nulls email when the auth user has none", async () => {
     mockSupabase({
       user: { id: "user-4", email: null, user_metadata: { full_name: "Pat" } },
-      person: null,
+      rpc: {
+        person: null,
+        managers: [],
+        team_members: [],
+        guardians: [],
+        self_players: [],
+        teams: [],
+        clubs: [],
+      },
     });
 
     const { getViewerContext: freshGetViewerContext } =
@@ -233,5 +243,33 @@ describe("getViewerContext", () => {
       email: null,
       displayName: "Pat",
     });
+  });
+
+  it("includes visibleClubs from the RPC result", async () => {
+    mockSupabase({
+      user: { id: "user-5", email: "mgr@example.com" },
+      rpc: {
+        person: { id: "person-5", first_name: "Jo", last_name: "Manager" },
+        managers: [{ club_id: "club-x" }],
+        team_members: [],
+        guardians: [],
+        self_players: [],
+        teams: [],
+        clubs: [
+          { id: "club-x", name: "Alpha FC" },
+          { id: "club-y", name: "Beta FC" },
+        ],
+      },
+    });
+
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    const ctx = await freshGetViewerContext();
+
+    expect(ctx?.visibleClubs).toEqual([
+      { id: "club-x", name: "Alpha FC" },
+      { id: "club-y", name: "Beta FC" },
+    ]);
+    expect(ctx?.managementClubIds).toEqual(["club-x"]);
   });
 });

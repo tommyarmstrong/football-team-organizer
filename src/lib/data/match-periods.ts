@@ -18,7 +18,7 @@ export type MatchPeriodWithStarters = MatchPeriod & {
   starter_player_ids: string[];
 };
 
-type PeriodRow = MatchPeriod & {
+export type PeriodRow = MatchPeriod & {
   starters:
     | {
         id: string;
@@ -28,7 +28,7 @@ type PeriodRow = MatchPeriod & {
     | null;
 };
 
-function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
+export function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
   const starterRows = Array.isArray(row.starters) ? row.starters : [];
   const starters: NamedPlayer[] = [];
   const starter_player_ids: string[] = [];
@@ -55,7 +55,7 @@ function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
   };
 }
 
-const PERIOD_SELECT = `*, starters:match_period_starters(id, player_id, player:players(${PLAYER_NAME_EMBED}))`;
+export const PERIOD_SELECT = `*, starters:match_period_starters(id, player_id, player:players(${PLAYER_NAME_EMBED}))`;
 
 export async function listPeriodsForMatch(
   matchId: string,

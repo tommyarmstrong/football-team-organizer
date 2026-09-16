@@ -17,9 +17,9 @@ export type GoalWithPlayers = Goal & {
   assist: NamedPlayer | null;
 };
 
-const GOAL_SELECT = `*, scorer:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED})`;
+export const GOAL_SELECT = `*, scorer:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED})`;
 
-function mapGoalRow(row: {
+export function mapGoalRow(row: {
   id: string;
   match_id: string;
   player_id: string | null;

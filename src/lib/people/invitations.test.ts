@@ -3,12 +3,16 @@ import { mockFromClient, okResult } from "@/test/supabase-mock";
 import { personFixture } from "@/test/fixtures";
 import { createInvitationToken } from "@/lib/people/person";
 
-const { createAdminClientMock } = vi.hoisted(() => ({
+const { createAdminClientMock, createClientMock } = vi.hoisted(() => ({
   createAdminClientMock: vi.fn(),
+  createClientMock: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: createAdminClientMock,
+}));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: createClientMock,
 }));
 vi.mock("@/lib/auth/origin", () => ({
   appOrigin: () => "http://localhost:3000",
@@ -175,24 +179,24 @@ describe("people invitations", () => {
     expect(
       (await findPersonForVerifiedEmail("Ada@Example.com")).data?.email,
     ).toBe("ada@example.com");
+  });
 
-    createAdminClientMock.mockReturnValue(
-      adminClient(
-        mockFromClient({
-          people: okResult(
-            personFixture({ id: "person-1", auth_user_id: "auth-1" }),
-          ),
-        }),
-      ),
+  it("finds a person by auth user id via the RLS client (§1.3)", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(
+          personFixture({ id: "person-1", auth_user_id: "auth-1" }),
+        ),
+      }),
     );
     expect((await findPersonForAuthUserId("auth-1")).data?.id).toBe("person-1");
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+    expect(createClientMock).toHaveBeenCalled();
 
-    createAdminClientMock.mockReturnValue(
-      adminClient(
-        mockFromClient({
-          people: okResult(null),
-        }),
-      ),
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        people: okResult(null),
+      }),
     );
     expect(await findPersonForAuthUserId("missing")).toEqual({
       data: null,

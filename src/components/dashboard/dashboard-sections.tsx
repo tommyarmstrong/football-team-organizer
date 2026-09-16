@@ -1,22 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  canEditActiveMatchDay,
-  canEditActiveTeamHistory,
-} from "@/lib/data/team";
-import {
-  getLastResult,
-  getNextFixture,
-  type MatchWithRelations,
-} from "@/lib/data/matches";
-import { listCompetitions } from "@/lib/data/competitions";
-import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
-import {
-  getRecentForm,
-  getTopAssists,
-  getTopPlayersOfTheMatch,
-  getTopScorers,
-} from "@/lib/data/stats";
+import { getDashboardData } from "@/lib/data/dashboard";
+import { type MatchWithRelations } from "@/lib/data/matches";
 import {
   formatAwardMonth,
   formatCountLabel,
@@ -40,12 +25,14 @@ import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { buttonVariants } from "@/components/ui/button";
 
-export async function DashboardFixtures({ teamName }: { teamName: string }) {
-  const [next, last, canEditMatch] = await Promise.all([
-    getNextFixture(),
-    getLastResult(),
-    canEditActiveMatchDay(),
-  ]);
+export async function DashboardFixtures({
+  teamId,
+  teamName,
+}: {
+  teamId: string;
+  teamName: string;
+}) {
+  const { next, last, canEditMatch } = await getDashboardData(teamId);
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -82,8 +69,8 @@ export async function DashboardFixtures({ teamName }: { teamName: string }) {
   );
 }
 
-export async function DashboardForm() {
-  const results = await getRecentForm();
+export async function DashboardForm({ teamId }: { teamId: string }) {
+  const { form: results } = await getDashboardData(teamId);
 
   return (
     <Section
@@ -105,10 +92,7 @@ export async function DashboardForm() {
 }
 
 export async function DashboardCompetitions({ team }: { team: Team }) {
-  const [competitions, canEditTeam] = await Promise.all([
-    listCompetitions(team.id),
-    canEditActiveTeamHistory(),
-  ]);
+  const { competitions, canEditTeam } = await getDashboardData(team.id);
 
   return (
     <Section
@@ -129,12 +113,7 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
 }
 
 export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
-  const [scorers, assists, potm, potMonth] = await Promise.all([
-    getTopScorers(5),
-    getTopAssists(5),
-    getTopPlayersOfTheMatch(5),
-    listPlayerOfTheMonth(teamId, 5),
-  ]);
+  const { scorers, assists, potm, potMonth } = await getDashboardData(teamId);
 
   const errors = [
     scorers.error,
@@ -190,9 +169,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         rows={potm.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
-          name: playerDisplayName(row.player, {
-            shirtNumber: row.player.shirt_number,
-          }),
+          name: playerDisplayName(row.player),
           valueLabel: formatCountLabel(row.count, "award", "awards"),
         }))}
       />

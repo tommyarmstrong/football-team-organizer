@@ -38,6 +38,7 @@ import {
   createMatch,
   getLastResult,
   getMatch,
+  getMatchDetail,
   getNextFixture,
   listMatches,
   normalizeMatchRow,
@@ -509,9 +510,8 @@ describe("getNextFixture / getLastResult", () => {
   it("falls back to any scheduled fixture when none are upcoming", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: [
-          okResult(null),
-          okResult({
+        matches: okResult([
+          {
             id: "m-past-scheduled",
             team_id: "team-1",
             opponent_name: "Past FC",
@@ -532,8 +532,8 @@ describe("getNextFixture / getLastResult", () => {
             competition: null,
             venue: null,
             goals: [],
-          }),
-        ],
+          },
+        ]),
       }),
     );
 
@@ -542,10 +542,64 @@ describe("getNextFixture / getLastResult", () => {
     expect(result.data?.id).toBe("m-past-scheduled");
   });
 
+  it("prefers the soonest upcoming scheduled match over a past one (§6.5)", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-past",
+            team_id: "team-1",
+            opponent_name: "Past FC",
+            date: "2020-01-01",
+            kickoff_time: null,
+            meetup_time: null,
+            home_away: "home",
+            venue_id: null,
+            competition_id: null,
+            is_friendly: true,
+            player_of_the_match_id: null,
+            players_player_of_the_match_id: null,
+            status: "scheduled",
+            notes: null,
+            club_notes: null,
+            created_at: "2025-01-01T00:00:00Z",
+            updated_at: "2025-01-01T00:00:00Z",
+            competition: null,
+            venue: null,
+            goals: [],
+          },
+          {
+            id: "m-next",
+            team_id: "team-1",
+            opponent_name: "Rivals",
+            date: "2099-09-01",
+            kickoff_time: null,
+            meetup_time: null,
+            home_away: "home",
+            venue_id: null,
+            competition_id: null,
+            is_friendly: true,
+            player_of_the_match_id: null,
+            players_player_of_the_match_id: null,
+            status: "scheduled",
+            notes: null,
+            club_notes: null,
+            created_at: "2025-01-01T00:00:00Z",
+            updated_at: "2025-01-01T00:00:00Z",
+            competition: [],
+            venue: [],
+            goals: null,
+          },
+        ]),
+      }),
+    );
+    expect((await getNextFixture()).data?.id).toBe("m-next");
+  });
+
   it("returns null when no scheduled fixtures exist", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: [okResult(null), okResult(null)],
+        matches: okResult([]),
       }),
     );
     expect(await getNextFixture()).toEqual({ data: null, error: null });
@@ -561,44 +615,6 @@ describe("getNextFixture / getLastResult", () => {
     });
 
     createClientMock.mockResolvedValue(
-      mockFromClient({
-        matches: [okResult(null), errResult("fallback fail")],
-      }),
-    );
-    expect(await getNextFixture()).toEqual({
-      data: null,
-      error: "fallback fail",
-    });
-
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        matches: okResult({
-          id: "m-next",
-          team_id: "team-1",
-          opponent_name: "Rivals",
-          date: "2099-09-01",
-          kickoff_time: null,
-          meetup_time: null,
-          home_away: "home",
-          venue_id: null,
-          competition_id: null,
-          is_friendly: true,
-          player_of_the_match_id: null,
-          players_player_of_the_match_id: null,
-          status: "scheduled",
-          notes: null,
-          club_notes: null,
-          created_at: "2025-01-01T00:00:00Z",
-          updated_at: "2025-01-01T00:00:00Z",
-          competition: [],
-          venue: [],
-          goals: null,
-        }),
-      }),
-    );
-    expect((await getNextFixture()).data?.id).toBe("m-next");
-
-    createClientMock.mockResolvedValue(
       mockFromClient({ matches: errResult("last fail") }),
     );
     expect(await getLastResult()).toEqual({
@@ -610,5 +626,145 @@ describe("getNextFixture / getLastResult", () => {
       mockFromClient({ matches: okResult(null) }),
     );
     expect(await getLastResult()).toEqual({ data: null, error: null });
+  });
+});
+
+describe("getMatchDetail (§5.4)", () => {
+  it("maps a nested match row into match, goals, cards, squad, and periods", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult({
+          id: "m1",
+          team_id: "team-1",
+          opponent_name: "Rivals",
+          date: "2025-09-01",
+          kickoff_time: "10:00:00",
+          meetup_time: "09:30:00",
+          home_away: "home",
+          venue_id: "v1",
+          competition_id: "c1",
+          is_friendly: false,
+          player_of_the_match_id: null,
+          players_player_of_the_match_id: null,
+          status: "played",
+          notes: null,
+          club_notes: null,
+          created_at: "2025-01-01T00:00:00Z",
+          updated_at: "2025-01-01T00:00:00Z",
+          competition: { id: "c1", name: "League", kind: "league" },
+          venue: { id: "v1", name: "Pitch" },
+          goals: [
+            {
+              id: "g2",
+              match_id: "m1",
+              player_id: "p1",
+              assist_player_id: null,
+              period: null,
+              period_id: null,
+              minute: 40,
+              is_penalty: false,
+              is_freekick: false,
+              from_setpiece: false,
+              is_opposition: false,
+              is_own_goal: false,
+              created_at: "2025-01-01T00:00:02Z",
+              scorer: {
+                id: "p1",
+                person_id: "person-1",
+                person: { first_name: "Sam", last_name: "Striker" },
+              },
+              assist: null,
+            },
+            {
+              id: "g1",
+              match_id: "m1",
+              player_id: "p1",
+              assist_player_id: null,
+              period: null,
+              period_id: null,
+              minute: 12,
+              is_penalty: false,
+              is_freekick: false,
+              from_setpiece: false,
+              is_opposition: false,
+              is_own_goal: false,
+              created_at: "2025-01-01T00:00:01Z",
+              scorer: {
+                id: "p1",
+                person_id: "person-1",
+                person: { first_name: "Sam", last_name: "Striker" },
+              },
+              assist: null,
+            },
+          ],
+          cards: [
+            {
+              id: "card-1",
+              match_id: "m1",
+              player_id: "p1",
+              coach_id: null,
+              guardian_id: null,
+              type: "yellow",
+              coach_notes: null,
+              referee_notes: null,
+              club_notes: null,
+              created_at: "2025-01-01T00:00:03Z",
+              player: {
+                id: "p1",
+                person: { first_name: "Sam", last_name: "Striker" },
+              },
+              coach: null,
+              guardian: null,
+            },
+          ],
+          match_players: [
+            {
+              id: "mp-1",
+              match_id: "m1",
+              player_id: "p1",
+              created_at: "2025-01-01T00:00:00Z",
+            },
+          ],
+          match_periods: [
+            {
+              id: "period-1",
+              match_id: "m1",
+              name: "First half",
+              sort_order: 1,
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+              starters: [],
+            },
+          ],
+        }),
+      }),
+    );
+
+    const result = await getMatchDetail("m1");
+    expect(result.error).toBeNull();
+    expect(result.data?.match.id).toBe("m1");
+    expect(result.data?.match.goals_for).toBe(2);
+    expect(result.data?.goals.map((g) => g.id)).toEqual(["g1", "g2"]);
+    expect(result.data?.cards[0]?.id).toBe("card-1");
+    expect(result.data?.matchPlayers[0]?.player_id).toBe("p1");
+    expect(result.data?.periods[0]?.id).toBe("period-1");
+  });
+
+  it("maps missing matches and query errors", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({ matches: okResult(null) }),
+    );
+    expect(await getMatchDetail("missing")).toEqual({
+      data: null,
+      error: null,
+    });
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({ matches: errResult("db down") }),
+    );
+    expect(await getMatchDetail("m1")).toEqual({
+      data: null,
+      error: "db down",
+    });
   });
 });
