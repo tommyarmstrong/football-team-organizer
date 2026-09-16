@@ -223,55 +223,64 @@ export async function listPreviousMembers(): Promise<{
   return listPeople({ accountStatus: "disabled" });
 }
 
+/**
+ * Fetch a person with their role records and outstanding invitation in a
+ * single Supabase query using nested selects.
+ *
+ * §5.3: replaces the previous two-stage waterfall (1 person query + 5 parallel
+ * role queries) with a single DB round-trip.  The `person_invitations` embed
+ * returns all pending rows; we filter for the outstanding one in JS because
+ * Supabase nested selects do not support `.is()` filters on embeds.
+ */
 export async function getPerson(
   id: string,
 ): Promise<{ data: PersonWithRoles | null; error: string | null }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("people")
-    .select("*")
+    .select(
+      `*,
+      managers(id, club_id, active_role),
+      coaches(id, club_id, active_role),
+      guardians(id, club_id, active_role),
+      players(id, club_id, active_role, position, school, date_of_birth),
+      person_invitations!person_id(id, person_id, email, token_hash, expires_at, accepted_at, revoked_at, invited_by, created_at, updated_at)`,
+    )
     .eq("id", id)
     .maybeSingle();
 
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: null };
 
-  const [managers, coaches, guardians, players, invites] = await Promise.all([
-    supabase
-      .from("managers")
-      .select("id, club_id, active_role")
-      .eq("person_id", id),
-    supabase
-      .from("coaches")
-      .select("id, club_id, active_role")
-      .eq("person_id", id),
-    supabase
-      .from("guardians")
-      .select("id, club_id, active_role")
-      .eq("person_id", id),
-    supabase
-      .from("players")
-      .select("id, club_id, active_role, position, school, date_of_birth")
-      .eq("person_id", id),
-    supabase
-      .from("person_invitations")
-      .select("*")
-      .eq("person_id", id)
-      .is("accepted_at", null)
-      .is("revoked_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1),
-  ]);
+  type RawRow = typeof data & {
+    managers: PersonRoleRef[] | null;
+    coaches: PersonRoleRef[] | null;
+    guardians: PersonRoleRef[] | null;
+    players: PersonPlayerRef[] | null;
+    person_invitations: PersonInvitation[] | null;
+  };
+
+  const row = data as RawRow;
+
+  const pendingInvitations = (row.person_invitations ?? [])
+    .filter((inv) => inv.accepted_at == null && inv.revoked_at == null)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { person_invitations: _invitationsRaw, ...personFields } = row;
 
   return {
     data: {
-      ...data,
-      managers: (managers.data ?? []) as PersonRoleRef[],
-      coaches: (coaches.data ?? []) as PersonRoleRef[],
-      guardians: (guardians.data ?? []) as PersonRoleRef[],
-      players: (players.data ?? []) as PersonPlayerRef[],
+      ...personFields,
+      managers: (row.managers ?? []) as PersonRoleRef[],
+      coaches: (row.coaches ?? []) as PersonRoleRef[],
+      guardians: (row.guardians ?? []) as PersonRoleRef[],
+      players: (row.players ?? []) as PersonPlayerRef[],
       outstanding_invitation:
-        (invites.data?.[0] as PersonInvitation | undefined) ?? null,
+        (pendingInvitations[0] as PersonInvitation | undefined) ?? null,
     },
     error: null,
   };

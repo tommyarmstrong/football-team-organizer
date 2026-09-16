@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   TablesInsert,
   TablesUpdate,
@@ -7,18 +9,39 @@ import type {
 
 export type { Venue };
 
+/**
+ * List venues, optionally scoped to a club.
+ *
+ * §5.6: when a `clubId` is provided the result is cross-request cached for up
+ * to one hour and tagged `venues:<clubId>` so venue mutations can invalidate it
+ * with `revalidateTag`. The unscoped (all-clubs) path remains uncached because
+ * it combines every club the user can see and is not safe to share across users.
+ */
 export async function listVenues(
   clubId?: string,
 ): Promise<{ data: Venue[]; error: string | null }> {
+  if (clubId) {
+    return unstable_cache(
+      async (cId: string) => {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+          .from("venues")
+          .select("*")
+          .eq("club_id", cId)
+          .order("name", { ascending: true });
+        if (error) return { data: [] as Venue[], error: error.message };
+        return { data: (data ?? []) as Venue[], error: null };
+      },
+      ["venues", clubId],
+      { tags: [`venues:${clubId}`], revalidate: 3600 },
+    )(clubId);
+  }
+
   const supabase = await createClient();
-  let query = supabase
+  const { data, error } = await supabase
     .from("venues")
     .select("*")
     .order("name", { ascending: true });
-
-  if (clubId) query = query.eq("club_id", clubId);
-
-  const { data, error } = await query;
   if (error) return { data: [], error: error.message };
   return { data: data ?? [], error: null };
 }

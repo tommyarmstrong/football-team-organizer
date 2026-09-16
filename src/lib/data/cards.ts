@@ -22,7 +22,7 @@ export type CardWithPerson = Card & {
   guardian: NamedPerson | null;
 };
 
-const CARD_PERSON_SELECT =
+export const CARD_PERSON_SELECT =
   "*, player:players!cards_player_id_fkey(id, person:people!person_id(first_name, last_name)), coach:coaches!cards_coach_id_fkey(id, person:people!person_id(first_name, last_name)), guardian:guardians!cards_guardian_id_fkey(id, person:people!person_id(first_name, last_name))";
 
 function mapNamedRole(
@@ -52,7 +52,7 @@ function mapNamedRole(
   };
 }
 
-function mapCardRow(row: {
+export function mapCardRow(row: {
   id: string;
   match_id: string;
   player_id: string | null;

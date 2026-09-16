@@ -17,6 +17,18 @@ const {
 vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => createClientMock(),
+}));
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <T extends unknown[], R>(fn: (...args: T) => Promise<R>) =>
+    (...args: T) =>
+      fn(...args),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
+}));
 vi.mock("@/lib/data/people", () => ({
   createPerson: createPersonMock,
   updatePerson: updatePersonMock,
@@ -66,7 +78,7 @@ describe("players data", () => {
   });
 
   it("maps roster rows and skips inactive player roles", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         team_players: okResult([
           {
@@ -108,12 +120,12 @@ describe("players data", () => {
   });
 
   it("lists players and active roster for the active team", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ players: okResult([playerRow]) }),
     );
     expect((await listPlayers()).data[0]?.first_name).toBe("Sam");
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         team_players: okResult([
           {
@@ -135,12 +147,12 @@ describe("players data", () => {
   });
 
   it("gets player details, teams, contacts, and goals", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ players: okResult(playerRow) }),
     );
     expect((await getPlayer("player-1")).data?.id).toBe("player-1");
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         team_players: okResult([
           {
@@ -166,7 +178,7 @@ describe("players data", () => {
       data: { id: "person-new" },
       error: null,
     });
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         players: okResult({
           ...playerRow,
@@ -187,7 +199,7 @@ describe("players data", () => {
   });
 
   it("updates, toggles, deletes, and manages roster membership", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         players: [okResult(playerRow), okResult(playerRow)],
       }),
@@ -204,7 +216,7 @@ describe("players data", () => {
       ).error,
     ).toBeNull();
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         players: okResult(null),
         team_players: okResult(null),
@@ -221,7 +233,7 @@ describe("players data", () => {
   });
 
   it("adds players to a team and upserts contacts", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         team_players: okResult(null),
         player_contacts: okResult(null),
@@ -242,7 +254,7 @@ describe("players data", () => {
   });
 
   it("lists players not on a team", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         players: okResult([
           playerRow,
@@ -264,7 +276,7 @@ describe("players data", () => {
   });
 
   it("maps roster query errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ team_players: errResult("roster fail") }),
     );
     expect(await listRosterForTeam("team-1")).toEqual({

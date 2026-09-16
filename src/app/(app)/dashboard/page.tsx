@@ -42,11 +42,11 @@ export default async function DashboardPage() {
       </div>
 
       <Suspense fallback={<SectionSkeleton columns={2} />}>
-        <DashboardFixtures teamName={displayName} />
+        <DashboardFixtures teamId={team.id} teamName={displayName} />
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton rows={1} />}>
-        <DashboardForm />
+        <DashboardForm teamId={team.id} />
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton rows={2} />}>

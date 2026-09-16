@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
@@ -149,6 +149,7 @@ export async function updateClubAction(
   });
   if (error) return { error };
 
+  updateTag(`club:${id}`);
   revalidatePath("/club");
   revalidatePath("/club/edit");
   revalidatePath("/", "layout");

@@ -5,11 +5,7 @@ import {
   canEditTeamHistory,
 } from "@/lib/authz/context";
 import { matchAllowsEvents, matchAllowsPostcard } from "@/lib/constants";
-import { listCardsForMatch } from "@/lib/data/cards";
-import { listGoalsForMatch } from "@/lib/data/goals";
-import { listMatchPlayers } from "@/lib/data/match-players";
-import { listPeriodsForMatch } from "@/lib/data/match-periods";
-import { getMatch } from "@/lib/data/matches";
+import { getMatchDetail } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
   formatMatchTitle,
@@ -42,11 +38,11 @@ export default async function MatchDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [ctx, matchResult] = await Promise.all([
+  const [ctx, detailResult] = await Promise.all([
     getViewerContext(),
-    getMatch(id),
+    getMatchDetail(id),
   ]);
-  const { data: match, error } = matchResult;
+  const { data: detail, error } = detailResult;
 
   if (error) {
     return (
@@ -57,9 +53,17 @@ export default async function MatchDetailPage({
     );
   }
 
-  if (!match || !ctx) {
+  if (!detail || !ctx) {
     notFound();
   }
+
+  const {
+    match,
+    goals,
+    cards,
+    matchPlayers: matchPlayerRows,
+    periods,
+  } = detail;
 
   const canEdit = canEditMatchDay(ctx, match.team_id);
   const canEditPlayerOfTheMatch = canEditTeamHistory(ctx, match.team_id);
@@ -71,23 +75,13 @@ export default async function MatchDetailPage({
   const teamName = team ? teamDisplayName(team) : "Our team";
   const opponentName = match.opponent_name;
 
-  const [
-    { data: goals, error: goalsError },
-    { data: cards, error: cardsError },
-    { data: players, error: playersError },
-    { data: matchPlayerRows, error: matchPlayersError },
-    { data: periods, error: periodsError },
-    postcardResult,
-  ] = await Promise.all([
-    listGoalsForMatch(match.id),
-    listCardsForMatch(match.id),
-    listRosterForTeam(match.team_id, { includeInactive: true }),
-    listMatchPlayers(match.id),
-    listPeriodsForMatch(match.id),
-    matchAllowsPostcard(match.status)
-      ? buildMatchPostcardPayload(match.id)
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+  const [{ data: players, error: playersError }, postcardResult] =
+    await Promise.all([
+      listRosterForTeam(match.team_id, { includeInactive: true }),
+      matchAllowsPostcard(match.status)
+        ? buildMatchPostcardPayload(match.id)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
   const postcard = postcardResult.data;
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
@@ -101,7 +95,7 @@ export default async function MatchDetailPage({
       )
     : players;
 
-  const loadErrors = [playersError, matchPlayersError, periodsError]
+  const loadErrors = [playersError, postcardResult.error]
     .filter(Boolean)
     .join(" ");
 
@@ -200,7 +194,6 @@ export default async function MatchDetailPage({
 
       {allowsEvents ? (
         <Section title="Goals">
-          {goalsError ? <ErrorBanner message={goalsError} /> : null}
           <MatchGoalsSection
             matchId={match.id}
             goals={goals}
@@ -233,7 +226,6 @@ export default async function MatchDetailPage({
           />
 
           <Section title="Cards">
-            {cardsError ? <ErrorBanner message={cardsError} /> : null}
             <MatchCardsSection
               matchId={match.id}
               cards={cards}

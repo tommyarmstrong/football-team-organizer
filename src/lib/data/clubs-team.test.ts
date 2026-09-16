@@ -18,6 +18,18 @@ const { createClientMock, getViewerContextMock, cookiesGetMock } = vi.hoisted(
 vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => createClientMock(),
+}));
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <T extends unknown[], R>(fn: (...args: T) => Promise<R>) =>
+    (...args: T) =>
+      fn(...args),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
+}));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
   return { ...actual, getViewerContext: getViewerContextMock };
@@ -33,17 +45,20 @@ describe("clubs data", () => {
   });
 
   it("lists visible clubs", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         clubs: okResult([{ id: "club-1", name: "Example FC" }]),
       }),
     );
-    const { listVisibleClubs } = await import("@/lib/data/clubs");
+    const { listVisibleClubs, CLUB_SUMMARY_SELECT } =
+      await import("@/lib/data/clubs");
+    expect(CLUB_SUMMARY_SELECT).toBe("id, name, colour, icon_url");
+    expect(CLUB_SUMMARY_SELECT).not.toMatch(/about|website|email|phone/);
     expect((await listVisibleClubs()).data[0]?.id).toBe("club-1");
   });
 
   it("maps club list errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ clubs: errResult("fail") }),
     );
     const { listVisibleClubs } = await import("@/lib/data/clubs");
@@ -51,7 +66,7 @@ describe("clubs data", () => {
   });
 
   it("gets a club by id and maps errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         clubs: okResult({ id: "club-1", name: "Example FC" }),
       }),
@@ -59,7 +74,7 @@ describe("clubs data", () => {
     const { getClub } = await import("@/lib/data/clubs");
     expect((await getClub("club-1")).data?.id).toBe("club-1");
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ clubs: errResult("missing") }),
     );
     expect(await getClub("club-x")).toEqual({ data: null, error: "missing" });
@@ -113,7 +128,7 @@ describe("clubs data", () => {
   });
 
   it("creates and updates clubs", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient(
         {},
         {
@@ -129,7 +144,7 @@ describe("clubs data", () => {
     const { createClub, updateClub } = await import("@/lib/data/clubs");
     expect((await createClub("New FC")).data?.id).toBe("club-new");
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient(
         {},
         {
@@ -144,7 +159,7 @@ describe("clubs data", () => {
       error: "rpc failed",
     });
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         clubs: okResult({ id: "club-1", name: "Updated" }),
       }),
@@ -153,7 +168,7 @@ describe("clubs data", () => {
       "Updated",
     );
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ clubs: errResult("update failed") }),
     );
     expect(await updateClub("club-1", { name: "X" })).toEqual({
@@ -164,7 +179,7 @@ describe("clubs data", () => {
 
   it("resolves a staff club id for managers", async () => {
     getViewerContextMock.mockResolvedValue(clubManagerViewer());
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         clubs: okResult([{ id: "club-1", name: "Example FC" }]),
       }),
@@ -211,7 +226,7 @@ describe("team data", () => {
   });
 
   it("maps unique team name/season write errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({
         teams: errResult(
           'duplicate key value violates unique constraint "teams_club_name_season_uidx"',
