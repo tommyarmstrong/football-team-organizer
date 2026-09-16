@@ -6,7 +6,7 @@ import {
   canViewClubTeams,
   getViewerContext,
 } from "@/lib/authz/context";
-import { getPrimaryClub } from "@/lib/data/clubs";
+import { getClub, getPrimaryClub } from "@/lib/data/clubs";
 import {
   partitionTeamsByArchiveStatus,
   sortTeamsForDisplay,
@@ -20,10 +20,15 @@ import { ClubTeamsList } from "@/components/clubs/club-teams-list";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function ClubPage() {
-  const [ctx, club] = await Promise.all([getViewerContext(), getPrimaryClub()]);
+  const [ctx, summary] = await Promise.all([
+    getViewerContext(),
+    getPrimaryClub(),
+  ]);
   if (!ctx || !canAccessClubAndPeople(ctx)) {
     redirect("/dashboard");
   }
+
+  const { data: club } = summary ? await getClub(summary.id) : { data: null };
 
   if (!club) {
     return (

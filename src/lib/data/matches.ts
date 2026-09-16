@@ -1,5 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  CARD_PERSON_SELECT,
+  mapCardRow,
+  type CardWithPerson,
+} from "@/lib/data/cards";
+import {
+  GOAL_SELECT,
+  mapGoalRow,
+  type GoalWithPlayers,
+} from "@/lib/data/goals";
 import { setMatchSquad } from "@/lib/data/match-players";
+import {
+  mapPeriodRow,
+  PERIOD_SELECT,
+  type MatchPeriodWithStarters,
+  type PeriodRow,
+} from "@/lib/data/match-periods";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
@@ -8,6 +24,7 @@ import { scoreFromGoals } from "@/lib/format";
 import type {
   Competition,
   Match,
+  MatchPlayer,
   TablesInsert,
   TablesUpdate,
   Venue,
@@ -29,6 +46,17 @@ export type MatchWithRelations = Match & {
 
 const MATCH_SELECT =
   "*, competition:competitions(id, name, display_name, kind), venue:venues(id, name), goals(is_opposition)";
+
+/** Nested match-detail select: one round-trip for the match page (§5.4). */
+const MATCH_DETAIL_SELECT = `*, competition:competitions(id, name, display_name, kind), venue:venues(id, name), goals(${GOAL_SELECT}), cards(${CARD_PERSON_SELECT}), match_players(*), match_periods(${PERIOD_SELECT})`;
+
+export type MatchDetail = {
+  match: MatchWithRelations;
+  goals: GoalWithPlayers[];
+  cards: CardWithPerson[];
+  matchPlayers: MatchPlayer[];
+  periods: MatchPeriodWithStarters[];
+};
 
 export async function listMatches(
   filter: MatchListFilter = "all",
@@ -76,6 +104,69 @@ export async function getMatch(
   if (!data) return { data: null, error: null };
 
   return { data: normalizeMatchRow(data), error: null };
+}
+
+/**
+ * §5.4 — Match, goals, cards, squad rows, and periods in one nested select
+ * instead of getMatch() plus five follow-up queries.
+ */
+export async function getMatchDetail(
+  id: string,
+): Promise<{ data: MatchDetail | null; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select(MATCH_DETAIL_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: null, error: null };
+
+  const row = data as RawMatchRow & {
+    cards?: unknown;
+    match_players?: unknown;
+    match_periods?: unknown;
+  };
+
+  const goals = (Array.isArray(row.goals) ? row.goals : [])
+    .map((goal) => mapGoalRow(goal as Parameters<typeof mapGoalRow>[0]))
+    .sort((a, b) => {
+      if (a.minute == null && b.minute == null) {
+        return a.created_at.localeCompare(b.created_at);
+      }
+      if (a.minute == null) return 1;
+      if (b.minute == null) return -1;
+      if (a.minute !== b.minute) return a.minute - b.minute;
+      return a.created_at.localeCompare(b.created_at);
+    });
+
+  const cards = (Array.isArray(row.cards) ? row.cards : [])
+    .map((card) => mapCardRow(card as Parameters<typeof mapCardRow>[0]))
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  const matchPlayers = (
+    Array.isArray(row.match_players) ? row.match_players : []
+  ) as MatchPlayer[];
+  matchPlayers.sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  const periods = (Array.isArray(row.match_periods) ? row.match_periods : [])
+    .map((period) => mapPeriodRow(period as PeriodRow))
+    .sort((a, b) => {
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+      return a.created_at.localeCompare(b.created_at);
+    });
+
+  return {
+    data: {
+      match: normalizeMatchRow(row),
+      goals,
+      cards,
+      matchPlayers,
+      periods,
+    },
+    error: null,
+  };
 }
 
 export async function createMatch(
@@ -186,34 +277,21 @@ export async function getNextFixture(): Promise<{
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
+  // §6.5 — One query for all scheduled matches, ordered by date. Pick the
+  // first on/after today, otherwise the earliest scheduled row (past fallback).
   const { data, error } = await supabase
     .from("matches")
     .select(MATCH_SELECT)
     .eq("team_id", team.id)
     .eq("status", "scheduled")
-    .gte("date", today)
-    .order("date", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("date", { ascending: true });
 
   if (error) return { data: null, error: error.message };
 
-  if (!data) {
-    const { data: fallback, error: fallbackError } = await supabase
-      .from("matches")
-      .select(MATCH_SELECT)
-      .eq("team_id", team.id)
-      .eq("status", "scheduled")
-      .order("date", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (fallbackError) return { data: null, error: fallbackError.message };
-    if (!fallback) return { data: null, error: null };
-    return { data: normalizeMatchRow(fallback), error: null };
-  }
-
-  return { data: normalizeMatchRow(data), error: null };
+  const rows = data ?? [];
+  const chosen = rows.find((row) => row.date >= today) ?? rows[0] ?? null;
+  if (!chosen) return { data: null, error: null };
+  return { data: normalizeMatchRow(chosen), error: null };
 }
 
 export async function getLastResult(): Promise<{

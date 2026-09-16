@@ -7,6 +7,7 @@ import {
   normalizeEmail,
 } from "@/lib/people/person";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Person, PersonInvitation } from "@/lib/supabase/database.types";
 
 export type SendInvitationResult =
@@ -267,8 +268,11 @@ export async function findPersonForVerifiedEmail(
 export async function findPersonForAuthUserId(
   authUserId: string,
 ): Promise<{ data: Person | null; error: string | null }> {
-  const admin = createAdminClient();
-  const { data, error } = await admin
+  // §1.3 — Own-person lookup is allowed by people_select RLS
+  // (`auth_user_id = auth.uid()`). Use the request-scoped client instead of
+  // constructing a service-role admin client for a read that does not need it.
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("people")
     .select("*")
     .eq("auth_user_id", authUserId)

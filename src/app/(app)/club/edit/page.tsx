@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { canManageClub, getViewerContext } from "@/lib/authz/context";
-import { getPrimaryClub } from "@/lib/data/clubs";
+import { getClub, getPrimaryClub } from "@/lib/data/clubs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ClubForm } from "@/components/clubs/club-form";
@@ -18,7 +18,8 @@ export default async function EditClubPage() {
     redirect("/dashboard");
   }
 
-  const club = await getPrimaryClub();
+  const summary = await getPrimaryClub();
+  const { data: club } = summary ? await getClub(summary.id) : { data: null };
 
   if (!club || !canManageClub(ctx, club.id)) {
     return (

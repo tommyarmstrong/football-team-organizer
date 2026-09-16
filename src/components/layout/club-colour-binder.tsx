@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import {
   buildClubColourHintCookie,
   clearClubColourHintCookie,
@@ -8,7 +8,7 @@ import {
 
 /** Applies club colour on `#app-shell` after the header streams, without blocking page RSC. */
 export function ClubColourBinder({ colour }: { colour: string | null }) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = document.getElementById("app-shell");
     if (!root) return;
     if (colour) {

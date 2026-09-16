@@ -161,7 +161,10 @@ export async function listRosterForTeam(
       .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
       .eq("team_id", teamId);
     if (error) return { data: [], error: error.message };
-    return { data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]), error: null };
+    return {
+      data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]),
+      error: null,
+    };
   }
 
   return unstable_cache(

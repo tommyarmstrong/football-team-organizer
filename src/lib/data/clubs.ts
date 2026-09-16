@@ -11,13 +11,18 @@ import type { Club } from "@/lib/supabase/database.types";
 
 export type { Club };
 
+/** Columns needed to resolve and render the primary club in the header. */
+export const CLUB_SUMMARY_SELECT = "id, name, colour, icon_url" as const;
+
+export type ClubSummary = Pick<Club, "id" | "name" | "colour" | "icon_url">;
+
 /** Clubs the signed-in user can see (RLS-filtered). */
 export const listVisibleClubs = cache(
-  async (): Promise<{ data: Club[]; error: string | null }> => {
+  async (): Promise<{ data: ClubSummary[]; error: string | null }> => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("clubs")
-      .select("*")
+      .select(CLUB_SUMMARY_SELECT)
       .order("name", { ascending: true });
 
     if (error) return { data: [], error: error.message };
@@ -68,16 +73,16 @@ function preferredClubIds(ctx: ViewerContext): string[] {
  */
 export function resolvePrimaryClub(
   ctx: ViewerContext | null,
-  clubs?: Club[],
+  clubs?: ClubSummary[],
 ): Club | null {
   const clubList = clubs ?? ctx?.visibleClubs ?? [];
   if (ctx) {
     for (const clubId of preferredClubIds(ctx)) {
       const found = clubList.find((c) => c.id === clubId);
-      if (found) return found;
+      if (found) return found as Club;
     }
   }
-  if (clubList.length > 0) return clubList[0];
+  if (clubList.length > 0) return clubList[0] as Club;
   return null;
 }
 

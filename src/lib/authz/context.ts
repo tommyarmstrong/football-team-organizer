@@ -43,7 +43,7 @@ export type ViewerContext = {
   editableTeamIds: string[];
   isManagement: boolean;
   /**
-   * RLS-filtered clubs the user can read.
+   * RLS-filtered clubs the user can read (id, name, colour, icon_url; §6.3).
    * Fetched alongside teams in the composite get_viewer_context() RPC (§4.1 + §6.2)
    * so callers like getPrimaryClub() avoid a second DB round-trip.
    */

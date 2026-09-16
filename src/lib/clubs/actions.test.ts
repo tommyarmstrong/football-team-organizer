@@ -22,7 +22,11 @@ const {
   createClientMock: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock, revalidateTag: vi.fn(), updateTag: vi.fn() }));
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
+  revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();

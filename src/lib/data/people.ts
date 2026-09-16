@@ -279,7 +279,8 @@ export async function getPerson(
       coaches: (row.coaches ?? []) as PersonRoleRef[],
       guardians: (row.guardians ?? []) as PersonRoleRef[],
       players: (row.players ?? []) as PersonPlayerRef[],
-      outstanding_invitation: (pendingInvitations[0] as PersonInvitation | undefined) ?? null,
+      outstanding_invitation:
+        (pendingInvitations[0] as PersonInvitation | undefined) ?? null,
     },
     error: null,
   };

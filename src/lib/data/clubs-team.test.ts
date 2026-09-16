@@ -27,7 +27,8 @@ vi.mock("next/cache", () => ({
     (...args: T) =>
       fn(...args),
   revalidatePath: vi.fn(),
-  revalidateTag: vi.fn(), updateTag: vi.fn(),
+  revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
 }));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
@@ -49,7 +50,10 @@ describe("clubs data", () => {
         clubs: okResult([{ id: "club-1", name: "Example FC" }]),
       }),
     );
-    const { listVisibleClubs } = await import("@/lib/data/clubs");
+    const { listVisibleClubs, CLUB_SUMMARY_SELECT } =
+      await import("@/lib/data/clubs");
+    expect(CLUB_SUMMARY_SELECT).toBe("id, name, colour, icon_url");
+    expect(CLUB_SUMMARY_SELECT).not.toMatch(/about|website|email|phone/);
     expect((await listVisibleClubs()).data[0]?.id).toBe("club-1");
   });
 
