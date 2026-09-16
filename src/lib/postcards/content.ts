@@ -22,8 +22,12 @@ export function scheduledPostcardMeetupLine(time: string): string {
   return `${SCHEDULED_POSTCARD_MEETUP_EMOJI} Meet up: ${time}`;
 }
 
+export function scheduledPostcardKickoffText(time: string): string {
+  return `Kick off: ${time}`;
+}
+
 export function scheduledPostcardKickoffLine(time: string): string {
-  return `${SCHEDULED_POSTCARD_KICKOFF_EMOJI} Kick off: ${time}`;
+  return `${SCHEDULED_POSTCARD_KICKOFF_EMOJI} ${scheduledPostcardKickoffText(time)}`;
 }
 
 export type PostcardPlayerLabelInput = {

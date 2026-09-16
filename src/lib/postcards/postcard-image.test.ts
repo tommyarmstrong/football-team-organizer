@@ -3,7 +3,8 @@ import { ImageResponse } from "next/og";
 import { describe, expect, it } from "vitest";
 import {
   MatchPostcardImage,
-  postcardImageOptions,
+  POSTCARD_HEIGHT,
+  POSTCARD_WIDTH,
 } from "@/lib/postcards/postcard-image";
 import type {
   MatchPostcardPayload,
@@ -49,7 +50,7 @@ const basePayload: MatchPostcardPayload = {
 async function renderPostcard(payload: MatchPostcardPayload) {
   const response = new ImageResponse(
     createElement(MatchPostcardImage, { payload, crestSrc: null }),
-    postcardImageOptions(payload.kind),
+    { width: POSTCARD_WIDTH, height: POSTCARD_HEIGHT },
   );
   return Buffer.from(await response.arrayBuffer());
 }
@@ -86,23 +87,6 @@ const goalLists: Array<[string, PostcardGoalList]> = [
     },
   ],
 ];
-
-describe("postcardImageOptions", () => {
-  it("uses Noto emoji on scheduled cards so kick-off is a pale trainer", () => {
-    expect(postcardImageOptions("scheduled")).toEqual({
-      width: 1080,
-      height: 1350,
-      emoji: "noto",
-    });
-  });
-
-  it("leaves played recaps on the default emoji set", () => {
-    expect(postcardImageOptions("played")).toEqual({
-      width: 1080,
-      height: 1350,
-    });
-  });
-});
 
 describe("MatchPostcardImage", () => {
   it.each(goalLists)("renders a PNG with %s", async (_name, goalList) => {
