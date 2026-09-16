@@ -5,13 +5,13 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { RosterPlayer } from "@/lib/data/players";
 import { playerDisplayName } from "@/lib/format";
 import { updateMatchPlayersOfTheMatchAction } from "@/lib/matches/actions";
-import { PlayerOfTheMatchChip } from "@/components/matches/match-goals-section";
+import { PlayerOfTheMatchName } from "@/components/matches/match-goals-section";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 import { Section } from "@/components/shared/section";
 
-export function playerOfTheMatchChipName(
+export function playerOfTheMatchName(
   players: Pick<RosterPlayer, "id" | "first_name" | "last_name">[],
   playerId: string | null,
 ): string | null {
@@ -33,25 +33,22 @@ export function MatchPlayersOfTheMatchSection({
   playersPlayerOfTheMatchId: string | null;
   canEdit?: boolean;
 }) {
-  const coachName = playerOfTheMatchChipName(players, coachPlayerOfTheMatchId);
-  const playersName = playerOfTheMatchChipName(
-    players,
-    playersPlayerOfTheMatchId,
-  );
+  const coachName = playerOfTheMatchName(players, coachPlayerOfTheMatchId);
+  const playersName = playerOfTheMatchName(players, playersPlayerOfTheMatchId);
 
   if (!canEdit) {
     return (
       <>
         <Section title="Coach's Player of the Match">
           {coachName ? (
-            <PlayerOfTheMatchChip name={coachName} />
+            <PlayerOfTheMatchName name={coachName} />
           ) : (
             <p className="text-muted-foreground text-sm">Not selected</p>
           )}
         </Section>
         <Section title="Players' Player of the Match">
           {playersName ? (
-            <PlayerOfTheMatchChip name={playersName} />
+            <PlayerOfTheMatchName name={playersName} />
           ) : (
             <p className="text-muted-foreground text-sm">Not selected</p>
           )}
@@ -97,14 +94,14 @@ function PlayersOfTheMatchForm({
     })}${!player.active ? " (inactive)" : ""}`,
   }));
 
-  const coachName = playerOfTheMatchChipName(players, coachId);
-  const playersName = playerOfTheMatchChipName(players, playersId);
+  const coachName = playerOfTheMatchName(players, coachId);
+  const playersName = playerOfTheMatchName(players, playersId);
 
   return (
     <form action={formAction} className="space-y-8">
       <Section title="Coach's Player of the Match">
         <div className="space-y-2">
-          {coachName ? <PlayerOfTheMatchChip name={coachName} /> : null}
+          {coachName ? <PlayerOfTheMatchName name={coachName} /> : null}
           <SearchableSelect
             id="coach-potm-player"
             name="player_of_the_match_id"
@@ -122,7 +119,7 @@ function PlayersOfTheMatchForm({
       <Section title="Players' Player of the Match">
         <div className="space-y-4">
           <div className="space-y-2">
-            {playersName ? <PlayerOfTheMatchChip name={playersName} /> : null}
+            {playersName ? <PlayerOfTheMatchName name={playersName} /> : null}
             <SearchableSelect
               id="players-potm-player"
               name="players_player_of_the_match_id"
