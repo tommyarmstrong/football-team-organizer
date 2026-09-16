@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
-import { matchFixture, teamFixture } from "@/test/fixtures";
+import { matchFixture, teamFixture, venueFixture } from "@/test/fixtures";
 import {
   buildPostcardGoalList,
   postcardCaption,
   postcardFileName,
   postcardPlayerLabel,
   postcardSquadLines,
+  scheduledPostcardCaption,
 } from "@/lib/postcards/content";
 
 function rosterPlayer(
@@ -118,12 +119,42 @@ describe("postcardSquadLines", () => {
           }),
         ],
         ["p-theo", "p-ali", "p-dexter"],
+        "girls",
       ),
     ).toEqual(["1 Ali, 4 Dexter, 5 Theo"]);
   });
 
+  it("uses first and last names for adults on the squad list", () => {
+    expect(
+      postcardSquadLines(
+        [
+          rosterPlayer({
+            id: "p-theo",
+            first_name: "Theo",
+            last_name: "Taylor",
+            shirt_number: 5,
+          }),
+          rosterPlayer({
+            id: "p-ali",
+            first_name: "Ali",
+            last_name: "Ahmed",
+            shirt_number: 1,
+          }),
+          rosterPlayer({
+            id: "p-dexter",
+            first_name: "Dexter",
+            last_name: "Dunn",
+            shirt_number: 4,
+          }),
+        ],
+        ["p-theo", "p-ali", "p-dexter"],
+        "women",
+      ),
+    ).toEqual(["1 Ali Ahmed, 4 Dexter Dunn, 5 Theo Taylor"]);
+  });
+
   it("omits players who were not selected", () => {
-    expect(postcardSquadLines(youthRoster, [])).toEqual([]);
+    expect(postcardSquadLines(youthRoster, [], "girls")).toEqual([]);
   });
 });
 
@@ -218,6 +249,48 @@ describe("postcardCaption", () => {
     });
     expect(caption).toContain("🏆 Maya · Coach's Player of the Match");
     expect(caption).toContain("🏆 Luca · Players' Player of the Match");
+  });
+});
+
+describe("scheduledPostcardCaption", () => {
+  it("includes home/away, competition, times, venue, and address", () => {
+    const caption = scheduledPostcardCaption({
+      teamName: "U11 Girls",
+      opponentName: "Riverside",
+      homeAway: "home",
+      competitionLabel: "League",
+      dateLabel: "Sun 8 Mar 2026",
+      meetupTime: "09:30:00",
+      kickoffTime: "10:00:00",
+      venueName: "Main Pitch",
+      venueAddress: "1 Windmill Road, London, N18 1NB",
+    });
+
+    expect(caption).toContain("U11 Girls vs Riverside");
+    expect(caption).toContain("Home · League");
+    expect(caption).toContain("Sun 8 Mar 2026");
+    expect(caption).toContain("Meet up: 09:30");
+    expect(caption).toContain("Kick off: 10:00");
+    expect(caption).toContain("Main Pitch");
+    expect(caption).toContain("1 Windmill Road, London, N18 1NB");
+  });
+
+  it("omits missing venue and time lines", () => {
+    const caption = scheduledPostcardCaption({
+      teamName: "U11 Girls",
+      opponentName: "Riverside",
+      homeAway: "away",
+      competitionLabel: null,
+      dateLabel: "Sun 8 Mar 2026",
+      meetupTime: null,
+      kickoffTime: null,
+      venueName: null,
+      venueAddress: null,
+    });
+
+    expect(caption).toBe("Riverside vs U11 Girls\nAway\nSun 8 Mar 2026");
+    expect(caption).not.toContain("Meet up");
+    expect(caption).not.toContain("Kick off");
   });
 });
 
@@ -337,6 +410,7 @@ const {
   getMatchMock,
   getTeamMock,
   getClubMock,
+  getVenueMock,
   listGoalsForMatchMock,
   listMatchPlayersMock,
   listRosterForTeamMock,
@@ -345,6 +419,7 @@ const {
   getMatchMock: vi.fn(),
   getTeamMock: vi.fn(),
   getClubMock: vi.fn(),
+  getVenueMock: vi.fn(),
   listGoalsForMatchMock: vi.fn(),
   listMatchPlayersMock: vi.fn(),
   listRosterForTeamMock: vi.fn(),
@@ -354,6 +429,7 @@ const {
 vi.mock("@/lib/data/matches", () => ({ getMatch: getMatchMock }));
 vi.mock("@/lib/data/team", () => ({ getTeam: getTeamMock }));
 vi.mock("@/lib/data/clubs", () => ({ getClub: getClubMock }));
+vi.mock("@/lib/data/venues", () => ({ getVenue: getVenueMock }));
 vi.mock("@/lib/data/goals", () => ({
   listGoalsForMatch: listGoalsForMatchMock,
 }));
@@ -449,6 +525,7 @@ describe("buildMatchPostcardPayload", () => {
       error: null,
     });
     getFormThroughMatchMock.mockResolvedValue({ form: ["W"], error: null });
+    getVenueMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("assembles a played-match payload without cards, notes, or venue", async () => {
@@ -456,18 +533,38 @@ describe("buildMatchPostcardPayload", () => {
       await import("@/lib/postcards/match-postcard");
     const { data, error } = await buildMatchPostcardPayload("match-1");
     expect(error).toBeNull();
-    expect(data?.story).toBe("Great win!");
-    expect(data?.scoreLabel).toBe("2–1");
-    expect(data?.homeName).toBe("U11 Girls");
-    expect(data?.awayName).toBe("Riverside");
-    expect(data?.coachPotmLabel).toBe("Maya");
-    expect(data?.playersPotmLabel).toBe("Luca");
-    expect(data?.squadLines).toEqual(["4 Luca, 7 Maya"]);
-    expect(data?.clubColour).toBe("#146C4A");
-    expect(data?.caption).not.toContain("Hall");
+    expect(data?.kind).toBe("played");
+    if (data?.kind !== "played") return;
+    expect(data.story).toBe("Great win!");
+    expect(data.scoreLabel).toBe("2–1");
+    expect(data.homeName).toBe("U11 Girls");
+    expect(data.awayName).toBe("Riverside");
+    expect(data.coachPotmLabel).toBe("Maya");
+    expect(data.playersPotmLabel).toBe("Luca");
+    expect(data.squadLines).toEqual(["4 Luca, 7 Maya"]);
+    expect(data.clubColour).toBe("#146C4A");
+    expect(data.caption).not.toContain("Hall");
     expect(JSON.stringify(data)).not.toContain("club_notes");
     expect(JSON.stringify(data)).not.toContain("yellow");
-    expect(data?.fileName).toBe("u11-girls-2026-03-08-vs-riverside.png");
+    expect(data.fileName).toBe("u11-girls-2026-03-08-vs-riverside.png");
+  });
+
+  it("uses first and last names on the adult squad list", async () => {
+    getTeamMock.mockResolvedValue({
+      data: teamFixture({
+        name: "Women",
+        display_name: "Women",
+        gender: "women",
+        season_label: "2025/26",
+      }),
+      error: null,
+    });
+    const { buildMatchPostcardPayload } =
+      await import("@/lib/postcards/match-postcard");
+    const { data } = await buildMatchPostcardPayload("match-1");
+    expect(data?.kind).toBe("played");
+    if (data?.kind !== "played") return;
+    expect(data.squadLines).toEqual(["4 Luca Patel, 7 Maya Hall"]);
   });
 
   it("swaps the scoreboard for away fixtures", async () => {
@@ -482,22 +579,74 @@ describe("buildMatchPostcardPayload", () => {
     const { buildMatchPostcardPayload } =
       await import("@/lib/postcards/match-postcard");
     const { data } = await buildMatchPostcardPayload("match-1");
-    expect(data?.homeName).toBe("Riverside");
-    expect(data?.awayName).toBe("U11 Girls");
-    expect(data?.scoreLabel).toBe("1–2");
-    expect(data?.homeScore).toBe(1);
-    expect(data?.awayScore).toBe(2);
+    expect(data?.kind).toBe("played");
+    if (data?.kind !== "played") return;
+    expect(data.homeName).toBe("Riverside");
+    expect(data.awayName).toBe("U11 Girls");
+    expect(data.scoreLabel).toBe("1–2");
+    expect(data.homeScore).toBe(1);
+    expect(data.awayScore).toBe(2);
   });
 
-  it("rejects scheduled matches", async () => {
+  it("assembles a scheduled-match payload with venue, times, and address", async () => {
     getMatchMock.mockResolvedValue({
-      data: matchFixture({ status: "scheduled" }),
+      data: matchFixture({
+        status: "scheduled",
+        opponent_name: "Riverside",
+        date: "2026-03-08",
+        home_away: "home",
+        is_friendly: false,
+        kickoff_time: "10:00:00",
+        meetup_time: "09:30:00",
+        venue_id: "venue-1",
+        venue: { id: "venue-1", name: "Main Pitch" },
+        competition: {
+          id: "c1",
+          name: "County League",
+          display_name: "League",
+          kind: "league",
+        },
+      }),
+      error: null,
+    });
+    getVenueMock.mockResolvedValue({
+      data: venueFixture({
+        name: "Main Pitch",
+        address_line1: "1 Windmill Road",
+        town_city: "London",
+        postcode: "N18 1NB",
+      }),
+      error: null,
+    });
+    const { buildMatchPostcardPayload } =
+      await import("@/lib/postcards/match-postcard");
+    const { data, error } = await buildMatchPostcardPayload("match-1");
+    expect(error).toBeNull();
+    expect(data?.kind).toBe("scheduled");
+    if (data?.kind !== "scheduled") return;
+    expect(data.homeName).toBe("U11 Girls");
+    expect(data.awayName).toBe("Riverside");
+    expect(data.homeAwayLabel).toBe("Home");
+    expect(data.competitionLabel).toBe("League");
+    expect(data.kickoffLabel).toBe("10:00");
+    expect(data.meetupLabel).toBe("09:30");
+    expect(data.venueName).toBe("Main Pitch");
+    expect(data.venueAddress).toBe("1 Windmill Road, London, N18 1NB");
+    expect(data.caption).toContain("U11 Girls vs Riverside");
+    expect(data.caption).toContain("1 Windmill Road, London, N18 1NB");
+    expect(data.fileName).toBe("u11-girls-2026-03-08-vs-riverside.png");
+    expect(listGoalsForMatchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects postponed and cancelled matches", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "postponed" }),
       error: null,
     });
     const { buildMatchPostcardPayload } =
       await import("@/lib/postcards/match-postcard");
     const result = await buildMatchPostcardPayload("match-1");
     expect(result.data).toBeNull();
-    expect(result.error).toMatch(/played/i);
+    expect(result.error).toMatch(/scheduled and played/i);
   });
 });

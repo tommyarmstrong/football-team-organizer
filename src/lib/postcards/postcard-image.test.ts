@@ -9,11 +9,13 @@ import {
 import type {
   MatchPostcardPayload,
   PostcardGoalList,
+  ScheduledMatchPostcardPayload,
 } from "@/lib/postcards/types";
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 
 const basePayload: MatchPostcardPayload = {
+  kind: "played",
   matchId: "match-1",
   clubName: "Mill Green Athletic",
   clubColour: "#146C4A",
@@ -110,6 +112,32 @@ describe("MatchPostcardImage", () => {
       scoreLabel: "0–2",
       form: [],
     });
+    expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
+  });
+
+  it("renders a PNG for a scheduled fixture with venue and times", async () => {
+    const scheduled: ScheduledMatchPostcardPayload = {
+      kind: "scheduled",
+      matchId: "match-1",
+      clubName: "Mill Green Athletic",
+      clubColour: "#146C4A",
+      clubIconUrl: null,
+      teamName: "U11 Girls",
+      seasonLabel: "2025/26",
+      opponentName: "Riverside Rovers",
+      dateLabel: "Sun 8 Mar 2026",
+      homeAwayLabel: "Home",
+      competitionLabel: "League",
+      homeName: "U11 Girls",
+      awayName: "Riverside Rovers",
+      venueName: "Main Pitch",
+      venueAddress: "1 Windmill Road, London, N18 1NB",
+      kickoffLabel: "10:00",
+      meetupLabel: "09:30",
+      caption: "U11 Girls vs Riverside Rovers",
+      fileName: "u11-girls-2026-03-08-vs-riverside-rovers.png",
+    };
+    const png = await renderPostcard(scheduled);
     expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
   });
 });

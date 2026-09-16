@@ -5,6 +5,7 @@ import {
   isExtraTimeOrPenaltyPeriodName,
   isMatchPeriodName,
   matchAllowsEvents,
+  matchAllowsPostcard,
   matchPeriodSortOrder,
   periodNamesForCompetitionPeriods,
 } from "@/lib/constants";
@@ -75,6 +76,19 @@ describe("matchAllowsEvents", () => {
     expect(matchAllowsEvents("scheduled")).toBe(false);
     expect(matchAllowsEvents("postponed")).toBe(false);
     expect(matchAllowsEvents("cancelled")).toBe(false);
+  });
+});
+
+describe("matchAllowsPostcard", () => {
+  it("allows postcards for scheduled and played matches", () => {
+    expect(matchAllowsPostcard("scheduled")).toBe(true);
+    expect(matchAllowsPostcard("played")).toBe(true);
+  });
+
+  it("disallows postcards for other statuses", () => {
+    expect(matchAllowsPostcard("in_progress")).toBe(false);
+    expect(matchAllowsPostcard("postponed")).toBe(false);
+    expect(matchAllowsPostcard("cancelled")).toBe(false);
   });
 });
 

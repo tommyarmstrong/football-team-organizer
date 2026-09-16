@@ -429,6 +429,11 @@ export function matchAllowsEvents(status: MatchStatus): boolean {
   return status === "played" || status === "in_progress";
 }
 
+/** Statuses that can generate a shareable match postcard. */
+export function matchAllowsPostcard(status: MatchStatus): boolean {
+  return status === "played" || status === "scheduled";
+}
+
 /** Form value for recording a goal scored by the opposition. */
 export const OPPOSITION_SCORER_VALUE = "__opposition__";
 

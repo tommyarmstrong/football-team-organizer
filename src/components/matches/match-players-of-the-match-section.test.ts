@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { playerOfTheMatchChipName } from "@/components/matches/match-players-of-the-match-section";
+import { playerOfTheMatchName } from "@/components/matches/match-players-of-the-match-section";
 
-describe("playerOfTheMatchChipName", () => {
+describe("playerOfTheMatchName", () => {
   const players = [
     {
       id: "p1",
@@ -16,11 +16,11 @@ describe("playerOfTheMatchChipName", () => {
   ];
 
   it("returns the player name without a shirt number", () => {
-    expect(playerOfTheMatchChipName(players, "p2")).toBe("Sam Lee");
+    expect(playerOfTheMatchName(players, "p2")).toBe("Sam Lee");
   });
 
   it("returns null when no player is selected", () => {
-    expect(playerOfTheMatchChipName(players, null)).toBeNull();
-    expect(playerOfTheMatchChipName(players, "missing")).toBeNull();
+    expect(playerOfTheMatchName(players, null)).toBeNull();
+    expect(playerOfTheMatchName(players, "missing")).toBeNull();
   });
 });

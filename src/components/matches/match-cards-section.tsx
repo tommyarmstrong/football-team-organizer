@@ -57,7 +57,7 @@ export function MatchCardsSection({
                 href={`/matches/${matchId}/cards/${card.id}`}
                 className={objectListRowClassName()}
               >
-                <span className="border-border bg-background inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-xs font-medium">
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium">
                   <span aria-hidden="true">{CARD_TYPE_EMOJIS[card.type]}</span>
                   <span className="truncate">{cardPersonLabel(card)}</span>
                 </span>

@@ -22,7 +22,7 @@ export type PostcardGoalList =
       extra: string | null;
     };
 
-export type MatchPostcardPayload = {
+type MatchPostcardBase = {
   matchId: string;
   clubName: string;
   clubColour: string | null;
@@ -35,6 +35,12 @@ export type MatchPostcardPayload = {
   competitionLabel: string | null;
   homeName: string;
   awayName: string;
+  caption: string;
+  fileName: string;
+};
+
+export type PlayedMatchPostcardPayload = MatchPostcardBase & {
+  kind: "played";
   homeScore: number;
   awayScore: number;
   scoreLabel: string;
@@ -45,6 +51,15 @@ export type MatchPostcardPayload = {
   playersPotmLabel: string | null;
   squadLines: string[];
   form: Array<"W" | "D" | "L">;
-  caption: string;
-  fileName: string;
 };
+
+export type ScheduledMatchPostcardPayload = MatchPostcardBase & {
+  kind: "scheduled";
+  venueName: string | null;
+  venueAddress: string | null;
+  kickoffLabel: string | null;
+  meetupLabel: string | null;
+};
+
+export type MatchPostcardPayload =
+  PlayedMatchPostcardPayload | ScheduledMatchPostcardPayload;
