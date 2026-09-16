@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockFromClient, okResult, errResult } from "@/test/supabase-mock";
-import { clubManagerViewer, teamFixture, viewerFixture } from "@/test/fixtures";
+import {
+  clubFixture,
+  clubManagerViewer,
+  teamFixture,
+  viewerFixture,
+} from "@/test/fixtures";
 
 const { createClientMock, getViewerContextMock, cookiesGetMock } = vi.hoisted(
   () => ({
@@ -60,40 +65,51 @@ describe("clubs data", () => {
     expect(await getClub("club-x")).toEqual({ data: null, error: "missing" });
   });
 
-  it("resolves primary club from preferred ids and falls back to first visible", async () => {
+  it("resolves primary club from preferred ids in ctx.visibleClubs", async () => {
+    // §4.1 + §6.2 — getPrimaryClub() now reads clubs from ctx.visibleClubs
+    // returned by the composite get_viewer_context() RPC; no extra DB call.
     getViewerContextMock.mockResolvedValue(
       clubManagerViewer({
         managementClubIds: ["club-hidden"],
         visibleTeams: [teamFixture({ club_id: "club-1" })],
-      }),
-    );
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        clubs: [
-          okResult([{ id: "club-1", name: "Visible FC" }]),
-          okResult({ id: "club-hidden", name: "Hidden FC" }),
+        visibleClubs: [
+          clubFixture({ id: "club-1", name: "Visible FC" }),
+          clubFixture({ id: "club-hidden", name: "Hidden FC" }),
         ],
       }),
     );
     const { getPrimaryClub } = await import("@/lib/data/clubs");
+    // Prefers management club ("club-hidden") over team club ("club-1").
     expect((await getPrimaryClub())?.id).toBe("club-hidden");
 
+    // When ctx is null, no clubs are accessible → returns null.
     getViewerContextMock.mockResolvedValue(null);
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        clubs: okResult([{ id: "club-only", name: "Only FC" }]),
-      }),
-    );
     vi.resetModules();
-    const { getPrimaryClub: getPrimaryAgain } =
+    const { getPrimaryClub: getPrimaryNoCtx } =
       await import("@/lib/data/clubs");
-    expect((await getPrimaryAgain())?.id).toBe("club-only");
+    expect(await getPrimaryNoCtx()).toBeNull();
 
-    createClientMock.mockResolvedValue(mockFromClient({ clubs: okResult([]) }));
+    // When ctx exists but visibleClubs is empty → returns null.
+    getViewerContextMock.mockResolvedValue(
+      clubManagerViewer({ visibleClubs: [] }),
+    );
     vi.resetModules();
     const { getPrimaryClub: getPrimaryEmpty } =
       await import("@/lib/data/clubs");
     expect(await getPrimaryEmpty()).toBeNull();
+  });
+
+  it("falls back to first visible club when no preferred id matches", async () => {
+    getViewerContextMock.mockResolvedValue(
+      clubManagerViewer({
+        managementClubIds: [],
+        visibleTeams: [],
+        visibleClubs: [clubFixture({ id: "club-only", name: "Only FC" })],
+      }),
+    );
+    vi.resetModules();
+    const { getPrimaryClub } = await import("@/lib/data/clubs");
+    expect((await getPrimaryClub())?.id).toBe("club-only");
   });
 
   it("creates and updates clubs", async () => {
@@ -171,20 +187,23 @@ describe("team data", () => {
     cookiesGetMock.mockReturnValue(undefined);
   });
 
-  it("returns null active team when none are visible", async () => {
-    createClientMock.mockResolvedValue(mockFromClient({ teams: okResult([]) }));
-    getViewerContextMock.mockResolvedValue(viewerFixture());
+  it("returns null active team when ctx has no visible teams", async () => {
+    // §4.1 + §6.2 — getActiveTeam() now reads teams from ctx.visibleTeams;
+    // createClientMock is no longer consulted for teams.
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ visibleTeams: [], editableTeamIds: [] }),
+    );
     const { getActiveTeam } = await import("@/lib/data/team");
     expect(await getActiveTeam()).toBeNull();
   });
 
-  it("prefers the cookie team when visible", async () => {
+  it("prefers the cookie team when it is visible in the context", async () => {
     const teams = [
       teamFixture({ id: "team-a", club_id: "club-1", name: "A" }),
       teamFixture({ id: "team-b", club_id: "club-1", name: "B" }),
     ];
-    createClientMock.mockResolvedValue(
-      mockFromClient({ teams: okResult(teams) }),
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ visibleTeams: teams }),
     );
     cookiesGetMock.mockReturnValue({ value: "team-b" });
     const { getActiveTeam } = await import("@/lib/data/team");

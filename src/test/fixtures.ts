@@ -1,7 +1,30 @@
 import type { ViewerContext } from "@/lib/authz/context";
-import type { Match, Person, Team, Venue } from "@/lib/supabase/database.types";
+import type {
+  Club,
+  Match,
+  Person,
+  Team,
+  Venue,
+} from "@/lib/supabase/database.types";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { PersonWithRoles } from "@/lib/data/people";
+
+export function clubFixture(overrides: Partial<Club> = {}): Club {
+  return {
+    id: "club-1",
+    name: "Example FC",
+    website: null,
+    email: null,
+    phone: null,
+    icon_url: null,
+    colour: null,
+    established: null,
+    about: null,
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
 
 export function teamFixture(overrides: Partial<Team> = {}): Team {
   return {
@@ -29,6 +52,9 @@ export function viewerFixture(
   const visibleTeams = overrides.visibleTeams ?? [
     teamFixture({ id: "team-1", club_id: "club-1" }),
   ];
+  const visibleClubs = overrides.visibleClubs ?? [
+    clubFixture({ id: "club-1", name: "Example FC" }),
+  ];
   return {
     userId: "user-1",
     email: "coach@example.com",
@@ -46,6 +72,7 @@ export function viewerFixture(
     visibleTeams,
     editableTeamIds: ["team-1"],
     isManagement: false,
+    visibleClubs,
     ...overrides,
   };
 }

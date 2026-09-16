@@ -14,7 +14,12 @@ The recommendations below are grouped by subsystem and tagged **High**, **Medium
 
 ## Table of Contents
 
+Summaries
+
 - [Status](#status)
+- [Recommended priority order](#9-recommended-priority-order)
+
+Recommendation Areas
 
 1. [Login & Auth Flow](#1-login--auth-flow)
 2. [Theming & Club Colour Pipeline](#2-theming--club-colour-pipeline)
@@ -24,7 +29,6 @@ The recommendations below are grouped by subsystem and tagged **High**, **Medium
 6. [Database & Query Patterns](#6-database--query-patterns)
 7. [Client Bundle & Code Splitting](#7-client-bundle--code-splitting)
 8. [CSS & Rendering](#8-css--rendering)
-9. [Recommended priority order](#9-recommended-priority-order)
 
 ---
 
@@ -42,7 +46,7 @@ Items are tracked as they are picked up and merged. The branch column links to t
 | **3.1** | Cache `has_app_access` in a cookie                    | Middleware   | High   | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
 | **3.2** | Parallel `getUser()` + `has_app_access`               | Middleware   | Medium | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
 | 3.3     | Narrow middleware matcher                             | Middleware   | Low    | Low    | —                                                                                        |                                                                                                |
-| 4.1     | Composite RPC for header data                         | Header       | High   | High   | —                                                                                        |                                                                                                |
+| **4.1** | Composite RPC for header data                         | Header       | High   | High   | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
 | 4.2     | Split header into multiple Suspense zones             | Header       | Medium | Medium | —                                                                                        |                                                                                                |
 | 4.3     | Restructure `getPrimaryClub` to avoid chained awaits  | Header       | Medium | Low    | —                                                                                        |                                                                                                |
 | 5.1     | Composite RPC or SQL aggregation for stats            | Stats page   | High   | High   | —                                                                                        |                                                                                                |
@@ -52,7 +56,7 @@ Items are tracked as they are picked up and merged. The branch column links to t
 | 5.5     | Share dashboard data via single cached fetch          | Dashboard    | Low    | Low    | —                                                                                        |                                                                                                |
 | 5.6     | Cross-request caching with `unstable_cache` + tags    | All pages    | Medium | Medium | —                                                                                        |                                                                                                |
 | 6.1     | Wrap `createClient()` in `React.cache()`              | DB layer     | Medium | Low    | —                                                                                        |                                                                                                |
-| 6.2     | Single RPC for viewer context                         | DB layer     | High   | High   | —                                                                                        |                                                                                                |
+| **6.2** | Single RPC for viewer context                         | DB layer     | High   | High   | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
 | 6.3     | Select only needed columns from clubs                 | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
 | 6.4     | Push stats aggregation into Postgres                  | DB layer     | Medium | Medium | —                                                                                        |                                                                                                |
 | 6.5     | Combine `getNextFixture` fallback into one query      | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
@@ -76,6 +80,29 @@ Items are tracked as they are picked up and merged. The branch column links to t
 **§3.2** — `getUser()` and `rpc('has_app_access')` are now started concurrently with `Promise.all` on cache misses. Both calls rely only on the session cookies already in the incoming request and are independent of each other. On a cache miss this reduces the sequential 80–180 ms waterfall to the cost of whichever call takes longer (~50–100 ms). When `fto_access` is cached (§3.1) the RPC is replaced with `Promise.resolve(true)`, so no extra concurrency overhead is incurred on warm requests.
 
 **§2.2** — Deprioritised. §2.1 eliminated the flash of default colour by setting the cookie server-side in middleware; `ClubColourBinder`'s `useLayoutEffect` now only runs as a mid-session fallback (e.g. when the club colour is edited). The `useLayoutEffect` → `useEffect` switch remains valid and easy but the user-visible impact is now negligible.
+
+**§6.2** — `get_viewer_context()` Postgres function (migration `20260916000000_get_viewer_context_rpc.sql`) replaces the 7 individual DB calls in `getViewerContext()` with one SECURITY DEFINER RPC. The function returns a JSONB object containing: person identity, managers, team_members roles, guardians with nested player_guardians, self-player records, RLS-visible teams (ordered by name), and RLS-visible clubs. `getViewerContext()` now does `getUser()` (1 Auth call) + `rpc('get_viewer_context')` (1 DB call) instead of 1 Auth call + 2 sequential DB calls + 5 parallel DB calls.
+
+**§4.1** — Clubs are included in the `get_viewer_context()` RPC result (`visibleClubs` field on `ViewerContext`). `getPrimaryClub()` reads from `ctx.visibleClubs` instead of calling `listVisibleClubs()`, eliminating one extra DB round-trip. `listVisibleTeams()` and `getActiveTeam()` delegate to the cached `getViewerContext()` result so no separate teams query is made. `AppHeader` no longer calls `listVisibleTeams()` explicitly — it derives the sorted team list from `ctx.visibleTeams`. The irreducible waterfall per page load is now: Auth `getUser()` → `get_viewer_context()` RPC → cookie read (for active team), down from 4 sequential stages and 7+ DB calls.
+
+---
+
+## Recommended priority order
+
+Highest impact first.
+
+| Priority | Item            | Recommendation                                 | Rationale                                     |
+| -------- | --------------- | ---------------------------------------------- | --------------------------------------------- |
+| 1        | **§3.1**        | Cache `has_app_access` result                  | Immediate win; every page load benefits       |
+| 2        | **§2.1**        | Set club colour cookie in middleware           | Eliminates FODC                               |
+| 3        | **§1.1**        | Streamline login flow                          | Removes one network round-trip                |
+| 4        | **§4.1 + §6.2** | Composite RPC for viewer context + header data | Biggest single improvement for all page loads |
+| 5        | **§5.1 + §6.4** | Stats page SQL aggregation                     | Fixes the slowest individual page             |
+| 6        | **§3.2**        | Parallel middleware calls                      | Easy win                                      |
+| 7        | **§4.3**        | Restructure `getPrimaryClub`                   | Removes one waterfall stage                   |
+| 8        | **§5.6**        | Cross-request caching for stable data          | Multiplier on all above                       |
+| 9        | **§6.1**        | Cache `createClient()` per request             | Small per-call saving, large aggregate        |
+| 10       | —               | Everything else as time permits                | —                                             |
 
 ---
 
@@ -452,22 +479,3 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 - Consider whether Geist Mono is used often enough to justify loading it globally. If it's only used in a few code-related UI elements, load it only on pages that need it.
 
 **Tradeoffs:** Removing a font changes the visual identity. `font-display: swap` causes FOUT but is better for performance.
-
----
-
-## 9. Recommended priority order
-
-Highest impact first.
-
-| Priority | Item            | Recommendation                                 | Rationale                                     |
-| -------- | --------------- | ---------------------------------------------- | --------------------------------------------- |
-| 1        | **§3.1**        | Cache `has_app_access` result                  | Immediate win; every page load benefits       |
-| 2        | **§2.1**        | Set club colour cookie in middleware           | Eliminates FODC                               |
-| 3        | **§1.1**        | Streamline login flow                          | Removes one network round-trip                |
-| 4        | **§4.1 + §6.2** | Composite RPC for viewer context + header data | Biggest single improvement for all page loads |
-| 5        | **§5.1 + §6.4** | Stats page SQL aggregation                     | Fixes the slowest individual page             |
-| 6        | **§3.2**        | Parallel middleware calls                      | Easy win                                      |
-| 7        | **§4.3**        | Restructure `getPrimaryClub`                   | Removes one waterfall stage                   |
-| 8        | **§5.6**        | Cross-request caching for stable data          | Multiplier on all above                       |
-| 9        | **§6.1**        | Cache `createClient()` per request             | Small per-call saving, large aggregate        |
-| 10       | —               | Everything else as time permits                | —                                             |

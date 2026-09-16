@@ -30,28 +30,32 @@ describe("team data", () => {
     getViewerContextMock.mockResolvedValue(viewerFixture());
   });
 
-  it("lists visible teams and maps list errors", async () => {
+  it("lists visible teams sorted from ctx.visibleTeams (§4.1 + §6.2)", async () => {
+    // listVisibleTeams() now delegates to getViewerContext() instead of making
+    // its own DB call, so only getViewerContextMock needs to be set.
     const teams = [
       teamFixture({ id: "team-b", name: "B", season_label: "2024/25" }),
       teamFixture({ id: "team-a", name: "A", season_label: "2025/26" }),
     ];
-    createClientMock.mockResolvedValue(
-      mockFromClient({ teams: okResult(teams) }),
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ visibleTeams: teams }),
     );
     const { listVisibleTeams } = await import("@/lib/data/team");
     const listed = await listVisibleTeams();
     expect(listed.error).toBeNull();
+    // sortTeamsForDisplay orders by name → A before B.
     expect(listed.data.map((t) => t.id)).toEqual(["team-a", "team-b"]);
 
-    createClientMock.mockResolvedValue(
-      mockFromClient({ teams: errResult("rls denied") }),
-    );
+    // When ctx is null (signed out), returns empty with no error.
+    getViewerContextMock.mockResolvedValue(null);
     vi.resetModules();
-    const { listVisibleTeams: listAgain } = await import("@/lib/data/team");
-    expect(await listAgain()).toEqual({ data: [], error: "rls denied" });
+    const { listVisibleTeams: listWhenSignedOut } =
+      await import("@/lib/data/team");
+    expect(await listWhenSignedOut()).toEqual({ data: [], error: null });
   });
 
-  it("resolves active team from cookie, non-archived fallback, then first team", async () => {
+  it("resolves active team from cookie, non-archived fallback, then first team (§4.1 + §6.2)", async () => {
+    // getActiveTeam() now reads teams from ctx.visibleTeams; no DB call for teams.
     const archived = teamFixture({
       id: "team-old",
       archived_at: "2025-06-01T00:00:00Z",
@@ -59,20 +63,22 @@ describe("team data", () => {
     });
     const active = teamFixture({ id: "team-new", name: "New" });
 
-    createClientMock.mockResolvedValue(
-      mockFromClient({ teams: okResult([archived, active]) }),
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ visibleTeams: [archived, active] }),
     );
     cookiesGetMock.mockReturnValue({ value: "missing-id" });
     const { getActiveTeam, getCurrentTeam } = await import("@/lib/data/team");
+    // Cookie "missing-id" isn't found → falls back to non-archived team.
     expect((await getActiveTeam())?.id).toBe("team-new");
     expect(getCurrentTeam).toBe(getActiveTeam);
 
     vi.resetModules();
-    createClientMock.mockResolvedValue(
-      mockFromClient({ teams: okResult([archived]) }),
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({ visibleTeams: [archived] }),
     );
     cookiesGetMock.mockReturnValue(undefined);
     const { getActiveTeam: getAgain } = await import("@/lib/data/team");
+    // Only archived team → returns it as last resort.
     expect((await getAgain())?.id).toBe("team-old");
   });
 
@@ -425,13 +431,11 @@ describe("team data", () => {
   });
 
   it("checks canEditActiveTeam and canEditActiveMatchDay", async () => {
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        teams: okResult([teamFixture({ id: "team-1" })]),
-      }),
-    );
     getViewerContextMock.mockResolvedValue(
-      viewerFixture({ editableTeamIds: ["team-1"] }),
+      viewerFixture({
+        visibleTeams: [teamFixture({ id: "team-1" })],
+        editableTeamIds: ["team-1"],
+      }),
     );
     const { canEditActiveTeam, canEditActiveMatchDay } =
       await import("@/lib/data/team");
@@ -440,11 +444,6 @@ describe("team data", () => {
 
     getViewerContextMock.mockResolvedValue(null);
     vi.resetModules();
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        teams: okResult([teamFixture({ id: "team-1" })]),
-      }),
-    );
     const {
       canEditActiveTeam: canEditTeamAgain,
       canEditActiveMatchDay: canEditMatchAgain,
@@ -453,24 +452,23 @@ describe("team data", () => {
     expect(await canEditMatchAgain()).toBe(false);
 
     getViewerContextMock.mockResolvedValue(
-      viewerFixture({ editableTeamIds: ["other"] }),
+      viewerFixture({ visibleTeams: [], editableTeamIds: ["other"] }),
     );
-    createClientMock.mockResolvedValue(mockFromClient({ teams: okResult([]) }));
     vi.resetModules();
     const { canEditActiveTeam: noTeam } = await import("@/lib/data/team");
     expect(await noTeam()).toBe(false);
   });
 
   it("treats archived active teams as match-day read-only", async () => {
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        teams: okResult([
-          teamFixture({ id: "team-1", archived_at: "2026-05-01T00:00:00Z" }),
-        ]),
-      }),
-    );
+    const archivedTeam = teamFixture({
+      id: "team-1",
+      archived_at: "2026-05-01T00:00:00Z",
+    });
     getViewerContextMock.mockResolvedValue(
-      viewerFixture({ editableTeamIds: ["team-1"] }),
+      viewerFixture({
+        visibleTeams: [archivedTeam],
+        editableTeamIds: ["team-1"],
+      }),
     );
     vi.resetModules();
     const { canEditActiveMatchDay, canEditActiveTeamHistory, getTeam } =
@@ -478,6 +476,7 @@ describe("team data", () => {
     expect(await canEditActiveMatchDay()).toBe(false);
     expect(await canEditActiveTeamHistory()).toBe(false);
 
+    // getTeam still reads from the DB directly (point lookup by id).
     createClientMock.mockResolvedValue(
       mockFromClient({
         teams: okResult(teamFixture({ archived_at: "2026-05-01T00:00:00Z" })),
