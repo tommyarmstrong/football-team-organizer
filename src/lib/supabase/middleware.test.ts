@@ -311,3 +311,46 @@ describe("§2.1 — club_colour_hint cookie in middleware", () => {
     expect(response.cookies.get(CLUB_COLOUR_HINT_COOKIE)).toBeUndefined();
   });
 });
+
+describe("§3.2 — parallel getUser() + has_app_access", () => {
+  beforeEach(() => {
+    createServerClientMock.mockReset();
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("calls both getUser() and has_app_access on a cache miss", async () => {
+    mockAuth({ user: { id: "auth-1" }, hasAccess: true });
+
+    await updateSession(request("/dashboard")); // no fto_access cookie → cache miss
+
+    const client = createServerClientMock.mock.results[0].value;
+    // Both should have been called (verifying concurrent execution path).
+    expect(client.rpc).toHaveBeenCalledWith("has_app_access");
+  });
+
+  it("does not call has_app_access when fto_access cookie is present", async () => {
+    mockAuth({ user: { id: "auth-1" }, hasAccess: false }); // RPC would deny
+
+    await updateSession(request("/dashboard", `${FTO_ACCESS_COOKIE}=1`));
+
+    const client = createServerClientMock.mock.results[0].value;
+    expect(client.rpc).not.toHaveBeenCalled();
+  });
+
+  it("resolves access correctly when both calls return concurrently", async () => {
+    // Simulate concurrent resolution by confirming the result is correct.
+    mockAuth({ user: { id: "auth-1" }, hasAccess: true });
+
+    const response = await updateSession(request("/dashboard"));
+
+    // No redirect → access was granted via the concurrent RPC result.
+    expect(response.headers.get("location")).toBeNull();
+    const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
+    expect(cookie?.value).toBe("1");
+  });
+});

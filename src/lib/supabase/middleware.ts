@@ -61,10 +61,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh the auth session; do not remove this call.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // §3.1 — Check the cached access cookie before firing any network calls.
+  const cachedAccess = request.cookies.get(FTO_ACCESS_COOKIE)?.value === "1";
+
+  // §3.2 — getUser() and has_app_access are independent: both rely only on the
+  // session cookies already present in the incoming request. Fire them
+  // concurrently so their latencies overlap rather than stack sequentially.
+  // When the access cookie is present (§3.1) the RPC is replaced with an
+  // already-resolved promise, leaving only the mandatory getUser() call.
+  const [
+    {
+      data: { user },
+    },
+    hasTeamFromRpc,
+  ] = await Promise.all([
+    supabase.auth.getUser(), // always required — do not remove this call
+    cachedAccess ? Promise.resolve(true) : userHasAppAccess(supabase),
+  ]);
 
   const { pathname } = request.nextUrl;
   const setupKind = parsePasswordSetupKind(
@@ -89,13 +102,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    // §3.1 — Skip the has_app_access RPC for sessions with a valid cached cookie.
-    const cachedAccess = request.cookies.get(FTO_ACCESS_COOKIE)?.value === "1";
-    let hasTeam = cachedAccess;
-
-    if (!cachedAccess) {
-      hasTeam = await userHasAppAccess(supabase);
-    }
+    const hasTeam = cachedAccess || hasTeamFromRpc;
 
     if (!hasTeam && !isMembershipExemptPath(pathname)) {
       const redirectUrl = request.nextUrl.clone();

@@ -17,9 +17,14 @@ export async function verifySignedInPersonAccess(): Promise<{
   error: string | null;
 }> {
   const supabase = await createClient();
+  // §1.2 — Middleware already validated the JWT via getUser() on this request
+  // and refreshed the session cookie if needed. getSession() reads that
+  // already-validated session from cookies without a second network round-trip
+  // to the Supabase Auth server, halving auth latency for this code path.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   if (!user) {
     return { error: "Not signed in." };
   }

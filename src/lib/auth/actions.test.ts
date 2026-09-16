@@ -62,6 +62,12 @@ function authClient({
 } = {}) {
   return {
     auth: {
+      // §1.2 — verifySignedInPersonAccess uses getSession() instead of getUser()
+      // to avoid a redundant network call when middleware already validated the JWT.
+      getSession: vi.fn(async () => ({
+        data: { session: sessionUser ? { user: sessionUser } : null },
+        error: null,
+      })),
       getUser: vi.fn(async () => ({
         data: { user: sessionUser },
         error: null,
@@ -257,6 +263,29 @@ describe("assertPersonMayRemainSignedIn", () => {
     signOutMock.mockReset();
     findPersonForAuthUserIdMock.mockReset();
     findPersonForVerifiedEmailMock.mockReset();
+  });
+
+  it("uses getSession() rather than getUser() to avoid a redundant network call (§1.2)", async () => {
+    const client = authClient();
+    createClientMock.mockResolvedValue(client);
+    findPersonForAuthUserIdMock.mockResolvedValue({
+      data: { id: "person-1", account_status: "active" } as Person,
+      error: null,
+    });
+
+    await assertPersonMayRemainSignedIn();
+
+    expect(client.auth.getSession).toHaveBeenCalledOnce();
+    expect(client.auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when there is no active session", async () => {
+    createClientMock.mockResolvedValue(authClient({ sessionUser: null }));
+
+    const result = await assertPersonMayRemainSignedIn();
+
+    expect(result.error).toBe("Not signed in.");
+    expect(signOutMock).not.toHaveBeenCalled();
   });
 
   it("allows active people to remain signed in", async () => {
