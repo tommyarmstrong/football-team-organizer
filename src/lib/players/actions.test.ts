@@ -40,7 +40,7 @@ const {
   deletePlayerObjectiveMock: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
+vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock, revalidateTag: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/data/team", () => ({ getActiveTeam: getActiveTeamMock }));
 vi.mock("@/lib/data/clubs", () => ({

@@ -10,6 +10,17 @@ const { createClientMock, getCurrentTeamMock } = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => createClientMock(),
+}));
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <T extends unknown[], R>(fn: (...args: T) => Promise<R>) =>
+    (...args: T) =>
+      fn(...args),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
 vi.mock("@/lib/data/team", () => ({
   getCurrentTeam: getCurrentTeamMock,
 }));
@@ -45,12 +56,12 @@ describe("competitions data", () => {
   });
 
   it("lists, gets, creates, updates, and deletes", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ competitions: okResult([competition]) }),
     );
     expect((await listCompetitions()).data).toHaveLength(1);
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ competitions: okResult(competition) }),
     );
     expect((await getCompetition("comp-1")).data?.name).toBe("League");
@@ -61,7 +72,7 @@ describe("competitions data", () => {
       (await updateCompetition("comp-1", { name: "League 2" })).error,
     ).toBeNull();
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ competitions: okResult(null) }),
     );
     expect(await deleteCompetition("comp-1")).toEqual({ error: null });
@@ -79,7 +90,7 @@ describe("competitions data", () => {
   });
 
   it("maps query errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ competitions: errResult("fail") }),
     );
     expect(await listCompetitions("team-1")).toEqual({

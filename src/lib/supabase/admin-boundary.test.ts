@@ -8,6 +8,11 @@ const srcRoot = path.join(repoRoot, "src");
 const adminModule = path.join(srcRoot, "lib/supabase/admin.ts");
 
 const allowedDirectImporters = new Set([
+  // Data layer: uses admin client inside unstable_cache callbacks (§5.6).
+  "src/lib/data/clubs.ts",
+  "src/lib/data/competitions.ts",
+  "src/lib/data/players.ts",
+  "src/lib/data/venues.ts",
   "src/lib/people/delete-auth-user.ts",
   "src/lib/people/invitations.ts",
   "src/lib/people/onboarding-actions.ts",

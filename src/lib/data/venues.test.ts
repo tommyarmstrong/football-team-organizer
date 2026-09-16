@@ -9,6 +9,19 @@ const { createClientMock } = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => createClientMock(),
+}));
+// Provide a passthrough unstable_cache so data-layer tests run without the
+// Next.js incremental-cache infrastructure.
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <T extends unknown[], R>(fn: (...args: T) => Promise<R>) =>
+    (...args: T) =>
+      fn(...args),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
 
 import {
   createVenue,
@@ -24,7 +37,7 @@ describe("venues data", () => {
   });
 
   it("lists venues and filters by club", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ venues: okResult([venueFixture()]) }),
     );
     const all = await listVenues();
@@ -35,7 +48,7 @@ describe("venues data", () => {
   });
 
   it("gets, creates, updates, and deletes venues", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ venues: okResult(venueFixture()) }),
     );
     expect((await getVenue("venue-1")).data?.name).toBe("Main Pitch");
@@ -46,14 +59,14 @@ describe("venues data", () => {
       (await updateVenue("venue-1", { name: "Updated" })).error,
     ).toBeNull();
 
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ venues: okResult(null) }),
     );
     expect(await deleteVenue("venue-1")).toEqual({ error: null });
   });
 
   it("maps query errors", async () => {
-    createClientMock.mockResolvedValue(
+    createClientMock.mockReturnValue(
       mockFromClient({ venues: errResult("nope") }),
     );
     expect(await getVenue("x")).toEqual({ data: null, error: "nope" });

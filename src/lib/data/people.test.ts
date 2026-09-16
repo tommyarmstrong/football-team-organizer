@@ -62,22 +62,31 @@ describe("people data writes", () => {
   });
 
   it("loads a person with roles and outstanding invitation", async () => {
+    // §5.3: getPerson now uses a single nested select so all roles and the
+    // invitation come back embedded in the people row.
     createClientMock.mockResolvedValue(
       mockFromClient({
-        people: okResult(personFixture({ id: "person-1" })),
-        managers: okResult([]),
-        coaches: okResult([{ id: "c1", club_id: "club-1", active_role: true }]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: okResult([
-          {
-            id: "inv-1",
-            person_id: "person-1",
-            email: "ada@example.com",
-            accepted_at: null,
-            revoked_at: null,
-          },
-        ]),
+        people: okResult({
+          ...personFixture({ id: "person-1" }),
+          managers: [],
+          coaches: [{ id: "c1", club_id: "club-1", active_role: true }],
+          guardians: [],
+          players: [],
+          person_invitations: [
+            {
+              id: "inv-1",
+              person_id: "person-1",
+              email: "ada@example.com",
+              token_hash: "hash",
+              expires_at: "2030-01-01T00:00:00Z",
+              accepted_at: null,
+              revoked_at: null,
+              invited_by: null,
+              created_at: "2026-01-01T00:00:00Z",
+              updated_at: "2026-01-01T00:00:00Z",
+            },
+          ],
+        }),
       }),
     );
     const person = await getPerson("person-1");
@@ -412,65 +421,65 @@ describe("people data writes", () => {
   });
 
   it("maps deletePerson load, deactivate, invite, disable, and auth errors", async () => {
+    // §5.3: getPerson uses a single nested select, so roles come embedded in
+    // the people result. Separate role-table mocks are only needed for writes.
+
     createClientMock.mockResolvedValue(
       mockFromClient({ people: errResult("load fail") }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: "load fail" });
 
+    // Person not found
     createClientMock.mockResolvedValue(
-      mockFromClient({
-        people: okResult(null),
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: okResult([]),
-      }),
+      mockFromClient({ people: okResult(null) }),
     );
     expect(await deletePerson("person-1")).toEqual({
       error: "Person not found.",
     });
 
+    // Guardian write error — role list embedded in people result
     createClientMock.mockResolvedValue(
       mockFromClient({
-        people: okResult(personFixture({ id: "person-1" })),
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: [
-          okResult([{ id: "g1", club_id: "club-1", active_role: true }]),
-          errResult("guardian write"),
-        ],
-        players: okResult([]),
-        person_invitations: okResult([]),
+        people: okResult({
+          ...personFixture({ id: "person-1" }),
+          managers: [],
+          coaches: [],
+          guardians: [{ id: "g1", club_id: "club-1", active_role: true }],
+          players: [],
+          person_invitations: [],
+        }),
+        guardians: errResult("guardian write"),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({
       error: "guardian write",
     });
 
+    // Manager write error
     createClientMock.mockResolvedValue(
       mockFromClient({
-        people: okResult(personFixture({ id: "person-1" })),
-        managers: [
-          okResult([{ id: "m1", club_id: "club-1", active_role: true }]),
-          errResult("manager write"),
-        ],
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: okResult([]),
+        people: okResult({
+          ...personFixture({ id: "person-1" }),
+          managers: [{ id: "m1", club_id: "club-1", active_role: true }],
+          coaches: [],
+          guardians: [],
+          players: [],
+          person_invitations: [],
+        }),
+        managers: errResult("manager write"),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: "manager write" });
 
+    // Player write error
     createClientMock.mockResolvedValue(
       mockFromClient({
-        people: okResult(personFixture({ id: "person-1" })),
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: [
-          okResult([
+        people: okResult({
+          ...personFixture({ id: "person-1" }),
+          managers: [],
+          coaches: [],
+          guardians: [],
+          players: [
             {
               id: "p1",
               club_id: "club-1",
@@ -479,72 +488,85 @@ describe("people data writes", () => {
               school: null,
               date_of_birth: null,
             },
-          ]),
-          errResult("player write"),
-        ],
-        person_invitations: okResult([]),
+          ],
+          person_invitations: [],
+        }),
+        players: errResult("player write"),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: "player write" });
 
+    // Coach write error
     createClientMock.mockResolvedValue(
       mockFromClient({
-        people: okResult(personFixture({ id: "person-1" })),
-        managers: okResult([]),
-        coaches: [
-          okResult([{ id: "c1", club_id: "club-1", active_role: true }]),
-          errResult("coach write"),
-        ],
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: okResult([]),
+        people: okResult({
+          ...personFixture({ id: "person-1" }),
+          managers: [],
+          coaches: [{ id: "c1", club_id: "club-1", active_role: true }],
+          guardians: [],
+          players: [],
+          person_invitations: [],
+        }),
+        coaches: errResult("coach write"),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: "coach write" });
 
+    // Invite revoke error
     createClientMock.mockResolvedValue(
       mockFromClient({
         people: [
-          okResult(personFixture({ id: "person-1" })),
+          okResult({
+            ...personFixture({ id: "person-1" }),
+            managers: [],
+            coaches: [],
+            guardians: [],
+            players: [],
+            person_invitations: [],
+          }),
           errResult("disable fail"),
         ],
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: [okResult([]), errResult("invite fail")],
+        person_invitations: errResult("invite fail"),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({ error: "invite fail" });
 
+    // Disable (people update) error
     createClientMock.mockResolvedValue(
       mockFromClient({
         people: [
-          okResult(personFixture({ id: "person-1" })),
+          okResult({
+            ...personFixture({ id: "person-1" }),
+            managers: [],
+            coaches: [],
+            guardians: [],
+            players: [],
+            person_invitations: [],
+          }),
           errResult("disable fail"),
         ],
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: [okResult([]), okResult(null)],
+        person_invitations: okResult(null),
       }),
     );
     expect(await deletePerson("person-1")).toEqual({
       error: "disable fail",
     });
 
+    // Auth user delete error
     createClientMock.mockResolvedValue(
       mockFromClient({
         people: [
-          okResult(personFixture({ id: "person-1", auth_user_id: "auth-1" })),
+          okResult({
+            ...personFixture({ id: "person-1", auth_user_id: "auth-1" }),
+            managers: [],
+            coaches: [],
+            guardians: [],
+            players: [],
+            person_invitations: [],
+          }),
           okResult(null),
         ],
-        managers: okResult([]),
-        coaches: okResult([]),
-        guardians: okResult([]),
-        players: okResult([]),
-        person_invitations: okResult([]),
+        person_invitations: okResult(null),
       }),
     );
     deleteAuthUserMock.mockResolvedValue({ error: "auth fail" });

@@ -42,7 +42,7 @@ const {
   createClientMock: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
+vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock, revalidateTag: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ set: cookiesSetMock, get: vi.fn(), delete: vi.fn() }),
