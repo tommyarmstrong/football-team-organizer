@@ -14,73 +14,74 @@ The recommendations below are grouped by subsystem and tagged **High**, **Medium
 
 ## Table of Contents
 
-1. [Status](#1-status)
-2. [Login & Auth Flow](#2-login--auth-flow)
-3. [Theming & Club Colour Pipeline](#3-theming--club-colour-pipeline)
-4. [Middleware](#4-middleware)
-5. [App Header & Layout Data Fetching](#5-app-header--layout-data-fetching)
-6. [Page-Level Data Fetching & Caching](#6-page-level-data-fetching--caching)
-7. [Database & Query Patterns](#7-database--query-patterns)
-8. [Client Bundle & Code Splitting](#8-client-bundle--code-splitting)
-9. [CSS & Rendering](#9-css--rendering)
-10. [Recommended priority order](#10-recommended-priority-order)
+- [Status](#status)
+
+1. [Login & Auth Flow](#1-login--auth-flow)
+2. [Theming & Club Colour Pipeline](#2-theming--club-colour-pipeline)
+3. [Middleware](#3-middleware)
+4. [App Header & Layout Data Fetching](#4-app-header--layout-data-fetching)
+5. [Page-Level Data Fetching & Caching](#5-page-level-data-fetching--caching)
+6. [Database & Query Patterns](#6-database--query-patterns)
+7. [Client Bundle & Code Splitting](#7-client-bundle--code-splitting)
+8. [CSS & Rendering](#8-css--rendering)
+9. [Recommended priority order](#9-recommended-priority-order)
 
 ---
 
-## 1. Status
+## Status
 
 Items are tracked as they are picked up and merged. The branch column links to the PR where each fix landed.
 
 | #       | Recommendation                                        | Area         | Impact | Effort | Status                                                                                   | Branch / PR                                                                                    |
 | ------- | ----------------------------------------------------- | ------------ | ------ | ------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **2.1** | Inline session access check; remove bootstrap POST    | Login        | High   | Medium | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
-| **2.2** | Deduplicate `getUser()` calls                         | Login        | Medium | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
-| 2.3     | Use RLS client instead of admin for reads             | Auth         | Low    | Low    | —                                                                                        |                                                                                                |
-| **3.1** | Set colour cookie in middleware                       | Theming      | High   | Medium | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
-| 3.2     | Switch `useLayoutEffect` to `useEffect`               | Theming      | Low    | Low    | ⏸ Low priority — §3.1 eliminated the FODC; `useLayoutEffect` is now only a fallback path |                                                                                                |
-| **4.1** | Cache `has_app_access` in a cookie                    | Middleware   | High   | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
-| **4.2** | Parallel `getUser()` + `has_app_access`               | Middleware   | Medium | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
-| 4.3     | Narrow middleware matcher                             | Middleware   | Low    | Low    | —                                                                                        |                                                                                                |
-| 5.1     | Composite RPC for header data                         | Header       | High   | High   | —                                                                                        |                                                                                                |
-| 5.2     | Split header into multiple Suspense zones             | Header       | Medium | Medium | —                                                                                        |                                                                                                |
-| 5.3     | Restructure `getPrimaryClub` to avoid chained awaits  | Header       | Medium | Low    | —                                                                                        |                                                                                                |
-| 6.1     | Composite RPC or SQL aggregation for stats            | Stats page   | High   | High   | —                                                                                        |                                                                                                |
-| 6.2     | Combine or defer team page candidate queries          | Team page    | Medium | Medium | —                                                                                        |                                                                                                |
-| 6.3     | Composite person-detail query or RPC                  | People page  | Medium | Medium | —                                                                                        |                                                                                                |
-| 6.4     | Composite match-detail query                          | Matches page | Medium | Medium | —                                                                                        |                                                                                                |
-| 6.5     | Share dashboard data via single cached fetch          | Dashboard    | Low    | Low    | —                                                                                        |                                                                                                |
-| 6.6     | Cross-request caching with `unstable_cache` + tags    | All pages    | Medium | Medium | —                                                                                        |                                                                                                |
-| 7.1     | Wrap `createClient()` in `React.cache()`              | DB layer     | Medium | Low    | —                                                                                        |                                                                                                |
-| 7.2     | Single RPC for viewer context                         | DB layer     | High   | High   | —                                                                                        |                                                                                                |
-| 7.3     | Select only needed columns from clubs                 | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
-| 7.4     | Push stats aggregation into Postgres                  | DB layer     | Medium | Medium | —                                                                                        |                                                                                                |
-| 7.5     | Combine `getNextFixture` fallback into one query      | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
-| 8.1     | Verify Recharts tree-shaking; prefetch stats bundle   | Bundle       | Medium | Low    | —                                                                                        |                                                                                                |
-| 8.2     | Verify Lucide tree-shaking                            | Bundle       | Low    | Low    | —                                                                                        |                                                                                                |
-| 8.3     | Monitor @base-ui bundle size                          | Bundle       | Low    | Low    | —                                                                                        |                                                                                                |
-| 9.1     | Remove `background-attachment: fixed`                 | CSS          | Low    | Low    | —                                                                                        |                                                                                                |
-| 9.2     | No action needed for `color-mix()`                    | CSS          | —      | —      | N/A                                                                                      |                                                                                                |
-| 9.3     | Verify font-display; consider lazy-loading Geist Mono | CSS          | Low    | Low    | —                                                                                        |                                                                                                |
+| **1.1** | Inline session access check; remove bootstrap POST    | Login        | High   | Medium | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
+| **1.2** | Deduplicate `getUser()` calls                         | Login        | Medium | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
+| 1.3     | Use RLS client instead of admin for reads             | Auth         | Low    | Low    | —                                                                                        |                                                                                                |
+| **2.1** | Set colour cookie in middleware                       | Theming      | High   | Medium | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
+| 2.2     | Switch `useLayoutEffect` to `useEffect`               | Theming      | Low    | Low    | ⏸ Low priority — §2.1 eliminated the FODC; `useLayoutEffect` is now only a fallback path |                                                                                                |
+| **3.1** | Cache `has_app_access` in a cookie                    | Middleware   | High   | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
+| **3.2** | Parallel `getUser()` + `has_app_access`               | Middleware   | Medium | Low    | ✅ Done — 16 Sep 2026                                                                    | [performance/reivew-items](https://github.com/tommyarmstrong/football-team-organizer/pull/154) |
+| 3.3     | Narrow middleware matcher                             | Middleware   | Low    | Low    | —                                                                                        |                                                                                                |
+| 4.1     | Composite RPC for header data                         | Header       | High   | High   | —                                                                                        |                                                                                                |
+| 4.2     | Split header into multiple Suspense zones             | Header       | Medium | Medium | —                                                                                        |                                                                                                |
+| 4.3     | Restructure `getPrimaryClub` to avoid chained awaits  | Header       | Medium | Low    | —                                                                                        |                                                                                                |
+| 5.1     | Composite RPC or SQL aggregation for stats            | Stats page   | High   | High   | —                                                                                        |                                                                                                |
+| 5.2     | Combine or defer team page candidate queries          | Team page    | Medium | Medium | —                                                                                        |                                                                                                |
+| 5.3     | Composite person-detail query or RPC                  | People page  | Medium | Medium | —                                                                                        |                                                                                                |
+| 5.4     | Composite match-detail query                          | Matches page | Medium | Medium | —                                                                                        |                                                                                                |
+| 5.5     | Share dashboard data via single cached fetch          | Dashboard    | Low    | Low    | —                                                                                        |                                                                                                |
+| 5.6     | Cross-request caching with `unstable_cache` + tags    | All pages    | Medium | Medium | —                                                                                        |                                                                                                |
+| 6.1     | Wrap `createClient()` in `React.cache()`              | DB layer     | Medium | Low    | —                                                                                        |                                                                                                |
+| 6.2     | Single RPC for viewer context                         | DB layer     | High   | High   | —                                                                                        |                                                                                                |
+| 6.3     | Select only needed columns from clubs                 | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
+| 6.4     | Push stats aggregation into Postgres                  | DB layer     | Medium | Medium | —                                                                                        |                                                                                                |
+| 6.5     | Combine `getNextFixture` fallback into one query      | DB layer     | Low    | Low    | —                                                                                        |                                                                                                |
+| 7.1     | Verify Recharts tree-shaking; prefetch stats bundle   | Bundle       | Medium | Low    | —                                                                                        |                                                                                                |
+| 7.2     | Verify Lucide tree-shaking                            | Bundle       | Low    | Low    | —                                                                                        |                                                                                                |
+| 7.3     | Monitor @base-ui bundle size                          | Bundle       | Low    | Low    | —                                                                                        |                                                                                                |
+| 8.1     | Remove `background-attachment: fixed`                 | CSS          | Low    | Low    | —                                                                                        |                                                                                                |
+| 8.2     | No action needed for `color-mix()`                    | CSS          | —      | —      | N/A                                                                                      |                                                                                                |
+| 8.3     | Verify font-display; consider lazy-loading Geist Mono | CSS          | Low    | Low    | —                                                                                        |                                                                                                |
 
 ### Notes on completed items
 
-**§4.1** — `fto_access=1` (`HttpOnly; Max-Age=300`) is set by middleware whenever `rpc('has_app_access')` returns `true`. Subsequent requests within the 5-minute window skip the RPC entirely. The cookie is carried through the `/login` → `/dashboard` redirect and is cleared by `signOut()`.
+**§3.1** — `fto_access=1` (`HttpOnly; Max-Age=300`) is set by middleware whenever `rpc('has_app_access')` returns `true`. Subsequent requests within the 5-minute window skip the RPC entirely. The cookie is carried through the `/login` → `/dashboard` redirect and is cleared by `signOut()`.
 
-**§3.1** — Middleware now runs a single-row `SELECT colour FROM clubs` (RLS-filtered) whenever the `club_colour_hint` cookie is absent or invalid. The cookie lasts 30 days so this query only fires on the first authenticated request. `ClubColourBinder` is kept as a mid-session fallback updater.
+**§2.1** — Middleware now runs a single-row `SELECT colour FROM clubs` (RLS-filtered) whenever the `club_colour_hint` cookie is absent or invalid. The cookie lasts 30 days so this query only fires on the first authenticated request. `ClubColourBinder` is kept as a mid-session fallback updater.
 
-**§2.1** — `GET /auth/session/verify?next=<path>` replaces the client-initiated `POST /auth/session/bootstrap`. After `signInWithPassword` the login form redirects the browser to this route; middleware runs on the same request (§4.1 + §3.1 + §4.2 activate here), and the verify route calls `verifySignedInPersonAccess()` server-side then redirects to `next`. Login now has one client-initiated call followed by one server hop instead of two sequential browser↔server round-trips. The 150 ms colour-resolution timeout is removed from the login critical path entirely.
+**§1.1** — `GET /auth/session/verify?next=<path>` replaces the client-initiated `POST /auth/session/bootstrap`. After `signInWithPassword` the login form redirects the browser to this route; middleware runs on the same request (§3.1 + §2.1 + §3.2 activate here), and the verify route calls `verifySignedInPersonAccess()` server-side then redirects to `next`. Login now has one client-initiated call followed by one server hop instead of two sequential browser↔server round-trips. The 150 ms colour-resolution timeout is removed from the login critical path entirely.
 
-**§2.2** — `verifySignedInPersonAccess()` now calls `supabase.auth.getSession()` instead of `supabase.auth.getUser()`. Middleware already validated and refreshed the JWT via `getUser()` on the same request, so `getSession()` reads the session from the cookie store without a second network round-trip to the Supabase Auth server. This halves auth network latency for the verify route and any server action that calls `assertPersonMayRemainSignedIn`.
+**§1.2** — `verifySignedInPersonAccess()` now calls `supabase.auth.getSession()` instead of `supabase.auth.getUser()`. Middleware already validated and refreshed the JWT via `getUser()` on the same request, so `getSession()` reads the session from the cookie store without a second network round-trip to the Supabase Auth server. This halves auth network latency for the verify route and any server action that calls `assertPersonMayRemainSignedIn`.
 
-**§4.2** — `getUser()` and `rpc('has_app_access')` are now started concurrently with `Promise.all` on cache misses. Both calls rely only on the session cookies already in the incoming request and are independent of each other. On a cache miss this reduces the sequential 80–180 ms waterfall to the cost of whichever call takes longer (~50–100 ms). When `fto_access` is cached (§4.1) the RPC is replaced with `Promise.resolve(true)`, so no extra concurrency overhead is incurred on warm requests.
+**§3.2** — `getUser()` and `rpc('has_app_access')` are now started concurrently with `Promise.all` on cache misses. Both calls rely only on the session cookies already in the incoming request and are independent of each other. On a cache miss this reduces the sequential 80–180 ms waterfall to the cost of whichever call takes longer (~50–100 ms). When `fto_access` is cached (§3.1) the RPC is replaced with `Promise.resolve(true)`, so no extra concurrency overhead is incurred on warm requests.
 
-**§3.2** — Deprioritised. §3.1 eliminated the flash of default colour by setting the cookie server-side in middleware; `ClubColourBinder`'s `useLayoutEffect` now only runs as a mid-session fallback (e.g. when the club colour is edited). The `useLayoutEffect` → `useEffect` switch remains valid and easy but the user-visible impact is now negligible.
+**§2.2** — Deprioritised. §2.1 eliminated the flash of default colour by setting the cookie server-side in middleware; `ClubColourBinder`'s `useLayoutEffect` now only runs as a mid-session fallback (e.g. when the club colour is edited). The `useLayoutEffect` → `useEffect` switch remains valid and easy but the user-visible impact is now negligible.
 
 ---
 
-## 2. Login & Auth Flow
+## 1. Login & Auth Flow
 
-### 2.1 Inline session access check instead of a separate bootstrap POST — **High**
+### 1.1 Inline session access check instead of a separate bootstrap POST — **High**
 
 **Current behaviour:** After `signInWithPassword` returns successfully on the client, the login form immediately fires `fetch("/auth/session/bootstrap", { method: "POST" })`. This endpoint creates a new Supabase server client, calls `supabase.auth.getUser()`, looks up the person by `auth_user_id` (and optionally by email as a fallback), checks account status, then races a club colour lookup against a 150 ms timeout — all sequentially.
 
@@ -94,7 +95,7 @@ Items are tracked as they are picked up and merged. The branch column links to t
 
 **Tradeoffs:** Moving to a redirect-based flow changes the login UX slightly (browser navigation instead of an SPA transition). The optimistic parallel approach is simpler but still has two round-trips.
 
-### 2.2 Remove redundant `getUser()` calls in session access — **Medium**
+### 1.2 Remove redundant `getUser()` calls in session access — **Medium**
 
 **Current behaviour:** `verifySignedInPersonAccess()` in `session-access.ts` calls `supabase.auth.getUser()`. This is the same call the middleware _just made_ for the same request. The bootstrap route handler creates its own Supabase client, so the middleware's session refresh is not reused.
 
@@ -104,7 +105,7 @@ Items are tracked as they are picked up and merged. The branch column links to t
 
 **Tradeoffs:** Passing user info via headers requires care to avoid spoofing (only trust headers set by your own middleware).
 
-### 2.3 `findPersonForAuthUserId` uses admin client unnecessarily — **Low**
+### 1.3 `findPersonForAuthUserId` uses admin client unnecessarily — **Low**
 
 **Current behaviour:** `findPersonForAuthUserId` in `invitations.ts` uses the service-role admin client, bypassing RLS.
 
@@ -116,9 +117,9 @@ Items are tracked as they are picked up and merged. The branch column links to t
 
 ---
 
-## 3. Theming & Club Colour Pipeline
+## 2. Theming & Club Colour Pipeline
 
-### 3.1 Set colour cookie in middleware instead of client-side — **High**
+### 2.1 Set colour cookie in middleware instead of client-side — **High**
 
 **Current behaviour:** Club colour theming has three stages:
 
@@ -132,13 +133,13 @@ The first visit after login has no cookie (the bootstrap endpoint's 150 ms race 
 
 **Proposed fix:**
 
-- **Set the `club_colour_hint` cookie in middleware** for authenticated users. The middleware already calls `getUser()` — add a lightweight club-colour lookup cached per-user (see §4.2). If the cookie is present, the layout applies colour on the _very first byte_ of HTML, eliminating the flash entirely.
+- **Set the `club_colour_hint` cookie in middleware** for authenticated users. The middleware already calls `getUser()` — add a lightweight club-colour lookup cached per-user (see §3.2). If the cookie is present, the layout applies colour on the _very first byte_ of HTML, eliminating the flash entirely.
 - **Remove `ClubColourBinder` as the primary mechanism.** Keep it only as a fallback updater if the colour changes mid-session (e.g. the user edits their club colour).
 - **Pre-populate the cookie during the OAuth callback / email auth flow**, not just the bootstrap endpoint.
 
-**Tradeoffs:** Adding a DB call to middleware adds latency to every request (see §4 for how to mitigate). If the club colour changes after the cookie is set, the cookie is stale until ClubColourBinder updates it. This is already the case today and is acceptable for a colour preference.
+**Tradeoffs:** Adding a DB call to middleware adds latency to every request (see §3 for how to mitigate). If the club colour changes after the cookie is set, the cookie is stale until ClubColourBinder updates it. This is already the case today and is acceptable for a colour preference.
 
-### 3.2 Avoid `useLayoutEffect` for theming — **Low**
+### 2.2 Avoid `useLayoutEffect` for theming — **Low**
 
 **Current behaviour:** `ClubColourBinder` uses `useLayoutEffect` to mutate the DOM (`root.style.setProperty`). This blocks paint until the effect completes.
 
@@ -150,9 +151,9 @@ The first visit after login has no cookie (the bootstrap endpoint's 150 ms race 
 
 ---
 
-## 4. Middleware
+## 3. Middleware
 
-### 4.1 Skip `rpc('has_app_access')` for known-good sessions — **High**
+### 3.1 Skip `rpc('has_app_access')` for known-good sessions — **High**
 
 **Current behaviour:** `src/lib/supabase/middleware.ts` calls `supabase.auth.getUser()` AND `rpc('has_app_access')` on every single request that matches the middleware config. The matcher excludes static assets but includes every page navigation, every Server Action, and every route handler.
 
@@ -166,7 +167,7 @@ The first visit after login has no cookie (the bootstrap endpoint's 150 ms race 
 
 **Tradeoffs:** A cached access cookie means a revoked user retains access for up to the cookie's TTL. A 5-minute TTL is a reasonable tradeoff for most use cases. For immediate revocation, pair with a webhook that clears the cookie.
 
-### 4.2 Parallel middleware calls — **Medium**
+### 3.2 Parallel middleware calls — **Medium**
 
 **Current behaviour:** `getUser()` is awaited before `userHasAppAccess()` is called, creating a waterfall.
 
@@ -176,7 +177,7 @@ The first visit after login has no cookie (the bootstrap endpoint's 150 ms race 
 
 **Tradeoffs:** If the session is expired, the parallel RPC call will fail — but it would have failed anyway and the middleware handles the redirect based on `getUser()` alone.
 
-### 4.3 Narrow the middleware matcher — **Low**
+### 3.3 Narrow the middleware matcher — **Low**
 
 **Current behaviour:** The matcher `/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)` matches everything except static files and images. This means middleware runs on Server Actions, API routes, and RSC data fetches — many of which already validate auth internally.
 
@@ -186,9 +187,9 @@ The first visit after login has no cookie (the bootstrap endpoint's 150 ms race 
 
 ---
 
-## 5. App Header & Layout Data Fetching
+## 4. App Header & Layout Data Fetching
 
-### 5.1 Reduce the header's data waterfall — **High**
+### 4.1 Reduce the header's data waterfall — **High**
 
 **Current behaviour:** `AppHeader` is an async server component that does:
 
@@ -207,7 +208,7 @@ The header resolves after the longest chain completes. With cold connections, th
 
 **Tradeoffs:** A composite RPC couples the server function to the header's data needs — any schema change requires updating the RPC. The cookie-based cache adds complexity around invalidation. Start with the RPC approach, which is simple and deterministic.
 
-### 5.2 Stream the header colour without blocking on full context — **Medium**
+### 4.2 Stream the header colour without blocking on full context — **Medium**
 
 **Current behaviour:** The entire header is wrapped in one `<Suspense>` boundary. The colour, club name, team switcher, and navigation all resolve together. The user sees the `AppHeaderFallback` skeleton until every query completes.
 
@@ -220,7 +221,7 @@ This lets the brand bar (and correct colour) appear immediately while the naviga
 
 **Tradeoffs:** More complex component structure. The brand bar and navigation must be independently renderable, which may require refactoring the header layout slightly.
 
-### 5.3 `getPrimaryClub` calls `getViewerContext` creating a dependency chain — **Medium**
+### 4.3 `getPrimaryClub` calls `getViewerContext` creating a dependency chain — **Medium**
 
 **Current behaviour:** `getPrimaryClub` is defined as `cache(async () => { const ctx = await getViewerContext(); const { data: clubs } = await listVisibleClubs(); ... })`. Because it awaits `getViewerContext()`, it cannot start until context resolves. The header does `const ctx = await getViewerContext()` and then `await Promise.all([..., getPrimaryClub()])`, but `getPrimaryClub` is blocked waiting for the same `getViewerContext` that just resolved.
 
@@ -243,9 +244,9 @@ This removes one sequential stage from the header waterfall.
 
 ---
 
-## 6. Page-Level Data Fetching & Caching
+## 5. Page-Level Data Fetching & Caching
 
-### 6.1 Stats page fetches are extremely heavy — **High**
+### 5.1 Stats page fetches are extremely heavy — **High**
 
 **Current behaviour:** The stats page (`/stats`) calls `getActiveTeam()`, then in `StatsBody` runs 7 parallel functions:
 
@@ -268,7 +269,7 @@ Each of these functions independently calls `getActiveTeam()` (cached) and `crea
 
 **Tradeoffs:** Postgres RPCs require SQL maintenance. The caching approach requires cache invalidation logic in server actions that modify matches/goals.
 
-### 6.2 Team page fetches 10+ parallel queries — **Medium**
+### 5.2 Team page fetches 10+ parallel queries — **Medium**
 
 **Current behaviour:** `/team` page.tsx runs `Promise.all` with 10 data calls: `listVenues`, `listRosterForTeam`, `listPlayersNotOnTeam`, `listTeamCoaches`, `listCoachesNotOnTeam`, `listGuardianAssistants`, `listGuardianAssistantCandidates`, `listPlayerOfTheMonth`, `listCompetitions`. Each creates a separate Supabase client.
 
@@ -282,7 +283,7 @@ Each of these functions independently calls `getActiveTeam()` (cached) and `crea
 
 **Tradeoffs:** Deferring candidate lists changes the UX slightly (a brief loading state when opening the "add" UI).
 
-### 6.3 Person detail page has serial then parallel fetch stages — **Medium**
+### 5.3 Person detail page has serial then parallel fetch stages — **Medium**
 
 **Current behaviour:** `/people/[id]/page.tsx` first awaits `getViewerContext()`, `getPrimaryClub()`, and `getPerson(id)` in parallel. Then it runs a second `Promise.all` with 9 more queries (player teams, guardians, objectives, coach record, etc.). The second batch depends on the first batch's results (e.g. `player.id`, `coach.id`).
 
@@ -295,19 +296,19 @@ Each of these functions independently calls `getActiveTeam()` (cached) and `crea
 
 **Tradeoffs:** Deeper nested selects in Supabase can be harder to type correctly. An RPC is cleaner.
 
-### 6.4 Match detail page runs 6 parallel queries after 2 initial ones — **Medium**
+### 5.4 Match detail page runs 6 parallel queries after 2 initial ones — **Medium**
 
 **Current behaviour:** `/matches/[id]/page.tsx` first awaits `getViewerContext()` and `getMatch(id)`, then runs 6 parallel queries for goals, cards, roster, match players, periods, and postcard data.
 
 **Proposed fix:** Similar to above — a composite query or RPC for match detail data. At minimum, embed goals and cards in the match query using Supabase nested selects (goals and cards are already fetched with player joins).
 
-### 6.5 Dashboard makes 4 Suspense sections with overlapping data needs — **Low**
+### 5.5 Dashboard makes 4 Suspense sections with overlapping data needs — **Low**
 
 **Current behaviour:** The dashboard uses 4 `Suspense` boundaries, each of which independently resolves `getActiveTeam()` (cached) and then fetches its own data. This is a good pattern — it allows progressive rendering. However, `DashboardFixtures` and `DashboardLeaderboards` both query match/goal data that partially overlaps.
 
 **Proposed fix:** No urgent change needed — the current Suspense pattern is correct. For further optimization, share a single "dashboard data" RPC across sections using React `cache()`, then render all 4 sections from the same cached result. The Suspense boundaries can still wrap individual sections for progressive rendering.
 
-### 6.6 No cross-request caching — **Medium**
+### 5.6 No cross-request caching — **Medium**
 
 **Current behaviour:** Every page load re-fetches all data from Supabase. `React.cache()` only deduplicates within a single server render (i.e. within one request). There is no `unstable_cache`, `fetch` cache, or external cache layer.
 
@@ -327,9 +328,9 @@ Each of these functions independently calls `getActiveTeam()` (cached) and `crea
 
 ---
 
-## 7. Database & Query Patterns
+## 6. Database & Query Patterns
 
-### 7.1 `createClient()` is called many times per request — **Medium**
+### 6.1 `createClient()` is called many times per request — **Medium**
 
 **Current behaviour:** Every data module calls `await createClient()` which calls `await cookies()` and constructs a new `createServerClient`. Within a single page render, this can happen 10–20+ times.
 
@@ -350,7 +351,7 @@ This is safe because the server client is scoped to the request via `cookies()`.
 
 **Tradeoffs:** The Supabase SSR library recommends creating a fresh client per operation for cookie sync. In practice, within a single RSC render, cookies don't change, so sharing is safe. Verify that `setAll` callbacks still work correctly.
 
-### 7.2 `getViewerContext` makes 7 sequential/parallel DB calls — **High**
+### 6.2 `getViewerContext` makes 7 sequential/parallel DB calls — **High**
 
 **Current behaviour (recap):** `getUser()` → `people` by `auth_user_id` → `Promise.all([managers, teamMembers, guardianLinks, selfPlayers, loadVisibleTeams()])`. This is 7 total calls (2 sequential, then 5 parallel).
 
@@ -358,13 +359,13 @@ This is safe because the server client is scoped to the request via `cookies()`.
 
 **Tradeoffs:** More SQL to maintain. Worth it for something called on literally every page load.
 
-### 7.3 `listVisibleClubs` fetches all clubs — **Low**
+### 6.3 `listVisibleClubs` fetches all clubs — **Low**
 
 **Current behaviour:** `listVisibleClubs` does `supabase.from('clubs').select('*')`. With RLS, this returns only clubs the user can see — but `select('*')` returns all columns.
 
 **Proposed fix:** Select only the columns needed for the primary club resolution (id, name, colour, icon_url). This reduces payload size.
 
-### 7.4 Stats queries process data in JavaScript rather than SQL — **Medium**
+### 6.4 Stats queries process data in JavaScript rather than SQL — **Medium**
 
 **Current behaviour:** Stats functions like `getGoalsByPlayerStats` fetch raw goal rows and then aggregate (group-by, count, sort) in JavaScript. For a team with 100 matches and 500 goals, this means transferring 500 rows and processing them in the Node.js runtime.
 
@@ -383,7 +384,7 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 **Tradeoffs:** More complex SQL. The benefit scales with data volume.
 
-### 7.5 `getNextFixture` makes up to 2 sequential queries — **Low**
+### 6.5 `getNextFixture` makes up to 2 sequential queries — **Low**
 
 **Current behaviour:** `getNextFixture` first queries for upcoming matches >= today. If none found, it falls back to any scheduled match. This is two sequential queries.
 
@@ -391,9 +392,9 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 ---
 
-## 8. Client Bundle & Code Splitting
+## 7. Client Bundle & Code Splitting
 
-### 8.1 Recharts is the largest client dependency — **Medium**
+### 7.1 Recharts is the largest client dependency — **Medium**
 
 **Current behaviour:** The stats page uses `next/dynamic` to lazy-load chart components from `recharts`. This is the correct approach. However, `recharts` itself is large (~200 KB gzipped) and imports all of `d3-scale`, `d3-shape`, etc.
 
@@ -407,13 +408,13 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 **Tradeoffs:** Replacing Recharts is significant work. Prefetching is the lowest-effort improvement.
 
-### 8.2 `lucide-react` icons — **Low**
+### 7.2 `lucide-react` icons — **Low**
 
 **Current behaviour:** `lucide-react` is imported in multiple client components (`app-nav.tsx`, etc.). Lucide supports tree-shaking via named imports, which the code already uses.
 
 **Proposed fix:** No action needed. Verify the production bundle only includes the specific icons imported (about 10–15 icons). If bundle analysis shows otherwise, switch to direct SVG imports.
 
-### 8.3 `@base-ui/react` and `shadcn` — **Low**
+### 7.3 `@base-ui/react` and `shadcn` — **Low**
 
 **Current behaviour:** UI components from `@base-ui/react` are used for popover, select, dialog, and checkbox. These are headless and relatively lightweight.
 
@@ -421,9 +422,9 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 ---
 
-## 9. CSS & Rendering
+## 8. CSS & Rendering
 
-### 9.1 `body` background uses `background-attachment: fixed` — **Low**
+### 8.1 `body` background uses `background-attachment: fixed` — **Low**
 
 **Current behaviour:** `globals.css` sets `background-attachment: fixed` on `body` with a multi-layer background (SVG pattern, radial gradient, linear gradient).
 
@@ -433,13 +434,13 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 **Tradeoffs:** Visual change to the background scrolling behaviour. May be imperceptible to users.
 
-### 9.2 `color-mix()` used extensively for club theming — **Low**
+### 8.2 `color-mix()` used extensively for club theming — **Low**
 
 **Current behaviour:** `[data-club-colour="true"]` overrides use `color-mix(in srgb, ...)` for most themed elements. This is a modern CSS feature with good browser support.
 
 **Proposed fix:** No action needed for performance — `color-mix()` is computed once during style resolution. This is well-implemented.
 
-### 9.3 Three Google Fonts loaded in root layout — **Low**
+### 8.3 Three Google Fonts loaded in root layout — **Low**
 
 **Current behaviour:** `layout.tsx` loads Outfit, Barlow Condensed (3 weights), and Geist Mono via `next/font/google`. These are subset to Latin.
 
@@ -454,19 +455,19 @@ This returns ~20 rows instead of ~500 and eliminates JavaScript processing.
 
 ---
 
-## 10. Recommended priority order
+## 9. Recommended priority order
 
 Highest impact first.
 
 | Priority | Item            | Recommendation                                 | Rationale                                     |
 | -------- | --------------- | ---------------------------------------------- | --------------------------------------------- |
-| 1        | **§4.1**        | Cache `has_app_access` result                  | Immediate win; every page load benefits       |
-| 2        | **§3.1**        | Set club colour cookie in middleware           | Eliminates FODC                               |
-| 3        | **§2.1**        | Streamline login flow                          | Removes one network round-trip                |
-| 4        | **§5.1 + §7.2** | Composite RPC for viewer context + header data | Biggest single improvement for all page loads |
-| 5        | **§6.1 + §7.4** | Stats page SQL aggregation                     | Fixes the slowest individual page             |
-| 6        | **§4.2**        | Parallel middleware calls                      | Easy win                                      |
-| 7        | **§5.3**        | Restructure `getPrimaryClub`                   | Removes one waterfall stage                   |
-| 8        | **§6.6**        | Cross-request caching for stable data          | Multiplier on all above                       |
-| 9        | **§7.1**        | Cache `createClient()` per request             | Small per-call saving, large aggregate        |
+| 1        | **§3.1**        | Cache `has_app_access` result                  | Immediate win; every page load benefits       |
+| 2        | **§2.1**        | Set club colour cookie in middleware           | Eliminates FODC                               |
+| 3        | **§1.1**        | Streamline login flow                          | Removes one network round-trip                |
+| 4        | **§4.1 + §6.2** | Composite RPC for viewer context + header data | Biggest single improvement for all page loads |
+| 5        | **§5.1 + §6.4** | Stats page SQL aggregation                     | Fixes the slowest individual page             |
+| 6        | **§3.2**        | Parallel middleware calls                      | Easy win                                      |
+| 7        | **§4.3**        | Restructure `getPrimaryClub`                   | Removes one waterfall stage                   |
+| 8        | **§5.6**        | Cross-request caching for stable data          | Multiplier on all above                       |
+| 9        | **§6.1**        | Cache `createClient()` per request             | Small per-call saving, large aggregate        |
 | 10       | —               | Everything else as time permits                | —                                             |
