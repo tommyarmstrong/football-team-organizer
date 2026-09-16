@@ -4,7 +4,7 @@ import {
   canEditMatchDay,
   canEditTeamHistory,
 } from "@/lib/authz/context";
-import { matchAllowsEvents } from "@/lib/constants";
+import { matchAllowsEvents, matchAllowsPostcard } from "@/lib/constants";
 import { listCardsForMatch } from "@/lib/data/cards";
 import { listGoalsForMatch } from "@/lib/data/goals";
 import { listMatchPlayers } from "@/lib/data/match-players";
@@ -84,7 +84,7 @@ export default async function MatchDetailPage({
     listRosterForTeam(match.team_id, { includeInactive: true }),
     listMatchPlayers(match.id),
     listPeriodsForMatch(match.id),
-    match.status === "played"
+    matchAllowsPostcard(match.status)
       ? buildMatchPostcardPayload(match.id)
       : Promise.resolve({ data: null, error: null }),
   ]);
@@ -157,6 +157,21 @@ export default async function MatchDetailPage({
                   imageUrl={`/matches/${match.id}/postcard`}
                   caption={postcard.caption}
                   fileName={postcard.fileName}
+                  title={
+                    postcard.kind === "scheduled"
+                      ? "Fixture postcard"
+                      : "Match postcard"
+                  }
+                  description={
+                    postcard.kind === "scheduled"
+                      ? "Share this upcoming fixture, including the venue address."
+                      : "Share a recap of this result. Player names follow the team’s privacy rules."
+                  }
+                  previewAlt={
+                    postcard.kind === "scheduled"
+                      ? "Fixture postcard"
+                      : "Match postcard"
+                  }
                 />
               ) : null}
               {canEdit ? (

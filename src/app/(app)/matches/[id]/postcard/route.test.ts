@@ -26,6 +26,7 @@ vi.mock("next/og", () => ({
 import { GET } from "@/app/(app)/matches/[id]/postcard/route";
 
 const playedPayload = {
+  kind: "played" as const,
   matchId: "match-1",
   clubName: "MGA",
   clubColour: "#146C4A",
@@ -71,10 +72,10 @@ describe("GET /matches/[id]/postcard", () => {
     expect(response.status).toBe(404);
   });
 
-  it("returns 404 when the match is not played", async () => {
+  it("returns 404 when the match is not scheduled or played", async () => {
     buildMatchPostcardPayloadMock.mockResolvedValue({
       data: null,
-      error: "Postcard is only available for played matches.",
+      error: "Postcard is only available for scheduled and played matches.",
     });
     const response = await GET(
       new Request("http://localhost/matches/match-1/postcard"),

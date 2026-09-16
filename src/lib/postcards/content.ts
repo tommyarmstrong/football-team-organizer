@@ -1,7 +1,13 @@
 import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
-import { formatScore, playerDisplayName } from "@/lib/format";
-import type { TeamGender } from "@/lib/supabase/database.types";
+import {
+  formatKickoffTime,
+  formatMatchVersusTitle,
+  formatScore,
+  labelHomeAway,
+  playerDisplayName,
+} from "@/lib/format";
+import type { MatchHomeAway, TeamGender } from "@/lib/supabase/database.types";
 import type { PostcardGoalList } from "@/lib/postcards/types";
 
 const FULL_GOAL_MAX = 6;
@@ -83,9 +89,26 @@ export function nameOnlyLabelFor(
   return postcardPlayerLabel({ ...player, shirtNumber: null }, { gender });
 }
 
+function squadPlayerLabel(player: RosterPlayer, gender: TeamGender): string {
+  if (postcardShowsSurname(gender)) {
+    return postcardPlayerLabel(
+      {
+        firstName: player.first_name,
+        lastName: player.last_name,
+        shirtNumber: player.shirt_number,
+      },
+      { gender },
+    );
+  }
+  return player.shirt_number == null
+    ? player.first_name
+    : `${player.shirt_number} ${player.first_name}`;
+}
+
 export function postcardSquadLines(
   roster: RosterPlayer[],
   selectedPlayerIds: string[],
+  gender: TeamGender,
 ): string[] {
   const selected = new Set(selectedPlayerIds);
   const squad = roster
@@ -96,11 +119,7 @@ export function postcardSquadLines(
           (b.shirt_number ?? Number.MAX_SAFE_INTEGER) ||
         a.first_name.localeCompare(b.first_name),
     )
-    .map((player) =>
-      player.shirt_number == null
-        ? player.first_name
-        : `${player.shirt_number} ${player.first_name}`,
-    );
+    .map((player) => squadPlayerLabel(player, gender));
   const lines: string[] = [];
   for (const player of squad) {
     const current = lines.at(-1);
@@ -268,6 +287,36 @@ export function postcardCaption(input: {
     lines.push("");
     lines.push(...potm);
   }
+
+  return lines.join("\n");
+}
+
+export function scheduledPostcardCaption(input: {
+  teamName: string;
+  opponentName: string;
+  homeAway: MatchHomeAway;
+  competitionLabel: string | null;
+  dateLabel: string;
+  meetupTime: string | null;
+  kickoffTime: string | null;
+  venueName: string | null;
+  venueAddress: string | null;
+}): string {
+  const lines = [
+    formatMatchVersusTitle(input.teamName, input.opponentName, input.homeAway),
+  ];
+  const meta = [labelHomeAway(input.homeAway), input.competitionLabel]
+    .filter((part): part is string => Boolean(part))
+    .join(" · ");
+  if (meta) lines.push(meta);
+  lines.push(input.dateLabel);
+
+  const meetup = formatKickoffTime(input.meetupTime);
+  const kickoff = formatKickoffTime(input.kickoffTime);
+  if (meetup) lines.push(`Meet up: ${meetup}`);
+  if (kickoff) lines.push(`Kick off: ${kickoff}`);
+  if (input.venueName) lines.push(input.venueName);
+  if (input.venueAddress) lines.push(input.venueAddress);
 
   return lines.join("\n");
 }
