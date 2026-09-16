@@ -1,5 +1,7 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getViewerContext,
   isClubStaff,
@@ -26,15 +28,20 @@ export const listVisibleClubs = cache(
 export async function getClub(
   id: string,
 ): Promise<{ data: Club | null; error: string | null }> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clubs")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) return { data: null, error: error.message };
-  return { data, error: null };
+  return unstable_cache(
+    async (clubId: string) => {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from("clubs")
+        .select("*")
+        .eq("id", clubId)
+        .maybeSingle();
+      if (error) return { data: null, error: error.message };
+      return { data: (data as Club) ?? null, error: null };
+    },
+    ["club", id],
+    { tags: [`club:${id}`], revalidate: 3600 },
+  )(id);
 }
 
 function preferredClubIds(ctx: ViewerContext): string[] {
@@ -55,25 +62,36 @@ function preferredClubIds(ctx: ViewerContext): string[] {
 }
 
 /**
+ * Pure resolution logic: pick the primary club from a viewer context and its
+ * visible clubs list. Extracted so callers can fan out `getViewerContext()` and
+ * any club fetch in parallel, then resolve synchronously — enabling item §4.3.
+ */
+export function resolvePrimaryClub(
+  ctx: ViewerContext | null,
+  clubs?: Club[],
+): Club | null {
+  const clubList = clubs ?? ctx?.visibleClubs ?? [];
+  if (ctx) {
+    for (const clubId of preferredClubIds(ctx)) {
+      const found = clubList.find((c) => c.id === clubId);
+      if (found) return found;
+    }
+  }
+  if (clubList.length > 0) return clubList[0];
+  return null;
+}
+
+/**
  * The club the user manages, or the club of their first visible team.
  *
  * §4.1 + §6.2 — clubs are now fetched inside getViewerContext() via the
  * get_viewer_context() RPC, so this function needs no separate DB call.
+ * §4.3 — delegates to resolvePrimaryClub() so the resolution logic is
+ * reusable by callers that already hold a ViewerContext.
  */
 export const getPrimaryClub = cache(async (): Promise<Club | null> => {
   const ctx = await getViewerContext();
-  // ctx.visibleClubs is populated by the composite RPC (get_viewer_context).
-  const clubs = ctx?.visibleClubs ?? [];
-
-  if (ctx) {
-    for (const clubId of preferredClubIds(ctx)) {
-      const fromList = clubs.find((c) => c.id === clubId);
-      if (fromList) return fromList;
-    }
-  }
-
-  if (clubs.length > 0) return clubs[0];
-  return null;
+  return resolvePrimaryClub(ctx);
 });
 
 /**
