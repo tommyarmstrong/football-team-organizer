@@ -1312,6 +1312,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: Json;
       };
+      get_team_stats: {
+        Args: { p_team_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";
