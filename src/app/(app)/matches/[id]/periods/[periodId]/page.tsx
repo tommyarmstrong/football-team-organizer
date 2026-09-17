@@ -8,7 +8,6 @@ import { listRosterForTeam } from "@/lib/data/players";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchPeriodEditSection } from "@/components/matches/match-period-edit-section";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default async function MatchPeriodEditPage({
   params,
@@ -67,17 +66,13 @@ export default async function MatchPeriodEditPage({
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
-      <Card>
-        <CardContent className="pt-6">
-          <MatchPeriodEditSection
-            matchId={match.id}
-            period={period}
-            goals={periodGoals}
-            squadPlayers={eventPlayers}
-            canEdit={canEdit}
-          />
-        </CardContent>
-      </Card>
+      <MatchPeriodEditSection
+        matchId={match.id}
+        period={period}
+        goals={periodGoals}
+        squadPlayers={eventPlayers}
+        canEdit={canEdit}
+      />
     </div>
   );
 }
