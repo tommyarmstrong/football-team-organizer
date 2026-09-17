@@ -4,6 +4,7 @@ import {
   SCHEDULED_POSTCARD_TBC,
   scheduledPostcardKickoffText,
   scheduledPostcardMeetupLine,
+  scheduledPostcardVenueLabel,
 } from "@/lib/postcards/content";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
 
@@ -639,71 +640,59 @@ function ScheduledPostcardBody({
         )}
       </div>
 
-      {payload.venueName ? (
+      <div
+        style={stackStyle({
+          alignItems: "center",
+          marginTop: 8,
+        })}
+      >
         <div
-          style={stackStyle({
-            alignItems: "center",
-            marginTop: 8,
-          })}
+          style={{
+            fontSize: 30,
+            color: MUTED,
+            fontWeight: 700,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            marginBottom: 12,
+          }}
         >
-          <div
-            style={{
-              fontSize: 30,
-              color: MUTED,
-              fontWeight: 700,
-              letterSpacing: 2,
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}
-          >
-            Venue
-          </div>
-          <div
-            style={centredStyle({
-              fontSize: 34,
-              fontWeight: 700,
-              color: INK,
-              marginBottom: payload.venueAddress ? 8 : 0,
-              maxWidth: 984,
-            })}
-          >
-            {payload.venueName}
-          </div>
-          {payload.venueAddress ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 29,
-                  color: MUTED,
-                  width: 900,
-                  lineHeight: 1.35,
-                  textAlign: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {`📍 ${payload.venueAddress}`}
-              </div>
-            </div>
-          ) : null}
+          Venue
         </div>
-      ) : payload.venueAddress ? (
         <div
           style={centredStyle({
-            fontSize: 29,
-            color: MUTED,
+            fontSize: 34,
+            fontWeight: 700,
+            color: INK,
+            marginBottom: payload.venueAddress ? 8 : 0,
             maxWidth: 984,
           })}
         >
-          {`📍 ${payload.venueAddress}`}
+          {scheduledPostcardVenueLabel(payload.venueName)}
         </div>
-      ) : null}
+        {payload.venueAddress ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                fontSize: 29,
+                color: MUTED,
+                width: 900,
+                lineHeight: 1.35,
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              {`📍 ${payload.venueAddress}`}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -31,6 +31,13 @@ export function scheduledPostcardTimeLabel(time: string | null): string {
   return formatKickoffTime(time) ?? SCHEDULED_POSTCARD_TBC;
 }
 
+export function scheduledPostcardVenueLabel(
+  name: string | null | undefined,
+): string {
+  const trimmed = name?.trim() ?? "";
+  return trimmed || SCHEDULED_POSTCARD_TBC;
+}
+
 export function scheduledPostcardMeetupLine(time: string): string {
   return `${SCHEDULED_POSTCARD_MEETUP_EMOJI} Meet up: ${time}`;
 }
@@ -360,8 +367,8 @@ export function scheduledPostcardCaption(input: {
     scheduledPostcardKickoffLine(scheduledPostcardTimeLabel(input.kickoffTime)),
   );
 
-  if (input.venueName || input.venueAddress) lines.push("");
-  if (input.venueName) lines.push(input.venueName);
+  lines.push("");
+  lines.push(scheduledPostcardVenueLabel(input.venueName));
   if (input.venueAddress) lines.push(`📍 ${input.venueAddress}`);
 
   return lines.join("\n");
