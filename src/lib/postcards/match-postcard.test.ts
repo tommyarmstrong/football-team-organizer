@@ -13,6 +13,7 @@ import {
   scheduledPostcardKickoffLine,
   scheduledPostcardKickoffText,
   scheduledPostcardTimeLabel,
+  scheduledPostcardVenueLabel,
   SCHEDULED_POSTCARD_KICKOFF_EMOJI,
   SCHEDULED_POSTCARD_TBC,
 } from "@/lib/postcards/content";
@@ -315,7 +316,7 @@ describe("scheduledPostcardCaption", () => {
     );
   });
 
-  it("uses TBC for missing date, meet-up, and kick-off", () => {
+  it("uses TBC for missing date, meet-up, kick-off, and venue", () => {
     const caption = scheduledPostcardCaption({
       teamName: "U11 Girls",
       opponentName: "Riverside",
@@ -337,11 +338,13 @@ describe("scheduledPostcardCaption", () => {
         "",
         "⏰ Meet up: TBC",
         "👟 Kick off: TBC",
+        "",
+        "TBC",
       ].join("\n"),
     );
   });
 
-  it("uses TBC only for the missing time", () => {
+  it("uses TBC only for the missing time and venue name", () => {
     expect(
       scheduledPostcardCaption({
         teamName: "U11 Girls",
@@ -364,6 +367,7 @@ describe("scheduledPostcardCaption", () => {
         "⏰ Meet up: TBC",
         "👟 Kick off: 10:00",
         "",
+        "TBC",
         "📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
@@ -392,6 +396,13 @@ describe("scheduledPostcard missing values", () => {
     expect(scheduledPostcardTimeLabel("10:00:00")).toBe("10:00");
     expect(scheduledPostcardTimeLabel(null)).toBe("TBC");
     expect(scheduledPostcardTimeLabel("")).toBe("TBC");
+  });
+
+  it("uses the venue name or falls back to TBC", () => {
+    expect(scheduledPostcardVenueLabel("Main Pitch")).toBe("Main Pitch");
+    expect(scheduledPostcardVenueLabel("")).toBe("TBC");
+    expect(scheduledPostcardVenueLabel("   ")).toBe("TBC");
+    expect(scheduledPostcardVenueLabel(null)).toBe("TBC");
   });
 });
 
@@ -782,7 +793,7 @@ describe("buildMatchPostcardPayload", () => {
     expect(listGoalsForMatchMock).not.toHaveBeenCalled();
   });
 
-  it("uses TBC on a scheduled postcard when date and times are missing", async () => {
+  it("uses TBC on a scheduled postcard when date, times, and venue are missing", async () => {
     getMatchMock.mockResolvedValue({
       data: matchFixture({
         status: "scheduled",
@@ -807,6 +818,8 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.caption).toContain("TBC");
     expect(data.caption).toContain("⏰ Meet up: TBC");
     expect(data.caption).toContain("👟 Kick off: TBC");
+    expect(data.venueName).toBeNull();
+    expect(data.caption).toMatch(/\nTBC$/);
   });
 
   it("rejects postponed and cancelled matches", async () => {

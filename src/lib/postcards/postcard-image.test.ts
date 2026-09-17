@@ -141,7 +141,7 @@ describe("MatchPostcardImage", () => {
     expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
   });
 
-  it("renders a PNG for a scheduled fixture with TBC date and times", async () => {
+  it("renders a PNG for a scheduled fixture with TBC date, times, and venue", async () => {
     const scheduled: ScheduledMatchPostcardPayload = {
       kind: "scheduled",
       matchId: "match-1",
@@ -162,6 +162,32 @@ describe("MatchPostcardImage", () => {
       meetupLabel: "TBC",
       caption: "U11 Girls vs Riverside Rovers",
       fileName: "u11-girls-vs-riverside-rovers.png",
+    };
+    const png = await renderPostcard(scheduled);
+    expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
+  });
+
+  it("renders a PNG when only the venue address is set", async () => {
+    const scheduled: ScheduledMatchPostcardPayload = {
+      kind: "scheduled",
+      matchId: "match-1",
+      clubName: "Mill Green Athletic",
+      clubColour: "#146C4A",
+      clubIconUrl: null,
+      teamName: "U11 Girls",
+      seasonLabel: "2025/26",
+      opponentName: "Riverside Rovers",
+      dateLabel: "Sun 8 Mar 2026",
+      homeAwayLabel: "Home",
+      competitionLabel: "League",
+      homeName: "U11 Girls",
+      awayName: "Riverside Rovers",
+      venueName: null,
+      venueAddress: "1 Windmill Road, London, N18 1NB",
+      kickoffLabel: "10:00",
+      meetupLabel: "TBC",
+      caption: "U11 Girls vs Riverside Rovers",
+      fileName: "u11-girls-2026-03-08-vs-riverside-rovers.png",
     };
     const png = await renderPostcard(scheduled);
     expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
