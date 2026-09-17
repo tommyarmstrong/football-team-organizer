@@ -12,7 +12,6 @@ import { getTeam } from "@/lib/data/team";
 import { getVenue } from "@/lib/data/venues";
 import {
   formatHomeFirstScore,
-  formatKickoffTime,
   formatMatchDate,
   formatVenueAddress,
   labelHomeAway,
@@ -29,6 +28,8 @@ import {
   postcardFileName,
   postcardSquadLines,
   scheduledPostcardCaption,
+  scheduledPostcardDateLabel,
+  scheduledPostcardTimeLabel,
 } from "@/lib/postcards/content";
 import { postcardStory } from "@/lib/postcards/story";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
@@ -192,12 +193,13 @@ async function buildScheduledMatchPostcardPayload(
   }
 
   const venueName = match.venue?.name?.trim() || null;
+  const dateLabel = scheduledPostcardDateLabel(match.date);
   const caption = scheduledPostcardCaption({
     teamName,
     opponentName: match.opponent_name,
     homeAway: match.home_away,
     competitionLabel: matchCompetitionLabel(match),
-    dateLabel: formatMatchDate(match.date),
+    dateLabel,
     meetupTime: match.meetup_time,
     kickoffTime: match.kickoff_time,
     venueName,
@@ -214,15 +216,15 @@ async function buildScheduledMatchPostcardPayload(
       teamName,
       seasonLabel: team.season_label,
       opponentName: match.opponent_name,
-      dateLabel: formatMatchDate(match.date),
+      dateLabel,
       homeAwayLabel: labelHomeAway(match.home_away),
       competitionLabel: matchCompetitionLabel(match),
       homeName,
       awayName,
       venueName,
       venueAddress,
-      kickoffLabel: formatKickoffTime(match.kickoff_time),
-      meetupLabel: formatKickoffTime(match.meetup_time),
+      kickoffLabel: scheduledPostcardTimeLabel(match.kickoff_time),
+      meetupLabel: scheduledPostcardTimeLabel(match.meetup_time),
       caption,
       fileName: postcardFileName({
         teamName,

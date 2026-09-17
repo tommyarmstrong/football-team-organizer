@@ -140,4 +140,30 @@ describe("MatchPostcardImage", () => {
     const png = await renderPostcard(scheduled);
     expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
   });
+
+  it("renders a PNG for a scheduled fixture with TBC date and times", async () => {
+    const scheduled: ScheduledMatchPostcardPayload = {
+      kind: "scheduled",
+      matchId: "match-1",
+      clubName: "Mill Green Athletic",
+      clubColour: "#146C4A",
+      clubIconUrl: null,
+      teamName: "U11 Girls",
+      seasonLabel: "2025/26",
+      opponentName: "Riverside Rovers",
+      dateLabel: "TBC",
+      homeAwayLabel: "Home",
+      competitionLabel: "League",
+      homeName: "U11 Girls",
+      awayName: "Riverside Rovers",
+      venueName: null,
+      venueAddress: null,
+      kickoffLabel: "TBC",
+      meetupLabel: "TBC",
+      caption: "U11 Girls vs Riverside Rovers",
+      fileName: "u11-girls-vs-riverside-rovers.png",
+    };
+    const png = await renderPostcard(scheduled);
+    expect(png.subarray(0, 4)).toEqual(PNG_MAGIC);
+  });
 });
