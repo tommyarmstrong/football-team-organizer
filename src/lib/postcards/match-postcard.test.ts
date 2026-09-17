@@ -312,7 +312,9 @@ describe("scheduledPostcardCaption", () => {
         "⏰ Meet up: 09:30",
         "👟 Kick off: 10:00",
         "",
-        "🏟️ Main Pitch 📍 1 Windmill Road, London, N18 1NB",
+        "🏟️ Main Pitch",
+        "",
+        "📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
   });
@@ -368,7 +370,9 @@ describe("scheduledPostcardCaption", () => {
         "⏰ Meet up: TBC",
         "👟 Kick off: 10:00",
         "",
-        "🏟️ Venue: TBC 📍 1 Windmill Road, London, N18 1NB",
+        "🏟️ Venue: TBC",
+        "",
+        "📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
   });
