@@ -6,7 +6,6 @@ import {
   formatMatchDate,
   formatMatchVersusTitle,
   formatScore,
-  labelHomeAway,
   playerDisplayName,
 } from "@/lib/format";
 import type { MatchHomeAway, TeamGender } from "@/lib/supabase/database.types";
@@ -18,6 +17,9 @@ const SUMMARY_TOP_SCORERS = 4;
 
 export const SCHEDULED_POSTCARD_MEETUP_EMOJI = "⏰";
 export const SCHEDULED_POSTCARD_KICKOFF_EMOJI = "👟";
+export const SCHEDULED_POSTCARD_COMPETITION_EMOJI = "🏆";
+export const SCHEDULED_POSTCARD_DATE_EMOJI = "📅";
+export const SCHEDULED_POSTCARD_VENUE_EMOJI = "🏟️";
 export const SCHEDULED_POSTCARD_TBC = "TBC";
 
 export function scheduledPostcardDateLabel(
@@ -38,11 +40,20 @@ export function scheduledPostcardVenueLabel(
   return trimmed || SCHEDULED_POSTCARD_TBC;
 }
 
+export function scheduledPostcardCompetitionCaptionLine(label: string): string {
+  return `${SCHEDULED_POSTCARD_COMPETITION_EMOJI} ${label}`;
+}
+
+export function scheduledPostcardDateCaptionLine(dateLabel: string): string {
+  return `${SCHEDULED_POSTCARD_DATE_EMOJI} ${dateLabel.trim() || SCHEDULED_POSTCARD_TBC}`;
+}
+
 export function scheduledPostcardVenueCaptionLine(
   name: string | null | undefined,
 ): string {
   const trimmed = name?.trim() ?? "";
-  return trimmed || `Venue: ${SCHEDULED_POSTCARD_TBC}`;
+  const venue = trimmed || `Venue: ${SCHEDULED_POSTCARD_TBC}`;
+  return `${SCHEDULED_POSTCARD_VENUE_EMOJI} ${venue}`;
 }
 
 export function scheduledPostcardMeetupLine(time: string): string {
@@ -360,11 +371,11 @@ export function scheduledPostcardCaption(input: {
     formatMatchVersusTitle(input.teamName, input.opponentName, input.homeAway),
     "",
   ];
-  const meta = [labelHomeAway(input.homeAway), input.competitionLabel]
-    .filter((part): part is string => Boolean(part))
-    .join(" · ");
-  if (meta) lines.push(meta);
-  lines.push(input.dateLabel.trim() || SCHEDULED_POSTCARD_TBC);
+  if (input.competitionLabel) {
+    lines.push(scheduledPostcardCompetitionCaptionLine(input.competitionLabel));
+    lines.push("");
+  }
+  lines.push(scheduledPostcardDateCaptionLine(input.dateLabel));
 
   lines.push("");
   lines.push(
@@ -376,7 +387,10 @@ export function scheduledPostcardCaption(input: {
 
   lines.push("");
   lines.push(scheduledPostcardVenueCaptionLine(input.venueName));
-  if (input.venueAddress) lines.push(`📍 ${input.venueAddress}`);
+  if (input.venueAddress) {
+    lines.push("");
+    lines.push(`📍 ${input.venueAddress}`);
+  }
 
   return lines.join("\n");
 }
