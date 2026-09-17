@@ -288,7 +288,7 @@ describe("postcardCaption", () => {
 });
 
 describe("scheduledPostcardCaption", () => {
-  it("includes home/away, competition, times, venue, and address", () => {
+  it("includes competition, date, times, venue, and address with caption emojis", () => {
     const caption = scheduledPostcardCaption({
       teamName: "U11 Girls",
       opponentName: "Riverside",
@@ -305,14 +305,14 @@ describe("scheduledPostcardCaption", () => {
       [
         "U11 Girls vs Riverside",
         "",
-        "Home · League",
-        "Sun 8 Mar 2026",
+        "🏆 League",
+        "",
+        "📅 Sun 8 Mar 2026",
         "",
         "⏰ Meet up: 09:30",
         "👟 Kick off: 10:00",
         "",
-        "Main Pitch",
-        "📍 1 Windmill Road, London, N18 1NB",
+        "🏟️ Main Pitch 📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
   });
@@ -334,15 +334,16 @@ describe("scheduledPostcardCaption", () => {
       [
         "Riverside vs U11 Girls",
         "",
-        "Away",
-        "TBC",
+        "📅 TBC",
         "",
         "⏰ Meet up: TBC",
         "👟 Kick off: TBC",
         "",
-        "Venue: TBC",
+        "🏟️ Venue: TBC",
       ].join("\n"),
     );
+    expect(caption).not.toContain("Home");
+    expect(caption).not.toContain("Away");
   });
 
   it("uses TBC only for the missing time and venue name", () => {
@@ -362,14 +363,12 @@ describe("scheduledPostcardCaption", () => {
       [
         "U11 Girls vs Riverside",
         "",
-        "Home",
-        "Sun 8 Mar 2026",
+        "📅 Sun 8 Mar 2026",
         "",
         "⏰ Meet up: TBC",
         "👟 Kick off: 10:00",
         "",
-        "Venue: TBC",
-        "📍 1 Windmill Road, London, N18 1NB",
+        "🏟️ Venue: TBC 📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
   });
@@ -407,9 +406,11 @@ describe("scheduledPostcard missing values", () => {
   });
 
   it("prefixes TBC with Venue in the caption", () => {
-    expect(scheduledPostcardVenueCaptionLine("Main Pitch")).toBe("Main Pitch");
-    expect(scheduledPostcardVenueCaptionLine(null)).toBe("Venue: TBC");
-    expect(scheduledPostcardVenueCaptionLine("")).toBe("Venue: TBC");
+    expect(scheduledPostcardVenueCaptionLine("Main Pitch")).toBe(
+      "🏟️ Main Pitch",
+    );
+    expect(scheduledPostcardVenueCaptionLine(null)).toBe("🏟️ Venue: TBC");
+    expect(scheduledPostcardVenueCaptionLine("")).toBe("🏟️ Venue: TBC");
   });
 });
 
@@ -827,6 +828,7 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.caption).toContain("👟 Kick off: TBC");
     expect(data.venueName).toBeNull();
     expect(data.caption).toContain("Venue: TBC");
+    expect(data.caption).toContain("🏟️ Venue: TBC");
   });
 
   it("rejects postponed and cancelled matches", async () => {
