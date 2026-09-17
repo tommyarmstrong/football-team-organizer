@@ -5,12 +5,16 @@ import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { ExtraTimeOrPenaltyPeriodName } from "@/lib/constants";
 import { createPeriodAction } from "@/lib/match-periods/actions";
 import type { RosterPlayer } from "@/lib/data/players";
-import { PeriodStartersFields } from "@/components/matches/match-period-edit-section";
+import {
+  PERIOD_PAGE_SECTION_TITLES,
+  PeriodStartersFields,
+} from "@/components/matches/match-period-edit-section";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FormActions } from "@/components/shared/form-actions";
+import { Section } from "@/components/shared/section";
 
 export function MatchPeriodCreateSection({
   matchId,
@@ -40,7 +44,7 @@ export function MatchPeriodCreateSection({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-8">
       <div className="space-y-2">
         <Label htmlFor="period-name">Period</Label>
         <NativeSelect id="period-name" name="name" required disabled={pending}>
@@ -52,24 +56,23 @@ export function MatchPeriodCreateSection({
         </NativeSelect>
       </div>
 
-      {squadPlayers.length === 0 ? (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">Starting players</h3>
+      <Section title={PERIOD_PAGE_SECTION_TITLES.starters}>
+        {squadPlayers.length === 0 ? (
           <EmptyState
             title="No players available"
             description="Select the match-day squad first, then choose who starts this period."
           />
-        </div>
-      ) : (
-        <PeriodStartersFields
-          idPrefix="new_period"
-          squadPlayers={squadPlayers}
-          selectedIds={selectedIds}
-          onSelectedIdsChange={setSelectedIds}
-          disabled={pending}
-          inputName="player_id"
-        />
-      )}
+        ) : (
+          <PeriodStartersFields
+            idPrefix="new_period"
+            squadPlayers={squadPlayers}
+            selectedIds={selectedIds}
+            onSelectedIdsChange={setSelectedIds}
+            disabled={pending}
+            inputName="player_id"
+          />
+        )}
+      </Section>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 

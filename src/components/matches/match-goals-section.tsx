@@ -16,10 +16,58 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
-import {
-  objectListClassName,
-  objectListRowClassName,
-} from "@/components/shared/object-list";
+
+/** Card shell around the goals table; overflow clip keeps rounded corners. */
+export function goalsTableShellClassName(className?: string): string {
+  return cn(
+    "border-border/80 bg-card overflow-hidden rounded-2xl border shadow-sm",
+    className,
+  );
+}
+
+/** Full-width table so every period label shares one left-hand column. */
+export function goalsTableClassName(className?: string): string {
+  return cn("w-full border-collapse", className);
+}
+
+export function goalsTableRowClassName(className?: string): string {
+  return cn("border-border border-b last:border-b-0", className);
+}
+
+export function goalsTablePeriodCellClassName(className?: string): string {
+  return cn(
+    "align-top px-4 py-3.5 text-left font-medium whitespace-nowrap",
+    className,
+  );
+}
+
+export function goalsTableGoalsCellClassName(className?: string): string {
+  return cn("w-full min-w-0 align-top px-4 py-3.5", className);
+}
+
+/** Hug the scorer when there is no assist so the rule sits under the name. */
+export function goalEventRowClassName(
+  hasAssist: boolean,
+  className?: string,
+): string {
+  return cn(
+    "border-border grid grid-cols-[minmax(0,1fr)_auto] border-b last:border-b-0",
+    hasAssist
+      ? "grid-rows-[auto_auto] gap-x-2 gap-y-1.5 py-1.5"
+      : "gap-x-2 py-1",
+    "first:pt-0 last:pb-0",
+    className,
+  );
+}
+
+/** Scorer and delete control share one line so the icon lines up with the name. */
+export function goalScorerLineClassName(className?: string): string {
+  return cn("flex min-w-0 flex-1 items-center gap-1.5", className);
+}
+
+export function goalDeleteButtonFrameClassName(className?: string): string {
+  return cn("col-start-2 row-start-1 flex items-center self-center", className);
+}
 
 export function playerEventNameClassName(className?: string): string {
   return cn(
@@ -180,6 +228,86 @@ export function periodEndScores(
   });
 }
 
+function PeriodLabel({
+  matchId,
+  group,
+  score,
+}: {
+  matchId: string;
+  group: GoalPeriodGroup;
+  score?: string;
+}) {
+  const body = (
+    <>
+      <span className="block">{group.label}</span>
+      {score ? (
+        <span className="text-muted-foreground mt-0.5 block text-xs font-normal no-underline">
+          {score}
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (!group.periodId) {
+    return <span>{body}</span>;
+  }
+
+  return (
+    <Link
+      href={`/matches/${matchId}/periods/${group.periodId}`}
+      className="underline-offset-4 hover:underline"
+    >
+      {body}
+    </Link>
+  );
+}
+
+function GoalEventRow({
+  matchId,
+  goal,
+  canEdit,
+}: {
+  matchId: string;
+  goal: GoalWithPlayers;
+  canEdit: boolean;
+}) {
+  const assist = goalAssistPlayer(goal);
+  const hasAssist = assist != null;
+  const goalHref = `/matches/${matchId}/goals/${goal.id}`;
+
+  return (
+    <div className={goalEventRowClassName(hasAssist)}>
+      <Link
+        href={goalHref}
+        className={
+          hasAssist
+            ? "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-span-2 grid min-w-0 grid-rows-subgrid rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            : "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-start-1 flex min-w-0 items-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        }
+      >
+        <span className={goalScorerLineClassName()}>
+          <GoalScorerName goal={goal} />
+          {goal.is_penalty ? (
+            <span className="text-muted-foreground text-xs font-medium">
+              (P)
+            </span>
+          ) : null}
+        </span>
+        {assist ? <GoalAssistName player={assist} /> : null}
+      </Link>
+      {canEdit ? (
+        <div className={goalDeleteButtonFrameClassName()}>
+          <ListDeleteButton
+            label={`Delete goal by ${goalScorerLabel(goal)}`}
+            confirmMessage="Remove this goal?"
+            deleteAction={() => deleteGoalAction(matchId, goal.id)}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function MatchGoalsSection({
   matchId,
   goals,
@@ -229,91 +357,39 @@ export function MatchGoalsSection({
           }
         />
       ) : (
-        <ul className={objectListClassName}>
-          {groups.map((group, index) => (
-            <li key={group.key} className="flex items-stretch">
-              <div className={objectListRowClassName("items-stretch")}>
-                {group.periodId ? (
-                  <Link
-                    href={`/matches/${matchId}/periods/${group.periodId}`}
-                    className="min-w-0 shrink-0 self-start pt-0.5 font-medium underline-offset-4 hover:underline"
-                  >
-                    <span className="block">{group.label}</span>
-                    {endScores ? (
-                      <span className="text-muted-foreground mt-0.5 block text-xs font-normal no-underline">
-                        {endScores[index]}
+        <div className={goalsTableShellClassName()}>
+          <table className={goalsTableClassName()}>
+            <tbody>
+              {groups.map((group, index) => (
+                <tr key={group.key} className={goalsTableRowClassName()}>
+                  <th scope="row" className={goalsTablePeriodCellClassName()}>
+                    <PeriodLabel
+                      matchId={matchId}
+                      group={group}
+                      score={endScores?.[index]}
+                    />
+                  </th>
+                  <td className={goalsTableGoalsCellClassName()}>
+                    {group.goals.length === 0 ? (
+                      <span className="text-muted-foreground text-xs">
+                        No goals
                       </span>
-                    ) : null}
-                  </Link>
-                ) : (
-                  <span className="min-w-0 shrink-0 self-start pt-0.5 font-medium">
-                    <span className="block">{group.label}</span>
-                    {endScores ? (
-                      <span className="text-muted-foreground mt-0.5 block text-xs font-normal">
-                        {endScores[index]}
-                      </span>
-                    ) : null}
-                  </span>
-                )}
-                <div className="divide-border min-w-0 flex-1 divide-y">
-                  {group.goals.length === 0 ? (
-                    <span className="text-muted-foreground text-xs">
-                      No goals
-                    </span>
-                  ) : (
-                    group.goals.map((goal) => {
-                      const assist = goalAssistPlayer(goal);
-                      return (
-                        <div
+                    ) : (
+                      group.goals.map((goal) => (
+                        <GoalEventRow
                           key={goal.id}
-                          className="flex items-start gap-2 py-2 first:pt-0 last:pb-0"
-                        >
-                          <Link
-                            href={`/matches/${matchId}/goals/${goal.id}`}
-                            className={objectListRowClassName(
-                              "min-h-0 flex-1 items-start px-0 py-0 hover:bg-transparent focus-visible:ring-offset-2",
-                            )}
-                          >
-                            <span
-                              className={
-                                assist
-                                  ? "flex min-w-0 flex-1 flex-col items-start gap-1.5"
-                                  : "flex min-w-0 flex-1 flex-col items-start"
-                              }
-                            >
-                              <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                                <GoalScorerName goal={goal} />
-                                {goal.is_penalty ? (
-                                  <span className="text-muted-foreground text-xs font-medium">
-                                    (P)
-                                  </span>
-                                ) : null}
-                              </span>
-                              {assist ? (
-                                <GoalAssistName player={assist} />
-                              ) : null}
-                            </span>
-                          </Link>
-                          {canEdit ? (
-                            <div className="flex items-start">
-                              <ListDeleteButton
-                                label={`Delete goal by ${goalScorerLabel(goal)}`}
-                                confirmMessage="Remove this goal?"
-                                deleteAction={() =>
-                                  deleteGoalAction(matchId, goal.id)
-                                }
-                              />
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+                          matchId={matchId}
+                          goal={goal}
+                          canEdit={canEdit}
+                        />
+                      ))
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {canEdit ? (
