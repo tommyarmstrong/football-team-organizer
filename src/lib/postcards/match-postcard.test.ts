@@ -13,6 +13,7 @@ import {
   scheduledPostcardKickoffLine,
   scheduledPostcardKickoffText,
   scheduledPostcardTimeLabel,
+  scheduledPostcardVenueCaptionLine,
   scheduledPostcardVenueLabel,
   SCHEDULED_POSTCARD_KICKOFF_EMOJI,
   SCHEDULED_POSTCARD_TBC,
@@ -339,7 +340,7 @@ describe("scheduledPostcardCaption", () => {
         "⏰ Meet up: TBC",
         "👟 Kick off: TBC",
         "",
-        "TBC",
+        "Venue: TBC",
       ].join("\n"),
     );
   });
@@ -367,7 +368,7 @@ describe("scheduledPostcardCaption", () => {
         "⏰ Meet up: TBC",
         "👟 Kick off: 10:00",
         "",
-        "TBC",
+        "Venue: TBC",
         "📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
@@ -403,6 +404,12 @@ describe("scheduledPostcard missing values", () => {
     expect(scheduledPostcardVenueLabel("")).toBe("TBC");
     expect(scheduledPostcardVenueLabel("   ")).toBe("TBC");
     expect(scheduledPostcardVenueLabel(null)).toBe("TBC");
+  });
+
+  it("prefixes TBC with Venue in the caption", () => {
+    expect(scheduledPostcardVenueCaptionLine("Main Pitch")).toBe("Main Pitch");
+    expect(scheduledPostcardVenueCaptionLine(null)).toBe("Venue: TBC");
+    expect(scheduledPostcardVenueCaptionLine("")).toBe("Venue: TBC");
   });
 });
 
@@ -819,7 +826,7 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.caption).toContain("⏰ Meet up: TBC");
     expect(data.caption).toContain("👟 Kick off: TBC");
     expect(data.venueName).toBeNull();
-    expect(data.caption).toMatch(/\nTBC$/);
+    expect(data.caption).toContain("Venue: TBC");
   });
 
   it("rejects postponed and cancelled matches", async () => {
