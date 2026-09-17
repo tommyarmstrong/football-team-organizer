@@ -11,13 +11,6 @@ import { listRosterForTeam } from "@/lib/data/players";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function NewMatchPeriodPage({
   params,
@@ -84,22 +77,12 @@ export default async function NewMatchPeriodPage({
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Period details</CardTitle>
-          <CardDescription>
-            Choose extra time or a penalty shootout and set starting players.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MatchPeriodCreateSection
-            matchId={match.id}
-            availablePeriodNames={availablePeriodNames}
-            squadPlayers={eventPlayers}
-            defaultStarterPlayerIds={defaultStarterPlayerIds}
-          />
-        </CardContent>
-      </Card>
+      <MatchPeriodCreateSection
+        matchId={match.id}
+        availablePeriodNames={availablePeriodNames}
+        squadPlayers={eventPlayers}
+        defaultStarterPlayerIds={defaultStarterPlayerIds}
+      />
     </div>
   );
 }

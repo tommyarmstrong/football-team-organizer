@@ -24,6 +24,13 @@ import {
   objectListRowClassName,
 } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+import { Section } from "@/components/shared/section";
+
+/** Match-page-style section titles on period edit/create pages. */
+export const PERIOD_PAGE_SECTION_TITLES = {
+  starters: "Starting players",
+  goals: "Goals",
+} as const;
 
 export function MatchPeriodEditSection({
   matchId,
@@ -40,22 +47,23 @@ export function MatchPeriodEditSection({
 }) {
   if (!canEdit) {
     return (
-      <div className="space-y-6">
-        <PeriodStarters
-          matchId={matchId}
-          period={period}
-          squadPlayers={squadPlayers}
-          canEdit={false}
-        />
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">Goals</h3>
+      <div className="space-y-8">
+        <Section title={PERIOD_PAGE_SECTION_TITLES.starters}>
+          <PeriodStarters
+            matchId={matchId}
+            period={period}
+            squadPlayers={squadPlayers}
+            canEdit={false}
+          />
+        </Section>
+        <Section title={PERIOD_PAGE_SECTION_TITLES.goals}>
           <MatchGoalsSection
             matchId={matchId}
             goals={goals}
             canEdit={false}
             periodId={period.id}
           />
-        </div>
+        </Section>
       </div>
     );
   }
@@ -90,7 +98,7 @@ function EditablePeriodSection({
   const knownName = isMatchPeriodName(period.name);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <form id={formId} action={formAction} className="space-y-2">
         {knownName ? (
           <input type="hidden" name="name" value={period.name} />
@@ -121,21 +129,22 @@ function EditablePeriodSection({
         )}
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
-      <PeriodStarters
-        matchId={matchId}
-        period={period}
-        squadPlayers={squadPlayers}
-        canEdit
-      />
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Goals</h3>
+      <Section title={PERIOD_PAGE_SECTION_TITLES.starters}>
+        <PeriodStarters
+          matchId={matchId}
+          period={period}
+          squadPlayers={squadPlayers}
+          canEdit
+        />
+      </Section>
+      <Section title={PERIOD_PAGE_SECTION_TITLES.goals}>
         <MatchGoalsSection
           matchId={matchId}
           goals={goals}
           canEdit={false}
           periodId={period.id}
         />
-      </div>
+      </Section>
       <FormActions
         pending={pending}
         cancelHref={`/matches/${matchId}`}
@@ -160,42 +169,35 @@ function PeriodStarters({
   const selectedPlayers = squadPlayers.filter((p) => selected.has(p.id));
 
   if (!canEdit) {
+    if (selectedPlayers.length === 0) {
+      return <p className="text-muted-foreground text-sm">None selected.</p>;
+    }
     return (
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Starting players</h3>
-        {selectedPlayers.length === 0 ? (
-          <p className="text-muted-foreground text-sm">None selected.</p>
-        ) : (
-          <ul className={objectListClassName}>
-            {selectedPlayers.map((player) => (
-              <li key={player.id} className="flex items-stretch">
-                <Link
-                  href={`/people/${player.person_id}`}
-                  className={objectListRowClassName()}
-                >
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {playerDisplayName(player, {
-                      shirtNumber: player.shirt_number,
-                    })}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <ul className={objectListClassName}>
+        {selectedPlayers.map((player) => (
+          <li key={player.id} className="flex items-stretch">
+            <Link
+              href={`/people/${player.person_id}`}
+              className={objectListRowClassName()}
+            >
+              <span className="min-w-0 flex-1 truncate font-medium">
+                {playerDisplayName(player, {
+                  shirtNumber: player.shirt_number,
+                })}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     );
   }
 
   if (squadPlayers.length === 0) {
     return (
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Starting players</h3>
-        <EmptyState
-          title="No players available"
-          description="Select the match-day squad first, then choose who starts this period."
-        />
-      </div>
+      <EmptyState
+        title="No players available"
+        description="Select the match-day squad first, then choose who starts this period."
+      />
     );
   }
 
@@ -290,10 +292,6 @@ export function PeriodStartersFields({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Starting players</h3>
-      </div>
-
       {inputName
         ? selectedIds.map((id) => (
             <input key={id} type="hidden" name={inputName} value={id} />
