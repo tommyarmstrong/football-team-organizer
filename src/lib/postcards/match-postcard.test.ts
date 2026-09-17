@@ -9,6 +9,9 @@ import {
   postcardPlayerLabel,
   postcardSquadLines,
   scheduledPostcardCaption,
+  scheduledPostcardKickoffLine,
+  scheduledPostcardKickoffText,
+  SCHEDULED_POSTCARD_KICKOFF_EMOJI,
 } from "@/lib/postcards/content";
 
 function rosterPlayer(
@@ -217,6 +220,33 @@ describe("postcardCaption", () => {
     expect(caption).not.toContain("Riverside scored");
   });
 
+  it("includes opposition own goals in the scorer list", () => {
+    const caption = postcardCaption({
+      teamName: "U11 Girls",
+      opponentName: "Riverside",
+      goalsFor: 2,
+      goalsAgainst: 0,
+      story: "Took all three points.",
+      goals: [
+        goal({ id: "g1" }),
+        goal({
+          id: "g-og",
+          is_own_goal: true,
+          player_id: null,
+          scorer: null,
+          minute: 40,
+        }),
+      ],
+      gender: "girls",
+      roster: youthRoster,
+      coachPotmLabel: null,
+      playersPotmLabel: null,
+    });
+
+    expect(caption).toContain("⚽ Maya");
+    expect(caption).toContain("⚽ Own Goal");
+  });
+
   it("includes surnames on a women team", () => {
     const caption = postcardCaption({
       teamName: "Women",
@@ -266,13 +296,20 @@ describe("scheduledPostcardCaption", () => {
       venueAddress: "1 Windmill Road, London, N18 1NB",
     });
 
-    expect(caption).toContain("U11 Girls vs Riverside");
-    expect(caption).toContain("Home · League");
-    expect(caption).toContain("Sun 8 Mar 2026");
-    expect(caption).toContain("Meet up: 09:30");
-    expect(caption).toContain("Kick off: 10:00");
-    expect(caption).toContain("Main Pitch");
-    expect(caption).toContain("1 Windmill Road, London, N18 1NB");
+    expect(caption).toBe(
+      [
+        "U11 Girls vs Riverside",
+        "",
+        "Home · League",
+        "Sun 8 Mar 2026",
+        "",
+        "⏰ Meet up: 09:30",
+        "👟 Kick off: 10:00",
+        "",
+        "Main Pitch",
+        "📍 1 Windmill Road, London, N18 1NB",
+      ].join("\n"),
+    );
   });
 
   it("omits missing venue and time lines", () => {
@@ -288,9 +325,42 @@ describe("scheduledPostcardCaption", () => {
       venueAddress: null,
     });
 
-    expect(caption).toBe("Riverside vs U11 Girls\nAway\nSun 8 Mar 2026");
+    expect(caption).toBe("Riverside vs U11 Girls\n\nAway\nSun 8 Mar 2026");
     expect(caption).not.toContain("Meet up");
     expect(caption).not.toContain("Kick off");
+  });
+
+  it("uses the trainer emoji in the caption and plain kick-off text on the image", () => {
+    expect(SCHEDULED_POSTCARD_KICKOFF_EMOJI).toBe("👟");
+    expect(scheduledPostcardKickoffLine("10:00")).toBe("👟 Kick off: 10:00");
+    expect(scheduledPostcardKickoffText("10:00")).toBe("Kick off: 10:00");
+  });
+
+  it("keeps emoji lines when only kickoff or only address is set", () => {
+    expect(
+      scheduledPostcardCaption({
+        teamName: "U11 Girls",
+        opponentName: "Riverside",
+        homeAway: "home",
+        competitionLabel: null,
+        dateLabel: "Sun 8 Mar 2026",
+        meetupTime: null,
+        kickoffTime: "10:00:00",
+        venueName: null,
+        venueAddress: "1 Windmill Road, London, N18 1NB",
+      }),
+    ).toBe(
+      [
+        "U11 Girls vs Riverside",
+        "",
+        "Home",
+        "Sun 8 Mar 2026",
+        "",
+        "👟 Kick off: 10:00",
+        "",
+        "📍 1 Windmill Road, London, N18 1NB",
+      ].join("\n"),
+    );
   });
 });
 
@@ -309,6 +379,47 @@ describe("buildPostcardGoalList crowding", () => {
         { gender: "girls", roster: youthRoster },
       ),
     ).toEqual({ kind: "none" });
+  });
+
+  it("includes opposition own goals as Own Goal rows", () => {
+    const list = buildPostcardGoalList(
+      [
+        goal({ id: "g1" }),
+        goal({
+          id: "g-og",
+          is_own_goal: true,
+          player_id: null,
+          scorer: null,
+        }),
+      ],
+      { gender: "girls", roster: youthRoster },
+    );
+    expect(list).toEqual({
+      kind: "full",
+      rows: [
+        { label: "Maya", isPenalty: false, assistLabel: null },
+        { label: "Own Goal", isPenalty: false, assistLabel: null },
+      ],
+    });
+  });
+
+  it("shows a goals block when the only our goal is an own goal", () => {
+    expect(
+      buildPostcardGoalList(
+        [
+          goal({
+            id: "g-og",
+            is_own_goal: true,
+            player_id: null,
+            scorer: null,
+          }),
+        ],
+        { gender: "girls", roster: youthRoster },
+      ),
+    ).toEqual({
+      kind: "full",
+      rows: [{ label: "Own Goal", isPenalty: false, assistLabel: null }],
+    });
   });
 
   it("lists up to six goals in full with assists", () => {
