@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   postcardPotmLine,
+  SCHEDULED_POSTCARD_TBC,
   scheduledPostcardKickoffText,
   scheduledPostcardMeetupLine,
 } from "@/lib/postcards/content";
@@ -607,42 +608,42 @@ function ScheduledPostcardBody({
       <FixtureMeta
         homeAwayLabel={payload.homeAwayLabel}
         competitionLabel={payload.competitionLabel}
-        dateLabel={payload.dateLabel}
+        dateLabel={payload.dateLabel.trim() || SCHEDULED_POSTCARD_TBC}
       />
 
-      {payload.meetupLabel ? (
-        <div
-          style={centredStyle({
-            fontSize: 32,
-            color: INK,
-            fontWeight: 700,
-            marginBottom: payload.kickoffLabel ? 8 : 28,
-          })}
-        >
-          {scheduledPostcardMeetupLine(payload.meetupLabel)}
-        </div>
-      ) : null}
-      {payload.kickoffLabel ? (
-        <div
-          style={centredStyle({
-            fontSize: 32,
-            color: INK,
-            fontWeight: 700,
-            marginBottom: 28,
-            alignItems: "center",
-            gap: 10,
-          })}
-        >
-          <WhiteTrainerMark />
-          {scheduledPostcardKickoffText(payload.kickoffLabel)}
-        </div>
-      ) : null}
+      <div
+        style={centredStyle({
+          fontSize: 32,
+          color: INK,
+          fontWeight: 700,
+          marginBottom: 8,
+        })}
+      >
+        {scheduledPostcardMeetupLine(
+          payload.meetupLabel.trim() || SCHEDULED_POSTCARD_TBC,
+        )}
+      </div>
+      <div
+        style={centredStyle({
+          fontSize: 32,
+          color: INK,
+          fontWeight: 700,
+          marginBottom: 28,
+          alignItems: "center",
+          gap: 10,
+        })}
+      >
+        <WhiteTrainerMark />
+        {scheduledPostcardKickoffText(
+          payload.kickoffLabel.trim() || SCHEDULED_POSTCARD_TBC,
+        )}
+      </div>
 
       {payload.venueName ? (
         <div
           style={stackStyle({
             alignItems: "center",
-            marginTop: payload.kickoffLabel || payload.meetupLabel ? 8 : 0,
+            marginTop: 8,
           })}
         >
           <div
