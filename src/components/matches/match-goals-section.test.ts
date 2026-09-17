@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   goalAssistPlayer,
+  goalDeleteButtonFrameClassName,
+  goalEventRowClassName,
+  goalScorerLineClassName,
   goalScorerNameClassName,
+  goalsTableClassName,
+  goalsTablePeriodCellClassName,
+  goalsTableShellClassName,
   groupGoalsByPeriod,
   periodEndScores,
   playerEventNameClassName,
@@ -98,6 +104,31 @@ describe("goalScorerNameClassName", () => {
     expect(goalScorerNameClassName({ is_opposition: false })).not.toContain(
       "text-red-600",
     );
+  });
+});
+
+describe("goals table layout", () => {
+  it("uses a shared table column so period labels align", () => {
+    expect(goalsTableShellClassName()).toContain("rounded-2xl");
+    expect(goalsTableClassName()).toContain("w-full");
+    expect(goalsTableClassName()).toContain("border-collapse");
+    expect(goalsTablePeriodCellClassName()).toContain("whitespace-nowrap");
+    expect(goalsTablePeriodCellClassName()).toContain("align-top");
+  });
+
+  it("does not reserve a second row when a goal has no assist", () => {
+    const withoutAssist = goalEventRowClassName(false);
+    const withAssist = goalEventRowClassName(true);
+    expect(withoutAssist).not.toContain("grid-rows-[auto_auto]");
+    expect(withoutAssist).not.toContain("gap-y-1.5");
+    expect(withAssist).toContain("grid-rows-[auto_auto]");
+    expect(withAssist).toContain("gap-y-1.5");
+  });
+
+  it("places the delete control on the scorer line", () => {
+    expect(goalScorerLineClassName()).toContain("items-center");
+    expect(goalDeleteButtonFrameClassName()).toContain("row-start-1");
+    expect(goalDeleteButtonFrameClassName()).toContain("items-center");
   });
 });
 
