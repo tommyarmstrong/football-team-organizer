@@ -386,11 +386,10 @@ export function scheduledPostcardCaption(input: {
   );
 
   lines.push("");
-  const venueLine = scheduledPostcardVenueCaptionLine(input.venueName);
+  lines.push(scheduledPostcardVenueCaptionLine(input.venueName));
   if (input.venueAddress) {
-    lines.push(`${venueLine} 📍 ${input.venueAddress}`);
-  } else {
-    lines.push(venueLine);
+    lines.push("");
+    lines.push(`📍 ${input.venueAddress}`);
   }
 
   return lines.join("\n");
