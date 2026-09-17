@@ -53,7 +53,7 @@ export function goalEventRowClassName(
   return cn(
     "border-border grid grid-cols-[minmax(0,1fr)_auto] border-b last:border-b-0",
     hasAssist
-      ? "grid-rows-[auto_auto] gap-x-2 gap-y-1.5 py-1.5"
+      ? "grid-rows-[auto_auto] gap-x-2 gap-y-0.5 py-1.5"
       : "gap-x-2 py-1",
     "first:pt-0 last:pb-0",
     className,

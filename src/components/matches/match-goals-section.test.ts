@@ -120,9 +120,9 @@ describe("goals table layout", () => {
     const withoutAssist = goalEventRowClassName(false);
     const withAssist = goalEventRowClassName(true);
     expect(withoutAssist).not.toContain("grid-rows-[auto_auto]");
-    expect(withoutAssist).not.toContain("gap-y-1.5");
+    expect(withoutAssist).not.toContain("gap-y-0.5");
     expect(withAssist).toContain("grid-rows-[auto_auto]");
-    expect(withAssist).toContain("gap-y-1.5");
+    expect(withAssist).toContain("gap-y-0.5");
   });
 
   it("places the delete control on the scorer line", () => {
