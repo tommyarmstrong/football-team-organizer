@@ -3,6 +3,7 @@ import type { GoalWithPlayers } from "@/lib/data/goals";
 import type { RosterPlayer } from "@/lib/data/players";
 import {
   formatKickoffTime,
+  formatMatchDate,
   formatMatchVersusTitle,
   formatScore,
   labelHomeAway,
@@ -17,6 +18,32 @@ const SUMMARY_TOP_SCORERS = 4;
 
 export const SCHEDULED_POSTCARD_MEETUP_EMOJI = "⏰";
 export const SCHEDULED_POSTCARD_KICKOFF_EMOJI = "👟";
+export const SCHEDULED_POSTCARD_TBC = "TBC";
+
+export function scheduledPostcardDateLabel(
+  date: string | null | undefined,
+): string {
+  const trimmed = date?.trim() ?? "";
+  return trimmed ? formatMatchDate(trimmed) : SCHEDULED_POSTCARD_TBC;
+}
+
+export function scheduledPostcardTimeLabel(time: string | null): string {
+  return formatKickoffTime(time) ?? SCHEDULED_POSTCARD_TBC;
+}
+
+export function scheduledPostcardVenueLabel(
+  name: string | null | undefined,
+): string {
+  const trimmed = name?.trim() ?? "";
+  return trimmed || SCHEDULED_POSTCARD_TBC;
+}
+
+export function scheduledPostcardVenueCaptionLine(
+  name: string | null | undefined,
+): string {
+  const trimmed = name?.trim() ?? "";
+  return trimmed || `Venue: ${SCHEDULED_POSTCARD_TBC}`;
+}
 
 export function scheduledPostcardMeetupLine(time: string): string {
   return `${SCHEDULED_POSTCARD_MEETUP_EMOJI} Meet up: ${time}`;
@@ -337,16 +364,18 @@ export function scheduledPostcardCaption(input: {
     .filter((part): part is string => Boolean(part))
     .join(" · ");
   if (meta) lines.push(meta);
-  lines.push(input.dateLabel);
+  lines.push(input.dateLabel.trim() || SCHEDULED_POSTCARD_TBC);
 
-  const meetup = formatKickoffTime(input.meetupTime);
-  const kickoff = formatKickoffTime(input.kickoffTime);
-  if (meetup || kickoff) lines.push("");
-  if (meetup) lines.push(scheduledPostcardMeetupLine(meetup));
-  if (kickoff) lines.push(scheduledPostcardKickoffLine(kickoff));
+  lines.push("");
+  lines.push(
+    scheduledPostcardMeetupLine(scheduledPostcardTimeLabel(input.meetupTime)),
+  );
+  lines.push(
+    scheduledPostcardKickoffLine(scheduledPostcardTimeLabel(input.kickoffTime)),
+  );
 
-  if (input.venueName || input.venueAddress) lines.push("");
-  if (input.venueName) lines.push(input.venueName);
+  lines.push("");
+  lines.push(scheduledPostcardVenueCaptionLine(input.venueName));
   if (input.venueAddress) lines.push(`📍 ${input.venueAddress}`);
 
   return lines.join("\n");

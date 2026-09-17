@@ -9,9 +9,14 @@ import {
   postcardPlayerLabel,
   postcardSquadLines,
   scheduledPostcardCaption,
+  scheduledPostcardDateLabel,
   scheduledPostcardKickoffLine,
   scheduledPostcardKickoffText,
+  scheduledPostcardTimeLabel,
+  scheduledPostcardVenueCaptionLine,
+  scheduledPostcardVenueLabel,
   SCHEDULED_POSTCARD_KICKOFF_EMOJI,
+  SCHEDULED_POSTCARD_TBC,
 } from "@/lib/postcards/content";
 
 function rosterPlayer(
@@ -312,31 +317,35 @@ describe("scheduledPostcardCaption", () => {
     );
   });
 
-  it("omits missing venue and time lines", () => {
+  it("uses TBC for missing date, meet-up, kick-off, and venue", () => {
     const caption = scheduledPostcardCaption({
       teamName: "U11 Girls",
       opponentName: "Riverside",
       homeAway: "away",
       competitionLabel: null,
-      dateLabel: "Sun 8 Mar 2026",
+      dateLabel: "",
       meetupTime: null,
       kickoffTime: null,
       venueName: null,
       venueAddress: null,
     });
 
-    expect(caption).toBe("Riverside vs U11 Girls\n\nAway\nSun 8 Mar 2026");
-    expect(caption).not.toContain("Meet up");
-    expect(caption).not.toContain("Kick off");
+    expect(caption).toBe(
+      [
+        "Riverside vs U11 Girls",
+        "",
+        "Away",
+        "TBC",
+        "",
+        "⏰ Meet up: TBC",
+        "👟 Kick off: TBC",
+        "",
+        "Venue: TBC",
+      ].join("\n"),
+    );
   });
 
-  it("uses the trainer emoji in the caption and plain kick-off text on the image", () => {
-    expect(SCHEDULED_POSTCARD_KICKOFF_EMOJI).toBe("👟");
-    expect(scheduledPostcardKickoffLine("10:00")).toBe("👟 Kick off: 10:00");
-    expect(scheduledPostcardKickoffText("10:00")).toBe("Kick off: 10:00");
-  });
-
-  it("keeps emoji lines when only kickoff or only address is set", () => {
+  it("uses TBC only for the missing time and venue name", () => {
     expect(
       scheduledPostcardCaption({
         teamName: "U11 Girls",
@@ -356,11 +365,51 @@ describe("scheduledPostcardCaption", () => {
         "Home",
         "Sun 8 Mar 2026",
         "",
+        "⏰ Meet up: TBC",
         "👟 Kick off: 10:00",
         "",
+        "Venue: TBC",
         "📍 1 Windmill Road, London, N18 1NB",
       ].join("\n"),
     );
+  });
+
+  it("uses the trainer emoji in the caption and plain kick-off text on the image", () => {
+    expect(SCHEDULED_POSTCARD_KICKOFF_EMOJI).toBe("👟");
+    expect(scheduledPostcardKickoffLine("10:00")).toBe("👟 Kick off: 10:00");
+    expect(scheduledPostcardKickoffText("10:00")).toBe("Kick off: 10:00");
+    expect(scheduledPostcardKickoffLine(SCHEDULED_POSTCARD_TBC)).toBe(
+      "👟 Kick off: TBC",
+    );
+  });
+});
+
+describe("scheduledPostcard missing values", () => {
+  it("formats a date or falls back to TBC", () => {
+    expect(scheduledPostcardDateLabel("2026-03-08")).toMatch(/8/);
+    expect(scheduledPostcardDateLabel("2026-03-08")).toMatch(/Mar/);
+    expect(scheduledPostcardDateLabel("")).toBe("TBC");
+    expect(scheduledPostcardDateLabel("   ")).toBe("TBC");
+    expect(scheduledPostcardDateLabel(null)).toBe("TBC");
+  });
+
+  it("formats a time or falls back to TBC", () => {
+    expect(scheduledPostcardTimeLabel("10:00:00")).toBe("10:00");
+    expect(scheduledPostcardTimeLabel(null)).toBe("TBC");
+    expect(scheduledPostcardTimeLabel("")).toBe("TBC");
+  });
+
+  it("uses the venue name or falls back to TBC", () => {
+    expect(scheduledPostcardVenueLabel("Main Pitch")).toBe("Main Pitch");
+    expect(scheduledPostcardVenueLabel("")).toBe("TBC");
+    expect(scheduledPostcardVenueLabel("   ")).toBe("TBC");
+    expect(scheduledPostcardVenueLabel(null)).toBe("TBC");
+  });
+
+  it("prefixes TBC with Venue in the caption", () => {
+    expect(scheduledPostcardVenueCaptionLine("Main Pitch")).toBe("Main Pitch");
+    expect(scheduledPostcardVenueCaptionLine(null)).toBe("Venue: TBC");
+    expect(scheduledPostcardVenueCaptionLine("")).toBe("Venue: TBC");
   });
 });
 
@@ -744,9 +793,40 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.venueName).toBe("Main Pitch");
     expect(data.venueAddress).toBe("1 Windmill Road, London, N18 1NB");
     expect(data.caption).toContain("U11 Girls vs Riverside");
+    expect(data.caption).toContain("⏰ Meet up: 09:30");
+    expect(data.caption).toContain("👟 Kick off: 10:00");
     expect(data.caption).toContain("1 Windmill Road, London, N18 1NB");
     expect(data.fileName).toBe("u11-girls-2026-03-08-vs-riverside.png");
     expect(listGoalsForMatchMock).not.toHaveBeenCalled();
+  });
+
+  it("uses TBC on a scheduled postcard when date, times, and venue are missing", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({
+        status: "scheduled",
+        opponent_name: "Riverside",
+        date: "",
+        kickoff_time: null,
+        meetup_time: null,
+        venue_id: null,
+        venue: null,
+      }),
+      error: null,
+    });
+    const { buildMatchPostcardPayload } =
+      await import("@/lib/postcards/match-postcard");
+    const { data, error } = await buildMatchPostcardPayload("match-1");
+    expect(error).toBeNull();
+    expect(data?.kind).toBe("scheduled");
+    if (data?.kind !== "scheduled") return;
+    expect(data.dateLabel).toBe("TBC");
+    expect(data.kickoffLabel).toBe("TBC");
+    expect(data.meetupLabel).toBe("TBC");
+    expect(data.caption).toContain("TBC");
+    expect(data.caption).toContain("⏰ Meet up: TBC");
+    expect(data.caption).toContain("👟 Kick off: TBC");
+    expect(data.venueName).toBeNull();
+    expect(data.caption).toContain("Venue: TBC");
   });
 
   it("rejects postponed and cancelled matches", async () => {

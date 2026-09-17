@@ -77,7 +77,7 @@ export function MatchesDirectoryList({
               </span>
             ) : null}
             {meta.competition ? (
-              <p className="text-primary text-center text-sm font-bold">
+              <p className="text-center text-sm font-bold">
                 {meta.competition}
               </p>
             ) : null}

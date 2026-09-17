@@ -1,8 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   postcardPotmLine,
+  SCHEDULED_POSTCARD_TBC,
   scheduledPostcardKickoffText,
   scheduledPostcardMeetupLine,
+  scheduledPostcardVenueLabel,
 } from "@/lib/postcards/content";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
 
@@ -607,102 +609,90 @@ function ScheduledPostcardBody({
       <FixtureMeta
         homeAwayLabel={payload.homeAwayLabel}
         competitionLabel={payload.competitionLabel}
-        dateLabel={payload.dateLabel}
+        dateLabel={payload.dateLabel.trim() || SCHEDULED_POSTCARD_TBC}
       />
 
-      {payload.meetupLabel ? (
-        <div
-          style={centredStyle({
-            fontSize: 32,
-            color: INK,
-            fontWeight: 700,
-            marginBottom: payload.kickoffLabel ? 8 : 28,
-          })}
-        >
-          {scheduledPostcardMeetupLine(payload.meetupLabel)}
-        </div>
-      ) : null}
-      {payload.kickoffLabel ? (
-        <div
-          style={centredStyle({
-            fontSize: 32,
-            color: INK,
-            fontWeight: 700,
-            marginBottom: 28,
-            alignItems: "center",
-            gap: 10,
-          })}
-        >
-          <WhiteTrainerMark />
-          {scheduledPostcardKickoffText(payload.kickoffLabel)}
-        </div>
-      ) : null}
+      <div
+        style={centredStyle({
+          fontSize: 32,
+          color: INK,
+          fontWeight: 700,
+          marginBottom: 8,
+        })}
+      >
+        {scheduledPostcardMeetupLine(
+          payload.meetupLabel.trim() || SCHEDULED_POSTCARD_TBC,
+        )}
+      </div>
+      <div
+        style={centredStyle({
+          fontSize: 32,
+          color: INK,
+          fontWeight: 700,
+          marginBottom: 28,
+          alignItems: "center",
+          gap: 10,
+        })}
+      >
+        <WhiteTrainerMark />
+        {scheduledPostcardKickoffText(
+          payload.kickoffLabel.trim() || SCHEDULED_POSTCARD_TBC,
+        )}
+      </div>
 
-      {payload.venueName ? (
+      <div
+        style={stackStyle({
+          alignItems: "center",
+          marginTop: 8,
+        })}
+      >
         <div
-          style={stackStyle({
-            alignItems: "center",
-            marginTop: payload.kickoffLabel || payload.meetupLabel ? 8 : 0,
-          })}
+          style={{
+            fontSize: 30,
+            color: MUTED,
+            fontWeight: 700,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            marginBottom: 12,
+          }}
         >
-          <div
-            style={{
-              fontSize: 30,
-              color: MUTED,
-              fontWeight: 700,
-              letterSpacing: 2,
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}
-          >
-            Venue
-          </div>
-          <div
-            style={centredStyle({
-              fontSize: 34,
-              fontWeight: 700,
-              color: INK,
-              marginBottom: payload.venueAddress ? 8 : 0,
-              maxWidth: 984,
-            })}
-          >
-            {payload.venueName}
-          </div>
-          {payload.venueAddress ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 29,
-                  color: MUTED,
-                  width: 900,
-                  lineHeight: 1.35,
-                  textAlign: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {`📍 ${payload.venueAddress}`}
-              </div>
-            </div>
-          ) : null}
+          Venue
         </div>
-      ) : payload.venueAddress ? (
         <div
           style={centredStyle({
-            fontSize: 29,
-            color: MUTED,
+            fontSize: 34,
+            fontWeight: 700,
+            color: INK,
+            marginBottom: payload.venueAddress ? 8 : 0,
             maxWidth: 984,
           })}
         >
-          {`📍 ${payload.venueAddress}`}
+          {scheduledPostcardVenueLabel(payload.venueName)}
         </div>
-      ) : null}
+        {payload.venueAddress ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                fontSize: 29,
+                color: MUTED,
+                width: 900,
+                lineHeight: 1.35,
+                textAlign: "center",
+                justifyContent: "center",
+              }}
+            >
+              {`📍 ${payload.venueAddress}`}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -57,8 +57,8 @@ export type ScheduledMatchPostcardPayload = MatchPostcardBase & {
   kind: "scheduled";
   venueName: string | null;
   venueAddress: string | null;
-  kickoffLabel: string | null;
-  meetupLabel: string | null;
+  kickoffLabel: string;
+  meetupLabel: string;
 };
 
 export type MatchPostcardPayload =
