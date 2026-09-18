@@ -102,7 +102,7 @@ describe("MatchHero", () => {
       }),
     );
     expect(html).toContain("Rose FC");
-    expect(html).toMatch(/"1".*"2"/s);
+    expect(html).toMatch(/"1"[\s\S]*"2"/);
   });
 
   it("shows vs with no digits for scheduled matches", () => {
@@ -140,11 +140,11 @@ describe("MatchHero", () => {
       MatchHero({
         ...playedHome,
         size: "hero",
-        actions: { type: "actions", props: { children: "Share" } },
+        actions: "Share",
       }),
     );
     const scoreIndex = html.indexOf("text-6xl");
-    const actionsIndex = html.indexOf('"actions"');
+    const actionsIndex = html.indexOf("Share");
     expect(scoreIndex).toBeGreaterThan(-1);
     expect(actionsIndex).toBeGreaterThan(scoreIndex);
   });
