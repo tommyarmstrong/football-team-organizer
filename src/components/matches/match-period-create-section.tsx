@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { ExtraTimeOrPenaltyPeriodName } from "@/lib/constants";
-import { createPeriodAction } from "@/lib/match-periods/actions";
+import {
+  createPeriodAction,
+  createPeriodOnMatchAction,
+} from "@/lib/match-periods/actions";
 import type { RosterPlayer } from "@/lib/data/players";
 import {
   PERIOD_PAGE_SECTION_TITLES,
@@ -22,18 +25,30 @@ export function MatchPeriodCreateSection({
   availablePeriodNames,
   squadPlayers,
   defaultStarterPlayerIds,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   matchId: string;
   availablePeriodNames: ExtraTimeOrPenaltyPeriodName[];
   squadPlayers: RosterPlayer[];
   defaultStarterPlayerIds: string[];
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
-  const bound = createPeriodAction.bind(null, matchId);
+  const bound = stayOnPage
+    ? createPeriodOnMatchAction.bind(null, matchId)
+    : createPeriodAction.bind(null, matchId);
   const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
   const [selectedIds, setSelectedIds] = useState(defaultStarterPlayerIds);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   if (availablePeriodNames.length === 0) {
     return (
@@ -77,7 +92,11 @@ export function MatchPeriodCreateSection({
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <FormActions pending={pending} cancelHref={`/matches/${matchId}`} />
+      <FormActions
+        pending={pending}
+        cancelHref={onCancel ? undefined : `/matches/${matchId}`}
+        onCancel={onCancel}
+      />
     </form>
   );
 }

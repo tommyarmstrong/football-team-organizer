@@ -47,7 +47,7 @@ function parseStarterPlayerIds(formData: FormData): string[] {
     .filter(Boolean);
 }
 
-export async function createPeriodAction(
+export async function createPeriodOnMatchAction(
   matchId: string,
   _prev: ActionState,
   formData: FormData,
@@ -99,6 +99,16 @@ export async function createPeriodAction(
   }
 
   revalidateMatch(matchId, data.id);
+  return { success: "Period added." };
+}
+
+export async function createPeriodAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createPeriodOnMatchAction(matchId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 

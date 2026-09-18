@@ -166,7 +166,7 @@ export async function createGoalAndReturnToMatchAction(
   redirect(`/matches/${matchId}`);
 }
 
-export async function saveGoalAndReturnToMatchAction(
+export async function saveGoalOnMatchAction(
   matchId: string,
   goalId: string,
   _prev: ActionState,
@@ -179,6 +179,17 @@ export async function saveGoalAndReturnToMatchAction(
   if (error) return { error };
 
   revalidateGoal(matchId, goalId);
+  return { success: "Goal saved." };
+}
+
+export async function saveGoalAndReturnToMatchAction(
+  matchId: string,
+  goalId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await saveGoalOnMatchAction(matchId, goalId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 

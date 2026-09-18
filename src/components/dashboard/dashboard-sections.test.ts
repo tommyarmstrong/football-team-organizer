@@ -143,4 +143,11 @@ describe("DashboardFixtures last result share", () => {
     expect(source).toContain('title="Last result"');
     expect(source).toContain("actions={share}");
   });
+
+  it("shows initials on every leaderboard row and a display-font count", () => {
+    expect(source).toContain("InitialsAvatar");
+    expect(source).toContain("font-display text-foreground text-lg");
+    expect(source).not.toContain("showAvatar={false}");
+    expect(source).not.toContain("text-primary text-sm font-semibold");
+  });
 });

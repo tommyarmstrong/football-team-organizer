@@ -71,6 +71,7 @@ vi.mock("@/lib/data/player-objectives", () => ({
 
 import {
   addPlayerObjectiveAction,
+  addPlayerObjectiveOnPageAction,
   addPlayerToTeamAction,
   addRosterPlayerAction,
   createPlayerAction,
@@ -82,6 +83,7 @@ import {
   savePlayerContactAction,
   updatePlayerAction,
   updatePlayerObjectiveAction,
+  updatePlayerObjectiveOnPageAction,
   updateRosterEntryAction,
 } from "@/lib/players/actions";
 
@@ -331,6 +333,33 @@ describe("player objective actions", () => {
         }),
       ),
     ).rejects.toThrow("redirect:/people/person-1");
+  });
+
+  it("creates and updates objectives on the person page without redirecting", async () => {
+    expect(
+      await addPlayerObjectiveOnPageAction(
+        "player-1",
+        {},
+        formDataFrom({
+          body: "First touch",
+          objective_type: "skills",
+          status: "emerging",
+        }),
+      ),
+    ).toEqual({ success: "Objective added." });
+
+    expect(
+      await updatePlayerObjectiveOnPageAction(
+        "player-1",
+        "obj-1",
+        {},
+        formDataFrom({
+          body: "Passing",
+          objective_type: "team_work",
+          status: "expected",
+        }),
+      ),
+    ).toEqual({ success: "Objective saved." });
   });
 
   it("deletes objectives and supports return redirect", async () => {

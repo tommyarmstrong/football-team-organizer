@@ -289,6 +289,7 @@ export default async function TeamPage() {
         ) : (
           <PlayerOfTheMonthSection
             awards={potmAwards}
+            players={roster}
             canEdit={canEditHistory}
           />
         )}

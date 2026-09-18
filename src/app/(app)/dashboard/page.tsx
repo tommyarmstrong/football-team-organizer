@@ -29,15 +29,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-hero text-header-foreground relative overflow-hidden rounded-3xl px-5 py-6 shadow-md sm:px-7 sm:py-8">
-        <PitchGraphic className="pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto opacity-20 sm:h-56" />
-        <p className="text-pitch-lime relative text-xs font-semibold tracking-[0.22em] uppercase">
+      <div className="dashboard-title-card relative overflow-hidden rounded-3xl px-5 py-6 sm:px-7 sm:py-8">
+        <PitchGraphic className="dashboard-title-graphic pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto sm:h-56" />
+        <p className="dashboard-title-kicker relative text-xs font-semibold tracking-[0.22em] uppercase">
           Dashboard
         </p>
         <h1 className="font-display relative mt-1 text-3xl leading-none tracking-tight sm:text-4xl">
           {displayName}
         </h1>
-        <p className="relative mt-1.5 text-sm text-white/75">
+        <p className="dashboard-title-season relative mt-1.5 text-sm">
           {team.season_label}
         </p>
       </div>

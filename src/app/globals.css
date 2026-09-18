@@ -45,6 +45,7 @@
   --color-header: var(--header);
   --color-header-foreground: var(--header-foreground);
   --color-hero: var(--hero);
+  --color-hero-rail: var(--hero-rail);
   --color-pitch-lime: var(--pitch-lime);
   --color-pitch-deep: var(--pitch-deep);
   --color-win: var(--win);
@@ -107,6 +108,7 @@
   --loss-foreground: oklch(0.99 0.01 25);
   --club-colour: transparent;
   --hero: var(--pitch-deep);
+  --hero-rail: var(--pitch-deep);
 }
 
 .dark {
@@ -181,14 +183,14 @@
   }
 }
 
-/* Club colour look-and-feel (only when a colour is set). */
+/* Club colour look-and-feel (only when a colour is set).
+   Club colour is chrome: header, primary, ring, and hero rail — not every
+   table hairline or search field. */
 [data-club-colour="true"] {
   --primary: color-mix(in srgb, var(--club-colour) 82%, oklch(0.28 0.05 155));
   --ring: var(--club-colour);
   --header: color-mix(in srgb, var(--club-colour) 62%, oklch(0.2 0.04 155));
-  --hero: var(--header);
-  --border: color-mix(in srgb, var(--club-colour) 38%, oklch(0.89 0.03 145));
-  --input: color-mix(in srgb, var(--club-colour) 28%, oklch(0.92 0.02 145));
+  --hero-rail: var(--primary);
 }
 
 /* Mute the pitch-lime wash when club colour is set so it does not fight navy.
@@ -228,13 +230,45 @@ body:has(> [data-club-colour="true"])::before {
   border-top-color: color-mix(in srgb, var(--club-colour) 40%, transparent);
 }
 
-[data-club-colour="true"] .rounded-xl.border,
-[data-club-colour="true"] .rounded-lg.border {
-  border-color: color-mix(in srgb, var(--club-colour) 40%, transparent);
+/* Dashboard title: pitch-deep fill without club colour; 12% wash on paper
+   when a club colour is set. Not a second solid header. */
+.dashboard-title-card {
+  background-color: var(--hero);
+  color: var(--header-foreground);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-[data-club-colour="true"] .divide-y > :not(:first-child) {
-  border-top-color: color-mix(in srgb, var(--club-colour) 32%, transparent);
+.dashboard-title-kicker {
+  color: var(--pitch-lime);
+}
+
+.dashboard-title-season {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.dashboard-title-graphic {
+  opacity: 0.2;
+}
+
+[data-club-colour="true"] .dashboard-title-card {
+  background-color: color-mix(in srgb, var(--club-colour) 12%, var(--card));
+  color: var(--foreground);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+[data-club-colour="true"] .dashboard-title-kicker {
+  color: var(--primary);
+}
+
+[data-club-colour="true"] .dashboard-title-season {
+  color: var(--muted-foreground);
+}
+
+[data-club-colour="true"] .dashboard-title-graphic {
+  color: var(--primary);
+  opacity: 0.08;
 }
 
 .club-themed-header [data-slot="button"] {

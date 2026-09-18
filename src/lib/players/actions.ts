@@ -276,7 +276,7 @@ export async function removePlayerFromTeamAction(
   return { success: "Player removed from team." };
 }
 
-export async function addPlayerObjectiveAction(
+export async function addPlayerObjectiveOnPageAction(
   playerId: string,
   _prev: ActionState,
   formData: FormData,
@@ -292,12 +292,27 @@ export async function addPlayerObjectiveAction(
   if (error) return { error };
   if (!data) return { error: "Could not create objective." };
 
+  await revalidatePersonForPlayer(playerId);
+  return { success: "Objective added." };
+}
+
+export async function addPlayerObjectiveAction(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await addPlayerObjectiveOnPageAction(
+    playerId,
+    _prev,
+    formData,
+  );
+  if (result.error) return result;
   const personId = await revalidatePersonForPlayer(playerId);
   if (personId) redirect(`/people/${personId}`);
   redirect("/people");
 }
 
-export async function updatePlayerObjectiveAction(
+export async function updatePlayerObjectiveOnPageAction(
   playerId: string,
   objectiveId: string,
   _prev: ActionState,
@@ -312,8 +327,25 @@ export async function updatePlayerObjectiveAction(
   const personId = await revalidatePersonForPlayer(playerId);
   if (personId) {
     revalidatePath(`/people/${personId}/player-objectives/${objectiveId}`);
-    redirect(`/people/${personId}`);
   }
+  return { success: "Objective saved." };
+}
+
+export async function updatePlayerObjectiveAction(
+  playerId: string,
+  objectiveId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updatePlayerObjectiveOnPageAction(
+    playerId,
+    objectiveId,
+    _prev,
+    formData,
+  );
+  if (result.error) return result;
+  const personId = await revalidatePersonForPlayer(playerId);
+  if (personId) redirect(`/people/${personId}`);
   redirect("/people");
 }
 

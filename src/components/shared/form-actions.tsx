@@ -27,7 +27,10 @@ export function FormActions({
           Cancel
         </Button>
       ) : cancelHref ? (
-        <Link href={cancelHref} className={buttonVariants()}>
+        <Link
+          href={cancelHref}
+          className={buttonVariants({ variant: "outline" })}
+        >
           Cancel
         </Link>
       ) : null}

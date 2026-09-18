@@ -4,7 +4,11 @@ import {
   canEditMatchDay,
   canEditTeamHistory,
 } from "@/lib/authz/context";
-import { matchAllowsEvents, matchAllowsPostcard } from "@/lib/constants";
+import {
+  availableExtraTimeOrPenaltyPeriodNames,
+  matchAllowsEvents,
+  matchAllowsPostcard,
+} from "@/lib/constants";
 import { getMatchDetail } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
 import {
@@ -90,6 +94,12 @@ export default async function MatchDetailPage({
           p.id === match.players_player_of_the_match_id,
       )
     : players;
+  const defaultStarterPlayerIds = hasMatchSquad
+    ? [...matchSquadIds]
+    : eventPlayers.map((player) => player.id);
+  const availablePeriodNames = availableExtraTimeOrPenaltyPeriodNames(
+    periods.map((period) => period.name),
+  );
 
   const loadErrors = [playersError, postcardResult.error]
     .filter(Boolean)
@@ -194,6 +204,15 @@ export default async function MatchDetailPage({
                   }
                 : null
             }
+            addPeriod={
+              canEdit
+                ? {
+                    availablePeriodNames,
+                    squadPlayers: eventPlayers,
+                    defaultStarterPlayerIds,
+                  }
+                : null
+            }
           />
         </Section>
       ) : null}
@@ -223,6 +242,7 @@ export default async function MatchDetailPage({
             <MatchCardsSection
               matchId={match.id}
               cards={cards}
+              players={eventPlayers}
               canEdit={canEdit}
             />
           </Section>

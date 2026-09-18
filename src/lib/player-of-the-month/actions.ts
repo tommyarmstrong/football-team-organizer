@@ -47,7 +47,7 @@ function revalidateAwardPaths(id?: string) {
   }
 }
 
-export async function createPlayerOfTheMonthAction(
+export async function createPlayerOfTheMonthOnPageAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -59,10 +59,19 @@ export async function createPlayerOfTheMonthAction(
   if (!data) return { error: "Could not create player of the month." };
 
   revalidateAwardPaths(data.id);
+  return { success: "Player of the month added." };
+}
+
+export async function createPlayerOfTheMonthAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createPlayerOfTheMonthOnPageAction(_prev, formData);
+  if (result.error) return result;
   redirect("/team");
 }
 
-export async function updatePlayerOfTheMonthAction(
+export async function updatePlayerOfTheMonthOnPageAction(
   id: string,
   _prev: ActionState,
   formData: FormData,
@@ -74,6 +83,16 @@ export async function updatePlayerOfTheMonthAction(
   if (error) return { error };
 
   revalidateAwardPaths(id);
+  return { success: "Player of the month saved." };
+}
+
+export async function updatePlayerOfTheMonthAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updatePlayerOfTheMonthOnPageAction(id, _prev, formData);
+  if (result.error) return result;
   redirect("/team");
 }
 

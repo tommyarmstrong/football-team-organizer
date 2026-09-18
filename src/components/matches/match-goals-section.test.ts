@@ -371,8 +371,15 @@ describe("MatchGoalsSection add goal", () => {
   );
 
   it("opens an inline dialog instead of navigating to /goals/new", () => {
-    expect(source).toContain("AddGoalDialog");
+    expect(source).toContain("InlineFormDialog");
     expect(source).toContain("stayOnPage");
-    expect(source).toContain("<Dialog");
+    expect(source).not.toContain("AddGoalDialog");
+  });
+
+  it("opens add period and edit goal in dialogs on the match page", () => {
+    expect(source).toContain("addPeriod");
+    expect(source).toContain("MatchPeriodCreateSection");
+    expect(source).toContain("Edit goal");
+    expect(source).toContain("stayOnPage");
   });
 });

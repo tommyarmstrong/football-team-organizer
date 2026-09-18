@@ -176,7 +176,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Top scorers"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
-        showAvatar={false}
         rows={scorers.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -188,7 +187,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Most assists"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
-        showAvatar={false}
         rows={assists.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -200,7 +198,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the match"
         emptyTitle="No awards yet"
         emptyDescription="Select players of the match on played fixtures."
-        showAvatar={false}
         rows={potm.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -268,7 +265,6 @@ function LeaderboardSection({
   emptyTitle,
   emptyDescription,
   rows,
-  showAvatar = true,
 }: {
   title: string;
   emptyTitle: string;
@@ -280,7 +276,6 @@ function LeaderboardSection({
     valueLabel: string;
     rank?: number;
   }>;
-  showAvatar?: boolean;
 }) {
   return (
     <Section title={title}>
@@ -296,12 +291,10 @@ function LeaderboardSection({
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <RankBadge rank={row.rank ?? index + 1} />
-                  {showAvatar ? (
-                    <InitialsAvatar name={row.name} className="size-8" />
-                  ) : null}
+                  <InitialsAvatar name={row.name} className="size-8" />
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
-                <span className="text-primary text-sm font-semibold tabular-nums">
+                <span className="font-display text-foreground text-lg tabular-nums">
                   {row.valueLabel}
                 </span>
               </Link>

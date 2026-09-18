@@ -22,8 +22,10 @@ vi.mock("@/lib/data/player-of-the-month", () => ({
 
 import {
   createPlayerOfTheMonthAction,
+  createPlayerOfTheMonthOnPageAction,
   deletePlayerOfTheMonthAction,
   updatePlayerOfTheMonthAction,
+  updatePlayerOfTheMonthOnPageAction,
 } from "@/lib/player-of-the-month/actions";
 
 const valid = formDataFrom({
@@ -80,6 +82,15 @@ describe("player of the month actions", () => {
     await expect(deletePlayerOfTheMonthAction("potm-1")).rejects.toThrow(
       "redirect:/team",
     );
+  });
+
+  it("creates and updates on the team page without redirecting", async () => {
+    expect(await createPlayerOfTheMonthOnPageAction({}, valid)).toEqual({
+      success: "Player of the month added.",
+    });
+    expect(
+      await updatePlayerOfTheMonthOnPageAction("potm-1", {}, valid),
+    ).toEqual({ success: "Player of the month saved." });
   });
 
   it("returns write errors", async () => {

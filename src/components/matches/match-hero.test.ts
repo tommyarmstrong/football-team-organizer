@@ -165,6 +165,26 @@ describe("MatchHero", () => {
     expect(actionsIndex).toBeGreaterThan(scoreIndex);
   });
 
+  it("uses a paper masthead with a hero rail instead of a solid club fill", () => {
+    const html = JSON.stringify(MatchHero(playedHome));
+    expect(html).toContain("bg-card");
+    expect(html).toContain("text-foreground");
+    expect(html).toContain("border-hero-rail");
+    expect(html).not.toContain("bg-hero");
+    expect(html).not.toContain("text-header-foreground");
+  });
+
+  it("uses destructive text for cancelled and postponed on paper", () => {
+    const html = JSON.stringify(
+      MatchHero({
+        ...playedHome,
+        status: "postponed",
+      }),
+    );
+    expect(html).toContain("text-destructive");
+    expect(html).not.toContain("text-red-300");
+  });
+
   it("can put a share control under the score on a last-result card", () => {
     const html = JSON.stringify(
       MatchHero({ ...playedHome, size: "card", actions: "Share" }),

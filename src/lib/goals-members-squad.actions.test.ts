@@ -70,6 +70,7 @@ import {
   createGoalAndReturnToMatchAction,
   createGoalOnMatchAction,
   deleteGoalAndReturnToMatchAction,
+  saveGoalOnMatchAction,
 } from "@/lib/goals/actions";
 
 describe("saveMatchSquadAction", () => {
@@ -220,6 +221,7 @@ describe("goal actions", () => {
       data: { id: "goal-1" },
       error: null,
     });
+    updateGoalMock.mockResolvedValue({ error: null });
     deleteGoalMock.mockResolvedValue({ error: null });
   });
 
@@ -273,6 +275,20 @@ describe("goal actions", () => {
         match_id: "match-1",
         player_id: "player-1",
       }),
+    );
+  });
+
+  it("saves a goal on the match page without redirecting", async () => {
+    const result = await saveGoalOnMatchAction(
+      "match-1",
+      "goal-1",
+      {},
+      formDataFrom({ player_id: "player-1" }),
+    );
+    expect(result).toEqual({ success: "Goal saved." });
+    expect(updateGoalMock).toHaveBeenCalledWith(
+      "goal-1",
+      expect.objectContaining({ player_id: "player-1" }),
     );
   });
 
