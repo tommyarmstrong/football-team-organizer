@@ -182,8 +182,8 @@ vi.mock("@/components/shared/object-list", () => ({
   objectListClassName: "",
   objectListRowClassName: "",
 }));
-vi.mock("@/components/matches/match-scoreboard", () => ({
-  MatchScoreboard: () => null,
+vi.mock("@/components/matches/match-hero", () => ({
+  MatchHero: () => null,
 }));
 vi.mock("@/components/team/competitions-section", () => ({
   CompetitionsSection: () => null,

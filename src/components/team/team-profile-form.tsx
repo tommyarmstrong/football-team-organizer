@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   AGE_GROUPS,
@@ -30,7 +31,7 @@ export function TeamProfileForm({
   venues: Venue[];
   headCoachId: string | null;
 }) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     updateTeamAction,
     INITIAL_ACTION_STATE,
   );

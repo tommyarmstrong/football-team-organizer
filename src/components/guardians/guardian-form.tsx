@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createGuardianAction,
@@ -26,7 +26,7 @@ export function GuardianForm({
       ? createGuardianAction
       : updateGuardianAction.bind(null, guardian!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );

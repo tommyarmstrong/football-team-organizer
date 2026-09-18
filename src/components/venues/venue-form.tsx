@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   VENUE_FOOD_AND_DRINKS,
@@ -30,7 +30,7 @@ export function VenueForm({
       ? createVenueAction
       : updateVenueAction.bind(null, venue!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );

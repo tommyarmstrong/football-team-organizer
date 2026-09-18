@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { ExtraTimeOrPenaltyPeriodName } from "@/lib/constants";
 import { createPeriodAction } from "@/lib/match-periods/actions";
@@ -28,7 +29,7 @@ export function MatchPeriodCreateSection({
   defaultStarterPlayerIds: string[];
 }) {
   const bound = createPeriodAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

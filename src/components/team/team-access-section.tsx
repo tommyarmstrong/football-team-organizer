@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addTeamMemberAction,
@@ -23,7 +23,7 @@ export function TeamAccessSection({
   members: TeamMember[];
 }) {
   const bound = addTeamMemberAction.bind(null, teamId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -105,7 +105,7 @@ export function TeamAccessSection({
 }
 
 function RemoveMemberButton({ id }: { id: string }) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     async () => removeTeamMemberAction(id),
     INITIAL_ACTION_STATE,
   );

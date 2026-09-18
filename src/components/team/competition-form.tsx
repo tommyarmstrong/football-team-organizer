@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   AGE_GROUPS,
@@ -64,7 +64,7 @@ export function CompetitionForm({
     mode === "edit" && competition
       ? saveCompetitionAndReturnAction.bind(null, competition.id)
       : createCompetitionAndReturnAction;
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     boundReturn,
     INITIAL_ACTION_STATE,
   );

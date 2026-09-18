@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   goalAssistPlayer,
@@ -359,5 +361,18 @@ describe("periodEndScores", () => {
       ],
     );
     expect(periodEndScores(groups, "home")).toEqual(["0–0", "0–0"]);
+  });
+});
+
+describe("MatchGoalsSection add goal", () => {
+  const source = readFileSync(
+    path.join(import.meta.dirname, "match-goals-section.tsx"),
+    "utf8",
+  );
+
+  it("opens an inline dialog instead of navigating to /goals/new", () => {
+    expect(source).toContain("AddGoalDialog");
+    expect(source).toContain("stayOnPage");
+    expect(source).toContain("<Dialog");
   });
 });

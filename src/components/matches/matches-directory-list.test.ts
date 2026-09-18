@@ -8,15 +8,12 @@ const source = readFileSync(
 );
 
 describe("MatchesDirectoryList", () => {
-  it("uses standard text colour for competition names", () => {
-    expect(source).toContain('<p className="text-center text-sm font-bold">');
-    expect(source).not.toMatch(/text-primary text-center text-sm font-bold/);
+  it("reuses MatchHero compact rows", () => {
+    expect(source).toContain('size="compact"');
+    expect(source).toContain("MatchHero");
   });
 
-  it("keeps Scheduled in red", () => {
-    expect(source).toContain(
-      'className="text-center text-sm font-medium text-red-600 dark:text-red-400"',
-    );
-    expect(source).toMatch(/>\s*Scheduled\s*</);
+  it("does not colour competition names with primary", () => {
+    expect(source).not.toMatch(/text-primary/);
   });
 });

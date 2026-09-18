@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { matchPeriodSortOrder } from "@/lib/constants";
 import { deleteGoalAction } from "@/lib/goals/actions";
@@ -11,11 +12,20 @@ import {
   scoreFromGoals,
 } from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
+import type { RosterPlayer } from "@/lib/data/players";
 import type { MatchHomeAway } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
 
 /** Card shell around the goals table; overflow clip keeps rounded corners. */
 export function goalsTableShellClassName(className?: string): string {
@@ -316,6 +326,7 @@ export function MatchGoalsSection({
   periods,
   showAddPeriod = false,
   homeAway,
+  addGoal = null,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
@@ -327,6 +338,12 @@ export function MatchGoalsSection({
   showAddPeriod?: boolean;
   /** When set, show the cumulative home-first score under each period name. */
   homeAway?: MatchHomeAway;
+  /** When set, Add goal opens an inline dialog instead of `/goals/new`. */
+  addGoal?: {
+    players: RosterPlayer[];
+    teamName: string;
+    opponentName: string;
+  } | null;
 }) {
   const groups = groupGoalsByPeriod(goals, periods);
   const endScores = homeAway ? periodEndScores(groups, homeAway) : null;
@@ -393,14 +410,31 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={addHref} className={buttonVariants()}>
-            Add goal
-          </Link>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          {addGoal ? (
+            <AddGoalDialog
+              matchId={matchId}
+              players={addGoal.players}
+              periods={periods ?? []}
+              teamName={addGoal.teamName}
+              opponentName={addGoal.opponentName}
+              defaultPeriodId={periodId}
+            />
+          ) : (
+            <Link
+              href={addHref}
+              className={cn(buttonVariants(), "w-full sm:w-auto")}
+            >
+              Add goal
+            </Link>
+          )}
           {showAddPeriod ? (
             <Link
               href={`/matches/${matchId}/periods/new`}
-              className={buttonVariants()}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "w-full sm:w-auto",
+              )}
             >
               Add period
             </Link>
@@ -408,5 +442,63 @@ export function MatchGoalsSection({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function AddGoalDialog({
+  matchId,
+  players,
+  periods,
+  teamName,
+  opponentName,
+  defaultPeriodId,
+}: {
+  matchId: string;
+  players: RosterPlayer[];
+  periods: GoalPeriodRef[];
+  teamName: string;
+  opponentName: string;
+  defaultPeriodId?: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        type="button"
+        className="w-full sm:w-auto"
+        onClick={() => setOpen(true)}
+      >
+        Add goal
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          className="max-h-[min(90dvh,40rem)] overflow-y-auto sm:max-w-lg"
+          showCloseButton
+        >
+          <DialogHeader>
+            <DialogTitle>Add goal</DialogTitle>
+            <DialogDescription>
+              Choose the scorer and other details. Save adds the goal to this
+              match.
+            </DialogDescription>
+          </DialogHeader>
+          {open ? (
+            <MatchGoalEditSection
+              matchId={matchId}
+              players={players}
+              periods={periods}
+              teamName={teamName}
+              opponentName={opponentName}
+              canEdit
+              stayOnPage
+              defaultPeriodId={defaultPeriodId ?? null}
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

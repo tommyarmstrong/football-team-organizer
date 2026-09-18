@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { PLAYER_POSITIONS } from "@/lib/constants";
 import { createPersonAction, updatePersonAction } from "@/lib/people/actions";
@@ -39,7 +39,7 @@ export function PersonForm({
       ? createPersonAction
       : updatePersonAction.bind(null, person!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );

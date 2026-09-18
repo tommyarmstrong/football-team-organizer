@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { useRouter } from "next/navigation";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -178,7 +179,7 @@ function EditMembershipForm({
     membership.team_player_id,
     playerId,
   );
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -251,7 +252,7 @@ function AddToTeamForm({
   availableTeams: Pick<Team, "id" | "name">[];
 }) {
   const bound = addPlayerToTeamAction.bind(null, playerId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

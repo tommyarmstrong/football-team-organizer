@@ -1,7 +1,7 @@
 "use client";
 
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import Link from "next/link";
-import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { COACH_TEAM_ROLES } from "@/lib/constants";
 import {
@@ -92,7 +92,7 @@ function AssignCoachForm({
   teamId: string;
   candidates: CoachWithPerson[];
 }) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     async (_prev: typeof INITIAL_ACTION_STATE, formData: FormData) => {
       const coachId = String(formData.get("coach_id") ?? "");
       if (!coachId) return { error: "Select a coach." };

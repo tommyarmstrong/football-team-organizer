@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useTransition } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { useRouter } from "next/navigation";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { COACH_TEAM_ROLES } from "@/lib/constants";
@@ -145,7 +146,7 @@ function AssignTeamForm({
   availableTeams: Pick<Team, "id" | "name">[];
 }) {
   const bound = addCoachToTeamAction.bind(null, coachId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

@@ -6,7 +6,6 @@ import {
   formatAwardMonth,
   formatCountLabel,
   matchCompetitionLabel,
-  matchSummaryLines,
   playerDisplayName,
 } from "@/lib/format";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
@@ -20,10 +19,19 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { MatchHero } from "@/components/matches/match-hero";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { buttonVariants } from "@/components/ui/button";
+import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
+
+export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
+  const { stats } = await getDashboardData(teamId);
+  if (stats.error) return null;
+
+  return <SeasonTiles results={stats.resultsOverTime} />;
+}
 
 export async function DashboardFixtures({
   teamId,
@@ -32,7 +40,10 @@ export async function DashboardFixtures({
   teamId: string;
   teamName: string;
 }) {
-  const { next, last, canEditMatch } = await getDashboardData(teamId);
+  const { next, last, lastPostcard, canEditMatch } =
+    await getDashboardData(teamId);
+  const lastMatch = last.data;
+  const postcard = lastPostcard?.data ?? null;
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -60,9 +71,33 @@ export async function DashboardFixtures({
         <FixtureSection
           title="Last result"
           teamName={teamName}
-          match={last.data}
+          match={lastMatch}
           emptyTitle="No results yet"
           emptyDescription="Played matches will show here."
+          share={
+            postcard ? (
+              <SharePostcardButton
+                imageUrl={`/matches/${postcard.matchId}/postcard`}
+                caption={postcard.caption}
+                fileName={postcard.fileName}
+                title={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+                description={
+                  postcard.kind === "scheduled"
+                    ? "Share this upcoming fixture, including the venue address."
+                    : "Share a recap of this result. Player names follow the team’s privacy rules."
+                }
+                previewAlt={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+              />
+            ) : undefined
+          }
         />
       </div>
     </div>
@@ -184,6 +219,7 @@ function FixtureSection({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  share,
 }: {
   title: string;
   teamName: string;
@@ -191,6 +227,7 @@ function FixtureSection({
   emptyTitle: string;
   emptyDescription: string;
   emptyAction?: ReactNode;
+  share?: ReactNode;
 }) {
   if (!match) {
     return (
@@ -204,48 +241,24 @@ function FixtureSection({
     );
   }
 
-  const meta = matchSummaryLines({
-    competitionName: matchCompetitionLabel(match),
-    date: match.date,
-    kickoffTime: match.kickoff_time,
-    meetupTime: match.meetup_time,
-    venueName: match.venue?.name,
-    status: match.status,
-  });
-
   return (
     <Section title={title}>
-      <Link
+      <MatchHero
+        size="card"
         href={`/matches/${match.id}`}
-        className="bg-card ring-foreground/10 block space-y-3 rounded-2xl p-4 shadow-sm ring-1 transition-opacity hover:opacity-80"
-      >
-        <MatchScoreboard
-          teamName={teamName}
-          opponentName={match.opponent_name}
-          homeAway={match.home_away}
-          status={match.status}
-          goalsFor={match.goals_for}
-          goalsAgainst={match.goals_against}
-        />
-        {meta.competition ? (
-          <p className="text-primary text-center text-sm font-bold">
-            {meta.competition}
-          </p>
-        ) : null}
-        <p className="text-muted-foreground text-center text-sm">
-          {meta.dateTime}
-        </p>
-        {meta.times ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.times}
-          </p>
-        ) : null}
-        {meta.venue ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.venue}
-          </p>
-        ) : null}
-      </Link>
+        teamName={teamName}
+        opponentName={match.opponent_name}
+        homeAway={match.home_away}
+        status={match.status}
+        goalsFor={match.goals_for}
+        goalsAgainst={match.goals_against}
+        competitionName={matchCompetitionLabel(match)}
+        date={match.date}
+        kickoffTime={match.kickoff_time}
+        meetupTime={match.meetup_time}
+        venueName={match.venue?.name ?? null}
+        actions={share}
+      />
     </Section>
   );
 }
