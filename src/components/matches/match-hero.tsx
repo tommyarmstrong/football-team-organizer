@@ -222,14 +222,14 @@ export function MatchHero({
           </div>
 
           {(homeAway || isLive) && (
-            <p className="mt-2 flex items-center justify-center gap-2 text-center text-[11px] font-medium tracking-wide uppercase">
+            <div className="mt-2 flex flex-col items-center gap-1.5">
               {homeAway ? (
-                <span className="text-header-foreground/70">
+                <p className="text-header-foreground/70 text-center text-[11px] font-medium tracking-wide uppercase">
                   {labelHomeAway(homeAway)}
-                </span>
+                </p>
               ) : null}
               {isLive ? <LiveIndicator /> : null}
-            </p>
+            </div>
           )}
         </div>
 

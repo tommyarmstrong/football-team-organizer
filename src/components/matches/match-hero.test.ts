@@ -135,6 +135,22 @@ describe("MatchHero", () => {
     expect(played).not.toContain("LiveIndicator");
   });
 
+  it("stacks the LIVE chip under the home/away label, not beside it", () => {
+    const live = renderTree(
+      MatchHero({
+        ...playedHome,
+        status: "in_progress",
+        goalsFor: 0,
+        goalsAgainst: 0,
+      }),
+    );
+    expect(live).toContain("flex-col");
+    expect(live).toMatch(/"Home"[\s\S]*LiveIndicator/);
+    expect(live).not.toMatch(
+      /flex items-center justify-center gap-2[\s\S]*LiveIndicator/,
+    );
+  });
+
   it("puts share/edit/delete under the score on the hero", () => {
     const html = JSON.stringify(
       MatchHero({
