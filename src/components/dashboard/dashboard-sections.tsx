@@ -6,7 +6,6 @@ import {
   formatAwardMonth,
   formatCountLabel,
   matchCompetitionLabel,
-  matchSummaryLines,
   playerDisplayName,
 } from "@/lib/format";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
@@ -20,10 +19,18 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { MatchHero } from "@/components/matches/match-hero";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { buttonVariants } from "@/components/ui/button";
+
+export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
+  const { stats } = await getDashboardData(teamId);
+  if (stats.error) return null;
+
+  return <SeasonTiles results={stats.resultsOverTime} />;
+}
 
 export async function DashboardFixtures({
   teamId,
@@ -204,47 +211,26 @@ function FixtureSection({
     );
   }
 
-  const meta = matchSummaryLines({
-    competitionName: matchCompetitionLabel(match),
-    date: match.date,
-    kickoffTime: match.kickoff_time,
-    meetupTime: match.meetup_time,
-    venueName: match.venue?.name,
-    status: match.status,
-  });
-
   return (
     <Section title={title}>
       <Link
         href={`/matches/${match.id}`}
-        className="bg-card ring-foreground/10 block space-y-3 rounded-2xl p-4 shadow-sm ring-1 transition-opacity hover:opacity-80"
+        className="block rounded-3xl transition-opacity hover:opacity-80"
       >
-        <MatchScoreboard
+        <MatchHero
+          size="card"
           teamName={teamName}
           opponentName={match.opponent_name}
           homeAway={match.home_away}
           status={match.status}
           goalsFor={match.goals_for}
           goalsAgainst={match.goals_against}
+          competitionName={matchCompetitionLabel(match)}
+          date={match.date}
+          kickoffTime={match.kickoff_time}
+          meetupTime={match.meetup_time}
+          venueName={match.venue?.name ?? null}
         />
-        {meta.competition ? (
-          <p className="text-primary text-center text-sm font-bold">
-            {meta.competition}
-          </p>
-        ) : null}
-        <p className="text-muted-foreground text-center text-sm">
-          {meta.dateTime}
-        </p>
-        {meta.times ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.times}
-          </p>
-        ) : null}
-        {meta.venue ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.venue}
-          </p>
-        ) : null}
       </Link>
     </Section>
   );

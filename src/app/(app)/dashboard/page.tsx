@@ -10,6 +10,7 @@ import {
   DashboardFixtures,
   DashboardForm,
   DashboardLeaderboards,
+  DashboardSeasonTiles,
 } from "@/components/dashboard/dashboard-sections";
 
 export default async function DashboardPage() {
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-pitch-deep text-header-foreground relative overflow-hidden rounded-3xl px-5 py-6 shadow-md sm:px-7 sm:py-8">
+      <div className="bg-hero text-header-foreground relative overflow-hidden rounded-3xl px-5 py-6 shadow-md sm:px-7 sm:py-8">
         <PitchGraphic className="pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto opacity-20 sm:h-56" />
         <p className="text-pitch-lime relative text-xs font-semibold tracking-[0.22em] uppercase">
           Dashboard
@@ -40,6 +41,10 @@ export default async function DashboardPage() {
           {team.season_label}
         </p>
       </div>
+
+      <Suspense fallback={<SectionSkeleton rows={1} />}>
+        <DashboardSeasonTiles teamId={team.id} />
+      </Suspense>
 
       <Suspense fallback={<SectionSkeleton columns={2} />}>
         <DashboardFixtures teamId={team.id} teamName={displayName} />

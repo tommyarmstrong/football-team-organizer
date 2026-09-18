@@ -44,6 +44,7 @@
   --color-card: var(--card);
   --color-header: var(--header);
   --color-header-foreground: var(--header-foreground);
+  --color-hero: var(--hero);
   --color-pitch-lime: var(--pitch-lime);
   --color-pitch-deep: var(--pitch-deep);
   --color-win: var(--win);
@@ -105,6 +106,7 @@
   --loss: oklch(0.58 0.2 25);
   --loss-foreground: oklch(0.99 0.01 25);
   --club-colour: transparent;
+  --hero: var(--pitch-deep);
 }
 
 .dark {
@@ -184,14 +186,25 @@
   --primary: color-mix(in srgb, var(--club-colour) 82%, oklch(0.28 0.05 155));
   --ring: var(--club-colour);
   --header: color-mix(in srgb, var(--club-colour) 62%, oklch(0.2 0.04 155));
+  --hero: var(--header);
   --border: color-mix(in srgb, var(--club-colour) 38%, oklch(0.89 0.03 145));
   --input: color-mix(in srgb, var(--club-colour) 28%, oklch(0.92 0.02 145));
+}
+
+/* Mute the pitch-lime wash when club colour is set so it does not fight navy.
+   Keep the grid on body::before; do not add a second fixed-attachment layer. */
+body:has(> [data-club-colour="true"])::before {
   background-image:
     url("/pitch-pattern.svg"),
+    radial-gradient(
+      ellipse 90% 50% at 50% -20%,
+      color-mix(in srgb, var(--primary) 8%, transparent),
+      transparent 58%
+    ),
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--club-colour) 16%, transparent),
-      transparent 18rem
+      color-mix(in srgb, oklch(0.86 0.04 125) 8%, var(--background)),
+      var(--background) 22rem
     );
 }
 

@@ -13,7 +13,7 @@ import {
   scoreFromGoals,
   teamDisplayName,
 } from "@/lib/format";
-import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { MatchHero } from "@/components/matches/match-hero";
 import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
@@ -22,10 +22,6 @@ import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
-import {
-  LiveIndicator,
-  MatchHeaderMeta,
-} from "@/components/matches/match-header-meta";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
@@ -110,85 +106,73 @@ export default async function MatchDetailPage({
   );
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title={
-          <span className="block space-y-3">
-            <span className="sr-only">{titleText}</span>
-            <MatchScoreboard
-              teamName={teamName}
-              opponentName={opponentName}
-              homeAway={match.home_away}
-              status={match.status}
-              goalsFor={goalsFor}
-              goalsAgainst={goalsAgainst}
-            />
-            {match.status === "in_progress" ? (
-              <span className="flex justify-center">
-                <LiveIndicator />
-              </span>
-            ) : null}
-          </span>
-        }
-        description={
-          <MatchHeaderMeta
-            date={match.date}
-            kickoffTime={match.kickoff_time}
-            meetupTime={match.meetup_time}
-            venueName={match.venue?.name ?? null}
-            venueId={match.venue?.id ?? null}
-            competitionName={matchCompetitionLabel(match)}
-            status={match.status}
-            matchDaySquadCount={matchSquadIds.size}
-            cards={cards}
-          />
-        }
-        actions={
-          postcard || canEdit ? (
-            <>
-              {postcard ? (
-                <SharePostcardButton
-                  imageUrl={`/matches/${match.id}/postcard`}
-                  caption={postcard.caption}
-                  fileName={postcard.fileName}
-                  title={
-                    postcard.kind === "scheduled"
-                      ? "Fixture postcard"
-                      : "Match postcard"
-                  }
-                  description={
-                    postcard.kind === "scheduled"
-                      ? "Share this upcoming fixture, including the venue address."
-                      : "Share a recap of this result. Player names follow the team’s privacy rules."
-                  }
-                  previewAlt={
-                    postcard.kind === "scheduled"
-                      ? "Fixture postcard"
-                      : "Match postcard"
-                  }
-                />
-              ) : null}
-              {canEdit ? (
-                <>
-                  <EditIconLink
-                    href={`/matches/${match.id}/edit`}
-                    label="Edit match"
+    <div className="space-y-6">
+      <h1 className="sr-only">{titleText}</h1>
+      <div className="space-y-4">
+        <MatchHero
+          size="hero"
+          teamName={teamName}
+          opponentName={opponentName}
+          homeAway={match.home_away}
+          status={match.status}
+          goalsFor={goalsFor}
+          goalsAgainst={goalsAgainst}
+          competitionName={matchCompetitionLabel(match)}
+          date={match.date}
+          kickoffTime={match.kickoff_time}
+          meetupTime={match.meetup_time}
+          venueName={match.venue?.name ?? null}
+          venueId={match.venue?.id ?? null}
+          matchDaySquadCount={matchSquadIds.size}
+          cards={cards}
+          actions={
+            postcard || canEdit ? (
+              <>
+                {postcard ? (
+                  <SharePostcardButton
+                    imageUrl={`/matches/${match.id}/postcard`}
+                    caption={postcard.caption}
+                    fileName={postcard.fileName}
+                    title={
+                      postcard.kind === "scheduled"
+                        ? "Fixture postcard"
+                        : "Match postcard"
+                    }
+                    description={
+                      postcard.kind === "scheduled"
+                        ? "Share this upcoming fixture, including the venue address."
+                        : "Share a recap of this result. Player names follow the team’s privacy rules."
+                    }
+                    previewAlt={
+                      postcard.kind === "scheduled"
+                        ? "Fixture postcard"
+                        : "Match postcard"
+                    }
                   />
-                  <ListDeleteButton
-                    label={`Delete match vs ${opponentName}`}
-                    confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
-                    deleteAction={deleteMatchAction.bind(null, match.id)}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : undefined
-        }
-      />
+                ) : null}
+                {canEdit ? (
+                  <>
+                    <EditIconLink
+                      href={`/matches/${match.id}/edit`}
+                      label="Edit match"
+                      className="size-11 sm:size-9"
+                    />
+                    <ListDeleteButton
+                      label={`Delete match vs ${opponentName}`}
+                      confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
+                      deleteAction={deleteMatchAction.bind(null, match.id)}
+                    />
+                  </>
+                ) : null}
+              </>
+            ) : undefined
+          }
+        />
 
-      {canEdit ? (
-        <MatchStatusActions matchId={match.id} status={match.status} />
-      ) : null}
+        {canEdit ? (
+          <MatchStatusActions matchId={match.id} status={match.status} />
+        ) : null}
+      </div>
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 

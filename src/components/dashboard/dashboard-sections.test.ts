@@ -15,7 +15,11 @@ vi.mock("@/lib/data/dashboard", () => ({
   getDashboardData: getDashboardDataMock,
 }));
 
-import { DashboardLeaderboards } from "@/components/dashboard/dashboard-sections";
+import {
+  DashboardLeaderboards,
+  DashboardSeasonTiles,
+} from "@/components/dashboard/dashboard-sections";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 
 describe("DashboardLeaderboards", () => {
   beforeEach(() => {
@@ -31,6 +35,7 @@ describe("DashboardLeaderboards", () => {
       assists: { data: [], error: null },
       potm: { data: [], error: null },
       potMonth: { data: [], error: null },
+      stats: { resultsOverTime: [], form: [], error: null },
     });
   });
 
@@ -67,5 +72,60 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("Maya Hall");
     expect(html).not.toContain("7 Maya Hall");
     expect(html).toContain("3 awards");
+  });
+});
+
+describe("DashboardSeasonTiles", () => {
+  it("omits tiles when getAllTeamStats errors", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [
+          {
+            matchId: "m1",
+            date: "2026-01-01",
+            label: "Rivals",
+            goalsFor: 2,
+            goalsAgainst: 1,
+            result: "W",
+            competitionId: "c1",
+            competitionKind: "league",
+            competitionName: "League",
+            isFriendly: false,
+          },
+        ],
+        form: ["W"],
+        error: "boom",
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(tree).toBeNull();
+  });
+
+  it("renders tiles from played results", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [
+          {
+            matchId: "m1",
+            date: "2026-01-01",
+            label: "Rivals",
+            goalsFor: 2,
+            goalsAgainst: 1,
+            result: "W",
+            competitionId: "c1",
+            competitionKind: "league",
+            competitionName: "League",
+            isFriendly: false,
+          },
+        ],
+        form: ["W"],
+        error: null,
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(tree?.type).toBe(SeasonTiles);
+    expect(tree?.props.results).toHaveLength(1);
   });
 });

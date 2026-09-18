@@ -11,6 +11,7 @@ import {
   getTopAssists,
   getTopPlayersOfTheMatch,
   getTopScorers,
+  getAllTeamStats,
 } from "@/lib/data/stats";
 
 /**
@@ -30,6 +31,7 @@ export const getDashboardData = cache(async (teamId: string) => {
     assists,
     potm,
     potMonth,
+    stats,
   ] = await Promise.all([
     getNextFixture(),
     getLastResult(),
@@ -41,6 +43,7 @@ export const getDashboardData = cache(async (teamId: string) => {
     getTopAssists(5),
     getTopPlayersOfTheMatch(5),
     listPlayerOfTheMonth(teamId, 5),
+    getAllTeamStats(teamId),
   ]);
 
   return {
@@ -54,5 +57,6 @@ export const getDashboardData = cache(async (teamId: string) => {
     assists,
     potm,
     potMonth,
+    stats,
   };
 });

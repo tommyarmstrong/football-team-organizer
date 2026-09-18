@@ -18,6 +18,7 @@ import {
   tallyGoals,
   tallyResults,
 } from "@/lib/stats/results-view";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
@@ -193,6 +194,8 @@ export function StatsPageContent({
           onCompetitionKindChange={setCompetitionKind}
         />
       ) : null}
+
+      <SeasonTiles results={filteredResults} />
 
       <ResultPieCharts
         results={results}

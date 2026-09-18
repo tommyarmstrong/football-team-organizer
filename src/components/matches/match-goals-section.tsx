@@ -393,14 +393,20 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={addHref} className={buttonVariants()}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <Link
+            href={addHref}
+            className={cn(buttonVariants(), "w-full sm:w-auto")}
+          >
             Add goal
           </Link>
           {showAddPeriod ? (
             <Link
               href={`/matches/${matchId}/periods/new`}
-              className={buttonVariants()}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "w-full sm:w-auto",
+              )}
             >
               Add period
             </Link>

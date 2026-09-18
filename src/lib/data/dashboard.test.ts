@@ -11,6 +11,7 @@ const {
   getTopAssistsMock,
   getTopPlayersOfTheMatchMock,
   listPlayerOfTheMonthMock,
+  getAllTeamStatsMock,
 } = vi.hoisted(() => ({
   getNextFixtureMock: vi.fn(),
   getLastResultMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
   getTopAssistsMock: vi.fn(),
   getTopPlayersOfTheMatchMock: vi.fn(),
   listPlayerOfTheMonthMock: vi.fn(),
+  getAllTeamStatsMock: vi.fn(),
 }));
 
 vi.mock("@/lib/data/matches", () => ({
@@ -37,6 +39,7 @@ vi.mock("@/lib/data/stats", () => ({
   getTopScorers: getTopScorersMock,
   getTopAssists: getTopAssistsMock,
   getTopPlayersOfTheMatch: getTopPlayersOfTheMatchMock,
+  getAllTeamStats: getAllTeamStatsMock,
 }));
 vi.mock("@/lib/data/competitions", () => ({
   listCompetitions: listCompetitionsMock,
@@ -60,9 +63,18 @@ describe("getDashboardData (§5.5)", () => {
     getTopAssistsMock.mockResolvedValue({ data: [], error: null });
     getTopPlayersOfTheMatchMock.mockResolvedValue({ data: [], error: null });
     listPlayerOfTheMonthMock.mockResolvedValue({ data: [], error: null });
+    getAllTeamStatsMock.mockResolvedValue({
+      goalsByPlayer: [],
+      assistsByPlayer: [],
+      potmByPlayer: [],
+      matchesPlayed: [],
+      resultsOverTime: [],
+      form: [],
+      error: null,
+    });
   });
 
-  it("loads fixture, form, competition, and leaderboard data in parallel", async () => {
+  it("loads fixture, form, competition, leaderboard, and season stats in parallel", async () => {
     const result = await getDashboardData("team-1");
 
     expect(getNextFixtureMock).toHaveBeenCalledOnce();
@@ -71,7 +83,9 @@ describe("getDashboardData (§5.5)", () => {
     expect(listCompetitionsMock).toHaveBeenCalledWith("team-1");
     expect(getTopScorersMock).toHaveBeenCalledWith(5);
     expect(listPlayerOfTheMonthMock).toHaveBeenCalledWith("team-1", 5);
+    expect(getAllTeamStatsMock).toHaveBeenCalledWith("team-1");
     expect(result.form).toEqual({ form: [], error: null });
+    expect(result.stats.resultsOverTime).toEqual([]);
     expect(result.canEditMatch).toBe(false);
   });
 });
