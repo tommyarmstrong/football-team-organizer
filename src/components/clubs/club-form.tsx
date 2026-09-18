@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { updateClubAction } from "@/lib/clubs/actions";
 import { clubIconSrc } from "@/lib/clubs/branding";
@@ -15,7 +16,7 @@ import { FormActions } from "@/components/shared/form-actions";
 const DEFAULT_PICKER_COLOUR = "#1B4D3E";
 
 export function ClubForm({ club }: { club: Club }) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     updateClubAction,
     INITIAL_ACTION_STATE,
   );

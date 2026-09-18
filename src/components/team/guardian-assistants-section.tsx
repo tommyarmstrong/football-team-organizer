@@ -1,7 +1,7 @@
 "use client";
 
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import Link from "next/link";
-import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addGuardianAssistantAction,
@@ -99,7 +99,7 @@ function AddAssistantForm({
   candidates: GuardianWithPerson[];
 }) {
   const bound = addGuardianAssistantAction.bind(null, teamId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

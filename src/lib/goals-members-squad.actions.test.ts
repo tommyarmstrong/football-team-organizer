@@ -68,6 +68,7 @@ import {
 } from "@/lib/members/actions";
 import {
   createGoalAndReturnToMatchAction,
+  createGoalOnMatchAction,
   deleteGoalAndReturnToMatchAction,
 } from "@/lib/goals/actions";
 
@@ -256,6 +257,21 @@ describe("goal actions", () => {
         match_id: "match-1",
         is_opposition: true,
         player_id: null,
+      }),
+    );
+  });
+
+  it("creates a goal on the match page without redirecting", async () => {
+    const result = await createGoalOnMatchAction(
+      "match-1",
+      {},
+      formDataFrom({ player_id: "player-1" }),
+    );
+    expect(result).toEqual({ success: "Goal added." });
+    expect(createGoalMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        match_id: "match-1",
+        player_id: "player-1",
       }),
     );
   });

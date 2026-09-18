@@ -185,6 +185,15 @@ export default async function MatchDetailPage({
             canEdit={canEdit}
             showAddPeriod={canEdit}
             homeAway={match.home_away}
+            addGoal={
+              canEdit
+                ? {
+                    players: eventPlayers,
+                    teamName,
+                    opponentName,
+                  }
+                : null
+            }
           />
         </Section>
       ) : null}

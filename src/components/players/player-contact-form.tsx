@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { savePlayerContactAction } from "@/lib/players/actions";
 import type { PlayerContact } from "@/lib/supabase/database.types";
@@ -25,7 +26,7 @@ export function PlayerContactForm({
   canEdit: boolean;
 }) {
   const bound = savePlayerContactAction.bind(null, playerId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -150,11 +151,6 @@ export function PlayerContactForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save contact details"}

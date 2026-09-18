@@ -165,6 +165,14 @@ describe("MatchHero", () => {
     expect(actionsIndex).toBeGreaterThan(scoreIndex);
   });
 
+  it("can put a share control under the score on a last-result card", () => {
+    const html = JSON.stringify(
+      MatchHero({ ...playedHome, size: "card", actions: "Share" }),
+    );
+    expect(html).toContain("Share");
+    expect(html.indexOf("Share")).toBeGreaterThan(html.indexOf("text-5xl"));
+  });
+
   it("shows vs and status for postponed matches", () => {
     const html = JSON.stringify(
       MatchHero({
@@ -177,10 +185,10 @@ describe("MatchHero", () => {
     expect(html).not.toContain("LIVE");
   });
 
-  it("does not include a share slot on card or compact sizes", () => {
-    const card = JSON.stringify(
-      MatchHero({ ...playedHome, size: "card", actions: "Share" }),
+  it("does not include a share slot on compact size", () => {
+    const compact = JSON.stringify(
+      MatchHero({ ...playedHome, size: "compact", actions: "Share" }),
     );
-    expect(card).not.toContain("Share");
+    expect(compact).not.toContain("Share");
   });
 });

@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<PersonRoleKind, string> = {
 };
 
 const ROLE_CHIP_CLASS: Record<PersonRoleKind, string> = {
-  player: "border-primary/30 bg-primary/10 text-primary",
+  player: "border-chart-1/40 bg-chart-1/10 text-chart-1",
   guardian: "border-chart-3/40 bg-chart-3/10 text-chart-3",
   coach: "border-chart-2/50 bg-chart-2/15 text-draw-foreground",
   manager: "border-chart-5/40 bg-chart-5/10 text-chart-5",

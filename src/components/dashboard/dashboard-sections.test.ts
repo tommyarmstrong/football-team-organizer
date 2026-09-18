@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getDashboardDataMock } = vi.hoisted(() => ({
@@ -127,5 +129,18 @@ describe("DashboardSeasonTiles", () => {
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(tree?.type).toBe(SeasonTiles);
     expect(tree?.props.results).toHaveLength(1);
+  });
+});
+
+describe("DashboardFixtures last result share", () => {
+  const source = readFileSync(
+    path.join(import.meta.dirname, "dashboard-sections.tsx"),
+    "utf8",
+  );
+
+  it("places a share postcard control on the last-result card", () => {
+    expect(source).toContain("SharePostcardButton");
+    expect(source).toContain('title="Last result"');
+    expect(source).toContain("actions={share}");
   });
 });

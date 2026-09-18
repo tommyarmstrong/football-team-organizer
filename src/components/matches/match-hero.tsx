@@ -90,6 +90,7 @@ export function MatchHero({
   matchDaySquadCount,
   cards,
   actions,
+  href,
 }: {
   size?: MatchHeroSize;
   teamName: string;
@@ -107,6 +108,7 @@ export function MatchHero({
   matchDaySquadCount?: number;
   cards?: CardWithPerson[];
   actions?: ReactNode;
+  href?: string;
 }) {
   const { homeName, awayName } = matchHeroSides(
     teamName,
@@ -156,6 +158,143 @@ export function MatchHero({
           ? "px-4 py-4 sm:px-5 sm:py-5"
           : "px-4 py-3.5";
 
+  const showActions = Boolean(actions) && (size === "hero" || size === "card");
+  const masthead = (
+    <div className={cn("bg-hero text-header-foreground", mastheadPadding)}>
+      <div role="group" aria-label={ariaLabel}>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
+              Home
+            </p>
+            <p
+              className={cn(
+                "truncate font-semibold",
+                size === "hero" ? "text-base sm:text-lg" : "text-sm",
+              )}
+            >
+              {homeName}
+            </p>
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
+              Away
+            </p>
+            <p
+              className={cn(
+                "truncate font-semibold",
+                size === "hero" ? "text-base sm:text-lg" : "text-sm",
+              )}
+            >
+              {awayName}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-3 text-center">
+          {showScore ? (
+            <p
+              className={cn(
+                "font-display leading-none tracking-tight tabular-nums transition-colors",
+                matchHeroDigitClassName(size),
+                result === "W" && "text-win",
+                result === "D" && "text-draw",
+                result === "L" && "text-loss",
+              )}
+            >
+              <span>{homeGoals}</span>
+              <span className="text-header-foreground/55 px-[0.15em]">–</span>
+              <span>{awayGoals}</span>
+            </p>
+          ) : (
+            <p className="text-header-foreground/55 px-2 text-xs font-bold tracking-[0.2em] uppercase">
+              vs
+            </p>
+          )}
+          {isCancelledOrPostponed ? (
+            <p className="mt-2 font-medium text-red-300">
+              {labelMatchStatus(status)}
+            </p>
+          ) : null}
+        </div>
+
+        {(homeAway || isLive) && (
+          <div className="mt-2 flex flex-col items-center gap-1.5">
+            {homeAway ? (
+              <p className="text-header-foreground/70 text-center text-[11px] font-medium tracking-wide uppercase">
+                {labelHomeAway(homeAway)}
+              </p>
+            ) : null}
+            {isLive ? <LiveIndicator /> : null}
+          </div>
+        )}
+      </div>
+
+      {meta ? (
+        <div className="text-header-foreground/80 mt-4 space-y-1 text-center text-sm">
+          {isLive ? (
+            <p className="truncate">
+              {[meta.competition, meta.times ?? meta.dateTime]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          ) : (
+            <>
+              {meta.competition ? (
+                <p className="font-bold">{meta.competition}</p>
+              ) : null}
+              <p>
+                {meta.dateTime}
+                {meta.venue ? (
+                  <>
+                    {" · "}
+                    {showVenueLink ? (
+                      <Link
+                        href={`/venues/${venueId}`}
+                        className="text-header-foreground underline-offset-2 hover:underline"
+                      >
+                        {meta.venue}
+                      </Link>
+                    ) : (
+                      meta.venue
+                    )}
+                  </>
+                ) : null}
+              </p>
+              {meta.times ? <p>{meta.times}</p> : null}
+              {showSquad ? (
+                <p>
+                  Squad: {matchDaySquadCount}{" "}
+                  {matchDaySquadCount === 1 ? "player" : "players"}
+                </p>
+              ) : null}
+              {showScheduledLabel ? (
+                <p className="font-medium text-red-300">Scheduled</p>
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {visibleCards.length > 0 ? (
+        <ul
+          className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1"
+          aria-label="Cards"
+        >
+          {visibleCards.map((card) => (
+            <li
+              key={card.id}
+              className="inline-flex max-w-full items-center gap-1.5 text-sm font-medium"
+            >
+              <span aria-hidden="true">{CARD_TYPE_EMOJIS[card.type]}</span>
+              <span className="truncate">{cardPersonLabel(card)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+
   return (
     <div
       className={cn(
@@ -163,141 +302,18 @@ export function MatchHero({
         size === "compact" ? "rounded-2xl" : "rounded-3xl",
       )}
     >
-      <div className={cn("bg-hero text-header-foreground", mastheadPadding)}>
-        <div role="group" aria-label={ariaLabel}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="min-w-0">
-              <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
-                Home
-              </p>
-              <p
-                className={cn(
-                  "truncate font-semibold",
-                  size === "hero" ? "text-base sm:text-lg" : "text-sm",
-                )}
-              >
-                {homeName}
-              </p>
-            </div>
-            <div className="min-w-0 text-right">
-              <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
-                Away
-              </p>
-              <p
-                className={cn(
-                  "truncate font-semibold",
-                  size === "hero" ? "text-base sm:text-lg" : "text-sm",
-                )}
-              >
-                {awayName}
-              </p>
-            </div>
-          </div>
+      {href ? (
+        <Link
+          href={href}
+          className="block rounded-[inherit] transition-opacity hover:opacity-80"
+        >
+          {masthead}
+        </Link>
+      ) : (
+        masthead
+      )}
 
-          <div className="mt-3 text-center">
-            {showScore ? (
-              <p
-                className={cn(
-                  "font-display leading-none tracking-tight tabular-nums transition-colors",
-                  matchHeroDigitClassName(size),
-                  result === "W" && "text-win",
-                  result === "D" && "text-draw",
-                  result === "L" && "text-loss",
-                )}
-              >
-                <span>{homeGoals}</span>
-                <span className="text-header-foreground/55 px-[0.15em]">–</span>
-                <span>{awayGoals}</span>
-              </p>
-            ) : (
-              <p className="text-header-foreground/55 px-2 text-xs font-bold tracking-[0.2em] uppercase">
-                vs
-              </p>
-            )}
-            {isCancelledOrPostponed ? (
-              <p className="mt-2 font-medium text-red-300">
-                {labelMatchStatus(status)}
-              </p>
-            ) : null}
-          </div>
-
-          {(homeAway || isLive) && (
-            <div className="mt-2 flex flex-col items-center gap-1.5">
-              {homeAway ? (
-                <p className="text-header-foreground/70 text-center text-[11px] font-medium tracking-wide uppercase">
-                  {labelHomeAway(homeAway)}
-                </p>
-              ) : null}
-              {isLive ? <LiveIndicator /> : null}
-            </div>
-          )}
-        </div>
-
-        {meta ? (
-          <div className="text-header-foreground/80 mt-4 space-y-1 text-center text-sm">
-            {isLive ? (
-              <p className="truncate">
-                {[meta.competition, meta.times ?? meta.dateTime]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            ) : (
-              <>
-                {meta.competition ? (
-                  <p className="font-bold">{meta.competition}</p>
-                ) : null}
-                <p>
-                  {meta.dateTime}
-                  {meta.venue ? (
-                    <>
-                      {" · "}
-                      {showVenueLink ? (
-                        <Link
-                          href={`/venues/${venueId}`}
-                          className="text-header-foreground underline-offset-2 hover:underline"
-                        >
-                          {meta.venue}
-                        </Link>
-                      ) : (
-                        meta.venue
-                      )}
-                    </>
-                  ) : null}
-                </p>
-                {meta.times ? <p>{meta.times}</p> : null}
-                {showSquad ? (
-                  <p>
-                    Squad: {matchDaySquadCount}{" "}
-                    {matchDaySquadCount === 1 ? "player" : "players"}
-                  </p>
-                ) : null}
-                {showScheduledLabel ? (
-                  <p className="font-medium text-red-300">Scheduled</p>
-                ) : null}
-              </>
-            )}
-          </div>
-        ) : null}
-
-        {visibleCards.length > 0 ? (
-          <ul
-            className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1"
-            aria-label="Cards"
-          >
-            {visibleCards.map((card) => (
-              <li
-                key={card.id}
-                className="inline-flex max-w-full items-center gap-1.5 text-sm font-medium"
-              >
-                <span aria-hidden="true">{CARD_TYPE_EMOJIS[card.type]}</span>
-                <span className="truncate">{cardPersonLabel(card)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-
-      {size === "hero" && actions ? (
+      {showActions ? (
         <div className="flex min-h-11 w-full items-center justify-center gap-1 px-2 py-1">
           {actions}
         </div>

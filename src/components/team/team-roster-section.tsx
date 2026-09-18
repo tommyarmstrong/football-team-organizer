@@ -1,7 +1,7 @@
 "use client";
 
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import Link from "next/link";
-import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addRosterPlayerAction,
@@ -19,6 +19,7 @@ import { FilterablePaginatedList } from "@/components/shared/filterable-paginate
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+import { SquadPlayerIdentity } from "@/components/shared/squad-player-identity";
 
 export function TeamRosterSection({
   teamId,
@@ -62,12 +63,10 @@ export function TeamRosterSection({
                 href={`/people/${entry.person_id}`}
                 className={objectListRowClassName()}
               >
-                <span className="text-muted-foreground w-[2ch] shrink-0 text-right tabular-nums">
-                  {entry.shirt_number ?? "—"}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {playerDisplayName(entry)}
-                </span>
+                <SquadPlayerIdentity
+                  name={playerDisplayName(entry)}
+                  shirtNumber={entry.shirt_number}
+                />
                 <span className="text-muted-foreground shrink-0">
                   {entry.position ?? "No position"}
                 </span>
@@ -103,7 +102,7 @@ function AddRosterPlayerForm({
   candidates: PlayerWithPerson[];
 }) {
   const bound = addRosterPlayerAction.bind(null, teamId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

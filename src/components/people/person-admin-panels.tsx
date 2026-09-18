@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addClubRoleToPersonAction,
@@ -205,7 +206,7 @@ function AddClubRoleForm({
   addable: PersonRoleKind[];
 }) {
   const bound = addClubRoleToPersonAction.bind(null, personId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -239,14 +240,6 @@ function AddClubRoleForm({
         <div className="w-full sm:basis-full">
           <ErrorBanner message={state.error} />
         </div>
-      ) : null}
-      {state.success ? (
-        <p
-          className="text-muted-foreground w-full text-sm sm:basis-full"
-          role="status"
-        >
-          {state.success}
-        </p>
       ) : null}
     </form>
   );

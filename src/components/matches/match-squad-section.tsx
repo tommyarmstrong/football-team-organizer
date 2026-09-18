@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { XIcon } from "lucide-react";
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { saveMatchSquadAction } from "@/lib/match-players/actions";
 import { playerDisplayName } from "@/lib/format";
@@ -16,6 +17,7 @@ import {
   objectListRowClassName,
 } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+import { SquadPlayerIdentity } from "@/components/shared/squad-player-identity";
 
 export function MatchSquadSection({
   matchId,
@@ -45,11 +47,10 @@ export function MatchSquadSection({
               href={`/people/${player.person_id}`}
               className={objectListRowClassName()}
             >
-              <span className="min-w-0 flex-1 truncate font-medium">
-                {playerDisplayName(player, {
-                  shirtNumber: player.shirt_number,
-                })}
-              </span>
+              <SquadPlayerIdentity
+                name={playerDisplayName(player)}
+                shirtNumber={player.shirt_number}
+              />
             </Link>
           </li>
         ))}
@@ -86,7 +87,7 @@ function SquadForm({
   selectedPlayerIds: string[];
 }) {
   const bound = saveMatchSquadAction.bind(null, matchId);
-  const [state, formAction, actionPending] = useActionState(
+  const [state, formAction, actionPending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -135,11 +136,10 @@ function SquadForm({
                 href={`/people/${player.person_id}`}
                 className={objectListRowClassName()}
               >
-                <span className="min-w-0 flex-1 truncate font-medium">
-                  {playerDisplayName(player, {
-                    shirtNumber: player.shirt_number,
-                  })}
-                </span>
+                <SquadPlayerIdentity
+                  name={playerDisplayName(player)}
+                  shirtNumber={player.shirt_number}
+                />
               </Link>
               <div className="flex items-center pr-2">
                 <button
@@ -192,11 +192,6 @@ function SquadForm({
       )}
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
     </div>
   );
 }

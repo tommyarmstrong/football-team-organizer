@@ -24,6 +24,7 @@ import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { buttonVariants } from "@/components/ui/button";
+import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const { stats } = await getDashboardData(teamId);
@@ -39,7 +40,10 @@ export async function DashboardFixtures({
   teamId: string;
   teamName: string;
 }) {
-  const { next, last, canEditMatch } = await getDashboardData(teamId);
+  const { next, last, lastPostcard, canEditMatch } =
+    await getDashboardData(teamId);
+  const lastMatch = last.data;
+  const postcard = lastPostcard?.data ?? null;
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -67,9 +71,33 @@ export async function DashboardFixtures({
         <FixtureSection
           title="Last result"
           teamName={teamName}
-          match={last.data}
+          match={lastMatch}
           emptyTitle="No results yet"
           emptyDescription="Played matches will show here."
+          share={
+            postcard ? (
+              <SharePostcardButton
+                imageUrl={`/matches/${postcard.matchId}/postcard`}
+                caption={postcard.caption}
+                fileName={postcard.fileName}
+                title={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+                description={
+                  postcard.kind === "scheduled"
+                    ? "Share this upcoming fixture, including the venue address."
+                    : "Share a recap of this result. Player names follow the team’s privacy rules."
+                }
+                previewAlt={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+              />
+            ) : undefined
+          }
         />
       </div>
     </div>
@@ -191,6 +219,7 @@ function FixtureSection({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  share,
 }: {
   title: string;
   teamName: string;
@@ -198,6 +227,7 @@ function FixtureSection({
   emptyTitle: string;
   emptyDescription: string;
   emptyAction?: ReactNode;
+  share?: ReactNode;
 }) {
   if (!match) {
     return (
@@ -213,25 +243,22 @@ function FixtureSection({
 
   return (
     <Section title={title}>
-      <Link
+      <MatchHero
+        size="card"
         href={`/matches/${match.id}`}
-        className="block rounded-3xl transition-opacity hover:opacity-80"
-      >
-        <MatchHero
-          size="card"
-          teamName={teamName}
-          opponentName={match.opponent_name}
-          homeAway={match.home_away}
-          status={match.status}
-          goalsFor={match.goals_for}
-          goalsAgainst={match.goals_against}
-          competitionName={matchCompetitionLabel(match)}
-          date={match.date}
-          kickoffTime={match.kickoff_time}
-          meetupTime={match.meetup_time}
-          venueName={match.venue?.name ?? null}
-        />
-      </Link>
+        teamName={teamName}
+        opponentName={match.opponent_name}
+        homeAway={match.home_away}
+        status={match.status}
+        goalsFor={match.goals_for}
+        goalsAgainst={match.goals_against}
+        competitionName={matchCompetitionLabel(match)}
+        date={match.date}
+        kickoffTime={match.kickoff_time}
+        meetupTime={match.meetup_time}
+        venueName={match.venue?.name ?? null}
+        actions={share}
+      />
     </Section>
   );
 }

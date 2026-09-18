@@ -27,6 +27,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
 import { Button } from "@/components/ui/button";
+import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
 function FilterButton({
   label,
@@ -134,7 +135,7 @@ export function GoalsSection({
                 description="Try another competition, position filter, or metric."
               />
             ) : (
-              <figure className="space-y-4">
+              <figure className={statsChartFrameClassName()}>
                 <div
                   className="h-72 w-full"
                   role="img"

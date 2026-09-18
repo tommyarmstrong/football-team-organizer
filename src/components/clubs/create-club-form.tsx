@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { createClubAction } from "@/lib/clubs/actions";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/shared/error-banner";
 
 export function CreateClubForm() {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     createClubAction,
     INITIAL_ACTION_STATE,
   );

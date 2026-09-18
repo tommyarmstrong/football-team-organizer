@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import type { RosterPlayer } from "@/lib/data/players";
 import { playerDisplayName } from "@/lib/format";
@@ -80,7 +81,7 @@ function PlayersOfTheMatchForm({
   playersPlayerOfTheMatchId: string | null;
 }) {
   const bound = updateMatchPlayersOfTheMatchAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -138,11 +139,6 @@ function PlayersOfTheMatchForm({
           </Button>
 
           {state.error ? <ErrorBanner message={state.error} /> : null}
-          {state.success ? (
-            <p className="text-muted-foreground text-sm" role="status">
-              {state.success}
-            </p>
-          ) : null}
         </div>
       </Section>
     </form>

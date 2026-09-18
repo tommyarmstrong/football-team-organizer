@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { PLAYER_POSITIONS } from "@/lib/constants";
 import { createPlayerAction, updatePlayerAction } from "@/lib/players/actions";
@@ -23,7 +23,7 @@ export function PlayerForm({
       ? createPlayerAction
       : updatePlayerAction.bind(null, player!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
@@ -101,11 +101,6 @@ export function PlayerForm({
       </div>
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : mode === "create" ? "Add player" : "Save player"}

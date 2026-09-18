@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createPlayerOfTheMonthAction,
@@ -36,7 +36,7 @@ export function PlayerOfTheMonthForm({
       ? createPlayerOfTheMonthAction
       : updatePlayerOfTheMonthAction.bind(null, award!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
