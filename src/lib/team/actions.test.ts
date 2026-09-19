@@ -86,6 +86,7 @@ import {
   createCompetitionAction,
   createCompetitionAndReturnAction,
   createTeamAction,
+  createTeamOnPageAction,
   deleteCompetitionAction,
   saveCompetitionAndReturnAction,
   setActiveTeamAction,
@@ -285,6 +286,12 @@ describe("createTeamAction", () => {
       "team-new",
       expect.any(Object),
     );
+  });
+
+  it("creates a team on the page without redirecting", async () => {
+    const result = await createTeamOnPageAction({}, validTeamForm());
+    expect(result).toEqual({ success: "Team created." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 });
 

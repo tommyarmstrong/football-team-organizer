@@ -21,6 +21,7 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 
 export function TeamStaffSection({
@@ -53,6 +54,7 @@ export function TeamStaffSection({
                 href={`/people/${entry.person_id}`}
                 className={objectListRowClassName()}
               >
+                <InitialsAvatar name={entry.name} className="size-9" />
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {entry.name}
                 </span>

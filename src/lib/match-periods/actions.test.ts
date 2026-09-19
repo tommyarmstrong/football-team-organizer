@@ -46,6 +46,7 @@ vi.mock("@/lib/data/match-periods", () => ({
 
 import {
   createPeriodAction,
+  createPeriodOnMatchAction,
   deletePeriodAction,
   deletePeriodAndReturnToMatchAction,
   savePeriodAndReturnToMatchAction,
@@ -109,6 +110,16 @@ describe("match period actions", () => {
       "p1",
       "p2",
     ]);
+  });
+
+  it("creates a period on the match page without redirecting", async () => {
+    expect(
+      await createPeriodOnMatchAction(
+        "match-1",
+        {},
+        formDataFrom({ name: "Extra time 1" }),
+      ),
+    ).toEqual({ success: "Period added." });
   });
 
   it("enforces permissions and match status", async () => {

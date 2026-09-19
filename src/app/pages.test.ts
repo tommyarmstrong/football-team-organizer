@@ -13,6 +13,7 @@ const {
   listPreviousMembersMock,
   listMatchesMock,
   listCompetitionsMock,
+  listVenuesMock,
   getNextFixtureMock,
   getLastResultMock,
   getTopScorersMock,
@@ -40,6 +41,7 @@ const {
   listPreviousMembersMock: vi.fn(),
   listMatchesMock: vi.fn(),
   listCompetitionsMock: vi.fn(),
+  listVenuesMock: vi.fn(),
   getNextFixtureMock: vi.fn(),
   getLastResultMock: vi.fn(),
   getTopScorersMock: vi.fn(),
@@ -77,6 +79,9 @@ vi.mock("@/lib/data/matches", () => ({
 }));
 vi.mock("@/lib/data/competitions", () => ({
   listCompetitions: listCompetitionsMock,
+}));
+vi.mock("@/lib/data/venues", () => ({
+  listVenues: listVenuesMock,
 }));
 vi.mock("@/lib/data/stats", () => ({
   getTopScorers: getTopScorersMock,
@@ -221,6 +226,7 @@ describe("app pages", () => {
     canEditActiveMatchDayMock.mockResolvedValue(true);
     canEditActiveTeamMock.mockResolvedValue(true);
     listCompetitionsMock.mockResolvedValue({ data: [], error: null });
+    listVenuesMock.mockResolvedValue({ data: [], error: null });
     listMatchesMock.mockResolvedValue({ data: [], error: null });
     getNextFixtureMock.mockResolvedValue({ data: null, error: null });
     getLastResultMock.mockResolvedValue({ data: null, error: null });

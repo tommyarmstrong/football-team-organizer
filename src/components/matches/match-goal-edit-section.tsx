@@ -16,6 +16,7 @@ import {
   createGoalAndReturnToMatchAction,
   createGoalOnMatchAction,
   saveGoalAndReturnToMatchAction,
+  saveGoalOnMatchAction,
 } from "@/lib/goals/actions";
 import { goalAssistsAllowed, goalKindFromFlags } from "@/lib/form-parse";
 import { goalScorerLabel, playerDisplayName } from "@/lib/format";
@@ -141,7 +142,9 @@ function EditableGoalSection({
   const formId = `goal-details-${fieldId}`;
   const cancelHref = `/matches/${matchId}`;
   const bound = goal
-    ? saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id)
+    ? stayOnPage
+      ? saveGoalOnMatchAction.bind(null, matchId, goal.id)
+      : saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id)
     : stayOnPage
       ? createGoalOnMatchAction.bind(null, matchId)
       : createGoalAndReturnToMatchAction.bind(null, matchId);

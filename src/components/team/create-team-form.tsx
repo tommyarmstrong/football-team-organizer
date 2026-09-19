@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -8,7 +9,7 @@ import {
   TRAINING_DAYS,
   TRAINING_DAY_LABELS,
 } from "@/lib/constants";
-import { createTeamAction } from "@/lib/team/actions";
+import { createTeamAction, createTeamOnPageAction } from "@/lib/team/actions";
 import type { CoachWithPerson } from "@/lib/data/coaches";
 import type { Venue } from "@/lib/supabase/database.types";
 import { coachDisplayName, labelGender } from "@/lib/format";
@@ -17,19 +18,30 @@ import { Input } from "@/components/ui/input";
 import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { FormActions } from "@/components/shared/form-actions";
 import { SeasonInput } from "@/components/team/season-input";
 
 export function CreateTeamForm({
   coaches = [],
   venues = [],
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   coaches?: CoachWithPerson[];
   venues?: Venue[];
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const [state, formAction, pending] = useToastActionState(
-    createTeamAction,
+    stayOnPage ? createTeamOnPageAction : createTeamAction,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -157,9 +169,13 @@ export function CreateTeamForm({
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create team"}
-      </Button>
+      {onCancel ? (
+        <FormActions pending={pending} onCancel={onCancel} />
+      ) : (
+        <Button type="submit" disabled={pending}>
+          {pending ? "Creating…" : "Create team"}
+        </Button>
+      )}
     </form>
   );
 }

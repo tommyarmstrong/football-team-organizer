@@ -4,7 +4,7 @@ import { getViewerContext } from "@/lib/authz/context";
 import { formatVenueAddress } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
+import { EditVenueDialog } from "@/components/venues/edit-venue-dialog";
 import { VenueMap } from "@/components/venues/venue-map";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
 import {
@@ -59,10 +59,7 @@ export default async function VenueDetailPage({
         actions={
           canEdit ? (
             <>
-              <EditIconLink
-                href={`/venues/${venue.id}/edit`}
-                label="Edit venue"
-              />
+              <EditVenueDialog venue={venue} />
               <DeleteVenueButton venueId={venue.id} label="Delete venue" />
             </>
           ) : undefined

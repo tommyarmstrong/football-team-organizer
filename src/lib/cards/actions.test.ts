@@ -27,9 +27,11 @@ vi.mock("@/lib/data/cards", () => ({
 
 import {
   createCardAndReturnToMatchAction,
+  createCardOnMatchAction,
   deleteCardAction,
   deleteCardAndReturnToMatchAction,
   saveCardAndReturnToMatchAction,
+  saveCardOnMatchAction,
 } from "@/lib/cards/actions";
 
 describe("card actions", () => {
@@ -68,6 +70,25 @@ describe("card actions", () => {
     ).rejects.toThrow("redirect:/matches/match-1");
     expect(createCardMock).toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalledWith("/matches/match-1");
+  });
+
+  it("creates and saves a card on the match page without redirecting", async () => {
+    expect(
+      await createCardOnMatchAction(
+        "match-1",
+        {},
+        formDataFrom({ player_id: "p1", type: "yellow_1st" }),
+      ),
+    ).toEqual({ success: "Card added." });
+
+    expect(
+      await saveCardOnMatchAction(
+        "match-1",
+        "card-1",
+        {},
+        formDataFrom({ player_id: "p1", type: "timeout" }),
+      ),
+    ).toEqual({ success: "Card saved." });
   });
 
   it("returns create errors", async () => {

@@ -117,12 +117,14 @@ import {
   addClubRoleToPersonAction,
   completePersonProfileAction,
   createPersonAction,
+  createPersonOnPageAction,
   deletePersonAction,
   linkRoleToPersonAction,
   reactivatePersonAction,
   removeClubRoleFromPersonAction,
   sendInvitationAction,
   updatePersonAction,
+  updatePersonOnPageAction,
 } from "@/lib/people/actions";
 
 const club = { id: "club-1", name: "Example FC" };
@@ -175,6 +177,23 @@ describe("createPersonAction", () => {
         }),
       ),
     ).rejects.toThrow("redirect:/people/person-new");
+  });
+
+  it("creates a person on the page without redirecting", async () => {
+    createPersonMock.mockResolvedValue({
+      data: personFixture({ id: "person-new" }),
+      error: null,
+    });
+    const result = await createPersonOnPageAction(
+      {},
+      formDataFrom({
+        first_name: "Ada",
+        last_name: "Lovelace",
+        email: "ada@example.com",
+      }),
+    );
+    expect(result).toEqual({ success: "Person added." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("maps create failures and missing rows", async () => {
@@ -1118,6 +1137,23 @@ describe("updatePersonAction", () => {
       "player-1",
       expect.objectContaining({ position: "FWD", school: "Ridge" }),
     );
+  });
+
+  it("saves a person on the page without redirecting", async () => {
+    const result = await updatePersonOnPageAction(
+      "person-1",
+      {},
+      formDataFrom({
+        first_name: "Ada",
+        last_name: "Lovelace",
+        player_id: "player-1",
+        date_of_birth: "2014-01-01",
+        position: "FWD",
+        school: "Ridge",
+      }),
+    );
+    expect(result).toEqual({ success: "Person saved." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("lets a guardian edit DOB and school but not position", async () => {

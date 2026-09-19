@@ -63,10 +63,9 @@ function revalidatePeople(personId?: string) {
   }
 }
 
-export async function createPersonAction(
-  _prev: ActionState,
+async function createPersonRecord(
   formData: FormData,
-): Promise<ActionState> {
+): Promise<{ error: string } | { id: string }> {
   const ctx = await getViewerContext();
   if (!ctx) return { error: "Not signed in." };
 
@@ -106,7 +105,25 @@ export async function createPersonAction(
   }
 
   revalidatePeople(data.id);
-  redirect(`/people/${data.id}`);
+  return { id: data.id };
+}
+
+export async function createPersonOnPageAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createPersonRecord(formData);
+  if ("error" in result) return result;
+  return { success: "Person added." };
+}
+
+export async function createPersonAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createPersonRecord(formData);
+  if ("error" in result) return result;
+  redirect(`/people/${result.id}`);
 }
 
 export async function deletePersonAction(id: string): Promise<ActionState> {
@@ -151,7 +168,7 @@ export async function reactivatePersonAction(id: string): Promise<ActionState> {
   return { success: "Person re-activated. Assign roles and link a login." };
 }
 
-export async function updatePersonAction(
+export async function updatePersonOnPageAction(
   id: string,
   _prev: ActionState,
   formData: FormData,
@@ -227,6 +244,16 @@ export async function updatePersonAction(
   }
 
   revalidatePeople(id);
+  return { success: "Person saved." };
+}
+
+export async function updatePersonAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updatePersonOnPageAction(id, _prev, formData);
+  if (result.error) return result;
   redirect(`/people/${id}`);
 }
 

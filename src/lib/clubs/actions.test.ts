@@ -41,7 +41,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
 }));
 
-import { createClubAction, updateClubAction } from "@/lib/clubs/actions";
+import {
+  createClubAction,
+  updateClubAction,
+  updateClubOnPageAction,
+} from "@/lib/clubs/actions";
 
 describe("club actions", () => {
   beforeEach(() => {
@@ -151,6 +155,20 @@ describe("club actions", () => {
         icon_url: null,
       }),
     );
+  });
+
+  it("saves the club on the page without redirecting", async () => {
+    const result = await updateClubOnPageAction(
+      {},
+      formDataFrom({
+        id: "club-1",
+        name: "Example FC",
+        clear_colour: "true",
+        clear_icon: "true",
+      }),
+    );
+    expect(result).toEqual({ success: "Club saved." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("uploads a valid icon file", async () => {

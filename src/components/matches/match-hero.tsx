@@ -160,11 +160,16 @@ export function MatchHero({
 
   const showActions = Boolean(actions) && (size === "hero" || size === "card");
   const masthead = (
-    <div className={cn("bg-hero text-header-foreground", mastheadPadding)}>
+    <div
+      className={cn(
+        "bg-card text-foreground border-hero-rail border-l-[3px]",
+        mastheadPadding,
+      )}
+    >
       <div role="group" aria-label={ariaLabel}>
         <div className="grid grid-cols-2 gap-3">
           <div className="min-w-0">
-            <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
+            <p className="text-muted-foreground text-[11px] font-medium tracking-[0.18em] uppercase">
               Home
             </p>
             <p
@@ -177,7 +182,7 @@ export function MatchHero({
             </p>
           </div>
           <div className="min-w-0 text-right">
-            <p className="text-header-foreground/65 text-[11px] font-medium tracking-[0.18em] uppercase">
+            <p className="text-muted-foreground text-[11px] font-medium tracking-[0.18em] uppercase">
               Away
             </p>
             <p
@@ -203,16 +208,16 @@ export function MatchHero({
               )}
             >
               <span>{homeGoals}</span>
-              <span className="text-header-foreground/55 px-[0.15em]">–</span>
+              <span className="text-muted-foreground px-[0.15em]">–</span>
               <span>{awayGoals}</span>
             </p>
           ) : (
-            <p className="text-header-foreground/55 px-2 text-xs font-bold tracking-[0.2em] uppercase">
+            <p className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase">
               vs
             </p>
           )}
           {isCancelledOrPostponed ? (
-            <p className="mt-2 font-medium text-red-300">
+            <p className="text-destructive mt-2 font-medium">
               {labelMatchStatus(status)}
             </p>
           ) : null}
@@ -221,7 +226,7 @@ export function MatchHero({
         {(homeAway || isLive) && (
           <div className="mt-2 flex flex-col items-center gap-1.5">
             {homeAway ? (
-              <p className="text-header-foreground/70 text-center text-[11px] font-medium tracking-wide uppercase">
+              <p className="text-muted-foreground text-center text-[11px] font-medium tracking-wide uppercase">
                 {labelHomeAway(homeAway)}
               </p>
             ) : null}
@@ -231,7 +236,7 @@ export function MatchHero({
       </div>
 
       {meta ? (
-        <div className="text-header-foreground/80 mt-4 space-y-1 text-center text-sm">
+        <div className="text-muted-foreground mt-4 space-y-1 text-center text-sm">
           {isLive ? (
             <p className="truncate">
               {[meta.competition, meta.times ?? meta.dateTime]
@@ -241,7 +246,9 @@ export function MatchHero({
           ) : (
             <>
               {meta.competition ? (
-                <p className="font-bold">{meta.competition}</p>
+                <p className="text-foreground font-semibold">
+                  {meta.competition}
+                </p>
               ) : null}
               <p>
                 {meta.dateTime}
@@ -251,7 +258,7 @@ export function MatchHero({
                     {showVenueLink ? (
                       <Link
                         href={`/venues/${venueId}`}
-                        className="text-header-foreground underline-offset-2 hover:underline"
+                        className="text-foreground underline-offset-2 hover:underline"
                       >
                         {meta.venue}
                       </Link>
@@ -269,7 +276,7 @@ export function MatchHero({
                 </p>
               ) : null}
               {showScheduledLabel ? (
-                <p className="font-medium text-red-300">Scheduled</p>
+                <p className="text-destructive font-medium">Scheduled</p>
               ) : null}
             </>
           )}

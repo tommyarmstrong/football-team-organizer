@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   canAccessClubAndPeople,
@@ -18,7 +17,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { Section } from "@/components/shared/section";
 import { PeopleDirectoryList } from "@/components/people/people-directory-list";
-import { buttonVariants } from "@/components/ui/button";
+import { AddPersonDialog } from "@/components/people/add-person-dialog";
 
 export default async function PeoplePage() {
   const [ctx, club] = await Promise.all([getViewerContext(), getPrimaryClub()]);
@@ -57,13 +56,7 @@ export default async function PeoplePage() {
       <PageHeader
         title="People"
         description={directoryDescription(ctx, club.id, club.name)}
-        actions={
-          canEdit ? (
-            <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
-              Add person
-            </Link>
-          ) : undefined
-        }
+        actions={canEdit ? <AddPersonDialog /> : undefined}
       />
 
       {error ? <ErrorBanner message={error} /> : null}

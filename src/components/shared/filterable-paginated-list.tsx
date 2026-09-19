@@ -108,28 +108,32 @@ export function FilterablePaginatedList<T>({
                 {total} {totalNoun} {totalCountPhrase}
                 {normalizedFilter ? ` (filtered from ${items.length})` : ""}
               </p>
-              <div className="flex items-center gap-2 sm:justify-end">
-                <Label
-                  htmlFor={pageSizeId}
-                  className="text-muted-foreground shrink-0 font-normal"
-                >
-                  Rows per page
-                </Label>
-                <NativeSelect
-                  id={pageSizeId}
-                  className="w-auto min-w-20"
-                  value={pageSize === "all" ? "all" : String(pageSize)}
-                  onChange={(event) => handlePageSizeChange(event.target.value)}
-                  aria-label="Rows per page"
-                >
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                  <option value="all">All</option>
-                </NativeSelect>
-              </div>
+              {totalPages > 1 ? (
+                <div className="flex items-center gap-2 sm:justify-end">
+                  <Label
+                    htmlFor={pageSizeId}
+                    className="text-muted-foreground shrink-0 font-normal"
+                  >
+                    Rows per page
+                  </Label>
+                  <NativeSelect
+                    id={pageSizeId}
+                    className="w-auto min-w-20"
+                    value={pageSize === "all" ? "all" : String(pageSize)}
+                    onChange={(event) =>
+                      handlePageSizeChange(event.target.value)
+                    }
+                    aria-label="Rows per page"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                    <option value="all">All</option>
+                  </NativeSelect>
+                </div>
+              ) : null}
             </div>
 
             {showPagination ? (

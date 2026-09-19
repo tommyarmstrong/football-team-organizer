@@ -33,4 +33,23 @@ describe("CSS and font loading (§8.1, §8.3)", () => {
     expect(binder).toMatch(/useEffect/);
     expect(binder).not.toMatch(/useLayoutEffect/);
   });
+
+  it("does not mix club colour into --border or --input", () => {
+    const clubBlock = globals.match(
+      /\[data-club-colour="true"\]\s*\{[^}]+\}/,
+    )?.[0];
+    expect(clubBlock).toBeTruthy();
+    expect(clubBlock).not.toMatch(/--border:/);
+    expect(clubBlock).not.toMatch(/--input:/);
+    expect(clubBlock).not.toMatch(/--hero:\s*var\(--header\)/);
+    expect(globals).not.toMatch(
+      /\[data-club-colour="true"\] \.divide-y > :not\(:first-child\)/,
+    );
+  });
+
+  it("registers a hero-rail token for paper match heroes", () => {
+    expect(globals).toContain("--color-hero-rail: var(--hero-rail)");
+    expect(globals).toContain("--hero-rail: var(--pitch-deep)");
+    expect(globals).toContain("--hero-rail: var(--primary)");
+  });
 });

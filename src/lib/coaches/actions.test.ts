@@ -58,6 +58,7 @@ vi.mock("@/lib/data/coach-objectives", () => ({
 
 import {
   addCoachObjectiveAction,
+  addCoachObjectiveOnPageAction,
   addCoachToTeamAction,
   createCoachAction,
   createTeamCoachAction,
@@ -67,6 +68,7 @@ import {
   removeCoachFromTeamAction,
   updateCoachAction,
   updateCoachObjectiveAction,
+  updateCoachObjectiveOnPageAction,
   updateCoachTextAction,
 } from "@/lib/coaches/actions";
 
@@ -183,5 +185,19 @@ describe("coach actions", () => {
     await expect(
       deleteCoachObjectiveAndReturnAction("coach-1", "obj-1"),
     ).rejects.toThrow("redirect:/people/person-1");
+  });
+
+  it("creates and updates coach objectives on the person page without redirecting", async () => {
+    expect(
+      await addCoachObjectiveOnPageAction("coach-1", {}, objectiveForm),
+    ).toEqual({ success: "Objective added." });
+    expect(
+      await updateCoachObjectiveOnPageAction(
+        "coach-1",
+        "obj-1",
+        {},
+        objectiveForm,
+      ),
+    ).toEqual({ success: "Objective saved." });
   });
 });

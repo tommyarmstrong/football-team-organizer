@@ -1,12 +1,18 @@
 import { notFound } from "next/navigation";
 import {
-  getViewerContext,
   canEditMatchDay,
   canEditTeamHistory,
+  getViewerContext,
 } from "@/lib/authz/context";
-import { matchAllowsEvents, matchAllowsPostcard } from "@/lib/constants";
+import {
+  availableExtraTimeOrPenaltyPeriodNames,
+  matchAllowsEvents,
+  matchAllowsPostcard,
+} from "@/lib/constants";
+import { listCompetitions } from "@/lib/data/competitions";
 import { getMatchDetail } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
+import { listVenues } from "@/lib/data/venues";
 import {
   formatMatchTitle,
   matchCompetitionLabel,
@@ -18,8 +24,8 @@ import { deleteMatchAction } from "@/lib/matches/actions";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { EditMatchDialog } from "@/components/matches/edit-match-dialog";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
@@ -70,14 +76,25 @@ export default async function MatchDetailPage({
   const team = ctx.visibleTeams.find((t) => t.id === match.team_id);
   const teamName = team ? teamDisplayName(team) : "Our team";
   const opponentName = match.opponent_name;
+  const clubId = team?.club_id;
 
-  const [{ data: players, error: playersError }, postcardResult] =
-    await Promise.all([
-      listRosterForTeam(match.team_id, { includeInactive: true }),
-      matchAllowsPostcard(match.status)
-        ? buildMatchPostcardPayload(match.id)
-        : Promise.resolve({ data: null, error: null }),
-    ]);
+  const [
+    { data: players, error: playersError },
+    postcardResult,
+    { data: competitions, error: competitionsError },
+    { data: venues, error: venuesError },
+  ] = await Promise.all([
+    listRosterForTeam(match.team_id, { includeInactive: true }),
+    matchAllowsPostcard(match.status)
+      ? buildMatchPostcardPayload(match.id)
+      : Promise.resolve({ data: null, error: null }),
+    canEdit
+      ? listCompetitions(match.team_id)
+      : Promise.resolve({ data: [], error: null }),
+    canEdit && clubId
+      ? listVenues(clubId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   const postcard = postcardResult.data;
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
@@ -90,8 +107,19 @@ export default async function MatchDetailPage({
           p.id === match.players_player_of_the_match_id,
       )
     : players;
+  const defaultStarterPlayerIds = hasMatchSquad
+    ? [...matchSquadIds]
+    : eventPlayers.map((player) => player.id);
+  const availablePeriodNames = availableExtraTimeOrPenaltyPeriodNames(
+    periods.map((period) => period.name),
+  );
 
-  const loadErrors = [playersError, postcardResult.error]
+  const loadErrors = [
+    playersError,
+    postcardResult.error,
+    competitionsError,
+    venuesError,
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -152,10 +180,14 @@ export default async function MatchDetailPage({
                 ) : null}
                 {canEdit ? (
                   <>
-                    <EditIconLink
-                      href={`/matches/${match.id}/edit`}
-                      label="Edit match"
-                      className="size-11 sm:size-9"
+                    <EditMatchDialog
+                      match={match}
+                      competitions={competitions}
+                      venues={venues}
+                      players={eventPlayers}
+                      matchDaySquadCount={matchSquadIds.size}
+                      canEditPlayerOfTheMatch={canEditPlayerOfTheMatch}
+                      triggerClassName="size-11 sm:size-9"
                     />
                     <ListDeleteButton
                       label={`Delete match vs ${opponentName}`}
@@ -194,6 +226,15 @@ export default async function MatchDetailPage({
                   }
                 : null
             }
+            addPeriod={
+              canEdit
+                ? {
+                    availablePeriodNames,
+                    squadPlayers: eventPlayers,
+                    defaultStarterPlayerIds,
+                  }
+                : null
+            }
           />
         </Section>
       ) : null}
@@ -223,6 +264,7 @@ export default async function MatchDetailPage({
             <MatchCardsSection
               matchId={match.id}
               cards={cards}
+              players={eventPlayers}
               canEdit={canEdit}
             />
           </Section>

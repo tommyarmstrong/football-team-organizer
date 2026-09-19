@@ -48,8 +48,10 @@ vi.mock("@/lib/data/venues", () => ({
 
 import {
   createVenueAction,
+  createVenueOnPageAction,
   deleteVenueAction,
   updateVenueAction,
+  updateVenueOnPageAction,
 } from "@/lib/venues/actions";
 
 describe("venue actions", () => {
@@ -95,6 +97,15 @@ describe("venue actions", () => {
     ).rejects.toThrow("redirect:/venues/venue-1");
   });
 
+  it("creates a venue on the page without redirecting", async () => {
+    const result = await createVenueOnPageAction(
+      {},
+      formDataFrom({ name: "Pitch 1" }),
+    );
+    expect(result).toEqual({ success: "Venue added." });
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
   it("updates an existing venue", async () => {
     getVenueMock.mockResolvedValue({
       data: venueFixture(),
@@ -103,6 +114,20 @@ describe("venue actions", () => {
     await expect(
       updateVenueAction("venue-1", {}, formDataFrom({ name: "Pitch 2" })),
     ).rejects.toThrow("redirect:/venues/venue-1");
+  });
+
+  it("saves a venue on the page without redirecting", async () => {
+    getVenueMock.mockResolvedValue({
+      data: venueFixture(),
+      error: null,
+    });
+    const result = await updateVenueOnPageAction(
+      "venue-1",
+      {},
+      formDataFrom({ name: "Pitch 2" }),
+    );
+    expect(result).toEqual({ success: "Venue saved." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("deletes a venue", async () => {

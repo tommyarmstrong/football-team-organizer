@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
-import { updateClubAction } from "@/lib/clubs/actions";
+import { updateClubAction, updateClubOnPageAction } from "@/lib/clubs/actions";
 import { clubIconSrc } from "@/lib/clubs/branding";
 import type { Club } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,29 @@ import { FormActions } from "@/components/shared/form-actions";
 
 const DEFAULT_PICKER_COLOUR = "#1B4D3E";
 
-export function ClubForm({ club }: { club: Club }) {
+export function ClubForm({
+  club,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
+}: {
+  club: Club;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}) {
   const [state, formAction, pending] = useToastActionState(
-    updateClubAction,
+    stayOnPage ? updateClubOnPageAction : updateClubAction,
     INITIAL_ACTION_STATE,
   );
   const [previewSrc, setPreviewSrc] = useState(clubIconSrc(club.icon_url));
   const [colourEnabled, setColourEnabled] = useState(Boolean(club.colour));
   const [colour, setColour] = useState(club.colour ?? DEFAULT_PICKER_COLOUR);
   const [clearIcon, setClearIcon] = useState(false);
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -248,7 +262,11 @@ export function ClubForm({ club }: { club: Club }) {
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <FormActions pending={pending} cancelHref="/club" />
+      <FormActions
+        pending={pending}
+        cancelHref={onCancel ? undefined : "/club"}
+        onCancel={onCancel}
+      />
     </form>
   );
 }

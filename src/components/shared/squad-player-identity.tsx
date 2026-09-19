@@ -10,7 +10,10 @@ export function SquadPlayerIdentity({
   return (
     <>
       <InitialsAvatar name={name} className="size-9" />
-      <span className="text-muted-foreground w-[2ch] shrink-0 text-right tabular-nums">
+      <span
+        aria-hidden
+        className="font-display bg-primary/10 text-primary inline-flex size-7 shrink-0 items-center justify-center rounded-md text-sm leading-none tabular-nums"
+      >
         {shirtNumber ?? "—"}
       </span>
       <span className="min-w-0 flex-1 truncate font-medium">{name}</span>

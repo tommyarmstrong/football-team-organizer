@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -10,7 +11,9 @@ import {
 } from "@/lib/constants";
 import {
   addPlayerObjectiveAction,
+  addPlayerObjectiveOnPageAction,
   updatePlayerObjectiveAction,
+  updatePlayerObjectiveOnPageAction,
 } from "@/lib/players/actions";
 import type { PlayerDevelopmentObjective } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
@@ -25,14 +28,23 @@ export function PlayerObjectiveForm({
   personId,
   objective,
   mode,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   playerId: string;
   personId: string;
   objective?: PlayerDevelopmentObjective;
   mode: "create" | "edit";
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
-  const action =
-    mode === "create"
+  const action = stayOnPage
+    ? mode === "create"
+      ? addPlayerObjectiveOnPageAction.bind(null, playerId)
+      : updatePlayerObjectiveOnPageAction.bind(null, playerId, objective!.id)
+    : mode === "create"
       ? addPlayerObjectiveAction.bind(null, playerId)
       : updatePlayerObjectiveAction.bind(null, playerId, objective!.id);
 
@@ -40,6 +52,10 @@ export function PlayerObjectiveForm({
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <div className="space-y-4">
@@ -100,8 +116,12 @@ export function PlayerObjectiveForm({
           </div>
         </div>
 
-        {mode === "edit" ? (
-          <FormActions pending={pending} cancelHref={`/people/${personId}`} />
+        {onCancel || mode === "edit" ? (
+          <FormActions
+            pending={pending}
+            cancelHref={onCancel ? undefined : `/people/${personId}`}
+            onCancel={onCancel}
+          />
         ) : (
           <Button type="submit" disabled={pending}>
             {pending ? "Adding…" : "Add objective"}
