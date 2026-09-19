@@ -12,6 +12,7 @@ import {
   partitionTeamsByArchiveStatus,
   sortTeamsForDisplay,
 } from "@/lib/team/season";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -33,7 +34,7 @@ export default async function ClubPage() {
 
   if (!club) {
     return (
-      <div className="space-y-8">
+      <div className={pageBodyClassName("space-y-8")}>
         <PageHeader title="Club" />
         <EmptyState
           title="No club found"
@@ -63,7 +64,7 @@ export default async function ClubPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={club.name}
         description={<ClubHeaderMeta club={club} teams={teams} />}

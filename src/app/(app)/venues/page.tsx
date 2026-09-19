@@ -1,6 +1,7 @@
 import { listVenues } from "@/lib/data/venues";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getViewerContext } from "@/lib/authz/context";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -23,7 +24,7 @@ export default async function VenuesPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title="Venues"
         actions={canAdd ? <AddVenueDialog /> : undefined}

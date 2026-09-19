@@ -53,7 +53,7 @@ export async function DashboardFixtures({
   return (
     <div className="space-y-4">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-8">
         <FixtureSection
           title="Next fixture"
           teamName={teamName}

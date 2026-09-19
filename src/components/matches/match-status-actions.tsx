@@ -5,10 +5,6 @@ import { updateMatchStatusAction } from "@/lib/matches/actions";
 import type { MatchStatus } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import {
-  stackedActionButtonClassName,
-  stackedActionsClassName,
-} from "@/components/shared/stacked-actions";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -17,6 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import {
+  stackedActionButtonClassName,
+  stackedActionsRowClassName,
+} from "@/components/shared/stacked-actions";
 
 export function MatchStatusActions({
   matchId,
@@ -46,7 +46,7 @@ export function MatchStatusActions({
 
   return (
     <div className="space-y-2">
-      <div className={stackedActionsClassName()}>
+      <div className={stackedActionsRowClassName()}>
         {showKickOff ? (
           <Button
             type="button"

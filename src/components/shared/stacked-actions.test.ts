@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   stackedActionButtonClassName,
-  stackedActionsClassName,
+  stackedActionsRowClassName,
 } from "@/components/shared/stacked-actions";
 
-describe("stackedActionsClassName", () => {
+describe("stackedActionsRowClassName", () => {
   it("stacks content-sized equal-width buttons, row from sm up", () => {
-    const className = stackedActionsClassName();
+    const className = stackedActionsRowClassName();
     expect(className).toContain("inline-grid");
     expect(className).toContain("grid-cols-1");
     expect(className).toContain("sm:grid-flow-col");

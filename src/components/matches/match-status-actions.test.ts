@@ -7,9 +7,9 @@ const source = readFileSync(
   "utf8",
 );
 
-describe("MatchStatusActions layout", () => {
-  it("uses the shared stacked action row so buttons stay equal and content-sized", () => {
-    expect(source).toContain("stackedActionsClassName");
+describe("MatchStatusActions", () => {
+  it("uses shared stacked actions so labels stay equal-width without spanning the screen", () => {
+    expect(source).toContain("stackedActionsRowClassName");
     expect(source).toContain("stackedActionButtonClassName");
     expect(source).not.toContain("sm:w-auto");
   });
