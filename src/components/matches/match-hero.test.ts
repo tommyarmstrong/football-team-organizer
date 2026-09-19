@@ -93,6 +93,22 @@ function renderTree(node: unknown): string {
   );
 }
 
+function stackMarkup(node: unknown): string {
+  const html = renderTree(node);
+  const start = html.indexOf('"data-slot":"match-card-stack"');
+  expect(start).toBeGreaterThan(-1);
+  return html.slice(start);
+}
+
+function expectStackOrder(html: string, parts: string[]) {
+  let from = 0;
+  for (const part of parts) {
+    const index = html.indexOf(part, from);
+    expect(index, part).toBeGreaterThan(-1);
+    from = index + part.length;
+  }
+}
+
 describe("MatchHero", () => {
   it("renders home-first digits for a played home win", () => {
     const html = JSON.stringify(MatchHero(playedHome));
@@ -146,7 +162,7 @@ describe("MatchHero", () => {
   });
 
   it("stacks home/away, venue, LIVE, competition, date, then scheduled times", () => {
-    const scheduled = renderTree(
+    const scheduled = stackMarkup(
       MatchHero({
         ...playedHome,
         status: "scheduled",
@@ -157,23 +173,65 @@ describe("MatchHero", () => {
         competitionName: "Premier League",
       }),
     );
-    const homeAwayIndex = scheduled.indexOf("Home");
-    const venueIndex = scheduled.indexOf("Wembley");
-    const competitionIndex = scheduled.indexOf("Premier League");
-    const meetupIndex = scheduled.indexOf("Meet up: 09:30");
-    const kickoffIndex = scheduled.indexOf("Kick off: 10:00");
-    expect(homeAwayIndex).toBeGreaterThan(-1);
-    expect(venueIndex).toBeGreaterThan(homeAwayIndex);
-    expect(competitionIndex).toBeGreaterThan(venueIndex);
+    expectStackOrder(scheduled, [
+      "Home",
+      "Wembley",
+      "Premier League",
+      "Meet up: 09:30",
+      "Kick off: 10:00",
+    ]);
     expect(scheduled).toContain("font-bold");
-    expect(meetupIndex).toBeGreaterThan(competitionIndex);
-    expect(kickoffIndex).toBeGreaterThan(meetupIndex);
+    expect(scheduled).not.toContain("LiveIndicator");
     expect(scheduled).not.toContain("Meet up: 09:30 · Kick off: 10:00");
     expect(scheduled).not.toContain("Scheduled");
+    expect(scheduled).not.toContain("Squad:");
+  });
+
+  it("keeps the same stack on compact, card, and hero sizes", () => {
+    const props = {
+      ...playedHome,
+      status: "scheduled" as const,
+      date: "2026-03-15",
+      kickoffTime: "10:00",
+      meetupTime: "09:30",
+      venueName: "Wembley",
+      competitionName: "Premier League",
+    };
+    for (const size of ["compact", "card", "hero"] as const) {
+      const scheduled = stackMarkup(MatchHero({ ...props, size }));
+      expectStackOrder(scheduled, [
+        "Home",
+        "Wembley",
+        "Premier League",
+        "Meet up: 09:30",
+        "Kick off: 10:00",
+      ]);
+      expect(scheduled).not.toContain("Squad:");
+      expect(scheduled).not.toContain('aria-label":"Cards"');
+    }
+  });
+
+  it("omits missing venue, competition, and times", () => {
+    const scheduled = stackMarkup(
+      MatchHero({
+        ...playedHome,
+        status: "scheduled",
+        date: "2026-03-15",
+        kickoffTime: null,
+        meetupTime: null,
+        venueName: null,
+        competitionName: null,
+      }),
+    );
+    expect(scheduled).toContain("Home");
+    expect(scheduled).not.toContain("Wembley");
+    expect(scheduled).not.toContain("Premier League");
+    expect(scheduled).not.toContain("Meet up:");
+    expect(scheduled).not.toContain("Kick off:");
   });
 
   it("puts the LIVE chip after the venue and before competition", () => {
-    const live = renderTree(
+    const live = stackMarkup(
       MatchHero({
         ...playedHome,
         status: "in_progress",
@@ -184,12 +242,12 @@ describe("MatchHero", () => {
         competitionName: "Premier League",
       }),
     );
-    const venueIndex = live.indexOf("Wembley");
-    const liveIndex = live.indexOf("LiveIndicator");
-    const competitionIndex = live.indexOf("Premier League");
-    expect(venueIndex).toBeGreaterThan(-1);
-    expect(liveIndex).toBeGreaterThan(venueIndex);
-    expect(competitionIndex).toBeGreaterThan(liveIndex);
+    expectStackOrder(live, [
+      "Home",
+      "Wembley",
+      "LiveIndicator",
+      "Premier League",
+    ]);
     expect(live).not.toContain("Kick off: 10:00");
     expect(live).not.toContain("Meet up: 09:30");
   });

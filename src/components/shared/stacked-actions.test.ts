@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
   stackedActionButtonClassName,
+  stackedActionCellClassName,
   stackedActionsRowClassName,
 } from "@/components/shared/stacked-actions";
 
 describe("stackedActionsRowClassName", () => {
   it("stacks content-sized equal-width buttons, row from sm up", () => {
     const className = stackedActionsRowClassName();
-    expect(className).toContain("inline-grid");
-    expect(className).toContain("grid-cols-1");
-    expect(className).toContain("sm:grid-flow-col");
-    expect(className).toContain("sm:auto-cols-fr");
-    expect(className).not.toContain("w-full");
+    const tokens = className.split(/\s+/);
+    expect(tokens).toContain("inline-grid");
+    expect(tokens).toContain("w-max");
+    expect(tokens).toContain("max-w-full");
+    expect(tokens).toContain("grid-cols-1");
+    expect(tokens).toContain("sm:grid-flow-col");
+    expect(tokens).toContain("sm:auto-cols-fr");
+    expect(tokens).not.toContain("w-full");
   });
 });
 
@@ -20,5 +24,14 @@ describe("stackedActionButtonClassName", () => {
     const className = stackedActionButtonClassName();
     expect(className).toContain("w-full");
     expect(className).not.toContain("sm:w-auto");
+  });
+});
+
+describe("stackedActionCellClassName", () => {
+  it("lets a dialog trigger fill its cell without widening the grid", () => {
+    const className = stackedActionCellClassName();
+    expect(className).toContain("flex");
+    expect(className).toContain("w-full");
+    expect(className).toContain("min-w-0");
   });
 });

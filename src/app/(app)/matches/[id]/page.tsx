@@ -152,8 +152,6 @@ export default async function MatchDetailPage({
           meetupTime={match.meetup_time}
           venueName={match.venue?.name ?? null}
           venueId={match.venue?.id ?? null}
-          matchDaySquadCount={matchSquadIds.size}
-          cards={cards}
           actions={
             postcard || canEdit ? (
               <>

@@ -1,16 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CARD_TYPE_EMOJIS } from "@/lib/constants";
-import type { CardWithPerson } from "@/lib/data/cards";
 import {
-  coachDisplayName,
   formatHomeFirstScore,
   formatMatchTitle,
-  guardianDisplayName,
   labelHomeAway,
   labelMatchStatus,
   matchSummaryLines,
-  playerDisplayName,
   resultLetter,
 } from "@/lib/format";
 import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
@@ -74,13 +69,6 @@ export function matchHeroFrameClassName(size: MatchHeroSize): string {
   );
 }
 
-function cardPersonLabel(card: CardWithPerson): string {
-  if (card.player) return playerDisplayName(card.player);
-  if (card.coach) return coachDisplayName(card.coach);
-  if (card.guardian) return guardianDisplayName(card.guardian);
-  return "Unknown";
-}
-
 export function MatchHero({
   size = "hero",
   teamName,
@@ -95,8 +83,6 @@ export function MatchHero({
   meetupTime,
   venueName,
   venueId,
-  matchDaySquadCount,
-  cards,
   actions,
   href,
 }: {
@@ -113,8 +99,6 @@ export function MatchHero({
   meetupTime?: string | null;
   venueName?: string | null;
   venueId?: string | null;
-  matchDaySquadCount?: number;
-  cards?: CardWithPerson[];
   actions?: ReactNode;
   href?: string;
 }) {
@@ -149,11 +133,6 @@ export function MatchHero({
           status,
         })
       : null;
-  const showFullMeta = size === "hero" && !isLive;
-  const showSquad =
-    showFullMeta && !isCancelledOrPostponed && matchDaySquadCount != null;
-  const visibleCards =
-    showFullMeta && !isCancelledOrPostponed && cards ? cards : [];
   const showVenueLink = size === "hero" && Boolean(venueId);
 
   const mastheadPadding =
@@ -232,7 +211,10 @@ export function MatchHero({
       </div>
 
       {homeAway || meta || isLive ? (
-        <div className="text-muted-foreground mt-4 space-y-1 text-center text-sm">
+        <div
+          data-slot="match-card-stack"
+          className="text-muted-foreground mt-4 space-y-1 text-center text-sm"
+        >
           {homeAway ? (
             <p className="text-[11px] font-medium tracking-wide uppercase">
               {labelHomeAway(homeAway)}
@@ -263,30 +245,7 @@ export function MatchHero({
           {meta ? <p>{meta.dateTime}</p> : null}
           {meta?.meetup ? <p>{meta.meetup}</p> : null}
           {meta?.kickoff ? <p>{meta.kickoff}</p> : null}
-          {showSquad ? (
-            <p>
-              Squad: {matchDaySquadCount}{" "}
-              {matchDaySquadCount === 1 ? "player" : "players"}
-            </p>
-          ) : null}
         </div>
-      ) : null}
-
-      {visibleCards.length > 0 ? (
-        <ul
-          className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1"
-          aria-label="Cards"
-        >
-          {visibleCards.map((card) => (
-            <li
-              key={card.id}
-              className="inline-flex max-w-full items-center gap-1.5 text-sm font-medium"
-            >
-              <span aria-hidden="true">{CARD_TYPE_EMOJIS[card.type]}</span>
-              <span className="truncate">{cardPersonLabel(card)}</span>
-            </li>
-          ))}
-        </ul>
       ) : null}
     </div>
   );
