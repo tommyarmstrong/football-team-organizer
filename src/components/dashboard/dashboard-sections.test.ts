@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getDashboardDataMock } = vi.hoisted(() => ({
@@ -15,7 +17,11 @@ vi.mock("@/lib/data/dashboard", () => ({
   getDashboardData: getDashboardDataMock,
 }));
 
-import { DashboardLeaderboards } from "@/components/dashboard/dashboard-sections";
+import {
+  DashboardLeaderboards,
+  DashboardSeasonTiles,
+} from "@/components/dashboard/dashboard-sections";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 
 describe("DashboardLeaderboards", () => {
   beforeEach(() => {
@@ -31,6 +37,7 @@ describe("DashboardLeaderboards", () => {
       assists: { data: [], error: null },
       potm: { data: [], error: null },
       potMonth: { data: [], error: null },
+      stats: { resultsOverTime: [], form: [], error: null },
     });
   });
 
@@ -67,5 +74,90 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("Maya Hall");
     expect(html).not.toContain("7 Maya Hall");
     expect(html).toContain("3 awards");
+  });
+});
+
+describe("DashboardSeasonTiles", () => {
+  it("omits tiles when getAllTeamStats errors", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [
+          {
+            matchId: "m1",
+            date: "2026-01-01",
+            label: "Rivals",
+            goalsFor: 2,
+            goalsAgainst: 1,
+            result: "W",
+            competitionId: "c1",
+            competitionKind: "league",
+            competitionName: "League",
+            isFriendly: false,
+          },
+        ],
+        form: ["W"],
+        error: "boom",
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(tree).toBeNull();
+  });
+
+  it("renders tiles from played results", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [
+          {
+            matchId: "m1",
+            date: "2026-01-01",
+            label: "Rivals",
+            goalsFor: 2,
+            goalsAgainst: 1,
+            result: "W",
+            competitionId: "c1",
+            competitionKind: "league",
+            competitionName: "League",
+            isFriendly: false,
+          },
+        ],
+        form: ["W"],
+        error: null,
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(tree?.type).toBe(SeasonTiles);
+    expect(tree?.props.results).toHaveLength(1);
+  });
+});
+
+describe("DashboardFixtures last result share", () => {
+  const source = readFileSync(
+    path.join(import.meta.dirname, "dashboard-sections.tsx"),
+    "utf8",
+  );
+
+  it("places a share postcard control on the last-result card", () => {
+    expect(source).toContain("SharePostcardButton");
+    expect(source).toContain('title="Last result"');
+    expect(source).toContain("actions={share}");
+  });
+
+  it("opens new fixture in an inline dialog instead of /matches/new", () => {
+    expect(source).toContain("NewFixtureDialog");
+    expect(source).not.toContain('href="/matches/new"');
+  });
+
+  it("stacks next fixture and last result in the narrow page column", () => {
+    expect(source).toContain("grid gap-8");
+    expect(source).not.toContain("sm:grid-cols-2");
+  });
+
+  it("shows initials on every leaderboard row and a display-font count", () => {
+    expect(source).toContain("InitialsAvatar");
+    expect(source).toContain("font-display text-foreground text-lg");
+    expect(source).not.toContain("showAvatar={false}");
+    expect(source).not.toContain("text-primary text-sm font-semibold");
   });
 });

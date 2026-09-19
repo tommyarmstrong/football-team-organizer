@@ -22,6 +22,7 @@ import {
   tallyResults,
   withGoalDifference,
 } from "@/lib/stats/results-view";
+import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
 export function PlayerCountChart({
   data,
@@ -37,7 +38,7 @@ export function PlayerCountChart({
   const summary = data.map((row) => `${row.name}: ${row.count}`).join("; ");
 
   return (
-    <figure className="space-y-4">
+    <figure className={statsChartFrameClassName()}>
       <div
         className="h-72 w-full"
         role="img"
@@ -140,7 +141,7 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
     .join("; ");
 
   return (
-    <figure className="space-y-4">
+    <figure className={statsChartFrameClassName()}>
       <div
         className="h-72 w-full"
         role="img"
@@ -250,7 +251,7 @@ export function ResultsOverTimeChart({
     .join("; ");
 
   return (
-    <figure className="space-y-4">
+    <figure className={statsChartFrameClassName()}>
       <div
         className="h-72 w-full"
         role="img"
@@ -354,7 +355,7 @@ export function ResultsPieChart({ data }: { data: ResultOverTimePoint[] }) {
   const summary = `Wins ${tally.wins}, draws ${tally.draws}, losses ${tally.losses}`;
 
   return (
-    <figure className="space-y-4">
+    <figure className={statsChartFrameClassName()}>
       <div
         className="h-72 w-full"
         role="img"
@@ -403,7 +404,7 @@ export function GoalsPieChart({ data }: { data: ResultOverTimePoint[] }) {
   const summary = `Goals for ${tally.goalsFor}, goals against ${tally.goalsAgainst}`;
 
   return (
-    <figure className="space-y-4">
+    <figure className={statsChartFrameClassName()}>
       <div
         className="h-72 w-full"
         role="img"

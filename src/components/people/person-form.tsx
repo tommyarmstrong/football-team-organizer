@@ -1,9 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { PLAYER_POSITIONS } from "@/lib/constants";
-import { createPersonAction, updatePersonAction } from "@/lib/people/actions";
+import {
+  createPersonAction,
+  createPersonOnPageAction,
+  updatePersonAction,
+  updatePersonOnPageAction,
+} from "@/lib/people/actions";
 import { PERSON_ROLE_ORDER } from "@/lib/people/roles";
 import type { PersonPlayerRef } from "@/lib/data/people";
 import type { Person } from "@/lib/supabase/database.types";
@@ -27,22 +33,36 @@ export function PersonForm({
   mode,
   showPlayerDobSchool = Boolean(player),
   showPlayerPosition = Boolean(player),
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   person?: Person;
   player?: PersonPlayerRef | null;
   mode: "create" | "edit";
   showPlayerDobSchool?: boolean;
   showPlayerPosition?: boolean;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const action =
     mode === "create"
-      ? createPersonAction
-      : updatePersonAction.bind(null, person!.id);
+      ? stayOnPage
+        ? createPersonOnPageAction
+        : createPersonAction
+      : stayOnPage
+        ? updatePersonOnPageAction.bind(null, person!.id)
+        : updatePersonAction.bind(null, person!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -183,7 +203,13 @@ export function PersonForm({
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
       {mode === "edit" && person ? (
-        <FormActions pending={pending} cancelHref={`/people/${person.id}`} />
+        <FormActions
+          pending={pending}
+          cancelHref={onCancel ? undefined : `/people/${person.id}`}
+          onCancel={onCancel}
+        />
+      ) : onCancel ? (
+        <FormActions pending={pending} onCancel={onCancel} />
       ) : (
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Create person"}

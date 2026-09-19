@@ -164,7 +164,7 @@ export async function removeCoachFromTeamAction(
   return { success: "Coach removed from team." };
 }
 
-export async function addCoachObjectiveAction(
+export async function addCoachObjectiveOnPageAction(
   coachId: string,
   _prev: ActionState,
   formData: FormData,
@@ -180,12 +180,23 @@ export async function addCoachObjectiveAction(
   if (error) return { error };
   if (!data) return { error: "Could not create objective." };
 
+  await revalidatePersonForCoach(coachId);
+  return { success: "Objective added." };
+}
+
+export async function addCoachObjectiveAction(
+  coachId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await addCoachObjectiveOnPageAction(coachId, _prev, formData);
+  if (result.error) return result;
   const personId = await revalidatePersonForCoach(coachId);
   if (personId) redirect(`/people/${personId}`);
   redirect("/people");
 }
 
-export async function updateCoachObjectiveAction(
+export async function updateCoachObjectiveOnPageAction(
   coachId: string,
   objectiveId: string,
   _prev: ActionState,
@@ -200,8 +211,25 @@ export async function updateCoachObjectiveAction(
   const personId = await revalidatePersonForCoach(coachId);
   if (personId) {
     revalidatePath(`/people/${personId}/coach-objectives/${objectiveId}`);
-    redirect(`/people/${personId}`);
   }
+  return { success: "Objective saved." };
+}
+
+export async function updateCoachObjectiveAction(
+  coachId: string,
+  objectiveId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updateCoachObjectiveOnPageAction(
+    coachId,
+    objectiveId,
+    _prev,
+    formData,
+  );
+  if (result.error) return result;
+  const personId = await revalidatePersonForCoach(coachId);
+  if (personId) redirect(`/people/${personId}`);
   redirect("/people");
 }
 

@@ -4,10 +4,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 export function FormActions({
   pending,
   cancelHref,
+  onCancel,
   form,
 }: {
   pending: boolean;
-  cancelHref: string;
+  cancelHref?: string;
+  onCancel?: () => void;
   form?: string;
 }) {
   return (
@@ -15,9 +17,23 @@ export function FormActions({
       <Button type="submit" form={form} disabled={pending}>
         {pending ? "Saving…" : "Save"}
       </Button>
-      <Link href={cancelHref} className={buttonVariants()}>
-        Cancel
-      </Link>
+      {onCancel ? (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      ) : cancelHref ? (
+        <Link
+          href={cancelHref}
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Cancel
+        </Link>
+      ) : null}
     </div>
   );
 }

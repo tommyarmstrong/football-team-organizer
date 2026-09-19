@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   goalAssistPlayer,
@@ -359,5 +361,31 @@ describe("periodEndScores", () => {
       ],
     );
     expect(periodEndScores(groups, "home")).toEqual(["0–0", "0–0"]);
+  });
+});
+
+describe("MatchGoalsSection add goal", () => {
+  const source = readFileSync(
+    path.join(import.meta.dirname, "match-goals-section.tsx"),
+    "utf8",
+  );
+
+  it("opens an inline dialog instead of navigating to /goals/new", () => {
+    expect(source).toContain("InlineFormDialog");
+    expect(source).toContain("stayOnPage");
+    expect(source).not.toContain("AddGoalDialog");
+  });
+
+  it("opens add period and edit goal in dialogs on the match page", () => {
+    expect(source).toContain("addPeriod");
+    expect(source).toContain("MatchPeriodCreateSection");
+    expect(source).toContain("Edit goal");
+    expect(source).toContain("stayOnPage");
+  });
+
+  it("keeps add-goal and add-period the same content width as other match actions", () => {
+    expect(source).toContain("stackedActionsRowClassName");
+    expect(source).toContain("stackedActionButtonClassName");
+    expect(source).not.toContain("sm:w-auto");
   });
 });

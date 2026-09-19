@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   GOAL_KIND_LABELS,
@@ -13,7 +14,9 @@ import {
 } from "@/lib/constants";
 import {
   createGoalAndReturnToMatchAction,
+  createGoalOnMatchAction,
   saveGoalAndReturnToMatchAction,
+  saveGoalOnMatchAction,
 } from "@/lib/goals/actions";
 import { goalAssistsAllowed, goalKindFromFlags } from "@/lib/form-parse";
 import { goalScorerLabel, playerDisplayName } from "@/lib/format";
@@ -35,15 +38,21 @@ export function MatchGoalEditSection({
   opponentName,
   canEdit = true,
   defaultPeriodId = null,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   matchId: string;
   goal?: GoalWithPlayers | null;
   players: RosterPlayer[];
-  periods: MatchPeriodWithStarters[];
+  periods: Pick<MatchPeriodWithStarters, "id" | "name">[];
   teamName: string;
   opponentName: string;
   canEdit?: boolean;
   defaultPeriodId?: string | null;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   if (!canEdit) {
     if (!goal) return null;
@@ -92,6 +101,9 @@ export function MatchGoalEditSection({
       teamName={teamName}
       opponentName={opponentName}
       defaultPeriodId={defaultPeriodId}
+      stayOnPage={stayOnPage}
+      onSuccess={onSuccess}
+      onCancel={onCancel}
     />
   );
 }
@@ -111,25 +123,39 @@ function EditableGoalSection({
   teamName,
   opponentName,
   defaultPeriodId,
+  stayOnPage,
+  onSuccess,
+  onCancel,
 }: {
   matchId: string;
   goal: GoalWithPlayers | null;
   players: RosterPlayer[];
-  periods: MatchPeriodWithStarters[];
+  periods: Pick<MatchPeriodWithStarters, "id" | "name">[];
   teamName: string;
   opponentName: string;
   defaultPeriodId: string | null;
+  stayOnPage: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const fieldId = goal?.id ?? "new";
   const formId = `goal-details-${fieldId}`;
   const cancelHref = `/matches/${matchId}`;
   const bound = goal
-    ? saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id)
-    : createGoalAndReturnToMatchAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
+    ? stayOnPage
+      ? saveGoalOnMatchAction.bind(null, matchId, goal.id)
+      : saveGoalAndReturnToMatchAction.bind(null, matchId, goal.id)
+    : stayOnPage
+      ? createGoalOnMatchAction.bind(null, matchId)
+      : createGoalAndReturnToMatchAction.bind(null, matchId);
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   const [scorerValue, setScorerValue] = useState(() =>
     defaultScorerValue(goal),
@@ -276,7 +302,12 @@ function EditableGoalSection({
         {state.error ? <ErrorBanner message={state.error} /> : null}
       </form>
 
-      <FormActions pending={pending} cancelHref={cancelHref} form={formId} />
+      <FormActions
+        pending={pending}
+        cancelHref={onCancel ? undefined : cancelHref}
+        onCancel={onCancel}
+        form={formId}
+      />
     </div>
   );
 }

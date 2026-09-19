@@ -67,11 +67,6 @@ export function MatchHeaderMeta({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        {meta.competition ? (
-          <p className="font-bold">{meta.competition}</p>
-        ) : null}
-        <p>{meta.dateTime}</p>
-        {meta.times ? <p>{meta.times}</p> : null}
         {meta.venue ? (
           <p>
             {venueId ? (
@@ -86,6 +81,12 @@ export function MatchHeaderMeta({
             )}
           </p>
         ) : null}
+        {meta.competition ? (
+          <p className="font-bold">{meta.competition}</p>
+        ) : null}
+        <p>{meta.dateTime}</p>
+        {meta.meetup ? <p>{meta.meetup}</p> : null}
+        {meta.kickoff ? <p>{meta.kickoff}</p> : null}
         {showCancelledOrPostponed ? (
           <p className="text-destructive font-medium">
             {labelMatchStatus(status)}

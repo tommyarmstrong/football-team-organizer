@@ -1,7 +1,7 @@
 "use client";
 
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import Link from "next/link";
-import { useActionState } from "react";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   addGuardianAssistantAction,
@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
+import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
@@ -58,6 +59,7 @@ export function GuardianAssistantsSection({
                 href={`/guardians/${entry.guardian_id}`}
                 className={objectListRowClassName()}
               >
+                <InitialsAvatar name={entry.name} className="size-9" />
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {entry.name}
                 </span>
@@ -99,7 +101,7 @@ function AddAssistantForm({
   candidates: GuardianWithPerson[];
 }) {
   const bound = addGuardianAssistantAction.bind(null, teamId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

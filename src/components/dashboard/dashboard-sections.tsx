@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { listVenues } from "@/lib/data/venues";
 import { type MatchWithRelations } from "@/lib/data/matches";
 import {
   formatAwardMonth,
   formatCountLabel,
   matchCompetitionLabel,
-  matchSummaryLines,
   playerDisplayName,
 } from "@/lib/format";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
@@ -20,26 +20,40 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { MatchHero } from "@/components/matches/match-hero";
+import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
-import { buttonVariants } from "@/components/ui/button";
+import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
+import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
+
+export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
+  const { stats } = await getDashboardData(teamId);
+  if (stats.error) return null;
+
+  return <SeasonTiles results={stats.resultsOverTime} />;
+}
 
 export async function DashboardFixtures({
   teamId,
   teamName,
+  clubId,
 }: {
   teamId: string;
   teamName: string;
+  clubId: string;
 }) {
-  const { next, last, canEditMatch } = await getDashboardData(teamId);
+  const [{ next, last, lastPostcard, canEditMatch, competitions }, venues] =
+    await Promise.all([getDashboardData(teamId), listVenues(clubId)]);
+  const lastMatch = last.data;
+  const postcard = lastPostcard?.data ?? null;
 
   const errors = [next.error, last.error].filter(Boolean);
 
   return (
     <div className="space-y-4">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-8">
         <FixtureSection
           title="Next fixture"
           teamName={teamName}
@@ -48,21 +62,44 @@ export async function DashboardFixtures({
           emptyDescription="Schedule the next match."
           emptyAction={
             canEditMatch ? (
-              <Link
-                href="/matches/new"
-                className={buttonVariants({ size: "sm" })}
-              >
-                New fixture
-              </Link>
+              <NewFixtureDialog
+                competitions={competitions.data}
+                venues={venues.data}
+                size="sm"
+              />
             ) : undefined
           }
         />
         <FixtureSection
           title="Last result"
           teamName={teamName}
-          match={last.data}
+          match={lastMatch}
           emptyTitle="No results yet"
           emptyDescription="Played matches will show here."
+          share={
+            postcard ? (
+              <SharePostcardButton
+                imageUrl={`/matches/${postcard.matchId}/postcard`}
+                caption={postcard.caption}
+                fileName={postcard.fileName}
+                title={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+                description={
+                  postcard.kind === "scheduled"
+                    ? "Share this upcoming fixture, including the venue address."
+                    : "Share a recap of this result. Player names follow the team’s privacy rules."
+                }
+                previewAlt={
+                  postcard.kind === "scheduled"
+                    ? "Fixture postcard"
+                    : "Match postcard"
+                }
+              />
+            ) : undefined
+          }
         />
       </div>
     </div>
@@ -92,7 +129,10 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
 }
 
 export async function DashboardCompetitions({ team }: { team: Team }) {
-  const { competitions, canEditTeam } = await getDashboardData(team.id);
+  const [{ competitions, canEditTeam }, venues] = await Promise.all([
+    getDashboardData(team.id),
+    listVenues(team.club_id),
+  ]);
 
   return (
     <Section
@@ -105,6 +145,7 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
         <CompetitionsSection
           key={team.id}
           competitions={competitions.data}
+          venues={venues.data}
           canEdit={canEditTeam}
         />
       )}
@@ -141,7 +182,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Top scorers"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
-        showAvatar={false}
         rows={scorers.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -153,7 +193,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Most assists"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
-        showAvatar={false}
         rows={assists.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -165,7 +204,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the match"
         emptyTitle="No awards yet"
         emptyDescription="Select players of the match on played fixtures."
-        showAvatar={false}
         rows={potm.data.map((row) => ({
           id: row.player.id,
           personId: row.player.person_id,
@@ -184,6 +222,7 @@ function FixtureSection({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  share,
 }: {
   title: string;
   teamName: string;
@@ -191,6 +230,7 @@ function FixtureSection({
   emptyTitle: string;
   emptyDescription: string;
   emptyAction?: ReactNode;
+  share?: ReactNode;
 }) {
   if (!match) {
     return (
@@ -204,48 +244,24 @@ function FixtureSection({
     );
   }
 
-  const meta = matchSummaryLines({
-    competitionName: matchCompetitionLabel(match),
-    date: match.date,
-    kickoffTime: match.kickoff_time,
-    meetupTime: match.meetup_time,
-    venueName: match.venue?.name,
-    status: match.status,
-  });
-
   return (
     <Section title={title}>
-      <Link
+      <MatchHero
+        size="card"
         href={`/matches/${match.id}`}
-        className="bg-card ring-foreground/10 block space-y-3 rounded-2xl p-4 shadow-sm ring-1 transition-opacity hover:opacity-80"
-      >
-        <MatchScoreboard
-          teamName={teamName}
-          opponentName={match.opponent_name}
-          homeAway={match.home_away}
-          status={match.status}
-          goalsFor={match.goals_for}
-          goalsAgainst={match.goals_against}
-        />
-        {meta.competition ? (
-          <p className="text-primary text-center text-sm font-bold">
-            {meta.competition}
-          </p>
-        ) : null}
-        <p className="text-muted-foreground text-center text-sm">
-          {meta.dateTime}
-        </p>
-        {meta.times ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.times}
-          </p>
-        ) : null}
-        {meta.venue ? (
-          <p className="text-muted-foreground text-center text-sm">
-            {meta.venue}
-          </p>
-        ) : null}
-      </Link>
+        teamName={teamName}
+        opponentName={match.opponent_name}
+        homeAway={match.home_away}
+        status={match.status}
+        goalsFor={match.goals_for}
+        goalsAgainst={match.goals_against}
+        competitionName={matchCompetitionLabel(match)}
+        date={match.date}
+        kickoffTime={match.kickoff_time}
+        meetupTime={match.meetup_time}
+        venueName={match.venue?.name ?? null}
+        actions={share}
+      />
     </Section>
   );
 }
@@ -255,7 +271,6 @@ function LeaderboardSection({
   emptyTitle,
   emptyDescription,
   rows,
-  showAvatar = true,
 }: {
   title: string;
   emptyTitle: string;
@@ -267,7 +282,6 @@ function LeaderboardSection({
     valueLabel: string;
     rank?: number;
   }>;
-  showAvatar?: boolean;
 }) {
   return (
     <Section title={title}>
@@ -283,12 +297,10 @@ function LeaderboardSection({
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <RankBadge rank={row.rank ?? index + 1} />
-                  {showAvatar ? (
-                    <InitialsAvatar name={row.name} className="size-8" />
-                  ) : null}
+                  <InitialsAvatar name={row.name} className="size-8" />
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
-                <span className="text-primary text-sm font-semibold tabular-nums">
+                <span className="font-display text-foreground text-lg tabular-nums">
                   {row.valueLabel}
                 </span>
               </Link>

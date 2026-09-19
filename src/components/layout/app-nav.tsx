@@ -156,7 +156,7 @@ export function MobileTabBar({
   return (
     <nav
       aria-label="Main"
-      className="border-header/20 bg-header text-header-foreground fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="club-themed-footer club-chrome border-header/20 text-header-foreground fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="grid grid-cols-5">
         {PRIMARY_NAV_ITEMS.map((item) => {
@@ -201,7 +201,7 @@ export function MobileTabBar({
       </ul>
 
       {moreOpen ? (
-        <div className="border-header-foreground/15 bg-header absolute inset-x-0 bottom-full border-t px-3 pt-3 pb-2 shadow-[0_-12px_40px_rgba(0,0,0,0.18)]">
+        <div className="club-chrome border-header-foreground/15 absolute inset-x-0 bottom-full border-t px-3 pt-3 pb-2 shadow-[0_-12px_40px_rgba(0,0,0,0.18)]">
           <div className="mx-auto max-w-5xl">
             <div className="border-header-foreground/15 mb-2 border-b px-1 pb-2">
               <AccountDetails name={name} email={email} />

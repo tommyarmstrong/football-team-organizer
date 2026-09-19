@@ -26,6 +26,7 @@ import {
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listVenues } from "@/lib/data/venues";
 import { formatTrainingDays, teamDisplayName } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -55,7 +56,7 @@ export default async function TeamPage() {
 
   if (!ctx) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Team" />
         <ErrorBanner message="Not signed in." />
       </div>
@@ -80,7 +81,7 @@ export default async function TeamPage() {
       ? clubVenues.filter((v) => v.club_id === club.id)
       : clubVenues;
     return (
-      <div className="space-y-8">
+      <div className={pageBodyClassName("space-y-8")}>
         <PageHeader
           title="Team"
           description={club ? club.name : "No club found"}
@@ -140,7 +141,7 @@ export default async function TeamPage() {
   const archived = isTeamArchived(team);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={teamDisplayName(team)}
         description={
@@ -198,6 +199,7 @@ export default async function TeamPage() {
           <CompetitionsSection
             key={team.id}
             competitions={competitions.data}
+            venues={teamClubVenues}
             canEdit={canEditHistory}
           />
         )}
@@ -289,6 +291,7 @@ export default async function TeamPage() {
         ) : (
           <PlayerOfTheMonthSection
             awards={potmAwards}
+            players={roster}
             canEdit={canEditHistory}
           />
         )}

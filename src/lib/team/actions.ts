@@ -222,7 +222,7 @@ async function uploadTeamPhoto(
   return { url: data.publicUrl };
 }
 
-export async function createTeamAction(
+export async function createTeamOnPageAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -276,6 +276,15 @@ export async function createTeamAction(
 
   revalidatePath("/", "layout");
   revalidatePath("/club");
+  return { success: "Team created." };
+}
+
+export async function createTeamAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createTeamOnPageAction(_prev, formData);
+  if (result.error) return result;
   redirect("/team");
 }
 

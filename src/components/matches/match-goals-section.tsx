@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { matchPeriodSortOrder } from "@/lib/constants";
+import {
+  matchPeriodSortOrder,
+  type ExtraTimeOrPenaltyPeriodName,
+} from "@/lib/constants";
 import { deleteGoalAction } from "@/lib/goals/actions";
 import { goalAssistsAllowed } from "@/lib/form-parse";
 import {
@@ -11,16 +14,24 @@ import {
   scoreFromGoals,
 } from "@/lib/format";
 import type { GoalWithPlayers } from "@/lib/data/goals";
+import type { RosterPlayer } from "@/lib/data/players";
 import type { MatchHomeAway } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InlineFormDialog } from "@/components/shared/inline-form-dialog";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  stackedActionButtonClassName,
+  stackedActionsRowClassName,
+} from "@/components/shared/stacked-actions";
+import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
+import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
 
 /** Card shell around the goals table; overflow clip keeps rounded corners. */
 export function goalsTableShellClassName(className?: string): string {
   return cn(
-    "border-border/80 bg-card overflow-hidden rounded-2xl border shadow-sm",
+    "bg-card overflow-hidden rounded-2xl shadow-sm ring-1 ring-foreground/8",
     className,
   );
 }
@@ -31,12 +42,12 @@ export function goalsTableClassName(className?: string): string {
 }
 
 export function goalsTableRowClassName(className?: string): string {
-  return cn("border-border border-b last:border-b-0", className);
+  return cn("border-foreground/8 border-b last:border-b-0", className);
 }
 
 export function goalsTablePeriodCellClassName(className?: string): string {
   return cn(
-    "align-top px-4 py-3.5 text-left font-medium whitespace-nowrap",
+    "text-muted-foreground align-top px-4 py-3.5 text-left font-medium whitespace-nowrap",
     className,
   );
 }
@@ -51,7 +62,7 @@ export function goalEventRowClassName(
   className?: string,
 ): string {
   return cn(
-    "border-border grid grid-cols-[minmax(0,1fr)_auto] border-b last:border-b-0",
+    "border-foreground/8 grid grid-cols-[minmax(0,1fr)_auto] border-b last:border-b-0",
     hasAssist
       ? "grid-rows-[auto_auto] gap-x-2 gap-y-1.5 py-1.5"
       : "gap-x-2 py-1",
@@ -266,35 +277,68 @@ function GoalEventRow({
   matchId,
   goal,
   canEdit,
+  editGoal,
 }: {
   matchId: string;
   goal: GoalWithPlayers;
   canEdit: boolean;
+  editGoal?: {
+    players: RosterPlayer[];
+    periods: GoalPeriodRef[];
+    teamName: string;
+    opponentName: string;
+  } | null;
 }) {
   const assist = goalAssistPlayer(goal);
   const hasAssist = assist != null;
   const goalHref = `/matches/${matchId}/goals/${goal.id}`;
+  const bodyClassName = hasAssist
+    ? "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-span-2 grid min-w-0 grid-rows-subgrid rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    : "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-start-1 flex min-w-0 items-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none";
+  const body = (
+    <>
+      <span className={goalScorerLineClassName()}>
+        <GoalScorerName goal={goal} />
+        {goal.is_penalty ? (
+          <span className="text-muted-foreground text-xs font-medium">(P)</span>
+        ) : null}
+      </span>
+      {assist ? <GoalAssistName player={assist} /> : null}
+    </>
+  );
 
   return (
     <div className={goalEventRowClassName(hasAssist)}>
-      <Link
-        href={goalHref}
-        className={
-          hasAssist
-            ? "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-span-2 grid min-w-0 grid-rows-subgrid rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            : "hover:bg-accent/50 focus-visible:ring-ring col-start-1 row-start-1 flex min-w-0 items-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
-        }
-      >
-        <span className={goalScorerLineClassName()}>
-          <GoalScorerName goal={goal} />
-          {goal.is_penalty ? (
-            <span className="text-muted-foreground text-xs font-medium">
-              (P)
-            </span>
-          ) : null}
-        </span>
-        {assist ? <GoalAssistName player={assist} /> : null}
-      </Link>
+      {canEdit && editGoal ? (
+        <InlineFormDialog
+          title="Edit goal"
+          description="Update the scorer and other details. Save keeps you on this match."
+          trigger={(open) => (
+            <button type="button" onClick={open} className={bodyClassName}>
+              {body}
+            </button>
+          )}
+        >
+          {(close) => (
+            <MatchGoalEditSection
+              matchId={matchId}
+              goal={goal}
+              players={editGoal.players}
+              periods={editGoal.periods}
+              teamName={editGoal.teamName}
+              opponentName={editGoal.opponentName}
+              canEdit
+              stayOnPage
+              onSuccess={close}
+              onCancel={close}
+            />
+          )}
+        </InlineFormDialog>
+      ) : (
+        <Link href={goalHref} className={bodyClassName}>
+          {body}
+        </Link>
+      )}
       {canEdit ? (
         <div className={goalDeleteButtonFrameClassName()}>
           <ListDeleteButton
@@ -316,6 +360,8 @@ export function MatchGoalsSection({
   periods,
   showAddPeriod = false,
   homeAway,
+  addGoal = null,
+  addPeriod = null,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
@@ -327,10 +373,23 @@ export function MatchGoalsSection({
   showAddPeriod?: boolean;
   /** When set, show the cumulative home-first score under each period name. */
   homeAway?: MatchHomeAway;
+  /** When set, Add goal opens an inline dialog instead of `/goals/new`. */
+  addGoal?: {
+    players: RosterPlayer[];
+    teamName: string;
+    opponentName: string;
+  } | null;
+  /** When set, Add period opens an inline dialog instead of `/periods/new`. */
+  addPeriod?: {
+    availablePeriodNames: ExtraTimeOrPenaltyPeriodName[];
+    squadPlayers: RosterPlayer[];
+    defaultStarterPlayerIds: string[];
+  } | null;
 }) {
   const groups = groupGoalsByPeriod(goals, periods);
   const endScores = homeAway ? periodEndScores(groups, homeAway) : null;
   const hasRows = groups.length > 0;
+  const editGoal = addGoal ? { ...addGoal, periods: periods ?? [] } : null;
 
   if (!canEdit && !hasRows) {
     return (
@@ -381,6 +440,7 @@ export function MatchGoalsSection({
                           matchId={matchId}
                           goal={goal}
                           canEdit={canEdit}
+                          editGoal={editGoal}
                         />
                       ))
                     )}
@@ -393,14 +453,82 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={addHref} className={buttonVariants()}>
-            Add goal
-          </Link>
-          {showAddPeriod ? (
+        <div className={stackedActionsRowClassName()}>
+          {addGoal ? (
+            <div>
+              <InlineFormDialog
+                title="Add goal"
+                description="Choose the scorer and other details. Save adds the goal to this match."
+                trigger={(open) => (
+                  <Button
+                    type="button"
+                    className={stackedActionButtonClassName()}
+                    onClick={open}
+                  >
+                    Add goal
+                  </Button>
+                )}
+              >
+                {(close) => (
+                  <MatchGoalEditSection
+                    matchId={matchId}
+                    players={addGoal.players}
+                    periods={periods ?? []}
+                    teamName={addGoal.teamName}
+                    opponentName={addGoal.opponentName}
+                    canEdit
+                    stayOnPage
+                    defaultPeriodId={periodId ?? null}
+                    onSuccess={close}
+                    onCancel={close}
+                  />
+                )}
+              </InlineFormDialog>
+            </div>
+          ) : (
+            <Link
+              href={addHref}
+              className={cn(buttonVariants(), stackedActionButtonClassName())}
+            >
+              Add goal
+            </Link>
+          )}
+          {showAddPeriod && addPeriod ? (
+            <div>
+              <InlineFormDialog
+                title="Add extra time or penalties"
+                description="Choose the period and who starts it. Save keeps you on this match."
+                trigger={(open) => (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={stackedActionButtonClassName()}
+                    onClick={open}
+                  >
+                    Add period
+                  </Button>
+                )}
+              >
+                {(close) => (
+                  <MatchPeriodCreateSection
+                    matchId={matchId}
+                    availablePeriodNames={addPeriod.availablePeriodNames}
+                    squadPlayers={addPeriod.squadPlayers}
+                    defaultStarterPlayerIds={addPeriod.defaultStarterPlayerIds}
+                    stayOnPage
+                    onSuccess={close}
+                    onCancel={close}
+                  />
+                )}
+              </InlineFormDialog>
+            </div>
+          ) : showAddPeriod ? (
             <Link
               href={`/matches/${matchId}/periods/new`}
-              className={buttonVariants()}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                stackedActionButtonClassName(),
+              )}
             >
               Add period
             </Link>

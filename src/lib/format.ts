@@ -97,6 +97,16 @@ export function formatMatchDateTime(
     .join(" · ");
 }
 
+export function formatMeetupLabel(meetupTime: string | null): string | null {
+  const meetup = formatKickoffTime(meetupTime);
+  return meetup ? `Meet up: ${meetup}` : null;
+}
+
+export function formatKickoffLabel(kickoffTime: string | null): string | null {
+  const kickoff = formatKickoffTime(kickoffTime);
+  return kickoff ? `Kick off: ${kickoff}` : null;
+}
+
 /**
  * Fixture times on one line beneath the date,
  * e.g. "Meet up: 09:30 · Kick off: 10:00".
@@ -106,11 +116,10 @@ export function formatScheduledMatchTimes(
   meetupTime: string | null,
   kickoffTime: string | null,
 ): string | null {
-  const parts: string[] = [];
-  const meetup = formatKickoffTime(meetupTime);
-  const kickoff = formatKickoffTime(kickoffTime);
-  if (meetup) parts.push(`Meet up: ${meetup}`);
-  if (kickoff) parts.push(`Kick off: ${kickoff}`);
+  const parts = [
+    formatMeetupLabel(meetupTime),
+    formatKickoffLabel(kickoffTime),
+  ].filter((part): part is string => Boolean(part));
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
@@ -135,12 +144,8 @@ export function matchCompetitionLabel(match: {
 
 /**
  * Shared match summary lines used on the matches list, match page, and
- * dashboard: competition, then date, then optional times, then venue —
- * each optional except date.
- *
- * Kick-off (and meet-up for scheduled only) appear on a row under the date
- * for scheduled and in-progress matches. Completed, cancelled, and postponed
- * fixtures show the date alone with no times row.
+ * dashboard. Callers render in this order, omitting blank values:
+ * venue, competition, date, then meet-up and kick-off for scheduled fixtures.
  */
 export function matchSummaryLines(match: {
   competitionName?: string | null;
@@ -152,23 +157,18 @@ export function matchSummaryLines(match: {
 }): {
   competition: string | null;
   dateTime: string;
-  times: string | null;
+  meetup: string | null;
+  kickoff: string | null;
   venue: string | null;
 } {
   const competition = match.competitionName?.trim() || null;
   const venue = match.venueName?.trim() || null;
   const scheduled = match.status === "scheduled";
-  const inProgress = match.status === "in_progress";
-  const showKickoff = scheduled || inProgress;
   return {
     competition,
     dateTime: formatMatchDate(match.date),
-    times: showKickoff
-      ? formatScheduledMatchTimes(
-          scheduled ? (match.meetupTime ?? null) : null,
-          match.kickoffTime,
-        )
-      : null,
+    meetup: scheduled ? formatMeetupLabel(match.meetupTime ?? null) : null,
+    kickoff: scheduled ? formatKickoffLabel(match.kickoffTime) : null,
     venue,
   };
 }

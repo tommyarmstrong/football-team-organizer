@@ -46,7 +46,7 @@ function MobileTabBarFallback() {
   return (
     <nav
       aria-hidden
-      className="border-header/20 bg-header fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="club-themed-footer club-chrome border-header/20 text-header-foreground fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div className="flex min-h-14 items-center justify-around px-2">
         {Array.from({ length: 5 }).map((_, index) => (
@@ -64,7 +64,7 @@ function MobileTabBarFallback() {
 export function AppHeaderFallback() {
   return (
     <>
-      <header className="club-themed-header bg-header text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
+      <header className="club-themed-header club-chrome text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
           <BrandFallback />
           <NavFallback />
@@ -189,7 +189,7 @@ async function AppHeaderMobileNav() {
 export function AppHeader() {
   return (
     <>
-      <header className="club-themed-header bg-header text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
+      <header className="club-themed-header club-chrome text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
           {/* Zone 1: brand bar — club name, icon, colour, mobile team switcher */}
           <Suspense fallback={<BrandFallback />}>

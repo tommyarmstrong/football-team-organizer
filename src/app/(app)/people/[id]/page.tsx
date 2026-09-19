@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import {
   canAccessClubAndPeople,
+  canEditLinkedPlayerProfile,
   canEditPersonDetails,
   canEditPlayer,
   canManageClub,
@@ -27,11 +28,12 @@ import {
 import { isPersonVisibleInDirectory } from "@/lib/people/directory";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { DeletePersonButton } from "@/components/people/delete-person-button";
+import { EditPersonDialog } from "@/components/people/edit-person-dialog";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
 import {
   PersonClubRolesSection,
@@ -64,7 +66,7 @@ export default async function PersonDetailPage({
   const { data: person, error } = personResult;
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Person" />
         <ErrorBanner message={error} />
       </div>
@@ -177,6 +179,12 @@ export default async function PersonDetailPage({
     player?.id ?? null,
     club?.id ?? null,
   );
+  const showPlayerDobSchool = Boolean(
+    player &&
+    club &&
+    canEditLinkedPlayerProfile(ctx, player.id, player.club_id),
+  );
+  const showPlayerPosition = Boolean(player && canEdit);
   const canEditCoachRole =
     coach != null && (canManageClub(ctx, coach.club_id) || self);
   const canEditGuardianRole =
@@ -258,7 +266,7 @@ export default async function PersonDetailPage({
     canEdit && (isDisabled || roles.coach || roles.guardian || roles.manager);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={title}
         description={
@@ -281,9 +289,18 @@ export default async function PersonDetailPage({
         actions={
           canEditDetails ? (
             <>
-              <EditIconLink
-                href={`/people/${person.id}/edit`}
-                label="Edit person"
+              <EditPersonDialog
+                person={person}
+                player={player}
+                showPlayerDobSchool={showPlayerDobSchool}
+                showPlayerPosition={showPlayerPosition}
+                description={
+                  showPlayerDobSchool && showPlayerPosition
+                    ? "Shared person-level details, plus player DOB, position, and school."
+                    : showPlayerDobSchool
+                      ? "Name, contact details, date of birth, and school."
+                      : "Name, email, and phone number."
+                }
               />
               {canEdit && !self && !isDisabled ? (
                 <DeletePersonButton personId={person.id} />

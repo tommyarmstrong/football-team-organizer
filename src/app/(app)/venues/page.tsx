@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { listVenues } from "@/lib/data/venues";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { getViewerContext } from "@/lib/authz/context";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { VenuesDirectoryList } from "@/components/venues/venues-directory-list";
-import { buttonVariants } from "@/components/ui/button";
+import { AddVenueDialog } from "@/components/venues/add-venue-dialog";
 
 export default async function VenuesPage() {
   const [ctx, club, { data: allVenues, error }] = await Promise.all([
@@ -24,16 +24,10 @@ export default async function VenuesPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title="Venues"
-        actions={
-          canAdd ? (
-            <Link href="/venues/new" className={buttonVariants()}>
-              Add venue
-            </Link>
-          ) : undefined
-        }
+        actions={canAdd ? <AddVenueDialog /> : undefined}
       />
 
       {error ? <ErrorBanner message={error} /> : null}

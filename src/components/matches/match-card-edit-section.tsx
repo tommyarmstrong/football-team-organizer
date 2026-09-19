@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createCardAndReturnToMatchAction,
+  createCardOnMatchAction,
   saveCardAndReturnToMatchAction,
+  saveCardOnMatchAction,
 } from "@/lib/cards/actions";
 import {
   CARD_TYPE_EMOJIS,
@@ -36,11 +39,17 @@ export function MatchCardEditSection({
   card,
   players,
   canEdit = true,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   matchId: string;
   card?: CardWithPerson | null;
   players: RosterPlayer[];
   canEdit?: boolean;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   if (!canEdit) {
     if (!card) return null;
@@ -90,6 +99,9 @@ export function MatchCardEditSection({
       matchId={matchId}
       card={card ?? null}
       players={players}
+      stayOnPage={stayOnPage}
+      onSuccess={onSuccess}
+      onCancel={onCancel}
     />
   );
 }
@@ -98,20 +110,34 @@ function EditableCardSection({
   matchId,
   card,
   players,
+  stayOnPage,
+  onSuccess,
+  onCancel,
 }: {
   matchId: string;
   card: CardWithPerson | null;
   players: RosterPlayer[];
+  stayOnPage: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const fieldId = card?.id ?? "new";
   const formId = `card-details-${fieldId}`;
   const bound = card
-    ? saveCardAndReturnToMatchAction.bind(null, matchId, card.id)
-    : createCardAndReturnToMatchAction.bind(null, matchId);
-  const [state, formAction, pending] = useActionState(
+    ? stayOnPage
+      ? saveCardOnMatchAction.bind(null, matchId, card.id)
+      : saveCardAndReturnToMatchAction.bind(null, matchId, card.id)
+    : stayOnPage
+      ? createCardOnMatchAction.bind(null, matchId)
+      : createCardAndReturnToMatchAction.bind(null, matchId);
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   const activePlayers = players.filter((p) => p.active);
   const options = activePlayers.length > 0 ? activePlayers : players;
@@ -209,7 +235,8 @@ function EditableCardSection({
 
       <FormActions
         pending={pending}
-        cancelHref={`/matches/${matchId}`}
+        cancelHref={onCancel ? undefined : `/matches/${matchId}`}
+        onCancel={onCancel}
         form={formId}
       />
     </div>

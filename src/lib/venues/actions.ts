@@ -37,10 +37,9 @@ function revalidateVenue(venueId?: string, clubId?: string) {
   revalidatePath("/teams/new");
 }
 
-export async function createVenueAction(
-  _prev: ActionState,
+async function createVenueRecord(
   formData: FormData,
-): Promise<ActionState> {
+): Promise<{ error: string } | { id: string }> {
   const ctx = await getViewerContext();
   if (!ctx) return { error: "Not signed in." };
 
@@ -60,10 +59,28 @@ export async function createVenueAction(
   if (!data) return { error: "Could not create venue." };
 
   revalidateVenue(data.id, club.id);
-  redirect(`/venues/${data.id}`);
+  return { id: data.id };
 }
 
-export async function updateVenueAction(
+export async function createVenueOnPageAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createVenueRecord(formData);
+  if ("error" in result) return result;
+  return { success: "Venue added." };
+}
+
+export async function createVenueAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createVenueRecord(formData);
+  if ("error" in result) return result;
+  redirect(`/venues/${result.id}`);
+}
+
+export async function updateVenueOnPageAction(
   id: string,
   _prev: ActionState,
   formData: FormData,
@@ -85,6 +102,16 @@ export async function updateVenueAction(
   if (error) return { error };
 
   revalidateVenue(id, existing.club_id);
+  return { success: "Venue saved." };
+}
+
+export async function updateVenueAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updateVenueOnPageAction(id, _prev, formData);
+  if (result.error) return result;
   redirect(`/venues/${id}`);
 }
 

@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { getVenue } from "@/lib/data/venues";
 import { getViewerContext } from "@/lib/authz/context";
 import { formatVenueAddress } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
+import { EditVenueDialog } from "@/components/venues/edit-venue-dialog";
 import { VenueMap } from "@/components/venues/venue-map";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
 import {
@@ -24,7 +25,7 @@ export default async function VenueDetailPage({
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Venue" />
         <ErrorBanner message={error} />
       </div>
@@ -45,7 +46,7 @@ export default async function VenueDetailPage({
   const address = formatVenueAddress(venue);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={venue.name}
         description={
@@ -59,10 +60,7 @@ export default async function VenueDetailPage({
         actions={
           canEdit ? (
             <>
-              <EditIconLink
-                href={`/venues/${venue.id}/edit`}
-                label="Edit venue"
-              />
+              <EditVenueDialog venue={venue} />
               <DeleteVenueButton venueId={venue.id} label="Delete venue" />
             </>
           ) : undefined

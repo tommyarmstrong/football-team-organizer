@@ -1,31 +1,34 @@
 import { notFound } from "next/navigation";
 import {
-  getViewerContext,
   canEditMatchDay,
   canEditTeamHistory,
+  getViewerContext,
 } from "@/lib/authz/context";
-import { matchAllowsEvents, matchAllowsPostcard } from "@/lib/constants";
+import {
+  availableExtraTimeOrPenaltyPeriodNames,
+  matchAllowsEvents,
+  matchAllowsPostcard,
+} from "@/lib/constants";
+import { listCompetitions } from "@/lib/data/competitions";
 import { getMatchDetail } from "@/lib/data/matches";
 import { listRosterForTeam } from "@/lib/data/players";
+import { listVenues } from "@/lib/data/venues";
 import {
   formatMatchTitle,
   matchCompetitionLabel,
   scoreFromGoals,
   teamDisplayName,
 } from "@/lib/format";
-import { MatchScoreboard } from "@/components/matches/match-scoreboard";
+import { MatchHero } from "@/components/matches/match-hero";
 import { deleteMatchAction } from "@/lib/matches/actions";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import { EditMatchDialog } from "@/components/matches/edit-match-dialog";
 import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
-import {
-  LiveIndicator,
-  MatchHeaderMeta,
-} from "@/components/matches/match-header-meta";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
@@ -46,7 +49,7 @@ export default async function MatchDetailPage({
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Match" />
         <ErrorBanner message={error} />
       </div>
@@ -74,14 +77,25 @@ export default async function MatchDetailPage({
   const team = ctx.visibleTeams.find((t) => t.id === match.team_id);
   const teamName = team ? teamDisplayName(team) : "Our team";
   const opponentName = match.opponent_name;
+  const clubId = team?.club_id;
 
-  const [{ data: players, error: playersError }, postcardResult] =
-    await Promise.all([
-      listRosterForTeam(match.team_id, { includeInactive: true }),
-      matchAllowsPostcard(match.status)
-        ? buildMatchPostcardPayload(match.id)
-        : Promise.resolve({ data: null, error: null }),
-    ]);
+  const [
+    { data: players, error: playersError },
+    postcardResult,
+    { data: competitions, error: competitionsError },
+    { data: venues, error: venuesError },
+  ] = await Promise.all([
+    listRosterForTeam(match.team_id, { includeInactive: true }),
+    matchAllowsPostcard(match.status)
+      ? buildMatchPostcardPayload(match.id)
+      : Promise.resolve({ data: null, error: null }),
+    canEdit
+      ? listCompetitions(match.team_id)
+      : Promise.resolve({ data: [], error: null }),
+    canEdit && clubId
+      ? listVenues(clubId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
   const postcard = postcardResult.data;
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
@@ -94,8 +108,19 @@ export default async function MatchDetailPage({
           p.id === match.players_player_of_the_match_id,
       )
     : players;
+  const defaultStarterPlayerIds = hasMatchSquad
+    ? [...matchSquadIds]
+    : eventPlayers.map((player) => player.id);
+  const availablePeriodNames = availableExtraTimeOrPenaltyPeriodNames(
+    periods.map((period) => period.name),
+  );
 
-  const loadErrors = [playersError, postcardResult.error]
+  const loadErrors = [
+    playersError,
+    postcardResult.error,
+    competitionsError,
+    venuesError,
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -110,85 +135,77 @@ export default async function MatchDetailPage({
   );
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title={
-          <span className="block space-y-3">
-            <span className="sr-only">{titleText}</span>
-            <MatchScoreboard
-              teamName={teamName}
-              opponentName={opponentName}
-              homeAway={match.home_away}
-              status={match.status}
-              goalsFor={goalsFor}
-              goalsAgainst={goalsAgainst}
-            />
-            {match.status === "in_progress" ? (
-              <span className="flex justify-center">
-                <LiveIndicator />
-              </span>
-            ) : null}
-          </span>
-        }
-        description={
-          <MatchHeaderMeta
-            date={match.date}
-            kickoffTime={match.kickoff_time}
-            meetupTime={match.meetup_time}
-            venueName={match.venue?.name ?? null}
-            venueId={match.venue?.id ?? null}
-            competitionName={matchCompetitionLabel(match)}
-            status={match.status}
-            matchDaySquadCount={matchSquadIds.size}
-            cards={cards}
-          />
-        }
-        actions={
-          postcard || canEdit ? (
-            <>
-              {postcard ? (
-                <SharePostcardButton
-                  imageUrl={`/matches/${match.id}/postcard`}
-                  caption={postcard.caption}
-                  fileName={postcard.fileName}
-                  title={
-                    postcard.kind === "scheduled"
-                      ? "Fixture postcard"
-                      : "Match postcard"
-                  }
-                  description={
-                    postcard.kind === "scheduled"
-                      ? "Share this upcoming fixture, including the venue address."
-                      : "Share a recap of this result. Player names follow the team’s privacy rules."
-                  }
-                  previewAlt={
-                    postcard.kind === "scheduled"
-                      ? "Fixture postcard"
-                      : "Match postcard"
-                  }
-                />
-              ) : null}
-              {canEdit ? (
-                <>
-                  <EditIconLink
-                    href={`/matches/${match.id}/edit`}
-                    label="Edit match"
+    <div className={pageBodyClassName("space-y-6")}>
+      <h1 className="sr-only">{titleText}</h1>
+      <div className="space-y-4">
+        <MatchHero
+          size="hero"
+          teamName={teamName}
+          opponentName={opponentName}
+          homeAway={match.home_away}
+          status={match.status}
+          goalsFor={goalsFor}
+          goalsAgainst={goalsAgainst}
+          competitionName={matchCompetitionLabel(match)}
+          date={match.date}
+          kickoffTime={match.kickoff_time}
+          meetupTime={match.meetup_time}
+          venueName={match.venue?.name ?? null}
+          venueId={match.venue?.id ?? null}
+          matchDaySquadCount={matchSquadIds.size}
+          cards={cards}
+          actions={
+            postcard || canEdit ? (
+              <>
+                {postcard ? (
+                  <SharePostcardButton
+                    imageUrl={`/matches/${match.id}/postcard`}
+                    caption={postcard.caption}
+                    fileName={postcard.fileName}
+                    title={
+                      postcard.kind === "scheduled"
+                        ? "Fixture postcard"
+                        : "Match postcard"
+                    }
+                    description={
+                      postcard.kind === "scheduled"
+                        ? "Share this upcoming fixture, including the venue address."
+                        : "Share a recap of this result. Player names follow the team’s privacy rules."
+                    }
+                    previewAlt={
+                      postcard.kind === "scheduled"
+                        ? "Fixture postcard"
+                        : "Match postcard"
+                    }
                   />
-                  <ListDeleteButton
-                    label={`Delete match vs ${opponentName}`}
-                    confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
-                    deleteAction={deleteMatchAction.bind(null, match.id)}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : undefined
-        }
-      />
+                ) : null}
+                {canEdit ? (
+                  <>
+                    <EditMatchDialog
+                      match={match}
+                      competitions={competitions}
+                      venues={venues}
+                      players={eventPlayers}
+                      matchDaySquadCount={matchSquadIds.size}
+                      canEditPlayerOfTheMatch={canEditPlayerOfTheMatch}
+                      triggerClassName="size-11 sm:size-9"
+                    />
+                    <ListDeleteButton
+                      label={`Delete match vs ${opponentName}`}
+                      confirmMessage={`Delete the match against ${opponentName}? This cannot be undone.`}
+                      deleteAction={deleteMatchAction.bind(null, match.id)}
+                    />
+                  </>
+                ) : null}
+              </>
+            ) : undefined
+          }
+        />
 
-      {canEdit ? (
-        <MatchStatusActions matchId={match.id} status={match.status} />
-      ) : null}
+        {canEdit ? (
+          <MatchStatusActions matchId={match.id} status={match.status} />
+        ) : null}
+      </div>
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
@@ -201,6 +218,24 @@ export default async function MatchDetailPage({
             canEdit={canEdit}
             showAddPeriod={canEdit}
             homeAway={match.home_away}
+            addGoal={
+              canEdit
+                ? {
+                    players: eventPlayers,
+                    teamName,
+                    opponentName,
+                  }
+                : null
+            }
+            addPeriod={
+              canEdit
+                ? {
+                    availablePeriodNames,
+                    squadPlayers: eventPlayers,
+                    defaultStarterPlayerIds,
+                  }
+                : null
+            }
           />
         </Section>
       ) : null}
@@ -230,6 +265,7 @@ export default async function MatchDetailPage({
             <MatchCardsSection
               matchId={match.id}
               cards={cards}
+              players={eventPlayers}
               canEdit={canEdit}
             />
           </Section>

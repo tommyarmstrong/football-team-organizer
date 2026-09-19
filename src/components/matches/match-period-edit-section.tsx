@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { XIcon } from "lucide-react";
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { MATCH_PERIOD_NAMES, isMatchPeriodName } from "@/lib/constants";
 import {
@@ -91,7 +92,7 @@ function EditablePeriodSection({
 }) {
   const formId = `period-details-${period.id}`;
   const bound = savePeriodAndReturnToMatchAction.bind(null, matchId, period.id);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -224,7 +225,7 @@ function StartersForm({
   selectedPlayerIds: string[];
 }) {
   const bound = savePeriodStartersAction.bind(null, matchId, periodId);
-  const [state, formAction, actionPending] = useActionState(
+  const [state, formAction, actionPending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -253,11 +254,6 @@ function StartersForm({
         onSelectedIdsChange={persist}
       />
       {state.error ? <ErrorBanner message={state.error} /> : null}
-      {state.success ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {state.success}
-        </p>
-      ) : null}
     </div>
   );
 }

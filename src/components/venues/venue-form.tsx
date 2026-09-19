@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   VENUE_FOOD_AND_DRINKS,
@@ -10,7 +11,12 @@ import {
   VENUE_SURFACES,
   VENUE_SURFACE_LABELS,
 } from "@/lib/constants";
-import { createVenueAction, updateVenueAction } from "@/lib/venues/actions";
+import {
+  createVenueAction,
+  createVenueOnPageAction,
+  updateVenueAction,
+  updateVenueOnPageAction,
+} from "@/lib/venues/actions";
 import type { Venue } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,19 +27,33 @@ import { FormActions } from "@/components/shared/form-actions";
 export function VenueForm({
   venue,
   mode,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   venue?: Venue;
   mode: "create" | "edit";
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const action =
     mode === "create"
-      ? createVenueAction
-      : updateVenueAction.bind(null, venue!.id);
+      ? stayOnPage
+        ? createVenueOnPageAction
+        : createVenueAction
+      : stayOnPage
+        ? updateVenueOnPageAction.bind(null, venue!.id)
+        : updateVenueAction.bind(null, venue!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   const selectedSurfaces = new Set(
     Array.isArray(venue?.surface) ? venue.surface : [],
@@ -175,7 +195,13 @@ export function VenueForm({
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
       {mode === "edit" && venue ? (
-        <FormActions pending={pending} cancelHref={`/venues/${venue.id}`} />
+        <FormActions
+          pending={pending}
+          cancelHref={onCancel ? undefined : `/venues/${venue.id}`}
+          onCancel={onCancel}
+        />
+      ) : onCancel ? (
+        <FormActions pending={pending} onCancel={onCancel} />
       ) : (
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Add venue"}

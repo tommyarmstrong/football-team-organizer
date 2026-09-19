@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   COMPETITION_PERIODS,
@@ -11,7 +12,12 @@ import {
   MATCH_STATUSES,
   matchAllowsEvents,
 } from "@/lib/constants";
-import { createMatchAction, updateMatchAction } from "@/lib/matches/actions";
+import {
+  createMatchAction,
+  createMatchOnPageAction,
+  updateMatchAction,
+  updateMatchOnPageAction,
+} from "@/lib/matches/actions";
 import {
   competitionDisplayName,
   labelHomeAway,
@@ -42,6 +48,9 @@ export function MatchForm({
   players = [],
   matchDaySquadCount,
   canEditPlayerOfTheMatch = true,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   mode: "create" | "edit";
   match?: Match;
@@ -51,16 +60,27 @@ export function MatchForm({
   /** Read-only match-day squad size (edit mode). */
   matchDaySquadCount?: number;
   canEditPlayerOfTheMatch?: boolean;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
   const action =
     mode === "create"
-      ? createMatchAction
-      : updateMatchAction.bind(null, match!.id);
+      ? stayOnPage
+        ? createMatchOnPageAction
+        : createMatchAction
+      : stayOnPage
+        ? updateMatchOnPageAction.bind(null, match!.id)
+        : updateMatchAction.bind(null, match!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   const [status, setStatus] = useState<MatchStatus>(
     match?.status ?? "scheduled",
@@ -339,7 +359,13 @@ export function MatchForm({
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
       {mode === "edit" && match ? (
-        <FormActions pending={pending} cancelHref={`/matches/${match.id}`} />
+        <FormActions
+          pending={pending}
+          cancelHref={onCancel ? undefined : `/matches/${match.id}`}
+          onCancel={onCancel}
+        />
+      ) : onCancel ? (
+        <FormActions pending={pending} onCancel={onCancel} />
       ) : (
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Create fixture"}

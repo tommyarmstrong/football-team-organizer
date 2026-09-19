@@ -55,7 +55,7 @@ function parseCardForm(
   };
 }
 
-export async function createCardAndReturnToMatchAction(
+export async function createCardOnMatchAction(
   matchId: string,
   _prev: ActionState,
   formData: FormData,
@@ -68,10 +68,20 @@ export async function createCardAndReturnToMatchAction(
   if (!data) return { error: "Could not create card." };
 
   revalidateCard(matchId, data.id);
+  return { success: "Card added." };
+}
+
+export async function createCardAndReturnToMatchAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createCardOnMatchAction(matchId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 
-export async function saveCardAndReturnToMatchAction(
+export async function saveCardOnMatchAction(
   matchId: string,
   cardId: string,
   _prev: ActionState,
@@ -96,6 +106,17 @@ export async function saveCardAndReturnToMatchAction(
   if (error) return { error };
 
   revalidateCard(matchId, cardId);
+  return { success: "Card saved." };
+}
+
+export async function saveCardAndReturnToMatchAction(
+  matchId: string,
+  cardId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await saveCardOnMatchAction(matchId, cardId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 

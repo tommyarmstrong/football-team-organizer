@@ -152,7 +152,7 @@ describe("formatScheduledMatchTimes", () => {
 });
 
 describe("matchSummaryLines", () => {
-  it("returns competition, date/time, and venue as separate lines", () => {
+  it("returns competition, date, venue, and separate scheduled time lines", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -163,12 +163,13 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDate("2026-03-15"),
-      times: null,
+      meetup: null,
+      kickoff: null,
       venue: "Wembley",
     });
   });
 
-  it("puts meet-up and kick-off on a row beneath the date for scheduled matches", () => {
+  it("puts meet-up and kick-off on their own lines for scheduled matches", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -181,7 +182,8 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDate("2026-03-15"),
-      times: "Meet up: 09:30 · Kick off: 10:00",
+      meetup: "Meet up: 09:30",
+      kickoff: "Kick off: 10:00",
       venue: "Wembley",
     });
   });
@@ -197,12 +199,13 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
-      times: "Kick off: 10:00",
+      meetup: null,
+      kickoff: "Kick off: 10:00",
       venue: null,
     });
   });
 
-  it("shows kick-off without meet-up for in-progress matches", () => {
+  it("omits meet-up and kick-off for in-progress matches", () => {
     expect(
       matchSummaryLines({
         competitionName: "Premier League",
@@ -215,7 +218,8 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDate("2026-03-15"),
-      times: "Kick off: 10:00",
+      meetup: null,
+      kickoff: null,
       venue: "Wembley",
     });
   });
@@ -233,7 +237,8 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: "Premier League",
       dateTime: formatMatchDate("2026-03-15"),
-      times: null,
+      meetup: null,
+      kickoff: null,
       venue: "Wembley",
     });
   });
@@ -249,7 +254,8 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
-      times: null,
+      meetup: null,
+      kickoff: null,
       venue: null,
     });
   });
@@ -265,7 +271,8 @@ describe("matchSummaryLines", () => {
     ).toEqual({
       competition: null,
       dateTime: formatMatchDate("2026-03-15"),
-      times: null,
+      meetup: null,
+      kickoff: null,
       venue: null,
     });
   });

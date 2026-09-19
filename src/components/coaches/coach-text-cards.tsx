@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { updateCoachTextAction } from "@/lib/coaches/actions";
 import { Label, OptionalHint } from "@/components/ui/label";
@@ -27,7 +27,7 @@ export function CoachTextCards({
   philosophy: string | null;
 }) {
   const action = updateCoachTextAction.bind(null, coachId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );

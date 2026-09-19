@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   canAccessClubAndPeople,
@@ -13,19 +12,20 @@ import {
   filterPeopleDirectory,
   redactDirectoryEmergencyContact,
 } from "@/lib/people/directory";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { Section } from "@/components/shared/section";
 import { PeopleDirectoryList } from "@/components/people/people-directory-list";
-import { buttonVariants } from "@/components/ui/button";
+import { AddPersonDialog } from "@/components/people/add-person-dialog";
 
 export default async function PeoplePage() {
   const [ctx, club] = await Promise.all([getViewerContext(), getPrimaryClub()]);
   if (!ctx || !canAccessClubAndPeople(ctx)) redirect("/dashboard");
   if (!club) {
     return (
-      <div className="space-y-8">
+      <div className={pageBodyClassName("space-y-8")}>
         <PageHeader title="People" />
         <EmptyState
           title="No club found"
@@ -53,17 +53,11 @@ export default async function PeoplePage() {
   const previousMembers = previous.error ? [] : previous.data;
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title="People"
         description={directoryDescription(ctx, club.id, club.name)}
-        actions={
-          canEdit ? (
-            <Link href="/people/new" className={buttonVariants({ size: "sm" })}>
-              Add person
-            </Link>
-          ) : undefined
-        }
+        actions={canEdit ? <AddPersonDialog /> : undefined}
       />
 
       {error ? <ErrorBanner message={error} /> : null}

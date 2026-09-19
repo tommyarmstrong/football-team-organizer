@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   linkGuardianToPlayerAction,
@@ -196,7 +197,7 @@ function EditLinkForm({
     guardianId,
     link.player_id,
   );
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );
@@ -278,7 +279,7 @@ function LinkPlayerForm({
   availablePlayers: PlayerOption[];
 }) {
   const bound = linkGuardianToPlayerAction.bind(null, guardianId);
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     bound,
     INITIAL_ACTION_STATE,
   );

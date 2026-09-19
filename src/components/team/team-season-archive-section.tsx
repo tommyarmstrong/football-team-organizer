@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import { AGE_GROUPS } from "@/lib/constants";
 import {
@@ -26,15 +27,15 @@ type TransitionMode = "continue" | "archive_only";
 export function TeamSeasonArchiveSection({ team }: { team: Team }) {
   const archived = isTeamArchived(team);
   const [mode, setMode] = useState<TransitionMode>("continue");
-  const [startState, startAction, startPending] = useActionState(
+  const [startState, startAction, startPending] = useToastActionState(
     startNewSeasonAction,
     INITIAL_ACTION_STATE,
   );
-  const [archiveState, archiveAction, archivePending] = useActionState(
+  const [archiveState, archiveAction, archivePending] = useToastActionState(
     archiveTeamAction,
     INITIAL_ACTION_STATE,
   );
-  const [restoreState, restoreAction, restorePending] = useActionState(
+  const [restoreState, restoreAction, restorePending] = useToastActionState(
     unarchiveTeamAction,
     INITIAL_ACTION_STATE,
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   COACH_OBJECTIVE_STATUSES,
@@ -10,7 +11,9 @@ import {
 } from "@/lib/constants";
 import {
   addCoachObjectiveAction,
+  addCoachObjectiveOnPageAction,
   updateCoachObjectiveAction,
+  updateCoachObjectiveOnPageAction,
 } from "@/lib/coaches/actions";
 import type { CoachDevelopmentObjective } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
@@ -26,21 +29,34 @@ export function CoachObjectiveForm({
   personId,
   objective,
   mode,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   coachId: string;
   personId: string;
   objective?: CoachDevelopmentObjective;
   mode: "create" | "edit";
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
-  const action =
-    mode === "create"
+  const action = stayOnPage
+    ? mode === "create"
+      ? addCoachObjectiveOnPageAction.bind(null, coachId)
+      : updateCoachObjectiveOnPageAction.bind(null, coachId, objective!.id)
+    : mode === "create"
       ? addCoachObjectiveAction.bind(null, coachId)
       : updateCoachObjectiveAction.bind(null, coachId, objective!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <div className="space-y-4">
@@ -114,8 +130,12 @@ export function CoachObjectiveForm({
           </div>
         </div>
 
-        {mode === "edit" ? (
-          <FormActions pending={pending} cancelHref={`/people/${personId}`} />
+        {onCancel || mode === "edit" ? (
+          <FormActions
+            pending={pending}
+            cancelHref={onCancel ? undefined : `/people/${personId}`}
+            onCancel={onCancel}
+          />
         ) : (
           <Button type="submit" disabled={pending}>
             {pending ? "Adding…" : "Add objective"}

@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   clubManagerViewer,
   personWithRolesFixture,
@@ -307,5 +309,16 @@ describe("PersonDetailPage guardian relationships", () => {
       availablePlayers: [],
     });
     expect(listPlayersMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("person detail page inline edit", () => {
+  it("opens person edit in a dialog", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("EditPersonDialog");
+    expect(source).not.toContain("href={`/people/${person.id}/edit`}");
   });
 });

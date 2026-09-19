@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect } from "react";
+import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   createPlayerOfTheMonthAction,
+  createPlayerOfTheMonthOnPageAction,
   updatePlayerOfTheMonthAction,
+  updatePlayerOfTheMonthOnPageAction,
 } from "@/lib/player-of-the-month/actions";
 import type { PlayerOfTheMonthWithPlayer } from "@/lib/data/player-of-the-month";
 import type { NamedPlayer } from "@/lib/people/named-player";
@@ -26,20 +29,33 @@ export function PlayerOfTheMonthForm({
   mode,
   award,
   players,
+  stayOnPage = false,
+  onSuccess,
+  onCancel,
 }: {
   mode: "create" | "edit";
   award?: PlayerOfTheMonthWithPlayer;
   players: Array<NamedPlayer & { shirt_number?: number | null }>;
+  stayOnPage?: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }) {
-  const action =
-    mode === "create"
+  const action = stayOnPage
+    ? mode === "create"
+      ? createPlayerOfTheMonthOnPageAction
+      : updatePlayerOfTheMonthOnPageAction.bind(null, award!.id)
+    : mode === "create"
       ? createPlayerOfTheMonthAction
       : updatePlayerOfTheMonthAction.bind(null, award!.id);
 
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useToastActionState(
     action,
     INITIAL_ACTION_STATE,
   );
+
+  useEffect(() => {
+    if (state.success) onSuccess?.();
+  }, [state.success, onSuccess]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -96,8 +112,12 @@ export function PlayerOfTheMonthForm({
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      {mode === "edit" ? (
-        <FormActions pending={pending} cancelHref="/team" />
+      {onCancel || mode === "edit" ? (
+        <FormActions
+          pending={pending}
+          cancelHref={onCancel ? undefined : "/team"}
+          onCancel={onCancel}
+        />
       ) : (
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Add player of the month"}

@@ -136,7 +136,7 @@ async function parseGoalFields(
   };
 }
 
-export async function createGoalAndReturnToMatchAction(
+export async function createGoalOnMatchAction(
   matchId: string,
   _prev: ActionState,
   formData: FormData,
@@ -153,10 +153,20 @@ export async function createGoalAndReturnToMatchAction(
   if (!data) return { error: "Could not create goal." };
 
   revalidateGoal(matchId, data.id);
+  return { success: "Goal added." };
+}
+
+export async function createGoalAndReturnToMatchAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createGoalOnMatchAction(matchId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 
-export async function saveGoalAndReturnToMatchAction(
+export async function saveGoalOnMatchAction(
   matchId: string,
   goalId: string,
   _prev: ActionState,
@@ -169,6 +179,17 @@ export async function saveGoalAndReturnToMatchAction(
   if (error) return { error };
 
   revalidateGoal(matchId, goalId);
+  return { success: "Goal saved." };
+}
+
+export async function saveGoalAndReturnToMatchAction(
+  matchId: string,
+  goalId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await saveGoalOnMatchAction(matchId, goalId, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${matchId}`);
 }
 
