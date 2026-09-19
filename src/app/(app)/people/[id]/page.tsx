@@ -28,6 +28,7 @@ import {
 import { isPersonVisibleInDirectory } from "@/lib/people/directory";
 import { personDisplayName } from "@/lib/people/person";
 import { guardianDisplayName } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -65,7 +66,7 @@ export default async function PersonDetailPage({
   const { data: person, error } = personResult;
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Person" />
         <ErrorBanner message={error} />
       </div>
@@ -265,7 +266,7 @@ export default async function PersonDetailPage({
     canEdit && (isDisabled || roles.coach || roles.guardian || roles.manager);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={title}
         description={

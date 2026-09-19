@@ -21,6 +21,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InlineFormDialog } from "@/components/shared/inline-form-dialog";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  stackedActionButtonClassName,
+  stackedActionsRowClassName,
+} from "@/components/shared/stacked-actions";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
 import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
 
@@ -449,77 +453,81 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className={stackedActionsRowClassName()}>
           {addGoal ? (
-            <InlineFormDialog
-              title="Add goal"
-              description="Choose the scorer and other details. Save adds the goal to this match."
-              trigger={(open) => (
-                <Button
-                  type="button"
-                  className="w-full sm:w-auto"
-                  onClick={open}
-                >
-                  Add goal
-                </Button>
-              )}
-            >
-              {(close) => (
-                <MatchGoalEditSection
-                  matchId={matchId}
-                  players={addGoal.players}
-                  periods={periods ?? []}
-                  teamName={addGoal.teamName}
-                  opponentName={addGoal.opponentName}
-                  canEdit
-                  stayOnPage
-                  defaultPeriodId={periodId ?? null}
-                  onSuccess={close}
-                  onCancel={close}
-                />
-              )}
-            </InlineFormDialog>
+            <div>
+              <InlineFormDialog
+                title="Add goal"
+                description="Choose the scorer and other details. Save adds the goal to this match."
+                trigger={(open) => (
+                  <Button
+                    type="button"
+                    className={stackedActionButtonClassName()}
+                    onClick={open}
+                  >
+                    Add goal
+                  </Button>
+                )}
+              >
+                {(close) => (
+                  <MatchGoalEditSection
+                    matchId={matchId}
+                    players={addGoal.players}
+                    periods={periods ?? []}
+                    teamName={addGoal.teamName}
+                    opponentName={addGoal.opponentName}
+                    canEdit
+                    stayOnPage
+                    defaultPeriodId={periodId ?? null}
+                    onSuccess={close}
+                    onCancel={close}
+                  />
+                )}
+              </InlineFormDialog>
+            </div>
           ) : (
             <Link
               href={addHref}
-              className={cn(buttonVariants(), "w-full sm:w-auto")}
+              className={cn(buttonVariants(), stackedActionButtonClassName())}
             >
               Add goal
             </Link>
           )}
           {showAddPeriod && addPeriod ? (
-            <InlineFormDialog
-              title="Add extra time or penalties"
-              description="Choose the period and who starts it. Save keeps you on this match."
-              trigger={(open) => (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={open}
-                >
-                  Add period
-                </Button>
-              )}
-            >
-              {(close) => (
-                <MatchPeriodCreateSection
-                  matchId={matchId}
-                  availablePeriodNames={addPeriod.availablePeriodNames}
-                  squadPlayers={addPeriod.squadPlayers}
-                  defaultStarterPlayerIds={addPeriod.defaultStarterPlayerIds}
-                  stayOnPage
-                  onSuccess={close}
-                  onCancel={close}
-                />
-              )}
-            </InlineFormDialog>
+            <div>
+              <InlineFormDialog
+                title="Add extra time or penalties"
+                description="Choose the period and who starts it. Save keeps you on this match."
+                trigger={(open) => (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={stackedActionButtonClassName()}
+                    onClick={open}
+                  >
+                    Add period
+                  </Button>
+                )}
+              >
+                {(close) => (
+                  <MatchPeriodCreateSection
+                    matchId={matchId}
+                    availablePeriodNames={addPeriod.availablePeriodNames}
+                    squadPlayers={addPeriod.squadPlayers}
+                    defaultStarterPlayerIds={addPeriod.defaultStarterPlayerIds}
+                    stayOnPage
+                    onSuccess={close}
+                    onCancel={close}
+                  />
+                )}
+              </InlineFormDialog>
+            </div>
           ) : showAddPeriod ? (
             <Link
               href={`/matches/${matchId}/periods/new`}
               className={cn(
                 buttonVariants({ variant: "outline" }),
-                "w-full sm:w-auto",
+                stackedActionButtonClassName(),
               )}
             >
               Add period

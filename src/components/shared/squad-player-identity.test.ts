@@ -8,8 +8,8 @@ const source = readFileSync(
 );
 
 describe("SquadPlayerIdentity", () => {
-  it("shows club-colour initials, then a kit badge, then the full name", () => {
-    expect(source).toContain("InitialsAvatar");
+  it("shows a kit badge then the full name, without initials", () => {
+    expect(source).not.toContain("InitialsAvatar");
     expect(source).toContain("font-display");
     expect(source).toContain("bg-primary/10");
     expect(source).toContain('shirtNumber ?? "—"');

@@ -66,6 +66,14 @@ export function matchHeroDigitClassName(size: MatchHeroSize): string {
   return "text-4xl";
 }
 
+/** Cap width on desktop so home/away names stay close; mobile is already this size. */
+export function matchHeroFrameClassName(size: MatchHeroSize): string {
+  return cn(
+    "bg-card ring-foreground/10 w-full max-w-lg overflow-hidden shadow-md ring-1",
+    size === "compact" ? "rounded-2xl" : "rounded-3xl",
+  );
+}
+
 function cardPersonLabel(card: CardWithPerson): string {
   if (card.player) return playerDisplayName(card.player);
   if (card.coach) return coachDisplayName(card.coach);
@@ -303,12 +311,7 @@ export function MatchHero({
   );
 
   return (
-    <div
-      className={cn(
-        "bg-card ring-foreground/10 overflow-hidden shadow-md ring-1",
-        size === "compact" ? "rounded-2xl" : "rounded-3xl",
-      )}
-    >
+    <div className={matchHeroFrameClassName(size)}>
       {href ? (
         <Link
           href={href}

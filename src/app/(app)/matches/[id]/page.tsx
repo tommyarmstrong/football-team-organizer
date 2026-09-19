@@ -21,6 +21,7 @@ import {
 } from "@/lib/format";
 import { MatchHero } from "@/components/matches/match-hero";
 import { deleteMatchAction } from "@/lib/matches/actions";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -48,7 +49,7 @@ export default async function MatchDetailPage({
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Match" />
         <ErrorBanner message={error} />
       </div>
@@ -134,7 +135,7 @@ export default async function MatchDetailPage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className={pageBodyClassName("space-y-6")}>
       <h1 className="sr-only">{titleText}</h1>
       <div className="space-y-4">
         <MatchHero
