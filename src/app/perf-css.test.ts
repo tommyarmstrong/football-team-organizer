@@ -53,12 +53,16 @@ describe("CSS and font loading (§8.1, §8.3)", () => {
     expect(globals).toContain("--hero-rail: var(--primary)");
   });
 
-  it("paints the dashboard title as a vibrant club-colour gradient, not a pale wash", () => {
+  it("paints header, footer, and dashboard title with the same vibrant chrome gradient", () => {
+    expect(globals).toContain(".club-chrome");
     expect(globals).toMatch(/linear-gradient\(\s*145deg/);
     expect(globals).toContain("var(--primary) 58%");
     expect(globals).toContain("var(--club-colour) 58%");
     expect(globals).not.toContain(
       "color-mix(in srgb, var(--club-colour) 12%, var(--card))",
+    );
+    expect(globals).not.toMatch(
+      /\[data-club-colour="true"\] \.club-themed-header \{[^}]*background-color:\s*var\(--header\)/,
     );
   });
 });

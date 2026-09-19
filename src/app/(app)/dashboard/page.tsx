@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div className={pageBodyClassName("space-y-8")}>
-      <div className="dashboard-title-card relative overflow-hidden rounded-3xl px-5 py-6 shadow-lg sm:px-7 sm:py-8">
+      <div className="dashboard-title-card club-chrome relative overflow-hidden rounded-3xl px-5 py-6 shadow-lg sm:px-7 sm:py-8">
         <PitchGraphic className="dashboard-title-graphic pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto sm:h-56" />
         <div className="relative space-y-1.5">
           <p className="dashboard-title-kicker inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase">
