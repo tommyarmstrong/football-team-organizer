@@ -135,20 +135,53 @@ describe("MatchHero", () => {
     expect(played).not.toContain("LiveIndicator");
   });
 
-  it("stacks the LIVE chip under the home/away label, not beside it", () => {
+  it("stacks home/away, venue, LIVE, competition, date, then scheduled times", () => {
+    const scheduled = renderTree(
+      MatchHero({
+        ...playedHome,
+        status: "scheduled",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        competitionName: "Premier League",
+      }),
+    );
+    const homeAwayIndex = scheduled.indexOf("Home");
+    const venueIndex = scheduled.indexOf("Wembley");
+    const competitionIndex = scheduled.indexOf("Premier League");
+    const meetupIndex = scheduled.indexOf("Meet up: 09:30");
+    const kickoffIndex = scheduled.indexOf("Kick off: 10:00");
+    expect(homeAwayIndex).toBeGreaterThan(-1);
+    expect(venueIndex).toBeGreaterThan(homeAwayIndex);
+    expect(competitionIndex).toBeGreaterThan(venueIndex);
+    expect(scheduled).toContain("font-bold");
+    expect(meetupIndex).toBeGreaterThan(competitionIndex);
+    expect(kickoffIndex).toBeGreaterThan(meetupIndex);
+    expect(scheduled).not.toContain("Meet up: 09:30 · Kick off: 10:00");
+    expect(scheduled).not.toContain("Scheduled");
+  });
+
+  it("puts the LIVE chip after the venue and before competition", () => {
     const live = renderTree(
       MatchHero({
         ...playedHome,
         status: "in_progress",
-        goalsFor: 0,
-        goalsAgainst: 0,
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        competitionName: "Premier League",
       }),
     );
-    expect(live).toContain("flex-col");
-    expect(live).toMatch(/"Home"[\s\S]*LiveIndicator/);
-    expect(live).not.toMatch(
-      /flex items-center justify-center gap-2[\s\S]*LiveIndicator/,
-    );
+    const venueIndex = live.indexOf("Wembley");
+    const liveIndex = live.indexOf("LiveIndicator");
+    const competitionIndex = live.indexOf("Premier League");
+    expect(venueIndex).toBeGreaterThan(-1);
+    expect(liveIndex).toBeGreaterThan(venueIndex);
+    expect(competitionIndex).toBeGreaterThan(liveIndex);
+    expect(live).not.toContain("Kick off: 10:00");
+    expect(live).not.toContain("Meet up: 09:30");
   });
 
   it("puts share/edit/delete under the score on the hero", () => {

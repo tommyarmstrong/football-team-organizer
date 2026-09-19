@@ -21,6 +21,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InlineFormDialog } from "@/components/shared/inline-form-dialog";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
+import {
+  stackedActionButtonClassName,
+  stackedActionsClassName,
+} from "@/components/shared/stacked-actions";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
 import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
 
@@ -449,7 +453,7 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className={stackedActionsClassName()}>
           {addGoal ? (
             <InlineFormDialog
               title="Add goal"
@@ -457,7 +461,7 @@ export function MatchGoalsSection({
               trigger={(open) => (
                 <Button
                   type="button"
-                  className="w-full sm:w-auto"
+                  className={stackedActionButtonClassName()}
                   onClick={open}
                 >
                   Add goal
@@ -482,7 +486,7 @@ export function MatchGoalsSection({
           ) : (
             <Link
               href={addHref}
-              className={cn(buttonVariants(), "w-full sm:w-auto")}
+              className={cn(buttonVariants(), stackedActionButtonClassName())}
             >
               Add goal
             </Link>
@@ -495,7 +499,7 @@ export function MatchGoalsSection({
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full sm:w-auto"
+                  className={stackedActionButtonClassName()}
                   onClick={open}
                 >
                   Add period
@@ -519,7 +523,7 @@ export function MatchGoalsSection({
               href={`/matches/${matchId}/periods/new`}
               className={cn(
                 buttonVariants({ variant: "outline" }),
-                "w-full sm:w-auto",
+                stackedActionButtonClassName(),
               )}
             >
               Add period

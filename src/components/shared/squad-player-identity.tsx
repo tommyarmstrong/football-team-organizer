@@ -1,5 +1,3 @@
-import { InitialsAvatar } from "@/components/shared/initials-avatar";
-
 export function SquadPlayerIdentity({
   name,
   shirtNumber,
@@ -9,7 +7,6 @@ export function SquadPlayerIdentity({
 }) {
   return (
     <>
-      <InitialsAvatar name={name} className="size-9" />
       <span
         aria-hidden
         className="font-display bg-primary/10 text-primary inline-flex size-7 shrink-0 items-center justify-center rounded-md text-sm leading-none tabular-nums"

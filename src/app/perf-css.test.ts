@@ -52,4 +52,13 @@ describe("CSS and font loading (§8.1, §8.3)", () => {
     expect(globals).toContain("--hero-rail: var(--pitch-deep)");
     expect(globals).toContain("--hero-rail: var(--primary)");
   });
+
+  it("paints the dashboard title as a vibrant club-colour gradient, not a pale wash", () => {
+    expect(globals).toMatch(/linear-gradient\(\s*145deg/);
+    expect(globals).toContain("var(--primary) 58%");
+    expect(globals).toContain("var(--club-colour) 58%");
+    expect(globals).not.toContain(
+      "color-mix(in srgb, var(--club-colour) 12%, var(--card))",
+    );
+  });
 });

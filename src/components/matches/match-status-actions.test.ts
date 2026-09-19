@@ -1,24 +1,16 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  matchStatusActionButtonClassName,
-  matchStatusActionsRowClassName,
-} from "@/components/matches/match-status-actions";
 
-describe("matchStatusActionsRowClassName", () => {
-  it("stacks content-sized equal-width buttons, row from sm up", () => {
-    const className = matchStatusActionsRowClassName();
-    expect(className).toContain("inline-grid");
-    expect(className).toContain("grid-cols-1");
-    expect(className).toContain("sm:grid-flow-col");
-    expect(className).toContain("sm:auto-cols-fr");
-    expect(className).not.toContain("w-full");
-  });
-});
+const source = readFileSync(
+  path.join(import.meta.dirname, "match-status-actions.tsx"),
+  "utf8",
+);
 
-describe("matchStatusActionButtonClassName", () => {
-  it("fills the shared grid cell without forcing screen width", () => {
-    const className = matchStatusActionButtonClassName();
-    expect(className).toContain("w-full");
-    expect(className).not.toContain("sm:w-auto");
+describe("MatchStatusActions layout", () => {
+  it("uses the shared stacked action row so buttons stay equal and content-sized", () => {
+    expect(source).toContain("stackedActionsClassName");
+    expect(source).toContain("stackedActionButtonClassName");
+    expect(source).not.toContain("sm:w-auto");
   });
 });

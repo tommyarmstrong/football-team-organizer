@@ -12,7 +12,7 @@ const matchDay = readFileSync(
 );
 
 describe("squad rows", () => {
-  it("show club-colour initials on the team roster and match-day squad", () => {
+  it("use the shared squad identity on the team roster and match-day squad", () => {
     expect(roster).toContain("SquadPlayerIdentity");
     expect(matchDay).toContain("SquadPlayerIdentity");
   });
