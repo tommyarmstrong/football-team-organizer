@@ -144,6 +144,11 @@ describe("DashboardFixtures last result share", () => {
     expect(source).toContain("actions={share}");
   });
 
+  it("opens new fixture in an inline dialog instead of /matches/new", () => {
+    expect(source).toContain("NewFixtureDialog");
+    expect(source).not.toContain('href="/matches/new"');
+  });
+
   it("shows initials on every leaderboard row and a display-font count", () => {
     expect(source).toContain("InitialsAvatar");
     expect(source).toContain("font-display text-foreground text-lg");

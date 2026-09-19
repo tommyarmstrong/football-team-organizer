@@ -47,7 +47,11 @@ export default async function DashboardPage() {
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton columns={2} />}>
-        <DashboardFixtures teamId={team.id} teamName={displayName} />
+        <DashboardFixtures
+          teamId={team.id}
+          teamName={displayName}
+          clubId={team.club_id}
+        />
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton rows={1} />}>

@@ -8,16 +8,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export function InlineFormDialog({
   trigger,
   title,
   description,
+  size = "default",
   children,
 }: {
   trigger: (open: () => void) => ReactNode;
   title: string;
   description: string;
+  size?: "default" | "lg";
   children: (close: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -28,7 +31,12 @@ export function InlineFormDialog({
       {trigger(() => setOpen(true))}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="max-h-[min(90dvh,40rem)] overflow-y-auto sm:max-w-lg"
+          className={cn(
+            "overflow-y-auto",
+            size === "lg"
+              ? "max-h-[min(90dvh,52rem)] sm:max-w-2xl"
+              : "max-h-[min(90dvh,40rem)] sm:max-w-lg",
+          )}
           showCloseButton
         >
           <DialogHeader>

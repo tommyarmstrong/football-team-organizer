@@ -68,7 +68,7 @@ async function uploadClubIcon(
   return { url: data.publicUrl };
 }
 
-export async function updateClubAction(
+export async function updateClubOnPageAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -153,5 +153,14 @@ export async function updateClubAction(
   revalidatePath("/club");
   revalidatePath("/club/edit");
   revalidatePath("/", "layout");
+  return { success: "Club saved." };
+}
+
+export async function updateClubAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updateClubOnPageAction(_prev, formData);
+  if (result.error) return result;
   redirect("/club");
 }

@@ -12,6 +12,7 @@ describe("InlineFormDialog", () => {
     expect(source).toContain("max-h-[min(90dvh,40rem)]");
     expect(source).toContain("overflow-y-auto");
     expect(source).toContain("sm:max-w-lg");
+    expect(source).toContain("sm:max-w-2xl");
     expect(source).toContain("showCloseButton");
     expect(source).toContain("DialogTitle");
     expect(source).toContain("DialogDescription");

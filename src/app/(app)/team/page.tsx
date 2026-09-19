@@ -198,6 +198,7 @@ export default async function TeamPage() {
           <CompetitionsSection
             key={team.id}
             competitions={competitions.data}
+            venues={teamClubVenues}
             canEdit={canEditHistory}
           />
         )}

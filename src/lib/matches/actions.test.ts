@@ -63,8 +63,10 @@ vi.mock("@/lib/data/match-periods", () => ({
 
 import {
   createMatchAction,
+  createMatchOnPageAction,
   deleteMatchAction,
   updateMatchAction,
+  updateMatchOnPageAction,
   updateMatchPlayersOfTheMatchAction,
   updateMatchStatusAction,
 } from "@/lib/matches/actions";
@@ -156,6 +158,17 @@ describe("createMatchAction", () => {
       ["player-1"],
     );
     expect(revalidatePathMock).toHaveBeenCalledWith("/matches");
+  });
+
+  it("creates a match on the page without redirecting", async () => {
+    createMatchMock.mockResolvedValue({
+      data: plainMatchFixture({ id: "match-new" }),
+      error: null,
+    });
+
+    const result = await createMatchOnPageAction({}, validCreateForm());
+    expect(result).toEqual({ success: "Fixture created." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("passes optional meet-up time through to createMatch", async () => {
@@ -354,6 +367,16 @@ describe("updateMatchAction", () => {
       ),
     ).rejects.toThrow("redirect:/matches/match-1");
     expect(updateMatchMock).toHaveBeenCalled();
+  });
+
+  it("saves a match on the page without redirecting", async () => {
+    const result = await updateMatchOnPageAction(
+      "match-1",
+      {},
+      validCreateForm({ status: "scheduled", opponent_name: "Updated" }),
+    );
+    expect(result).toEqual({ success: "Match saved." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("passes optional meet-up time through to updateMatch", async () => {

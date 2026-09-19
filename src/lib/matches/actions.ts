@@ -64,10 +64,9 @@ async function defaultStarterPlayerIds(
   return roster.map((player) => player.id);
 }
 
-export async function createMatchAction(
-  _prev: ActionState,
+async function createMatchRecord(
   formData: FormData,
-): Promise<ActionState> {
+): Promise<{ error: string } | { id: string }> {
   const opponent_name = str(formData, "opponent_name");
   const date = str(formData, "date");
   const kickoff_time = str(formData, "kickoff_time") || null;
@@ -135,10 +134,29 @@ export async function createMatchAction(
 
   revalidatePath("/matches");
   revalidatePath("/dashboard");
-  redirect(`/matches/${data.id}`);
+  revalidatePath(`/matches/${data.id}`);
+  return { id: data.id };
 }
 
-export async function updateMatchAction(
+export async function createMatchOnPageAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createMatchRecord(formData);
+  if ("error" in result) return result;
+  return { success: "Fixture created." };
+}
+
+export async function createMatchAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await createMatchRecord(formData);
+  if ("error" in result) return result;
+  redirect(`/matches/${result.id}`);
+}
+
+export async function updateMatchOnPageAction(
   id: string,
   _prev: ActionState,
   formData: FormData,
@@ -217,6 +235,16 @@ export async function updateMatchAction(
   revalidatePath("/dashboard");
   revalidatePath("/stats");
   revalidatePath("/club");
+  return { success: "Match saved." };
+}
+
+export async function updateMatchAction(
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const result = await updateMatchOnPageAction(id, _prev, formData);
+  if (result.error) return result;
   redirect(`/matches/${id}`);
 }
 

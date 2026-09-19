@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   canAccessClubAndPeople,
@@ -7,6 +6,8 @@ import {
   getViewerContext,
 } from "@/lib/authz/context";
 import { getClub, getPrimaryClub } from "@/lib/data/clubs";
+import { listCoaches } from "@/lib/data/coaches";
+import { listVenues } from "@/lib/data/venues";
 import {
   partitionTeamsByArchiveStatus,
   sortTeamsForDisplay,
@@ -14,10 +15,10 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { ClubHeaderMeta } from "@/components/clubs/club-header-meta";
 import { ClubTeamsList } from "@/components/clubs/club-teams-list";
-import { buttonVariants } from "@/components/ui/button";
+import { EditClubDialog } from "@/components/clubs/edit-club-dialog";
+import { AddTeamDialog } from "@/components/team/add-team-dialog";
 
 export default async function ClubPage() {
   const [ctx, summary] = await Promise.all([
@@ -50,6 +51,17 @@ export default async function ClubPage() {
   const { current: currentTeams, archived: archivedTeams } =
     partitionTeamsByArchiveStatus(teams);
 
+  let coaches: Awaited<ReturnType<typeof listCoaches>>["data"] = [];
+  let clubVenues: Awaited<ReturnType<typeof listVenues>>["data"] = [];
+  if (canEdit) {
+    const [coachesResult, venuesResult] = await Promise.all([
+      listCoaches(),
+      listVenues(club.id),
+    ]);
+    coaches = coachesResult.data.filter((coach) => coach.club_id === club.id);
+    clubVenues = venuesResult.data;
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -59,11 +71,7 @@ export default async function ClubPage() {
 
       <Section
         title={`About ${club.name}`}
-        actions={
-          canEdit ? (
-            <EditIconLink href="/club/edit" label="Edit club details" />
-          ) : undefined
-        }
+        actions={canEdit ? <EditClubDialog club={club} /> : undefined}
       >
         {club.about ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -94,9 +102,7 @@ export default async function ClubPage() {
               <ClubTeamsList teams={currentTeams} />
             )}
             {canEdit ? (
-              <Link href="/teams/new" className={buttonVariants()}>
-                Add team
-              </Link>
+              <AddTeamDialog coaches={coaches} venues={clubVenues} />
             ) : null}
           </Section>
 

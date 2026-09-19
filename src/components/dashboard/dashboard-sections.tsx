@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { listVenues } from "@/lib/data/venues";
 import { type MatchWithRelations } from "@/lib/data/matches";
 import {
   formatAwardMonth,
@@ -23,7 +24,7 @@ import { MatchHero } from "@/components/matches/match-hero";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
-import { buttonVariants } from "@/components/ui/button";
+import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
 import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
@@ -36,12 +37,14 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
 export async function DashboardFixtures({
   teamId,
   teamName,
+  clubId,
 }: {
   teamId: string;
   teamName: string;
+  clubId: string;
 }) {
-  const { next, last, lastPostcard, canEditMatch } =
-    await getDashboardData(teamId);
+  const [{ next, last, lastPostcard, canEditMatch, competitions }, venues] =
+    await Promise.all([getDashboardData(teamId), listVenues(clubId)]);
   const lastMatch = last.data;
   const postcard = lastPostcard?.data ?? null;
 
@@ -59,12 +62,11 @@ export async function DashboardFixtures({
           emptyDescription="Schedule the next match."
           emptyAction={
             canEditMatch ? (
-              <Link
-                href="/matches/new"
-                className={buttonVariants({ size: "sm" })}
-              >
-                New fixture
-              </Link>
+              <NewFixtureDialog
+                competitions={competitions.data}
+                venues={venues.data}
+                size="sm"
+              />
             ) : undefined
           }
         />
@@ -127,7 +129,10 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
 }
 
 export async function DashboardCompetitions({ team }: { team: Team }) {
-  const { competitions, canEditTeam } = await getDashboardData(team.id);
+  const [{ competitions, canEditTeam }, venues] = await Promise.all([
+    getDashboardData(team.id),
+    listVenues(team.club_id),
+  ]);
 
   return (
     <Section
@@ -140,6 +145,7 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
         <CompetitionsSection
           key={team.id}
           competitions={competitions.data}
+          venues={venues.data}
           canEdit={canEditTeam}
         />
       )}
