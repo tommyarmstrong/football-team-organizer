@@ -155,7 +155,6 @@ export function MatchHero({
   const visibleCards =
     showFullMeta && !isCancelledOrPostponed && cards ? cards : [];
   const showVenueLink = size === "hero" && Boolean(venueId);
-  const showScheduledLabel = size === "compact" && status === "scheduled";
 
   const mastheadPadding =
     isLive && size === "hero"
@@ -230,64 +229,46 @@ export function MatchHero({
             </p>
           ) : null}
         </div>
-
-        {(homeAway || isLive) && (
-          <div className="mt-2 flex flex-col items-center gap-1.5">
-            {homeAway ? (
-              <p className="text-muted-foreground text-center text-[11px] font-medium tracking-wide uppercase">
-                {labelHomeAway(homeAway)}
-              </p>
-            ) : null}
-            {isLive ? <LiveIndicator /> : null}
-          </div>
-        )}
       </div>
 
-      {meta ? (
+      {homeAway || meta || isLive ? (
         <div className="text-muted-foreground mt-4 space-y-1 text-center text-sm">
-          {isLive ? (
-            <p className="truncate">
-              {[meta.competition, meta.times ?? meta.dateTime]
-                .filter(Boolean)
-                .join(" · ")}
+          {homeAway ? (
+            <p className="text-[11px] font-medium tracking-wide uppercase">
+              {labelHomeAway(homeAway)}
             </p>
-          ) : (
-            <>
-              {meta.competition ? (
-                <p className="text-foreground font-semibold">
-                  {meta.competition}
-                </p>
-              ) : null}
-              <p>
-                {meta.dateTime}
-                {meta.venue ? (
-                  <>
-                    {" · "}
-                    {showVenueLink ? (
-                      <Link
-                        href={`/venues/${venueId}`}
-                        className="text-foreground underline-offset-2 hover:underline"
-                      >
-                        {meta.venue}
-                      </Link>
-                    ) : (
-                      meta.venue
-                    )}
-                  </>
-                ) : null}
-              </p>
-              {meta.times ? <p>{meta.times}</p> : null}
-              {showSquad ? (
-                <p>
-                  Squad: {matchDaySquadCount}{" "}
-                  {matchDaySquadCount === 1 ? "player" : "players"}
-                </p>
-              ) : null}
-              {showScheduledLabel ? (
-                <p className="text-destructive font-medium">Scheduled</p>
-              ) : null}
-            </>
-          )}
+          ) : null}
+          {meta?.venue ? (
+            <p>
+              {showVenueLink ? (
+                <Link
+                  href={`/venues/${venueId}`}
+                  className="text-foreground underline-offset-2 hover:underline"
+                >
+                  {meta.venue}
+                </Link>
+              ) : (
+                meta.venue
+              )}
+            </p>
+          ) : null}
+          {isLive ? (
+            <div className="flex justify-center">
+              <LiveIndicator />
+            </div>
+          ) : null}
+          {meta?.competition ? (
+            <p className="text-foreground font-bold">{meta.competition}</p>
+          ) : null}
+          {meta ? <p>{meta.dateTime}</p> : null}
+          {meta?.meetup ? <p>{meta.meetup}</p> : null}
+          {meta?.kickoff ? <p>{meta.kickoff}</p> : null}
+          {showSquad ? (
+            <p>
+              Squad: {matchDaySquadCount}{" "}
+              {matchDaySquadCount === 1 ? "player" : "players"}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

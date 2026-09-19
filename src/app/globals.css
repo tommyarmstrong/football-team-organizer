@@ -230,22 +230,28 @@ body:has(> [data-club-colour="true"])::before {
   border-top-color: color-mix(in srgb, var(--club-colour) 40%, transparent);
 }
 
-/* Dashboard title: pitch-deep fill without club colour; 12% wash on paper
-   when a club colour is set. Not a second solid header. */
+/* Dashboard title: same 145° blend as the login Matchday-ready card.
+   Club colour replaces the pitch greens so navy and orange stay saturated. */
 .dashboard-title-card {
-  background-color: var(--hero);
+  background-image: linear-gradient(
+    145deg,
+    var(--pitch-deep),
+    var(--primary) 58%,
+    var(--pitch-lime)
+  );
   color: var(--header-foreground);
   box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.1),
-    0 2px 4px -2px rgb(0 0 0 / 0.1);
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .dashboard-title-kicker {
+  background-color: color-mix(in srgb, var(--pitch-lime) 20%, transparent);
   color: var(--pitch-lime);
 }
 
 .dashboard-title-season {
-  color: rgb(255 255 255 / 0.75);
+  color: rgb(255 255 255 / 0.8);
 }
 
 .dashboard-title-graphic {
@@ -253,22 +259,13 @@ body:has(> [data-club-colour="true"])::before {
 }
 
 [data-club-colour="true"] .dashboard-title-card {
-  background-color: color-mix(in srgb, var(--club-colour) 12%, var(--card));
-  color: var(--foreground);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-[data-club-colour="true"] .dashboard-title-kicker {
-  color: var(--primary);
-}
-
-[data-club-colour="true"] .dashboard-title-season {
-  color: var(--muted-foreground);
-}
-
-[data-club-colour="true"] .dashboard-title-graphic {
-  color: var(--primary);
-  opacity: 0.08;
+  background-image: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--club-colour) 78%, var(--pitch-deep)),
+    var(--club-colour) 58%,
+    color-mix(in srgb, var(--club-colour) 38%, var(--pitch-lime))
+  );
+  color: var(--header-foreground);
 }
 
 .club-themed-header [data-slot="button"] {
