@@ -149,6 +149,11 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain('href="/matches/new"');
   });
 
+  it("stacks next fixture and last result in the narrow page column", () => {
+    expect(source).toContain("grid gap-8");
+    expect(source).not.toContain("sm:grid-cols-2");
+  });
+
   it("shows initials on every leaderboard row and a display-font count", () => {
     expect(source).toContain("InitialsAvatar");
     expect(source).toContain("font-display text-foreground text-lg");

@@ -3,6 +3,7 @@ import { listCompetitions } from "@/lib/data/competitions";
 import { canEditActiveMatchDay, getActiveTeam } from "@/lib/data/team";
 import { listVenues } from "@/lib/data/venues";
 import { teamDisplayName } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -24,7 +25,7 @@ export default async function MatchesPage() {
     : [{ data: [] }, { data: [] }];
 
   return (
-    <div className="w-full max-w-lg space-y-6">
+    <div className={pageBodyClassName("space-y-6")}>
       <PageHeader
         title="Matches"
         actions={

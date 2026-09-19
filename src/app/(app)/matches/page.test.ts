@@ -17,7 +17,7 @@ describe("inline entity create/edit entry points", () => {
       path.join(import.meta.dirname, "page.tsx"),
       "utf8",
     );
-    expect(source).toContain("max-w-lg");
+    expect(source).toContain("pageBodyClassName");
     expect(source).not.toContain("mx-auto");
   });
 });

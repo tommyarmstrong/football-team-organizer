@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getCurrentTeam } from "@/lib/data/team";
 import { teamDisplayName } from "@/lib/format";
 import { PitchGraphic } from "@/components/brand/pitch-graphic";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { SectionSkeleton } from "@/components/shared/skeleton";
@@ -18,7 +19,7 @@ export default async function DashboardPage() {
 
   if (!team) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Dashboard" />
         <ErrorBanner message="No team found for your account." />
       </div>
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
   const displayName = teamDisplayName(team);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <div className="dashboard-title-card relative overflow-hidden rounded-3xl px-5 py-6 sm:px-7 sm:py-8">
         <PitchGraphic className="dashboard-title-graphic pointer-events-none absolute -right-10 -bottom-12 h-44 w-auto sm:h-56" />
         <p className="dashboard-title-kicker relative text-xs font-semibold tracking-[0.22em] uppercase">
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
         <DashboardSeasonTiles teamId={team.id} />
       </Suspense>
 
-      <Suspense fallback={<SectionSkeleton columns={2} />}>
+      <Suspense fallback={<SectionSkeleton />}>
         <DashboardFixtures
           teamId={team.id}
           teamName={displayName}
