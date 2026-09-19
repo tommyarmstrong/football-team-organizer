@@ -382,4 +382,10 @@ describe("MatchGoalsSection add goal", () => {
     expect(source).toContain("Edit goal");
     expect(source).toContain("stayOnPage");
   });
+
+  it("keeps add-goal and add-period the same content width as other match actions", () => {
+    expect(source).toContain("stackedActionsRowClassName");
+    expect(source).toContain("stackedActionButtonClassName");
+    expect(source).not.toContain("sm:w-auto");
+  });
 });

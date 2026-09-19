@@ -11,6 +11,7 @@ import {
   MatchHero,
   matchHeroAriaLabel,
   matchHeroDigitClassName,
+  matchHeroFrameClassName,
   matchHeroShowsScore,
   matchHeroSides,
 } from "@/components/matches/match-hero";
@@ -74,6 +75,15 @@ describe("matchHeroDigitClassName", () => {
     expect(matchHeroDigitClassName("hero")).toContain("text-6xl");
     expect(matchHeroDigitClassName("card")).toContain("text-5xl");
     expect(matchHeroDigitClassName("compact")).toContain("text-4xl");
+  });
+});
+
+describe("matchHeroFrameClassName", () => {
+  it("caps width so desktop cards stay as dense as mobile", () => {
+    expect(matchHeroFrameClassName("compact")).toContain("max-w-lg");
+    expect(matchHeroFrameClassName("hero")).toContain("max-w-lg");
+    expect(matchHeroFrameClassName("compact")).toContain("rounded-2xl");
+    expect(matchHeroFrameClassName("hero")).toContain("rounded-3xl");
   });
 });
 

@@ -24,7 +24,7 @@ export default async function MatchesPage() {
     : [{ data: [] }, { data: [] }];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-lg space-y-6">
       <PageHeader
         title="Matches"
         actions={

@@ -11,4 +11,13 @@ describe("inline entity create/edit entry points", () => {
     expect(source).toContain("NewFixtureDialog");
     expect(source).not.toContain('href="/matches/new"');
   });
+
+  it("keeps the fixture list and new-fixture control in a left-aligned desktop column", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("max-w-lg");
+    expect(source).not.toContain("mx-auto");
+  });
 });

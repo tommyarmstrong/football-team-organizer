@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { updateMatchStatusAction } from "@/lib/matches/actions";
 import type { MatchStatus } from "@/lib/supabase/database.types";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,18 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/shared/error-banner";
-
-/** Stack on mobile, row on desktop; width follows the widest label. */
-export function matchStatusActionsRowClassName(className?: string): string {
-  return cn(
-    "inline-grid grid-cols-1 gap-2 sm:grid-flow-col sm:auto-cols-fr",
-    className,
-  );
-}
-
-export function matchStatusActionButtonClassName(className?: string): string {
-  return cn("w-full", className);
-}
+import {
+  stackedActionButtonClassName,
+  stackedActionsRowClassName,
+} from "@/components/shared/stacked-actions";
 
 export function MatchStatusActions({
   matchId,
@@ -55,11 +46,11 @@ export function MatchStatusActions({
 
   return (
     <div className="space-y-2">
-      <div className={matchStatusActionsRowClassName()}>
+      <div className={stackedActionsRowClassName()}>
         {showKickOff ? (
           <Button
             type="button"
-            className={matchStatusActionButtonClassName()}
+            className={stackedActionButtonClassName()}
             disabled={pending}
             onClick={() => setStatus("in_progress")}
           >
@@ -69,7 +60,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant={showFullTimePrimary ? "default" : "outline"}
-          className={matchStatusActionButtonClassName()}
+          className={stackedActionButtonClassName()}
           disabled={pending}
           onClick={() => setStatus("played")}
         >
@@ -78,7 +69,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant="destructive"
-          className={matchStatusActionButtonClassName()}
+          className={stackedActionButtonClassName()}
           disabled={pending}
           aria-haspopup="dialog"
           onClick={() => setCancelOpen(true)}
