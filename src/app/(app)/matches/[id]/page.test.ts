@@ -10,5 +10,6 @@ describe("match detail page", () => {
     );
     expect(source).toContain("EditMatchDialog");
     expect(source).not.toContain("href={`/matches/${match.id}/edit`}");
+    expect(source).toContain("meetupTime={match.meetup_time}");
   });
 });

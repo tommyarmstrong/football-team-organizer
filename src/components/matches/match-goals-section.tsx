@@ -23,6 +23,7 @@ import { InlineFormDialog } from "@/components/shared/inline-form-dialog";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import {
   stackedActionButtonClassName,
+  stackedActionCellClassName,
   stackedActionsRowClassName,
 } from "@/components/shared/stacked-actions";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
@@ -455,7 +456,7 @@ export function MatchGoalsSection({
       {canEdit ? (
         <div className={stackedActionsRowClassName()}>
           {addGoal ? (
-            <div>
+            <div className={stackedActionCellClassName()}>
               <InlineFormDialog
                 title="Add goal"
                 description="Choose the scorer and other details. Save adds the goal to this match."
@@ -494,7 +495,7 @@ export function MatchGoalsSection({
             </Link>
           )}
           {showAddPeriod && addPeriod ? (
-            <div>
+            <div className={stackedActionCellClassName()}>
               <InlineFormDialog
                 title="Add extra time or penalties"
                 description="Choose the period and who starts it. Save keeps you on this match."

@@ -144,6 +144,16 @@ describe("DashboardFixtures last result share", () => {
     expect(source).toContain("actions={share}");
   });
 
+  it("passes dashboard match cards the same stack fields as the matches list", () => {
+    expect(source).toContain("MatchHero");
+    expect(source).toContain("meetupTime={match.meetup_time}");
+    expect(source).toContain("kickoffTime={match.kickoff_time}");
+    expect(source).toContain("venueName={match.venue?.name ?? null}");
+    expect(source).toContain("competitionName={matchCompetitionLabel(match)}");
+    expect(source).not.toContain("matchDaySquadCount");
+    expect(source).not.toContain("cards=");
+  });
+
   it("opens new fixture in an inline dialog instead of /matches/new", () => {
     expect(source).toContain("NewFixtureDialog");
     expect(source).not.toContain('href="/matches/new"');
