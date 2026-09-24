@@ -89,7 +89,7 @@ export function SetPasswordForm({
 
       {error ? <ErrorBanner message={error} /> : null}
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" disabled={pending}>
         {pending ? pendingLabel : submitLabel}
       </Button>
     </form>
