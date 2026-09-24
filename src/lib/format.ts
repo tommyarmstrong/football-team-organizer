@@ -144,8 +144,8 @@ export function matchCompetitionLabel(match: {
 
 /**
  * Shared match summary lines used on the matches list, match page, and
- * dashboard. Callers render in this order, omitting blank values:
- * venue, competition, date, then meet-up and kick-off for scheduled fixtures.
+ * dashboard. Callers render HOME/AWAY then these lines, omitting blanks:
+ * venue, LIVE, competition, date, then meet-up and kick-off for scheduled fixtures.
  */
 export function matchSummaryLines(match: {
   competitionName?: string | null;
