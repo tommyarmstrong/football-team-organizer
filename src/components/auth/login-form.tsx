@@ -104,7 +104,7 @@ export function AcceptInvitationForm({
 
         {error ? <ErrorBanner message={error} /> : null}
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Creating account…" : "Create account"}
         </Button>
       </form>
@@ -119,7 +119,6 @@ export function AcceptInvitationForm({
       <Button
         type="button"
         variant="outline"
-        className="w-full"
         disabled={pending}
         onClick={onGoogle}
       >
@@ -229,7 +228,7 @@ export function LoginFormWithGoogle() {
 
         {error ? <ErrorBanner message={error} /> : null}
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
         </Button>
 
@@ -253,7 +252,6 @@ export function LoginFormWithGoogle() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
         disabled={pending}
         onClick={onGoogle}
       >

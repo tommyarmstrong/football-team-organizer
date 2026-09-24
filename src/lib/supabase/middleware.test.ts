@@ -11,7 +11,11 @@ vi.mock("@supabase/ssr", () => ({
   createServerClient: createServerClientMock,
 }));
 
-import { FTO_ACCESS_COOKIE, updateSession } from "@/lib/supabase/middleware";
+import {
+  FTO_ACCESS_COOKIE,
+  FTO_ACCESS_MAX_AGE,
+  updateSession,
+} from "@/lib/supabase/middleware";
 
 function request(path: string, cookie?: string) {
   const headers = new Headers();
@@ -211,7 +215,8 @@ describe("§3.1 — fto_access cookie caching", () => {
     expect(response.headers.get("location")).toBeNull();
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
-    expect(cookie?.maxAge).toBe(300);
+    expect(FTO_ACCESS_MAX_AGE).toBe(90 * 60);
+    expect(cookie?.maxAge).toBe(FTO_ACCESS_MAX_AGE);
     expect(cookie?.httpOnly).toBe(true);
   });
 
@@ -248,6 +253,7 @@ describe("§3.1 — fto_access cookie caching", () => {
     );
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
+    expect(cookie?.maxAge).toBe(90 * 60);
   });
 });
 
