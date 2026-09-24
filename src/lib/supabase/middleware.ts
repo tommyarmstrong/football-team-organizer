@@ -21,8 +21,8 @@ import {
  * signed-in user through to the data tables.
  */
 export const FTO_ACCESS_COOKIE = "fto_access";
-/** 90 minutes. */
-export const FTO_ACCESS_MAX_AGE = 90 * 60;
+/** 24 hours. */
+export const FTO_ACCESS_MAX_AGE = 24 * 60 * 60;
 
 async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,

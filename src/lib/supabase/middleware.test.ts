@@ -215,7 +215,7 @@ describe("§3.1 — fto_access cookie caching", () => {
     expect(response.headers.get("location")).toBeNull();
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
-    expect(FTO_ACCESS_MAX_AGE).toBe(90 * 60);
+    expect(FTO_ACCESS_MAX_AGE).toBe(24 * 60 * 60);
     expect(cookie?.maxAge).toBe(FTO_ACCESS_MAX_AGE);
     expect(cookie?.httpOnly).toBe(true);
   });
@@ -253,7 +253,7 @@ describe("§3.1 — fto_access cookie caching", () => {
     );
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
-    expect(cookie?.maxAge).toBe(90 * 60);
+    expect(cookie?.maxAge).toBe(24 * 60 * 60);
   });
 });
 
