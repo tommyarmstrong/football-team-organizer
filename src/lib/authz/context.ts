@@ -368,6 +368,24 @@ export function canViewPlayerContact(
   return false;
 }
 
+/**
+ * Player cards leave the app with a child's name on them, so they are limited
+ * to the player's guardians, the club's managers, and the coaches / team
+ * managers of the team the card is for. Players themselves and guardian
+ * assistants cannot generate one.
+ */
+export function canGeneratePlayerCard(
+  ctx: ViewerContext,
+  player: { id: string; club_id: string },
+  teamId: string,
+): boolean {
+  if (isGuardianOfPlayer(ctx, player.id)) return true;
+  if (canManageClub(ctx, player.club_id)) return true;
+  return (
+    ctx.coachTeamIds.includes(teamId) || ctx.managementTeamIds.includes(teamId)
+  );
+}
+
 /** A short label for the user's highest role, for display in the header. */
 export function viewerRoleLabel(ctx: ViewerContext): string {
   if (ctx.isManagement) return "Management";

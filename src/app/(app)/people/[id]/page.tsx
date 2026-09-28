@@ -19,6 +19,7 @@ import {
   listGuardians,
 } from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
+import { buildPlayerCardPayload } from "@/lib/postcards/player-card";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import {
   getPlayerTeams,
@@ -35,6 +36,7 @@ import { ErrorBanner } from "@/components/shared/error-banner";
 import { DeletePersonButton } from "@/components/people/delete-person-button";
 import { EditPersonDialog } from "@/components/people/edit-person-dialog";
 import { PersonHeaderMeta } from "@/components/people/person-header-meta";
+import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
 import {
   PersonClubRolesSection,
   PersonInvitationPanel,
@@ -118,6 +120,7 @@ export default async function PersonDetailPage({
     guardianPlayersResult,
     allPlayersResult,
     allGuardiansResult,
+    playerCardResult,
   ] = await Promise.all([
     player ? getPlayerTeams(player.id) : Promise.resolve({ data: [] }),
     player ? getPlayerGuardians(player.id) : Promise.resolve({ data: [] }),
@@ -140,6 +143,9 @@ export default async function PersonDetailPage({
       : Promise.resolve({
           data: [] as Awaited<ReturnType<typeof listGuardians>>["data"],
         }),
+    player
+      ? buildPlayerCardPayload(player.id, { personId: person.id })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const playerTeams = playerTeamsResult.data;
@@ -153,6 +159,10 @@ export default async function PersonDetailPage({
   const guardianPlayerLinks = guardianPlayersResult.data;
   const allPlayers = allPlayersResult.data;
   const allGuardians = allGuardiansResult.data;
+
+  // Null unless the viewer is a guardian, coach, or manager (see
+  // canGeneratePlayerCard) and the player is on a team.
+  const playerCard = playerCardResult.data;
 
   const emergencyGuardian =
     playerGuardians.find((link) => link.emergency_contact) ?? null;
@@ -287,23 +297,40 @@ export default async function PersonDetailPage({
           />
         }
         actions={
-          canEditDetails ? (
+          playerCard || canEditDetails ? (
             <>
-              <EditPersonDialog
-                person={person}
-                player={player}
-                showPlayerDobSchool={showPlayerDobSchool}
-                showPlayerPosition={showPlayerPosition}
-                description={
-                  showPlayerDobSchool && showPlayerPosition
-                    ? "Shared person-level details, plus player DOB, position, and school."
-                    : showPlayerDobSchool
-                      ? "Name, contact details, date of birth, and school."
-                      : "Name, email, and phone number."
-                }
-              />
-              {canEdit && !self && !isDisabled ? (
-                <DeletePersonButton personId={person.id} />
+              {playerCard ? (
+                <SharePostcardButton
+                  imageUrl={`/people/${person.id}/player-card?${new URLSearchParams(
+                    { player: playerCard.playerId, team: playerCard.teamId },
+                  ).toString()}`}
+                  caption={playerCard.caption}
+                  fileName={playerCard.fileName}
+                  title="Player card"
+                  description={`Share ${playerCard.firstName}’s ${playerCard.teamName} card. Youth players are shown by first name only.`}
+                  previewAlt={`${playerCard.firstName}’s player card`}
+                  buttonLabel="Share player card"
+                />
+              ) : null}
+              {canEditDetails ? (
+                <>
+                  <EditPersonDialog
+                    person={person}
+                    player={player}
+                    showPlayerDobSchool={showPlayerDobSchool}
+                    showPlayerPosition={showPlayerPosition}
+                    description={
+                      showPlayerDobSchool && showPlayerPosition
+                        ? "Shared person-level details, plus player DOB, position, and school."
+                        : showPlayerDobSchool
+                          ? "Name, contact details, date of birth, and school."
+                          : "Name, email, and phone number."
+                    }
+                  />
+                  {canEdit && !self && !isDisabled ? (
+                    <DeletePersonButton personId={person.id} />
+                  ) : null}
+                </>
               ) : null}
             </>
           ) : undefined

@@ -28,6 +28,7 @@ export function SharePostcardButton({
   title = "Match postcard",
   description = "Share a recap of this result. Player names follow the team’s privacy rules.",
   previewAlt = "Match postcard",
+  buttonLabel = "Share postcard",
 }: {
   imageUrl: string;
   caption: string;
@@ -35,6 +36,7 @@ export function SharePostcardButton({
   title?: string;
   description?: string;
   previewAlt?: string;
+  buttonLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -126,8 +128,8 @@ export function SharePostcardButton({
     <>
       <button
         type="button"
-        aria-label="Share postcard"
-        title="Share postcard"
+        aria-label={buttonLabel}
+        title={buttonLabel}
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
         className={iconButtonClassName}
