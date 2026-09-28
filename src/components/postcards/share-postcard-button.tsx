@@ -28,6 +28,7 @@ export function SharePostcardButton({
   title = "Match postcard",
   description = "Share a recap of this result. Player names follow the team’s privacy rules.",
   previewAlt = "Match postcard",
+  buttonLabel = "Share postcard",
 }: {
   imageUrl: string;
   caption: string;
@@ -35,6 +36,7 @@ export function SharePostcardButton({
   title?: string;
   description?: string;
   previewAlt?: string;
+  buttonLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -126,8 +128,8 @@ export function SharePostcardButton({
     <>
       <button
         type="button"
-        aria-label="Share postcard"
-        title="Share postcard"
+        aria-label={buttonLabel}
+        title={buttonLabel}
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
         className={iconButtonClassName}
@@ -136,7 +138,10 @@ export function SharePostcardButton({
       </button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogContent
+          className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md"
+          showCloseButton
+        >
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -149,7 +154,7 @@ export function SharePostcardButton({
             <img
               src={blobUrl}
               alt={previewAlt}
-              className="border-border h-auto w-full rounded-lg border"
+              className="border-border mx-auto h-auto max-h-[50dvh] w-auto max-w-full rounded-lg border object-contain"
             />
           ) : loadError ? null : (
             <p className="text-muted-foreground text-sm">Loading postcard…</p>

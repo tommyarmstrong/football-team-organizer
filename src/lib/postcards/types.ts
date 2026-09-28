@@ -63,3 +63,38 @@ export type ScheduledMatchPostcardPayload = MatchPostcardBase & {
 
 export type MatchPostcardPayload =
   PlayedMatchPostcardPayload | ScheduledMatchPostcardPayload;
+
+export type PlayerCardStats = {
+  /** Competitive (non-friendly) matches in the match-day squad: W + D + L. */
+  appearances: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  /** Goals, assists and POTM count every played match, friendlies included. */
+  goals: number;
+  assists: number;
+  /** Times named coach's player of the match. */
+  potm: number;
+};
+
+/**
+ * Everything the player card image needs. `lastName` is only set for adult
+ * teams: cards of children never carry a surname.
+ */
+export type PlayerCardPayload = {
+  playerId: string;
+  teamId: string;
+  clubName: string;
+  clubColour: string | null;
+  clubIconUrl: string | null;
+  teamName: string;
+  ageGroup: string;
+  seasonLabel: string;
+  firstName: string;
+  lastName: string | null;
+  shirtNumber: number | null;
+  positionLabel: string | null;
+  stats: PlayerCardStats;
+  caption: string;
+  fileName: string;
+};
