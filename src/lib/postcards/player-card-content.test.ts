@@ -83,7 +83,7 @@ describe("playerCardCaption", () => {
         "Competitive apps: 14 (W8 D3 L3)",
         "Goals: 9",
         "Assists: 4",
-        "Coach's POTM: 2",
+        "POTM: 2",
       ].join("\n"),
     );
     expect(caption).not.toContain("Hall");
@@ -94,7 +94,7 @@ describe("playerCardCaption", () => {
     expect(caption.split("\n")[0]).toBe("7 Maya Hall · Forward");
   });
 
-  it("omits empty stats and a missing position or shirt number", () => {
+  it("always lists goals, assists, and POTM, even when zero", () => {
     const caption = playerCardCaption({
       ...base,
       shirtNumber: null,
@@ -115,6 +115,9 @@ describe("playerCardCaption", () => {
         "Mill Green · U11 Girls · 2025/26",
         "",
         "Competitive apps: 0 (W0 D0 L0)",
+        "Goals: 0",
+        "Assists: 0",
+        "POTM: 0",
       ].join("\n"),
     );
   });

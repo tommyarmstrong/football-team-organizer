@@ -39,10 +39,6 @@ export function playerCardNames(
   return { firstName, lastName: null };
 }
 
-function countLine(label: string, count: number): string | null {
-  return count > 0 ? `${label}: ${count}` : null;
-}
-
 /** Plain-text caption shared with the image. Same privacy rules as the card. */
 export function playerCardCaption(input: {
   player: { first_name: string; last_name: string };
@@ -69,10 +65,10 @@ export function playerCardCaption(input: {
     .join(" · ");
   const stats = [
     `Competitive apps: ${input.stats.appearances} (W${input.stats.wins} D${input.stats.draws} L${input.stats.losses})`,
-    countLine("Goals", input.stats.goals),
-    countLine("Assists", input.stats.assists),
-    countLine("Coach's POTM", input.stats.potm),
-  ].filter((line): line is string => line !== null);
+    `Goals: ${input.stats.goals}`,
+    `Assists: ${input.stats.assists}`,
+    `POTM: ${input.stats.potm}`,
+  ];
 
   return [head, where, "", ...stats].join("\n");
 }

@@ -283,7 +283,7 @@ export function PlayerCardImage({
     { label: "Draws", value: payload.stats.draws },
     { label: "Losses", value: payload.stats.losses },
   ];
-  const contributions = `Goals ${payload.stats.goals} · Assists ${payload.stats.assists} · Coach’s POTM ${payload.stats.potm}`;
+  const contributions = `Goals ${payload.stats.goals} · Assists ${payload.stats.assists} · POTM ${payload.stats.potm}`;
 
   return (
     <div
