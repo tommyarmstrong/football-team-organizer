@@ -56,7 +56,7 @@ export function CompleteProfileForm({ person }: { person: Person }) {
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Continue"}
       </Button>
     </form>

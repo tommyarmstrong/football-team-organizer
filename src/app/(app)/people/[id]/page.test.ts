@@ -93,7 +93,11 @@ vi.mock("@/components/people/reactivate-person-button", () => ({
   ReactivatePersonButton: () => null,
 }));
 vi.mock("@/components/people/person-admin-panels", () => ({
-  PersonClubRolesSection: () => null,
+  PersonClubRolesSection: function PersonClubRolesSection(
+    props: Record<string, unknown>,
+  ) {
+    return { type: "PersonClubRolesSection", props };
+  },
   PersonInvitationPanel: () => null,
 }));
 vi.mock("@/components/players/player-teams-section", () => ({
@@ -309,6 +313,88 @@ describe("PersonDetailPage guardian relationships", () => {
       availablePlayers: [],
     });
     expect(listPlayersMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("PersonDetailPage reactivated members", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
+    getPlayerTeamsMock.mockResolvedValue({ data: [] });
+    getPlayerGuardiansMock.mockResolvedValue({ data: [] });
+    getGuardianPlayersMock.mockResolvedValue({ data: [] });
+    listPlayerObjectivesMock.mockResolvedValue({ data: [], error: null });
+    listPlayersMock.mockResolvedValue({ data: [] });
+    listGuardiansMock.mockResolvedValue({ data: [] });
+    getCoachMock.mockResolvedValue({ data: null, error: null });
+    getCoachTeamsMock.mockResolvedValue({ data: [] });
+    listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
+  });
+
+  it("lets a manager add roles after a player is reactivated", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPersonMock.mockResolvedValue({
+      data: personWithRolesFixture({
+        id: "person-p",
+        account_status: "none",
+        players: [
+          {
+            id: "player-1",
+            club_id: "club-1",
+            active_role: false,
+            position: null,
+            school: null,
+            date_of_birth: null,
+          },
+        ],
+      }),
+      error: null,
+    });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-p" }),
+    });
+    const sections = findNamed(tree, "PersonClubRolesSection");
+    expect(sections).toHaveLength(1);
+    expect(sections[0]).toMatchObject({ clubId: "club-1" });
+    expect(findNamed(tree, "PlayerTeamsSection")).toHaveLength(0);
+  });
+
+  it("lets a manager add another role to an existing player", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPersonMock.mockResolvedValue({ data: playerPerson, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-p" }),
+    });
+    const sections = findNamed(tree, "PersonClubRolesSection");
+    expect(sections).toHaveLength(1);
+    expect(sections[0]).toMatchObject({
+      clubId: "club-1",
+      person: expect.objectContaining({ id: "person-p" }),
+    });
+  });
+
+  it("hides club-role assignment from someone who is not club management", async () => {
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        userId: "user-g",
+        personId: "person-g",
+        coachTeamIds: [],
+        editableTeamIds: [],
+        managementClubIds: [],
+        isManagement: false,
+        guardianPlayerIds: ["player-1"],
+        guardianIds: ["g-1"],
+        visibleTeams: [teamFixture()],
+      }),
+    );
+    getPersonMock.mockResolvedValue({ data: guardianPerson, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-g" }),
+    });
+    expect(findNamed(tree, "PersonClubRolesSection")).toHaveLength(0);
   });
 });
 

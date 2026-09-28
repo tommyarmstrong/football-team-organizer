@@ -319,10 +319,10 @@ export default async function PersonDetailPage({
         </Section>
       ) : null}
 
-      {canEdit && club && isDisabled ? (
+      {canEdit && club ? (
         <Section
           title="Club roles"
-          description="Assign roles before or after re-activating this previous member."
+          description="Add or deactivate player, coach, guardian, and manager roles. Deactivating keeps historic records linked, and adding a role that was turned off restores that record."
         >
           <PersonClubRolesSection person={person} clubId={club.id} />
         </Section>

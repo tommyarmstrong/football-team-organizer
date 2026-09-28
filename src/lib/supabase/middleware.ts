@@ -16,11 +16,13 @@ import {
 } from "@/lib/clubs/colour-hint";
 
 /**
- * Short-lived cookie that caches the result of `has_app_access` so we skip the
- * Postgres RPC on every request for known-good sessions (§3.1).
+ * Cookie that caches the result of `has_app_access` so we skip the Postgres
+ * RPC on every request for known-good sessions (§3.1). It is what lets a
+ * signed-in user through to the data tables.
  */
 export const FTO_ACCESS_COOKIE = "fto_access";
-const FTO_ACCESS_MAX_AGE = 300; // 5 minutes
+/** 90 minutes. */
+export const FTO_ACCESS_MAX_AGE = 90 * 60;
 
 async function userHasAppAccess(
   supabase: ReturnType<typeof createServerClient<Database>>,
