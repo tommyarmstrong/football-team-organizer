@@ -15,7 +15,7 @@ import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { RankBadge } from "@/components/shared/rank-badge";
-import { InitialsAvatar } from "@/components/shared/initials-avatar";
+import { competitionRanks } from "@/lib/data/stats";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -170,46 +170,54 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the month"
         emptyTitle="No monthly awards yet"
         emptyDescription="Add player of the month awards from the Team page."
-        rows={potMonth.data.map((award, index) => ({
+        rows={potMonth.data.map((award) => ({
           id: award.id,
           personId: award.player.person_id,
           name: playerDisplayName(award.player),
           valueLabel: formatAwardMonth(award.month),
-          rank: index + 1,
         }))}
       />
       <LeaderboardSection
         title="Top scorers"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
-        rows={scorers.data.map((row) => ({
-          id: row.player.id,
-          personId: row.player.person_id,
-          name: playerDisplayName(row.player),
-          valueLabel: formatCountLabel(row.goals, "goal", "goals"),
-        }))}
+        rows={rankedLeaderboardRows(
+          scorers.data.map((row) => ({
+            id: row.player.id,
+            personId: row.player.person_id,
+            name: playerDisplayName(row.player),
+            valueLabel: formatCountLabel(row.goals, "goal", "goals"),
+            metric: row.goals,
+          })),
+        )}
       />
       <LeaderboardSection
         title="Most assists"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
-        rows={assists.data.map((row) => ({
-          id: row.player.id,
-          personId: row.player.person_id,
-          name: playerDisplayName(row.player),
-          valueLabel: formatCountLabel(row.count, "assist", "assists"),
-        }))}
+        rows={rankedLeaderboardRows(
+          assists.data.map((row) => ({
+            id: row.player.id,
+            personId: row.player.person_id,
+            name: playerDisplayName(row.player),
+            valueLabel: formatCountLabel(row.count, "assist", "assists"),
+            metric: row.count,
+          })),
+        )}
       />
       <LeaderboardSection
         title="Player of the match"
         emptyTitle="No awards yet"
-        emptyDescription="Select players of the match on played fixtures."
-        rows={potm.data.map((row) => ({
-          id: row.player.id,
-          personId: row.player.person_id,
-          name: playerDisplayName(row.player),
-          valueLabel: formatCountLabel(row.count, "award", "awards"),
-        }))}
+        emptyDescription="Select the coach's player of the match on played fixtures."
+        rows={rankedLeaderboardRows(
+          potm.data.map((row) => ({
+            id: row.player.id,
+            personId: row.player.person_id,
+            name: playerDisplayName(row.player),
+            valueLabel: formatCountLabel(row.count, "award", "awards"),
+            metric: row.count,
+          })),
+        )}
       />
     </div>
   );
@@ -266,6 +274,25 @@ function FixtureSection({
   );
 }
 
+function rankedLeaderboardRows(
+  rows: Array<{
+    id: string;
+    personId: string;
+    name: string;
+    valueLabel: string;
+    metric: number;
+  }>,
+) {
+  const ranks = competitionRanks(rows.map((row) => row.metric));
+  return rows.map((row, index) => ({
+    id: row.id,
+    personId: row.personId,
+    name: row.name,
+    valueLabel: row.valueLabel,
+    rank: ranks[index]!,
+  }));
+}
+
 function LeaderboardSection({
   title,
   emptyTitle,
@@ -289,15 +316,14 @@ function LeaderboardSection({
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <ol className={objectListClassName}>
-          {rows.map((row, index) => (
+          {rows.map((row) => (
             <li key={row.id}>
               <Link
                 href={`/people/${row.personId}`}
                 className={objectListRowClassName("justify-between")}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <RankBadge rank={row.rank ?? index + 1} />
-                  <InitialsAvatar name={row.name} className="size-8" />
+                  {row.rank != null ? <RankBadge rank={row.rank} /> : null}
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
                 <span className="font-display text-foreground text-lg tabular-nums">

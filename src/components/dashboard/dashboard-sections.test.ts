@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getDashboardDataMock } = vi.hoisted(() => ({
@@ -7,10 +9,8 @@ const { getDashboardDataMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: unknown; href: string }) => ({
-    type: "a",
-    props: { href, children },
-  }),
+  default: ({ children, href }: { children: unknown; href: string }) =>
+    createElement("a", { href }, children),
 }));
 
 vi.mock("@/lib/data/dashboard", () => ({
@@ -75,7 +75,78 @@ describe("DashboardLeaderboards", () => {
     expect(html).not.toContain("7 Maya Hall");
     expect(html).toContain("3 awards");
   });
+
+  it("ranks equal goal counts 1, 1, then 3 and leaves monthly awards unranked", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      next: { data: null, error: null },
+      last: { data: null, error: null },
+      canEditMatch: false,
+      form: { form: [], error: null },
+      competitions: { data: [], error: null },
+      canEditTeam: false,
+      scorers: {
+        data: [
+          playerStat("player-1", "person-1", "Ada", "Ace", 5),
+          playerStat("player-2", "person-2", "Bea", "Best", 5),
+          playerStat("player-3", "person-3", "Cleo", "Cross", 3),
+        ].map((player) => ({ player, goals: player.goals })),
+        error: null,
+      },
+      assists: { data: [], error: null },
+      potm: { data: [], error: null },
+      potMonth: {
+        data: [
+          {
+            id: "award-1",
+            month: "2025-03",
+            player: {
+              id: "player-9",
+              person_id: "person-9",
+              first_name: "Nia",
+              last_name: "North",
+            },
+          },
+        ],
+        error: null,
+      },
+      stats: { resultsOverTime: [], form: [], error: null },
+    });
+
+    const html = renderToStaticMarkup(
+      await DashboardLeaderboards({ teamId: "team-1" }),
+    );
+    expect(rankBadgesInSection(html, "Top scorers")).toEqual(["1", "1", "3"]);
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(html).toContain("March 2025");
+    expect(html).toContain("coach&#x27;s player of the match");
+  });
 });
+
+function playerStat(
+  id: string,
+  personId: string,
+  firstName: string,
+  lastName: string,
+  goals: number,
+) {
+  return {
+    id,
+    person_id: personId,
+    first_name: firstName,
+    last_name: lastName,
+    shirt_number: null,
+    goals,
+  };
+}
+
+function rankBadgesInSection(html: string, title: string): string[] {
+  const start = html.indexOf(`>${title}<`);
+  const next = html.indexOf("<h2", start + 1);
+  const section = html.slice(start, next === -1 ? undefined : next);
+  return [...section.matchAll(/rounded-full[^>]*>(\d+)</g)].map(
+    (match) => match[1] ?? "",
+  );
+}
 
 describe("DashboardSeasonTiles", () => {
   it("omits tiles when getAllTeamStats errors", async () => {
@@ -164,8 +235,8 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain("sm:grid-cols-2");
   });
 
-  it("shows initials on every leaderboard row and a display-font count", () => {
-    expect(source).toContain("InitialsAvatar");
+  it("omits initials on dashboard leaderboard rows and keeps a display-font count", () => {
+    expect(source).not.toContain("InitialsAvatar");
     expect(source).toContain("font-display text-foreground text-lg");
     expect(source).not.toContain("showAvatar={false}");
     expect(source).not.toContain("text-primary text-sm font-semibold");

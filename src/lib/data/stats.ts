@@ -342,6 +342,30 @@ function rankPlayerCounts(
   return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, limit);
 }
 
+/**
+ * Standard competition ranking ("1224") for metrics already sorted descending.
+ * Equal values share the best rank. The next distinct value is
+ * 1 + the number of rows strictly ahead.
+ */
+export function competitionRanks(
+  metricsDescending: readonly number[],
+): number[] {
+  const ranks: number[] = [];
+  for (let index = 0; index < metricsDescending.length; index++) {
+    const previous = ranks[index - 1];
+    if (
+      index > 0 &&
+      metricsDescending[index] === metricsDescending[index - 1] &&
+      previous != null
+    ) {
+      ranks.push(previous);
+    } else {
+      ranks.push(index + 1);
+    }
+  }
+  return ranks;
+}
+
 function bumpPlayerCount(
   counts: Map<string, PlayerStatLeader>,
   player: {
@@ -494,12 +518,12 @@ export async function getTopPlayersOfTheMatch(
     supabase
       .from("matches")
       .select(
-        `player_of_the_match_id, players_player_of_the_match_id,
-         coach_potm:players!matches_player_of_the_match_id_fkey(${PLAYER_NAME_EMBED}),
-         players_potm:players!matches_players_player_of_the_match_id_fkey(${PLAYER_NAME_EMBED})`,
+        `player_of_the_match_id,
+         coach_potm:players!matches_player_of_the_match_id_fkey(${PLAYER_NAME_EMBED})`,
       )
       .eq("team_id", team.id)
-      .eq("status", "played"),
+      .eq("status", "played")
+      .not("player_of_the_match_id", "is", null),
     getShirtByPlayer(team.id),
   ]);
 
@@ -507,14 +531,14 @@ export async function getTopPlayersOfTheMatch(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    for (const key of ["coach_potm", "players_potm"] as const) {
-      const playerRaw = Array.isArray(row[key]) ? row[key][0] : row[key];
-      const player = mapPlayerNameEmbed(
-        playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
-      );
-      if (!player) continue;
-      bumpPlayerCount(counts, player, shirtByPlayer);
-    }
+    const playerRaw = Array.isArray(row.coach_potm)
+      ? row.coach_potm[0]
+      : row.coach_potm;
+    const player = mapPlayerNameEmbed(
+      playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
+    );
+    if (!player) continue;
+    bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
   return { data: rankPlayerCounts(counts, limit), error: null };
