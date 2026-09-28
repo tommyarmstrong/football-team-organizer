@@ -15,6 +15,7 @@ const GOLD = "#F2C94C";
 const INK = "#183B2B";
 const MUTED = "#5E6F64";
 const WHITE = "#FFFFFF";
+const FOOTBALL_EMOJI = "⚽";
 
 const FRAME_INSET = 36;
 const FRAME_BORDER = 10;
@@ -85,16 +86,8 @@ function Silhouette() {
   );
 }
 
-function Crest({
-  crestSrc,
-  clubName,
-  colour,
-}: {
-  crestSrc: string | null;
-  clubName: string;
-  colour: string;
-}) {
-  const initial = (clubName.trim()[0] ?? "F").toUpperCase();
+/** The club crest, or a football emoji when the club has no usable logo. */
+export function Crest({ crestSrc }: { crestSrc: string | null }) {
   return (
     <div
       style={{
@@ -121,9 +114,7 @@ function Crest({
           style={{ width: 96, height: 96, objectFit: "contain" }}
         />
       ) : (
-        <div style={{ fontSize: 64, fontWeight: 700, color: colour }}>
-          {initial}
-        </div>
+        <div style={{ fontSize: 72 }}>{FOOTBALL_EMOJI}</div>
       )}
     </div>
   );
@@ -343,11 +334,7 @@ export function PlayerCardImage({
             }}
           />
           <Silhouette />
-          <Crest
-            crestSrc={crestSrc}
-            clubName={payload.clubName}
-            colour={deep}
-          />
+          <Crest crestSrc={crestSrc} />
           {payload.shirtNumber != null ? (
             <ShirtBadge number={payload.shirtNumber} colour={deep} />
           ) : null}

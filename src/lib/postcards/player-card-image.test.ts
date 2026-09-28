@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { describe, expect, it } from "vitest";
 import {
   bannerNameFontSize,
+  Crest,
   mixColour,
   PLAYER_CARD_HEIGHT,
   PLAYER_CARD_WIDTH,
@@ -154,5 +155,19 @@ describe("PlayerCardImage", { timeout: 30_000 }, () => {
   it("renders with a crest image", async () => {
     const png = await renderCard(basePayload, tinyPng);
     expect(png.subarray(0, 4).equals(PNG_MAGIC)).toBe(true);
+  });
+});
+
+describe("Crest", () => {
+  it("shows the club logo when there is one", () => {
+    const tree = JSON.stringify(Crest({ crestSrc: tinyPng }));
+    expect(tree).toContain(tinyPng);
+    expect(tree).not.toContain("⚽");
+  });
+
+  it("falls back to the football emoji when there is no logo", () => {
+    const tree = JSON.stringify(Crest({ crestSrc: null }));
+    expect(tree).toContain("⚽");
+    expect(tree).not.toContain("<img");
   });
 });
