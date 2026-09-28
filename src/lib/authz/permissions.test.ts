@@ -8,6 +8,7 @@ import {
   canEditPlayer,
   canEditTeam,
   canEditTeamHistory,
+  canGeneratePlayerCard,
   canManageGuardianPlayerLinks,
   isGuardianOfPlayer,
   isSelfPerson,
@@ -466,5 +467,87 @@ describe("viewerRoleLabel", () => {
       viewerRoleLabel(viewer({ memberTeamRoles: { "team-1": ["player"] } })),
     ).toBe("Player");
     expect(viewerRoleLabel(viewer())).toBe("Member");
+  });
+});
+
+describe("canGeneratePlayerCard", () => {
+  const player = { id: "player-1", club_id: "club-1" };
+
+  it("allows a guardian of the player", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({ guardianPlayerIds: ["player-1"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows club managers for any team", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({ managementClubIds: ["club-1"] }),
+        player,
+        "team-9",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows coaches and team managers of that team only", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({ coachTeamIds: ["team-1"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(true);
+    expect(
+      canGeneratePlayerCard(
+        viewer({ managementTeamIds: ["team-1"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(true);
+    expect(
+      canGeneratePlayerCard(
+        viewer({ coachTeamIds: ["team-2"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a guardian of a different player", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({ guardianPlayerIds: ["player-2"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects the player, guardian assistants, and other club members", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({
+          selfPlayerIds: ["player-1"],
+          memberTeamRoles: { "team-1": ["player", "guardian_assistant"] },
+          visibleTeams: [team({ id: "team-1", club_id: "club-1" })],
+        }),
+        player,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects managers of a different club", () => {
+    expect(
+      canGeneratePlayerCard(
+        viewer({ managementClubIds: ["club-2"] }),
+        player,
+        "team-1",
+      ),
+    ).toBe(false);
   });
 });

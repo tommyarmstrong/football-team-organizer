@@ -23,6 +23,7 @@ const {
   getCoachMock,
   getCoachTeamsMock,
   listCoachObjectivesMock,
+  buildPlayerCardPayloadMock,
 } = vi.hoisted(() => ({
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
@@ -42,6 +43,7 @@ const {
   getCoachMock: vi.fn(),
   getCoachTeamsMock: vi.fn(),
   listCoachObjectivesMock: vi.fn(),
+  buildPlayerCardPayloadMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -73,6 +75,9 @@ vi.mock("@/lib/data/coaches", () => ({
 }));
 vi.mock("@/lib/data/coach-objectives", () => ({
   listCoachObjectives: listCoachObjectivesMock,
+}));
+vi.mock("@/lib/postcards/player-card", () => ({
+  buildPlayerCardPayload: buildPlayerCardPayloadMock,
 }));
 vi.mock("@/components/players/player-guardians-section", () => ({
   PlayerGuardiansSection: (props: Record<string, unknown>) => ({
@@ -199,6 +204,7 @@ describe("PersonDetailPage guardian relationships", () => {
     getCoachMock.mockResolvedValue({ data: null, error: null });
     getCoachTeamsMock.mockResolvedValue({ data: [] });
     listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
+    buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("shows an error when the person cannot be loaded", async () => {
@@ -329,6 +335,7 @@ describe("PersonDetailPage reactivated members", () => {
     getCoachMock.mockResolvedValue({ data: null, error: null });
     getCoachTeamsMock.mockResolvedValue({ data: [] });
     listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
+    buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("lets a manager add roles after a player is reactivated", async () => {
@@ -406,5 +413,78 @@ describe("person detail page inline edit", () => {
     );
     expect(source).toContain("EditPersonDialog");
     expect(source).not.toContain("href={`/people/${person.id}/edit`}");
+  });
+});
+
+describe("PersonDetailPage player card", () => {
+  const cardPayload = {
+    playerId: "player-1",
+    teamId: "team-1",
+    firstName: "Ada",
+    teamName: "U12 Blues",
+    caption: "Ada · U12 Blues",
+    fileName: "ada-u12-blues-2025-26-player-card.png",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
+    getPlayerTeamsMock.mockResolvedValue({ data: [{ team_id: "team-1" }] });
+    getPlayerGuardiansMock.mockResolvedValue({ data: [] });
+    getGuardianPlayersMock.mockResolvedValue({ data: [] });
+    listPlayerObjectivesMock.mockResolvedValue({ data: [], error: null });
+    listPlayersMock.mockResolvedValue({ data: [] });
+    listGuardiansMock.mockResolvedValue({ data: [] });
+    getCoachMock.mockResolvedValue({ data: null, error: null });
+    getCoachTeamsMock.mockResolvedValue({ data: [] });
+    listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
+    getPersonMock.mockResolvedValue({ data: playerPerson, error: null });
+  });
+
+  it("offers the player card when the viewer may generate one", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    buildPlayerCardPayloadMock.mockResolvedValue({
+      data: cardPayload,
+      error: null,
+    });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-p" }),
+    });
+
+    expect(buildPlayerCardPayloadMock).toHaveBeenCalledWith("player-1", {
+      personId: "person-p",
+    });
+    const buttons = findNamed(tree, "SharePostcardButton");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toMatchObject({
+      imageUrl: "/people/person-p/player-card?player=player-1&team=team-1",
+      caption: "Ada · U12 Blues",
+      fileName: cardPayload.fileName,
+      buttonLabel: "Share player card",
+    });
+  });
+
+  it("hides the player card when the viewer may not generate one", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-p" }),
+    });
+
+    expect(findNamed(tree, "SharePostcardButton")).toHaveLength(0);
+  });
+
+  it("does not build a player card for people who are not players", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPersonMock.mockResolvedValue({ data: guardianPerson, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-g" }),
+    });
+
+    expect(buildPlayerCardPayloadMock).not.toHaveBeenCalled();
+    expect(findNamed(tree, "SharePostcardButton")).toHaveLength(0);
   });
 });
