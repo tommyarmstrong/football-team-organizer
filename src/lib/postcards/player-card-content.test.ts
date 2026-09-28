@@ -62,7 +62,15 @@ describe("playerCardCaption", () => {
     teamName: "U11 Girls",
     seasonLabel: "2025/26",
     positionLabel: "Forward",
-    stats: { appearances: 14, goals: 9, assists: 4, potm: 2 },
+    stats: {
+      appearances: 14,
+      wins: 8,
+      draws: 3,
+      losses: 3,
+      goals: 9,
+      assists: 4,
+      potm: 2,
+    },
   };
 
   it("uses first name and shirt number with no surname on youth teams", () => {
@@ -72,7 +80,7 @@ describe("playerCardCaption", () => {
         "Maya 7 · Forward",
         "Mill Green · U11 Girls · 2025/26",
         "",
-        "Appearances: 14",
+        "Competitive apps: 14 (W8 D3 L3)",
         "Goals: 9",
         "Assists: 4",
         "Coach's POTM: 2",
@@ -91,12 +99,23 @@ describe("playerCardCaption", () => {
       ...base,
       shirtNumber: null,
       positionLabel: null,
-      stats: { appearances: 0, goals: 0, assists: 0, potm: 0 },
+      stats: {
+        appearances: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goals: 0,
+        assists: 0,
+        potm: 0,
+      },
     });
     expect(caption).toBe(
-      ["Maya", "Mill Green · U11 Girls · 2025/26", "", "Appearances: 0"].join(
-        "\n",
-      ),
+      [
+        "Maya",
+        "Mill Green · U11 Girls · 2025/26",
+        "",
+        "Competitive apps: 0 (W0 D0 L0)",
+      ].join("\n"),
     );
   });
 

@@ -7,6 +7,7 @@ const {
   getPlayerTeamsMock,
   getClubMock,
   getAllTeamStatsMock,
+  getPlayerCompetitiveRecordMock,
   getActiveTeamMock,
 } = vi.hoisted(() => ({
   getViewerContextMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   getPlayerTeamsMock: vi.fn(),
   getClubMock: vi.fn(),
   getAllTeamStatsMock: vi.fn(),
+  getPlayerCompetitiveRecordMock: vi.fn(),
   getActiveTeamMock: vi.fn(),
 }));
 
@@ -26,7 +28,10 @@ vi.mock("@/lib/data/players", () => ({
   getPlayerTeams: getPlayerTeamsMock,
 }));
 vi.mock("@/lib/data/clubs", () => ({ getClub: getClubMock }));
-vi.mock("@/lib/data/stats", () => ({ getAllTeamStats: getAllTeamStatsMock }));
+vi.mock("@/lib/data/stats", () => ({
+  getAllTeamStats: getAllTeamStatsMock,
+  getPlayerCompetitiveRecord: getPlayerCompetitiveRecordMock,
+}));
 vi.mock("@/lib/data/team", () => ({ getActiveTeam: getActiveTeamMock }));
 
 import { buildPlayerCardPayload } from "@/lib/postcards/player-card";
@@ -93,6 +98,10 @@ describe("buildPlayerCardPayload", () => {
       error: null,
     });
     getAllTeamStatsMock.mockResolvedValue(stats);
+    getPlayerCompetitiveRecordMock.mockResolvedValue({
+      data: { wins: 8, draws: 3, losses: 3 },
+      error: null,
+    });
     getActiveTeamMock.mockResolvedValue(null);
   });
 
@@ -101,6 +110,10 @@ describe("buildPlayerCardPayload", () => {
 
     expect(error).toBeNull();
     expect(getAllTeamStatsMock).toHaveBeenCalledWith("team-1");
+    expect(getPlayerCompetitiveRecordMock).toHaveBeenCalledWith(
+      "team-1",
+      "player-1",
+    );
     expect(data).toMatchObject({
       playerId: "player-1",
       teamId: "team-1",
@@ -114,7 +127,15 @@ describe("buildPlayerCardPayload", () => {
       lastName: null,
       shirtNumber: 7,
       positionLabel: "Forward",
-      stats: { appearances: 14, goals: 9, assists: 4, potm: 2 },
+      stats: {
+        appearances: 14,
+        wins: 8,
+        draws: 3,
+        losses: 3,
+        goals: 9,
+        assists: 4,
+        potm: 2,
+      },
       fileName: "maya-u12-blues-2025-26-player-card.png",
     });
     expect(data?.caption).toContain("Maya 7 · Forward");
@@ -129,9 +150,16 @@ describe("buildPlayerCardPayload", () => {
       potmByPlayer: [],
       matchesPlayed: [],
     });
+    getPlayerCompetitiveRecordMock.mockResolvedValue({
+      data: { wins: 0, draws: 0, losses: 0 },
+      error: null,
+    });
     const { data } = await buildPlayerCardPayload("player-1");
     expect(data?.stats).toEqual({
       appearances: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
       goals: 0,
       assists: 0,
       potm: 0,
@@ -365,6 +393,16 @@ describe("buildPlayerCardPayload", () => {
     expect(await buildPlayerCardPayload("player-1")).toEqual({
       data: null,
       error: "stats failed",
+    });
+
+    getAllTeamStatsMock.mockResolvedValue(stats);
+    getPlayerCompetitiveRecordMock.mockResolvedValue({
+      data: { wins: 0, draws: 0, losses: 0 },
+      error: "record failed",
+    });
+    expect(await buildPlayerCardPayload("player-1")).toEqual({
+      data: null,
+      error: "record failed",
     });
   });
 });
