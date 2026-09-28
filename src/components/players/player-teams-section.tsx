@@ -9,6 +9,7 @@ import {
   removePlayerFromTeamAction,
   updateRosterEntryAction,
 } from "@/lib/players/actions";
+import { teamAssignmentOptionLabel } from "@/lib/format";
 import { setActiveTeamAction } from "@/lib/team/actions";
 import type { Team } from "@/lib/supabase/database.types";
 import type { PlayerTeamMembership } from "@/lib/data/players";
@@ -35,7 +36,7 @@ export function PlayerTeamsSection({
 }: {
   playerId: string;
   memberships: PlayerTeamMembership[];
-  availableTeams: Pick<Team, "id" | "name">[];
+  availableTeams: Pick<Team, "id" | "name" | "season_label">[];
   canEdit: boolean;
 }) {
   return (
@@ -249,7 +250,7 @@ function AddToTeamForm({
   availableTeams,
 }: {
   playerId: string;
-  availableTeams: Pick<Team, "id" | "name">[];
+  availableTeams: Pick<Team, "id" | "name" | "season_label">[];
 }) {
   const bound = addPlayerToTeamAction.bind(null, playerId);
   const [state, formAction, pending] = useToastActionState(
@@ -282,7 +283,7 @@ function AddToTeamForm({
           emptyMessage="No teams match that name."
           options={availableTeams.map((team) => ({
             value: team.id,
-            label: team.name,
+            label: teamAssignmentOptionLabel(team),
           }))}
         />
       </div>

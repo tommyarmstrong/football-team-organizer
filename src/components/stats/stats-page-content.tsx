@@ -8,11 +8,14 @@ import type {
   ResultOverTimePoint,
 } from "@/lib/data/stats";
 import {
-  ALL_COMPETITION_KINDS,
   ALL_COMPETITIONS,
+  ALL_LEAGUE_AND_CUP,
   type CompetitionFilterOption,
 } from "@/lib/stats/competition-filters";
-import { filterPlayerCountPoints } from "@/lib/stats/player-counts";
+import {
+  filterPlayerCountPoints,
+  withPlayedAppearanceCounts,
+} from "@/lib/stats/player-counts";
 import {
   filterResults,
   tallyGoals,
@@ -149,7 +152,7 @@ export function StatsPageContent({
   competitions: CompetitionFilterOption[];
 }) {
   const [competitionId, setCompetitionId] = useState(ALL_COMPETITIONS);
-  const [competitionKind, setCompetitionKind] = useState(ALL_COMPETITION_KINDS);
+  const [competitionKind, setCompetitionKind] = useState(ALL_LEAGUE_AND_CUP);
 
   const filteredResults = useMemo(
     () => filterResults(results, competitionId, competitionKind),
@@ -168,6 +171,14 @@ export function StatsPageContent({
     () =>
       filterPlayerCountPoints(matchesPlayed, competitionId, competitionKind),
     [competitionId, competitionKind, matchesPlayed],
+  );
+  const goalsForView = useMemo(
+    () => withPlayedAppearanceCounts(goalsByPlayer, filteredAppearances),
+    [filteredAppearances, goalsByPlayer],
+  );
+  const assistsForView = useMemo(
+    () => withPlayedAppearanceCounts(filteredAssists, filteredAppearances),
+    [filteredAppearances, filteredAssists],
   );
 
   const resultTally = tallyResults(filteredResults);
@@ -250,7 +261,7 @@ export function StatsPageContent({
       />
 
       <GoalsSection
-        data={goalsByPlayer}
+        data={goalsForView}
         competitionId={competitionId}
         competitionKind={competitionKind}
       />
@@ -261,7 +272,7 @@ export function StatsPageContent({
         emptyDescription="Add assists on match detail pages to populate this chart."
         emptyFilterTitle="No assists for this filter"
         data={assistsByPlayer}
-        filtered={filteredAssists}
+        filtered={assistsForView}
         metricLabel="Assists"
         perGameLabel="Assists per game"
         ariaTitle="assists"

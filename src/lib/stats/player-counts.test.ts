@@ -5,7 +5,10 @@ import {
   ALL_COMPETITIONS,
   FRIENDLY_MATCHES,
 } from "@/lib/stats/competition-filters";
-import { filterPlayerCountPoints } from "@/lib/stats/player-counts";
+import {
+  filterPlayerCountPoints,
+  withPlayedAppearanceCounts,
+} from "@/lib/stats/player-counts";
 
 const data: PlayerCountPoint[] = [
   {
@@ -27,6 +30,30 @@ const data: PlayerCountPoint[] = [
     ],
   },
 ];
+
+describe("withPlayedAppearanceCounts", () => {
+  it("uses played squad appearances as the per-game denominator", () => {
+    const rows = withPlayedAppearanceCounts(
+      [
+        { playerId: "1", matchesPlayed: 9 },
+        { playerId: "2", matchesPlayed: 4 },
+      ],
+      [
+        {
+          playerId: "1",
+          name: "Ada",
+          count: 3,
+          events: [],
+        },
+      ],
+    );
+
+    expect(rows).toEqual([
+      { playerId: "1", matchesPlayed: 3 },
+      { playerId: "2", matchesPlayed: 0 },
+    ]);
+  });
+});
 
 describe("filterPlayerCountPoints", () => {
   it("returns the original rows when no filter is set", () => {
