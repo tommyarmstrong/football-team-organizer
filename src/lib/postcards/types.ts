@@ -65,7 +65,12 @@ export type MatchPostcardPayload =
   PlayedMatchPostcardPayload | ScheduledMatchPostcardPayload;
 
 export type PlayerCardStats = {
+  /** Competitive (non-friendly) matches in the match-day squad: W + D + L. */
   appearances: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  /** Goals, assists and POTM count every played match, friendlies included. */
   goals: number;
   assists: number;
   /** Times named coach's player of the match. */

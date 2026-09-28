@@ -68,7 +68,7 @@ export function playerCardCaption(input: {
     .filter(Boolean)
     .join(" · ");
   const stats = [
-    `Appearances: ${input.stats.appearances}`,
+    `Competitive apps: ${input.stats.appearances} (W${input.stats.wins} D${input.stats.draws} L${input.stats.losses})`,
     countLine("Goals", input.stats.goals),
     countLine("Assists", input.stats.assists),
     countLine("Coach's POTM", input.stats.potm),
