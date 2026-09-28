@@ -23,6 +23,7 @@ import {
   getRecentForm,
   getFormThroughMatch,
   getResultsOverTime,
+  competitionRanks,
   getTopAssists,
   getTopPlayersOfTheMatch,
   getTopScorers,
@@ -86,7 +87,83 @@ describe("stats data", () => {
         team_players: okResult([{ player_id: "player-1", shirt_number: 7 }]),
       }),
     );
-    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(2);
+    const potm = await getTopPlayersOfTheMatch();
+    expect(potm.data).toHaveLength(1);
+    expect(potm.data[0]?.count).toBe(1);
+    expect(potm.data[0]?.player.id).toBe("player-1");
+  });
+
+  it("ignores players-only player of the match and ties coach awards", async () => {
+    const peers = {
+      id: "player-2",
+      person_id: "person-2",
+      person: { first_name: "Pat", last_name: "Peers" },
+    };
+    const third = {
+      id: "player-3",
+      person_id: "person-3",
+      person: { first_name: "Cleo", last_name: "Cross" },
+    };
+    const fourth = {
+      id: "player-4",
+      person_id: "person-4",
+      person: { first_name: "Dee", last_name: "Drew" },
+    };
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            player_of_the_match_id: "player-1",
+            players_player_of_the_match_id: "player-2",
+            coach_potm: namedPlayer,
+            players_potm: peers,
+          },
+          {
+            player_of_the_match_id: "player-1",
+            players_player_of_the_match_id: null,
+            coach_potm: namedPlayer,
+            players_potm: null,
+          },
+          {
+            player_of_the_match_id: "player-3",
+            players_player_of_the_match_id: "player-2",
+            coach_potm: third,
+            players_potm: peers,
+          },
+          {
+            player_of_the_match_id: "player-3",
+            players_player_of_the_match_id: null,
+            coach_potm: third,
+            players_potm: null,
+          },
+          {
+            player_of_the_match_id: "player-4",
+            players_player_of_the_match_id: "player-2",
+            coach_potm: fourth,
+            players_potm: peers,
+          },
+          {
+            player_of_the_match_id: null,
+            players_player_of_the_match_id: "player-2",
+            coach_potm: null,
+            players_potm: peers,
+          },
+        ]),
+        team_players: okResult([]),
+      }),
+    );
+
+    const potm = await getTopPlayersOfTheMatch();
+    expect(potm.data.map((row) => [row.player.id, row.count])).toEqual([
+      ["player-1", 2],
+      ["player-3", 2],
+      ["player-4", 1],
+    ]);
+    expect(competitionRanks(potm.data.map((row) => row.count))).toEqual([
+      1, 1, 3,
+    ]);
+
+    expect(competitionRanks([5, 5, 3, 3, 1])).toEqual([1, 1, 3, 3, 5]);
   });
 
   it("builds goals / assists / potm / matches-played series", async () => {
@@ -266,13 +343,23 @@ describe("stats data", () => {
         matches: okResult([
           {
             coach_potm: null,
-            players_potm: [namedPlayer],
+            players_potm: {
+              id: "player-2",
+              person_id: "person-2",
+              person: { first_name: "Pat", last_name: "Peers" },
+            },
+          },
+          {
+            coach_potm: [namedPlayer],
+            players_potm: namedPlayer,
           },
         ]),
         team_players: okResult([]),
       }),
     );
-    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(1);
+    const potm = await getTopPlayersOfTheMatch();
+    expect(potm.data.map((row) => row.player.id)).toEqual(["player-1"]);
+    expect(potm.data[0]?.count).toBe(1);
   });
 
   it("maps remaining stats query errors", async () => {
