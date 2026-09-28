@@ -288,65 +288,65 @@ function LinkPlayerForm({
     <form
       key={state.success ?? "idle"}
       action={formAction}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      className="space-y-3"
     >
-      <div className="min-w-0 flex-1 space-y-2">
-        <Label htmlFor="guardian-player">Player</Label>
-        <SearchableSelect
-          id="guardian-player"
-          name="player_id"
-          required
-          disabled={pending}
-          placeholder="Search players by name…"
-          emptyMessage="No players match that name."
-          options={availablePlayers.map((player) => ({
-            value: player.id,
-            label: playerDisplayName(player),
-          }))}
-        />
-      </div>
-      <div className="space-y-2 sm:w-40">
-        <Label htmlFor="guardian-relationship">Relationship</Label>
-        <NativeSelect
-          id="guardian-relationship"
-          name="relationship"
-          required
-          disabled={pending}
-          defaultValue="guardian"
-        >
-          {GUARDIAN_RELATIONSHIPS.map((value) => (
-            <option key={value} value={value}>
-              {GUARDIAN_RELATIONSHIP_LABELS[value]}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
-      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
-        <input
-          type="checkbox"
-          name="legal_guardian"
-          disabled={pending}
-          className="border-input size-4 rounded"
-        />
-        Legal guardian
-      </label>
-      <label className="flex min-h-9 items-center gap-2 text-sm sm:pb-1">
-        <input
-          type="checkbox"
-          name="emergency_contact"
-          disabled={pending}
-          className="border-input size-4 rounded"
-        />
-        Emergency contact
-      </label>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Linking…" : "Add"}
-      </Button>
-      {state.error ? (
-        <div className="w-full sm:basis-full">
-          <ErrorBanner message={state.error} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="min-w-0 space-y-2">
+          <Label htmlFor="guardian-player">Player</Label>
+          <SearchableSelect
+            id="guardian-player"
+            name="player_id"
+            required
+            disabled={pending}
+            placeholder="Search players by name…"
+            emptyMessage="No players match that name."
+            options={availablePlayers.map((player) => ({
+              value: player.id,
+              label: playerDisplayName(player),
+            }))}
+          />
         </div>
-      ) : null}
+        <div className="min-w-0 space-y-2">
+          <Label htmlFor="guardian-relationship">Relationship</Label>
+          <NativeSelect
+            id="guardian-relationship"
+            name="relationship"
+            required
+            disabled={pending}
+            defaultValue="guardian"
+          >
+            {GUARDIAN_RELATIONSHIPS.map((value) => (
+              <option key={value} value={value}>
+                {GUARDIAN_RELATIONSHIP_LABELS[value]}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="flex min-h-9 items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="legal_guardian"
+            disabled={pending}
+            className="border-input size-4 rounded"
+          />
+          Legal guardian
+        </label>
+        <label className="flex min-h-9 items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="emergency_contact"
+            disabled={pending}
+            className="border-input size-4 rounded"
+          />
+          Emergency contact
+        </label>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Linking…" : "Add"}
+        </Button>
+      </div>
+      {state.error ? <ErrorBanner message={state.error} /> : null}
     </form>
   );
 }
