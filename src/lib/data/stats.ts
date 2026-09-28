@@ -798,9 +798,10 @@ export async function getMatchesPlayedByPlayerStats(): Promise<{
   const { data, error } = await supabase
     .from("match_players")
     .select(
-      `player_id, player:players!match_players_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, competition_id, is_friendly, competition:competitions(id, kind))`,
+      `player_id, player:players!match_players_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status, competition_id, is_friendly, competition:competitions(id, kind))`,
     )
-    .eq("match.team_id", team.id);
+    .eq("match.team_id", team.id)
+    .eq("match.status", "played");
 
   if (error) return { data: [], error: error.message };
 

@@ -89,7 +89,7 @@ export default async function EditPersonPage({
           <CardTitle>Name and details</CardTitle>
           <CardDescription>
             {showPlayerDobSchool && showPlayerPosition
-              ? "Shared person-level details, plus player DOB, position, and school."
+              ? "Shared person-level details, plus player DOB, playing position, and school."
               : showPlayerDobSchool
                 ? "Name, contact details, date of birth, and school."
                 : "Name, email, and phone number."}

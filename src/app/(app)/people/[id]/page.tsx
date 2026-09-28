@@ -357,7 +357,7 @@ export default async function PersonDetailPage({
       ) : null}
 
       {coach ? (
-        <Section title="Teams" description="This coach's teams">
+        <Section title="Coach teams" description="This coach's teams">
           <CoachTeamsSection
             coachId={coach.id}
             memberships={coachTeams}

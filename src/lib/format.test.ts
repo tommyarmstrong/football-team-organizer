@@ -43,6 +43,7 @@ import {
   playerDisplayName,
   resultLetter,
   scoreFromGoals,
+  teamAssignmentOptionLabel,
   teamDisplayName,
 } from "@/lib/format";
 
@@ -653,6 +654,17 @@ describe("formatMatchTitle", () => {
     expect(
       formatMatchTitle("England", "West Germany", "neutral", "played", 1, 1),
     ).toBe("England 1-1 West Germany");
+  });
+});
+
+describe("teamAssignmentOptionLabel", () => {
+  it("joins the team name and season", () => {
+    expect(
+      teamAssignmentOptionLabel({
+        name: "England Women",
+        season_label: "2024/26",
+      }),
+    ).toBe("England Women - 2024/26");
   });
 });
 
