@@ -81,7 +81,9 @@ describe("bannerNameFontSize", () => {
   });
 });
 
-describe("PlayerCardImage", () => {
+// The first Satori render loads fonts and WASM, which can exceed the default
+// 5s timeout when the whole suite runs in parallel.
+describe("PlayerCardImage", { timeout: 30_000 }, () => {
   const cases: Array<[string, PlayerCardPayload]> = [
     ["a youth player", basePayload],
     [
