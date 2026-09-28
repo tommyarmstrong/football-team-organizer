@@ -4,6 +4,19 @@ import {
   hasCompetitionFilter,
 } from "@/lib/stats/competition-filters";
 
+/** Per-game rates use played match-day squad appearances for the active filter. */
+export function withPlayedAppearanceCounts<
+  T extends { playerId: string; matchesPlayed?: number },
+>(rows: T[], appearances: PlayerCountPoint[]): T[] {
+  const counts = new Map(
+    appearances.map((row) => [row.playerId, row.count] as const),
+  );
+  return rows.map((row) => ({
+    ...row,
+    matchesPlayed: counts.get(row.playerId) ?? 0,
+  }));
+}
+
 export function filterPlayerCountPoints(
   data: PlayerCountPoint[],
   selectedCompetitionId: string,

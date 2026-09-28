@@ -59,7 +59,7 @@ export function PlayerForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="position">
-            Position <OptionalHint />
+            Playing position <OptionalHint />
           </Label>
           <NativeSelect
             id="position"

@@ -8,6 +8,12 @@ const source = readFileSync(
 );
 
 describe("StatsPageContent", () => {
+  it("defaults competition type to all league and cup", () => {
+    expect(source).toContain("ALL_LEAGUE_AND_CUP");
+    expect(source).toContain("useState(ALL_LEAGUE_AND_CUP)");
+    expect(source).toContain("withPlayedAppearanceCounts");
+  });
+
   it("shows season tiles under the filters using the filtered results", () => {
     const filtersIndex = source.indexOf("<StatsCompetitionFilters");
     const tilesIndex = source.indexOf(

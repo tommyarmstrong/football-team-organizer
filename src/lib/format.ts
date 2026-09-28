@@ -411,6 +411,14 @@ export function teamDisplayName(team: {
   return display || team.name;
 }
 
+/** Label for assigning a player or coach to a team, e.g. "England Women - 2024/26". */
+export function teamAssignmentOptionLabel(team: {
+  name: string;
+  season_label: string;
+}): string {
+  return `${team.name} - ${team.season_label}`;
+}
+
 /** Club, gender, age group, and season for the team page header. */
 export function formatTeamHeaderSummary({
   clubName,

@@ -84,7 +84,7 @@ export function SearchableSelect({
 
         <Combobox.Portal>
           <Combobox.Positioner className="outline-none" sideOffset={4}>
-            <Combobox.Popup className="bg-popover text-popover-foreground ring-foreground/10 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-(--anchor-width) max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
+            <Combobox.Popup className="bg-popover text-popover-foreground ring-foreground/10 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-max max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
               <Combobox.Empty className="text-muted-foreground px-3 py-4 text-sm">
                 {emptyMessage}
               </Combobox.Empty>
@@ -95,7 +95,7 @@ export function SearchableSelect({
                     value={item}
                     className="data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50"
                   >
-                    <span className="min-w-0 flex-1 truncate">
+                    <span className="min-w-0 flex-1 whitespace-normal">
                       {item.label}
                     </span>
                     <Combobox.ItemIndicator className="absolute right-2 flex size-4 items-center justify-center">
