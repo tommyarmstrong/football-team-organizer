@@ -15,13 +15,14 @@ const GOLD = "#F2C94C";
 const INK = "#183B2B";
 const MUTED = "#5E6F64";
 const WHITE = "#FFFFFF";
+const FOOTBALL_EMOJI = "⚽";
 
 const FRAME_INSET = 36;
 const FRAME_BORDER = 10;
 const FRAME_INNER_WIDTH =
   PLAYER_CARD_WIDTH - FRAME_INSET * 2 - FRAME_BORDER * 2;
-const PHOTO_HEIGHT = 690;
-const BANNER_HEIGHT = 216;
+const PHOTO_HEIGHT = 570;
+const BANNER_HEIGHT = 310;
 
 function channel(hex: string, index: number): number {
   return Number.parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16);
@@ -62,8 +63,8 @@ function ellipsisStyle(extra?: CSSProperties): CSSProperties {
  * head-and-shoulders silhouette.
  */
 function Silhouette() {
-  const width = 620;
-  const height = 640;
+  const width = 540;
+  const height = 558;
   return (
     <svg
       width={width}
@@ -85,16 +86,8 @@ function Silhouette() {
   );
 }
 
-function Crest({
-  crestSrc,
-  clubName,
-  colour,
-}: {
-  crestSrc: string | null;
-  clubName: string;
-  colour: string;
-}) {
-  const initial = (clubName.trim()[0] ?? "F").toUpperCase();
+/** The club crest, or a football emoji when the club has no usable logo. */
+export function Crest({ crestSrc }: { crestSrc: string | null }) {
   return (
     <div
       style={{
@@ -121,9 +114,7 @@ function Crest({
           style={{ width: 96, height: 96, objectFit: "contain" }}
         />
       ) : (
-        <div style={{ fontSize: 64, fontWeight: 700, color: colour }}>
-          {initial}
-        </div>
+        <div style={{ fontSize: 72 }}>{FOOTBALL_EMOJI}</div>
       )}
     </div>
   );
@@ -166,6 +157,7 @@ function Banner({
     <div
       style={{
         height: BANNER_HEIGHT,
+        flexShrink: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -278,10 +270,11 @@ export function PlayerCardImage({
   const light = mixColour(base, "#FFFFFF", 0.38);
   const stats = [
     { label: "Apps", value: payload.stats.appearances },
-    { label: "Goals", value: payload.stats.goals },
-    { label: "Assists", value: payload.stats.assists },
-    { label: "POTM", value: payload.stats.potm },
+    { label: "Wins", value: payload.stats.wins },
+    { label: "Draws", value: payload.stats.draws },
+    { label: "Losses", value: payload.stats.losses },
   ];
+  const contributions = `Goals ${payload.stats.goals} · Assists ${payload.stats.assists} · POTM ${payload.stats.potm}`;
 
   return (
     <div
@@ -309,6 +302,7 @@ export function PlayerCardImage({
         <div
           style={{
             height: PHOTO_HEIGHT,
+            flexShrink: 0,
             display: "flex",
             position: "relative",
             overflow: "hidden",
@@ -340,11 +334,7 @@ export function PlayerCardImage({
             }}
           />
           <Silhouette />
-          <Crest
-            crestSrc={crestSrc}
-            clubName={payload.clubName}
-            colour={deep}
-          />
+          <Crest crestSrc={crestSrc} />
           {payload.shirtNumber != null ? (
             <ShirtBadge number={payload.shirtNumber} colour={deep} />
           ) : null}
@@ -374,11 +364,11 @@ export function PlayerCardImage({
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            padding: "28px 32px 30px",
+            padding: "24px 32px 26px",
             backgroundColor: CREAM,
           }}
         >
-          <div style={{ display: "flex", marginBottom: 26 }}>
+          <div style={{ display: "flex", marginBottom: 22 }}>
             {stats.map((stat, index) => (
               <StatBox
                 key={stat.label}
@@ -415,6 +405,16 @@ export function PlayerCardImage({
               })}
             >
               {`${payload.teamName} · ${payload.seasonLabel}`}
+            </div>
+            <div
+              style={ellipsisStyle({
+                fontSize: 30,
+                color: MUTED,
+                marginTop: 6,
+                maxWidth: 920,
+              })}
+            >
+              {contributions}
             </div>
           </div>
         </div>

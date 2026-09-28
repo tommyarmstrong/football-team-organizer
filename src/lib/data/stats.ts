@@ -985,3 +985,42 @@ export async function getFormThroughMatch(
 
   return { form: [...prior, thisResult].slice(-limit), error: null };
 }
+
+export type PlayerRecord = { wins: number; draws: number; losses: number };
+
+/**
+ * Wins / draws / losses in the played, non-friendly matches a player was in
+ * the match-day squad for. Results come from the goals (`scoreFromGoals`), the
+ * same as the match page.
+ */
+export async function getPlayerCompetitiveRecord(
+  teamId: string,
+  playerId: string,
+): Promise<{ data: PlayerRecord; error: string | null }> {
+  const record: PlayerRecord = { wins: 0, draws: 0, losses: 0 };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("match_players")
+    .select(
+      "match:matches!inner(team_id, status, is_friendly, goals(is_opposition))",
+    )
+    .eq("player_id", playerId)
+    .eq("match.team_id", teamId)
+    .eq("match.status", "played")
+    .eq("match.is_friendly", false);
+
+  if (error) return { data: record, error: error.message };
+
+  for (const row of data ?? []) {
+    const match = Array.isArray(row.match) ? row.match[0] : row.match;
+    if (!match) continue;
+    const { goalsFor, goalsAgainst } = scoreFromGoals(
+      Array.isArray(match.goals) ? match.goals : [],
+    );
+    const letter = resultLetter(goalsFor, goalsAgainst);
+    if (letter === "W") record.wins += 1;
+    else if (letter === "D") record.draws += 1;
+    else if (letter === "L") record.losses += 1;
+  }
+  return { data: record, error: null };
+}

@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { describe, expect, it } from "vitest";
 import {
   bannerNameFontSize,
+  Crest,
   mixColour,
   PLAYER_CARD_HEIGHT,
   PLAYER_CARD_WIDTH,
@@ -25,7 +26,15 @@ const basePayload: PlayerCardPayload = {
   lastName: null,
   shirtNumber: 7,
   positionLabel: "Forward",
-  stats: { appearances: 14, goals: 9, assists: 4, potm: 2 },
+  stats: {
+    appearances: 14,
+    wins: 8,
+    draws: 3,
+    losses: 3,
+    goals: 9,
+    assists: 4,
+    potm: 2,
+  },
   caption: "Maya 7",
   fileName: "maya-u11-girls-2025-26-player-card.png",
 };
@@ -73,7 +82,9 @@ describe("bannerNameFontSize", () => {
   });
 });
 
-describe("PlayerCardImage", () => {
+// The first Satori render loads fonts and WASM, which can exceed the default
+// 5s timeout when the whole suite runs in parallel.
+describe("PlayerCardImage", { timeout: 30_000 }, () => {
   const cases: Array<[string, PlayerCardPayload]> = [
     ["a youth player", basePayload],
     [
@@ -95,7 +106,15 @@ describe("PlayerCardImage", () => {
         clubColour: null,
         shirtNumber: null,
         positionLabel: null,
-        stats: { appearances: 0, goals: 0, assists: 0, potm: 0 },
+        stats: {
+          appearances: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goals: 0,
+          assists: 0,
+          potm: 0,
+        },
       },
     ],
     ["a three digit shirt number", { ...basePayload, shirtNumber: 100 }],
@@ -115,7 +134,15 @@ describe("PlayerCardImage", () => {
       "large stats",
       {
         ...basePayload,
-        stats: { appearances: 120, goals: 87, assists: 45, potm: 12 },
+        stats: {
+          appearances: 120,
+          wins: 80,
+          draws: 20,
+          losses: 20,
+          goals: 87,
+          assists: 45,
+          potm: 12,
+        },
       },
     ],
   ];
@@ -128,5 +155,19 @@ describe("PlayerCardImage", () => {
   it("renders with a crest image", async () => {
     const png = await renderCard(basePayload, tinyPng);
     expect(png.subarray(0, 4).equals(PNG_MAGIC)).toBe(true);
+  });
+});
+
+describe("Crest", () => {
+  it("shows the club logo when there is one", () => {
+    const tree = JSON.stringify(Crest({ crestSrc: tinyPng }));
+    expect(tree).toContain(tinyPng);
+    expect(tree).not.toContain("⚽");
+  });
+
+  it("falls back to the football emoji when there is no logo", () => {
+    const tree = JSON.stringify(Crest({ crestSrc: null }));
+    expect(tree).toContain("⚽");
+    expect(tree).not.toContain("<img");
   });
 });

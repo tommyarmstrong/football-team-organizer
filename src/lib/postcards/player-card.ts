@@ -4,7 +4,7 @@ import { canGeneratePlayerCard, getViewerContext } from "@/lib/authz/context";
 import { isValidClubColour } from "@/lib/clubs/branding";
 import { getClub } from "@/lib/data/clubs";
 import { getPlayer, getPlayerTeams } from "@/lib/data/players";
-import { getAllTeamStats } from "@/lib/data/stats";
+import { getAllTeamStats, getPlayerCompetitiveRecord } from "@/lib/data/stats";
 import { getActiveTeam } from "@/lib/data/team";
 import { teamDisplayName } from "@/lib/format";
 import {
@@ -63,11 +63,14 @@ export async function buildPlayerCardPayload(
   });
   if (!team) return { data: null, error: null };
 
-  const [clubResult, stats] = await Promise.all([
+  const [clubResult, stats, recordResult] = await Promise.all([
     getClub(team.club_id),
     getAllTeamStats(team.id),
+    getPlayerCompetitiveRecord(team.id, playerId),
   ]);
   if (stats.error) return { data: null, error: stats.error };
+  if (recordResult.error) return { data: null, error: recordResult.error };
+  const { wins, draws, losses } = recordResult.data;
 
   const club = clubResult.data;
   const shirtNumber =
@@ -76,8 +79,10 @@ export async function buildPlayerCardPayload(
   const teamName = teamDisplayName(team);
   const positionLabel = playerPositionLabel(player.position);
   const cardStats = {
-    appearances:
-      stats.matchesPlayed.find((row) => row.playerId === playerId)?.count ?? 0,
+    appearances: wins + draws + losses,
+    wins,
+    draws,
+    losses,
     goals:
       stats.goalsByPlayer.find((row) => row.playerId === playerId)?.goals ?? 0,
     assists:

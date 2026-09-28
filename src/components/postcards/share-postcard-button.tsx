@@ -138,7 +138,10 @@ export function SharePostcardButton({
       </button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogContent
+          className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md"
+          showCloseButton
+        >
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -151,7 +154,7 @@ export function SharePostcardButton({
             <img
               src={blobUrl}
               alt={previewAlt}
-              className="border-border h-auto w-full rounded-lg border"
+              className="border-border mx-auto h-auto max-h-[50dvh] w-auto max-w-full rounded-lg border object-contain"
             />
           ) : loadError ? null : (
             <p className="text-muted-foreground text-sm">Loading postcard…</p>
