@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -10,6 +10,7 @@ import {
   COMPETITION_GENDERS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_KINDS,
+  MATCH_HOME_AWAYS,
   COMPETITION_PERIODS,
   COMPETITION_PERIOD_LABELS,
   COMPETITION_RESULTS,
@@ -25,8 +26,12 @@ import {
   createCompetitionAndReturnAction,
   saveCompetitionAndReturnAction,
 } from "@/lib/team/actions";
-import { labelCompetitionKind } from "@/lib/format";
-import type { Competition, Venue } from "@/lib/supabase/database.types";
+import { labelCompetitionKind, labelHomeAway } from "@/lib/format";
+import type {
+  Competition,
+  CompetitionKind,
+  Venue,
+} from "@/lib/supabase/database.types";
 import { Input } from "@/components/ui/input";
 import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -85,6 +90,9 @@ export function CompetitionForm({
     if (state.success) onSuccess?.();
   }, [state.success, onSuccess]);
 
+  const [kind, setKind] = useState<CompetitionKind>(
+    competition?.kind ?? "league",
+  );
   const formId = "competition-details-form";
   const title = mode === "create" ? "New competition" : "Competition details";
   const description =
@@ -135,7 +143,8 @@ export function CompetitionForm({
           <NativeSelect
             id="kind"
             name="kind"
-            defaultValue={competition?.kind ?? "league"}
+            value={kind}
+            onChange={(event) => setKind(event.target.value as CompetitionKind)}
             disabled={pending}
           >
             {COMPETITION_KINDS.map((kind) => (
@@ -171,6 +180,53 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
+        {kind === "tournament" ? (
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="date">
+                Date <OptionalHint />
+              </Label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                defaultValue={competition?.date ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="meetup_time">
+                Meet-up <OptionalHint />
+              </Label>
+              <Input
+                id="meetup_time"
+                name="meetup_time"
+                type="time"
+                defaultValue={competition?.meetup_time?.slice(0, 5) ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="home_away">Home / away</Label>
+              <NativeSelect
+                id="home_away"
+                name="home_away"
+                defaultValue={competition?.home_away ?? "neutral"}
+                disabled={pending}
+              >
+                {MATCH_HOME_AWAYS.map((value) => (
+                  <option key={value} value={value}>
+                    {labelHomeAway(value)}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <p className="text-muted-foreground text-sm sm:col-span-3">
+              These are copied onto each match in this tournament, along with
+              the venue and periods.
+            </p>
+          </div>
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="format">Format</Label>
           <NativeSelect

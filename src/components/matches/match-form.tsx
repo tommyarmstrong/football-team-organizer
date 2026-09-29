@@ -7,8 +7,10 @@ import {
   COMPETITION_PERIODS,
   COMPETITION_PERIOD_LABELS,
   DEFAULT_MATCH_PERIODS,
+  DEFAULT_MATCH_STAGE,
   FRIENDLY_COMPETITION_VALUE,
   MATCH_HOME_AWAYS,
+  MATCH_STAGES,
   MATCH_STATUSES,
   matchAllowsEvents,
 } from "@/lib/constants";
@@ -21,13 +23,21 @@ import {
 import {
   competitionDisplayName,
   labelHomeAway,
+  labelMatchStage,
   labelMatchStatus,
   playerDisplayName,
 } from "@/lib/format";
+import {
+  applyTournamentMatchFields,
+  competitionHasMatchStage,
+  competitionIsTournament,
+} from "@/lib/matches/tournament-defaults";
 import type {
   Competition,
   CompetitionPeriods,
   Match,
+  MatchHomeAway,
+  MatchStage,
   MatchStatus,
   Venue,
 } from "@/lib/supabase/database.types";
@@ -90,19 +100,73 @@ export function MatchForm({
       ? FRIENDLY_COMPETITION_VALUE
       : (match?.competition_id ?? ""),
   );
+  const initialCompetition = competitions.find(
+    (competition) => competition.id === competitionId,
+  );
+  const initialSchedule = applyTournamentMatchFields(
+    {
+      date: match?.date ?? "",
+      meetup_time: match?.meetup_time ?? null,
+      home_away: match?.home_away ?? "home",
+      venue_id: match?.venue_id ?? null,
+      periods: initialCompetition?.periods ?? DEFAULT_MATCH_PERIODS,
+    },
+    initialCompetition ?? null,
+  );
+  const [date, setDate] = useState(initialSchedule.date);
+  const [meetupTime, setMeetupTime] = useState(
+    initialSchedule.meetup_time?.slice(0, 5) ?? "",
+  );
+  const [homeAway, setHomeAway] = useState<MatchHomeAway>(
+    initialSchedule.home_away,
+  );
+  const [venueId, setVenueId] = useState(initialSchedule.venue_id ?? "");
   const [periods, setPeriods] = useState<CompetitionPeriods>(
-    DEFAULT_MATCH_PERIODS,
+    initialSchedule.periods,
+  );
+  const [stage, setStage] = useState<MatchStage>(
+    match?.stage ?? DEFAULT_MATCH_STAGE,
   );
   const showEvents = matchAllowsEvents(status);
+  const selectedCompetition =
+    competitions.find((competition) => competition.id === competitionId) ??
+    null;
+  const tournament = competitionIsTournament(selectedCompetition?.kind)
+    ? selectedCompetition
+    : null;
+  const showStage = competitionHasMatchStage(selectedCompetition?.kind);
+  const dateLocked = Boolean(tournament?.date);
+  const meetupLocked = Boolean(tournament?.meetup_time);
+  const homeAwayLocked = Boolean(tournament?.home_away);
+  const venueLocked =
+    tournament?.venue_mode === "venue" || tournament?.venue_mode === "unknown";
+  const periodsLocked = Boolean(tournament);
 
   function handleCompetitionChange(nextId: string) {
     setCompetitionId(nextId);
-    if (!nextId || nextId === FRIENDLY_COMPETITION_VALUE) {
-      setPeriods(DEFAULT_MATCH_PERIODS);
+    const competition =
+      nextId && nextId !== FRIENDLY_COMPETITION_VALUE
+        ? competitions.find((item) => item.id === nextId)
+        : undefined;
+    if (!competition || !competitionIsTournament(competition.kind)) {
+      setPeriods(competition?.periods ?? DEFAULT_MATCH_PERIODS);
       return;
     }
-    const competition = competitions.find((c) => c.id === nextId);
-    setPeriods(competition?.periods ?? DEFAULT_MATCH_PERIODS);
+    const applied = applyTournamentMatchFields(
+      {
+        date,
+        meetup_time: meetupTime || null,
+        home_away: homeAway,
+        venue_id: venueId || null,
+        periods: competition.periods,
+      },
+      competition,
+    );
+    setDate(applied.date);
+    setMeetupTime(applied.meetup_time?.slice(0, 5) ?? "");
+    setHomeAway(applied.home_away);
+    setVenueId(applied.venue_id ?? "");
+    setPeriods(applied.periods);
   }
 
   return (
@@ -132,7 +196,9 @@ export function MatchForm({
               type="date"
               required
               aria-required="true"
-              defaultValue={match?.date}
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              readOnly={dateLocked}
               disabled={pending}
             />
           </div>
@@ -157,7 +223,9 @@ export function MatchForm({
                 id="meetup_time"
                 name="meetup_time"
                 type="time"
-                defaultValue={match?.meetup_time?.slice(0, 5) ?? ""}
+                value={meetupTime}
+                onChange={(event) => setMeetupTime(event.target.value)}
+                readOnly={meetupLocked}
                 disabled={pending}
               />
             </div>
@@ -165,12 +233,18 @@ export function MatchForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="home_away">Home / away</Label>
+          {homeAwayLocked ? (
+            <input type="hidden" name="home_away" value={homeAway} />
+          ) : null}
           <NativeSelect
             id="home_away"
-            name="home_away"
-            required
-            defaultValue={match?.home_away ?? "home"}
-            disabled={pending}
+            name={homeAwayLocked ? undefined : "home_away"}
+            required={!homeAwayLocked}
+            value={homeAway}
+            onChange={(event) =>
+              setHomeAway(event.target.value as MatchHomeAway)
+            }
+            disabled={pending || homeAwayLocked}
           >
             {MATCH_HOME_AWAYS.map((value) => (
               <option key={value} value={value}>
@@ -183,11 +257,15 @@ export function MatchForm({
           <Label htmlFor="venue_id">
             Venue <OptionalHint />
           </Label>
+          {venueLocked ? (
+            <input type="hidden" name="venue_id" value={venueId} />
+          ) : null}
           <NativeSelect
             id="venue_id"
-            name="venue_id"
-            defaultValue={match?.venue_id ?? ""}
-            disabled={pending}
+            name={venueLocked ? undefined : "venue_id"}
+            value={venueId}
+            onChange={(event) => setVenueId(event.target.value)}
+            disabled={pending || venueLocked}
           >
             <option value="">Unknown</option>
             {venues.map((venue) => (
@@ -217,16 +295,44 @@ export function MatchForm({
             ))}
           </NativeSelect>
         </div>
+        {tournament ? (
+          <p className="text-muted-foreground text-sm sm:col-span-2">
+            Date, meet-up, home/away, venue, and periods are filled from this
+            tournament when the tournament has them.
+          </p>
+        ) : null}
+
+        {showStage ? (
+          <div className="space-y-2">
+            <Label htmlFor="stage">Stage</Label>
+            <NativeSelect
+              id="stage"
+              name="stage"
+              value={stage}
+              onChange={(event) => setStage(event.target.value as MatchStage)}
+              disabled={pending}
+            >
+              {MATCH_STAGES.map((value) => (
+                <option key={value} value={value}>
+                  {labelMatchStage(value)}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+        ) : null}
 
         {mode === "create" ? (
           <div className="space-y-2">
             <Label htmlFor="periods">Periods</Label>
+            {periodsLocked ? (
+              <input type="hidden" name="periods" value={periods} />
+            ) : null}
             <NativeSelect
               id="periods"
-              name="periods"
+              name={periodsLocked ? undefined : "periods"}
               value={periods}
               onChange={(e) => setPeriods(e.target.value as CompetitionPeriods)}
-              disabled={pending}
+              disabled={pending || periodsLocked}
             >
               {COMPETITION_PERIODS.map((value) => (
                 <option key={value} value={value}>

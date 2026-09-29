@@ -8,6 +8,7 @@ import type {
   CompetitionPeriods,
   CompetitionResult,
   MatchHomeAway,
+  MatchStage,
   MatchStatus,
   PlayerObjectiveStatus,
   PlayerObjectiveType,
@@ -208,6 +209,24 @@ export const STATS_FORM_LIMIT = 8;
 export const DEFAULT_COMPETITION_RESULT: CompetitionResult = "ongoing";
 
 export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
+
+export const MATCH_STAGES: MatchStage[] = [
+  "group",
+  "quarter_final",
+  "semi_final",
+  "final",
+  "knockout",
+];
+
+export const MATCH_STAGE_LABELS: Record<MatchStage, string> = {
+  group: "Group",
+  quarter_final: "Quarter-final",
+  semi_final: "Semi-final",
+  final: "Final",
+  knockout: "Knockout",
+};
+
+export const DEFAULT_MATCH_STAGE: MatchStage = "group";
 
 export const VENUE_SURFACES: VenueSurface[] = [
   "astro",

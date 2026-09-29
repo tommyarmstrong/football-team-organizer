@@ -32,6 +32,7 @@ import {
   str as formStr,
 } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
+import { tournamentScheduleFromForm } from "@/lib/matches/tournament-defaults";
 import { isValidSeasonLabel, SEASON_FORMAT_HINT } from "@/lib/team/season";
 import {
   AGE_GROUPS,
@@ -528,6 +529,14 @@ function parseCompetitionUpdate(
   const venue = parseCompetitionVenue(formData);
   if ("error" in venue) return venue;
 
+  const schedule = tournamentScheduleFromForm({
+    kind,
+    date: str(formData, "date"),
+    meetupTime: str(formData, "meetup_time"),
+    homeAway: str(formData, "home_away"),
+  });
+  if ("error" in schedule) return schedule;
+
   return {
     name,
     display_name: str(formData, "display_name") || null,
@@ -544,6 +553,9 @@ function parseCompetitionUpdate(
     result,
     venue_mode: venue.venue_mode,
     venue_id: venue.venue_id,
+    date: schedule.date,
+    meetup_time: schedule.meetup_time,
+    home_away: schedule.home_away,
   };
 }
 

@@ -7,6 +7,7 @@ import {
   COMPETITION_PERIOD_LABELS,
   COMPETITION_RESULT_LABELS,
   GOAL_KIND_LABELS,
+  MATCH_STAGE_LABELS,
   MATCH_STATUS_LABELS,
   OPPOSITION_GOAL_LABEL,
   OWN_GOAL_LABEL,
@@ -28,6 +29,7 @@ import type {
   CompetitionPeriods,
   CompetitionResult,
   MatchHomeAway,
+  MatchStage,
   MatchStatus,
   PlayerObjectiveStatus,
   PlayerObjectiveType,
@@ -137,11 +139,15 @@ export function competitionDisplayName(competition: {
 /** Competition line for a fixture: friendlies show as "Friendly". */
 export function matchCompetitionLabel(match: {
   is_friendly?: boolean;
+  stage?: MatchStage | null;
   competition?: { name: string; display_name?: string | null } | null;
 }): string | null {
   if (match.is_friendly) return "Friendly";
   if (!match.competition) return null;
-  return competitionDisplayName(match.competition) || null;
+  const name = competitionDisplayName(match.competition);
+  if (!name) return null;
+  if (!match.stage) return name;
+  return `${name} · ${labelMatchStage(match.stage)}`;
 }
 
 /**
@@ -290,6 +296,11 @@ export function labelGender(gender: TeamGender): string {
 
 export function labelHomeAway(homeAway: MatchHomeAway): string {
   return homeAway.charAt(0).toUpperCase() + homeAway.slice(1);
+}
+
+export function labelMatchStage(stage: MatchStage | null | undefined): string {
+  if (!stage) return "—";
+  return MATCH_STAGE_LABELS[stage];
 }
 
 /** Away: opposition first; home / neutral / unknown: our team first. */

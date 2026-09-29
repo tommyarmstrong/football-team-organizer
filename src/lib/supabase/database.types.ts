@@ -723,6 +723,9 @@ export type Database = {
           team_id: string;
           venue_id: string | null;
           venue_mode: string;
+          date: string | null;
+          meetup_time: string | null;
+          home_away: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Insert: {
           age_group?: string | null;
@@ -743,6 +746,9 @@ export type Database = {
           team_id: string;
           venue_id?: string | null;
           venue_mode?: string;
+          date?: string | null;
+          meetup_time?: string | null;
+          home_away?: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Update: {
           age_group?: string | null;
@@ -763,6 +769,9 @@ export type Database = {
           team_id?: string;
           venue_id?: string | null;
           venue_mode?: string;
+          date?: string | null;
+          meetup_time?: string | null;
+          home_away?: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Relationships: [
           {
@@ -841,6 +850,7 @@ export type Database = {
           player_of_the_match_id: string | null;
           players_player_of_the_match_id: string | null;
           status: Database["public"]["Enums"]["match_status"];
+          stage: Database["public"]["Enums"]["match_stage"] | null;
           team_id: string;
           updated_at: string;
           home_away: Database["public"]["Enums"]["match_home_away"];
@@ -860,6 +870,7 @@ export type Database = {
           player_of_the_match_id?: string | null;
           players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
+          stage?: Database["public"]["Enums"]["match_stage"] | null;
           team_id: string;
           updated_at?: string;
           home_away: Database["public"]["Enums"]["match_home_away"];
@@ -879,6 +890,7 @@ export type Database = {
           player_of_the_match_id?: string | null;
           players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
+          stage?: Database["public"]["Enums"]["match_stage"] | null;
           team_id?: string;
           updated_at?: string;
           home_away?: Database["public"]["Enums"]["match_home_away"];
@@ -1344,6 +1356,8 @@ export type Database = {
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";
+      match_stage:
+        "group" | "final" | "semi_final" | "quarter_final" | "knockout";
       team_gender: "boys" | "girls" | "men" | "women" | "mixed";
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
       venue_surface:
@@ -1432,6 +1446,7 @@ export type CompetitionGender = Enums<"competition_gender">;
 export type CompetitionPeriods = Enums<"competition_periods">;
 export type CompetitionResult = Enums<"competition_result">;
 export type MatchHomeAway = Enums<"match_home_away">;
+export type MatchStage = Enums<"match_stage">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;
 export type VenueSurface = Enums<"venue_surface">;

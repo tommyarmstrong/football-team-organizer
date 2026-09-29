@@ -56,6 +56,7 @@ describe("normalizeMatchRow", () => {
       kickoff_time: "10:00:00",
       meetup_time: "09:30:00",
       home_away: "home",
+      stage: null,
       venue_id: "v1",
       competition_id: "c1",
       is_friendly: false,

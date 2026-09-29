@@ -340,6 +340,7 @@ export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
     kickoff_time: row.kickoff_time,
     meetup_time: row.meetup_time,
     home_away: row.home_away,
+    stage: row.stage ?? null,
     venue_id: row.venue_id,
     competition_id: row.competition_id,
     is_friendly: row.is_friendly,
