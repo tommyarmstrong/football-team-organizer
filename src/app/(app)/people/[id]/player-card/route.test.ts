@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { buildPlayerCardPayloadMock, crestDataUrlMock, renderedBodyMock } =
-  vi.hoisted(() => ({
-    buildPlayerCardPayloadMock: vi.fn(),
-    crestDataUrlMock: vi.fn(),
-    renderedBodyMock: vi.fn<() => BodyInit>(() => "png-bytes"),
-  }));
+const {
+  buildPlayerCardPayloadMock,
+  crestDataUrlMock,
+  photoDataUrlMock,
+  renderedBodyMock,
+} = vi.hoisted(() => ({
+  buildPlayerCardPayloadMock: vi.fn(),
+  crestDataUrlMock: vi.fn(),
+  photoDataUrlMock: vi.fn(),
+  renderedBodyMock: vi.fn<() => BodyInit>(() => "png-bytes"),
+}));
 
 vi.mock("@/lib/postcards/player-card", () => ({
   buildPlayerCardPayload: buildPlayerCardPayloadMock,
@@ -13,6 +18,10 @@ vi.mock("@/lib/postcards/player-card", () => ({
 
 vi.mock("@/lib/postcards/crest", () => ({
   crestDataUrl: crestDataUrlMock,
+}));
+
+vi.mock("@/lib/postcards/player-photo", () => ({
+  playerPhotoPlaceholderDataUrl: photoDataUrlMock,
 }));
 
 vi.mock("@/lib/postcards/player-card-image", () => ({
@@ -50,6 +59,7 @@ describe("GET /people/[id]/player-card", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     crestDataUrlMock.mockResolvedValue("data:image/png;base64,AAAA");
+    photoDataUrlMock.mockResolvedValue("data:image/jpeg;base64,BBBB");
   });
 
   it("returns 404 without a player parameter", async () => {
@@ -85,6 +95,16 @@ describe("GET /people/[id]/player-card", () => {
       "https://cdn.example/crest.png",
       "http://localhost",
     );
+    expect(photoDataUrlMock).toHaveBeenCalledWith();
+  });
+
+  it("still renders when the placeholder artwork cannot load", async () => {
+    buildPlayerCardPayloadMock.mockResolvedValue({
+      data: payload,
+      error: null,
+    });
+    photoDataUrlMock.mockResolvedValue(null);
+    expect((await call()).status).toBe(200);
   });
 
   it("lets the builder choose the team when none is requested", async () => {

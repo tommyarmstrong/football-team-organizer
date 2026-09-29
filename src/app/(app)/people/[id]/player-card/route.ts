@@ -7,6 +7,7 @@ import {
   PLAYER_CARD_WIDTH,
   PlayerCardImage,
 } from "@/lib/postcards/player-card-image";
+import { playerPhotoPlaceholderDataUrl } from "@/lib/postcards/player-photo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,13 +38,16 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  const crestSrc = await crestDataUrl(data.clubIconUrl, url.origin);
+  const [crestSrc, photoSrc] = await Promise.all([
+    crestDataUrl(data.clubIconUrl, url.origin),
+    playerPhotoPlaceholderDataUrl(),
+  ]);
 
   try {
     // Satori renders lazily as the body streams, so a layout error would reach
     // the client as a dropped connection. Buffer it to fail as a plain 500.
     const png = await new ImageResponse(
-      createElement(PlayerCardImage, { payload: data, crestSrc }),
+      createElement(PlayerCardImage, { payload: data, crestSrc, photoSrc }),
       { width: PLAYER_CARD_WIDTH, height: PLAYER_CARD_HEIGHT },
     ).arrayBuffer();
 
