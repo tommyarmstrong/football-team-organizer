@@ -20,6 +20,7 @@ const {
   listMatchPlayersMock,
   listRosterForTeamMock,
   createPeriodsWithStartersMock,
+  getCompetitionMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -35,6 +36,7 @@ const {
   listMatchPlayersMock: vi.fn(),
   listRosterForTeamMock: vi.fn(),
   createPeriodsWithStartersMock: vi.fn(),
+  getCompetitionMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -59,6 +61,9 @@ vi.mock("@/lib/data/players", () => ({
 }));
 vi.mock("@/lib/data/match-periods", () => ({
   createPeriodsWithStarters: createPeriodsWithStartersMock,
+}));
+vi.mock("@/lib/data/competitions", () => ({
+  getCompetition: getCompetitionMock,
 }));
 
 import {
@@ -92,6 +97,7 @@ describe("createMatchAction", () => {
     listMatchPlayersMock.mockResolvedValue({ data: [], error: null });
     listRosterForTeamMock.mockResolvedValue({ data: [], error: null });
     createPeriodsWithStartersMock.mockResolvedValue({ error: null });
+    getCompetitionMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("requires opponent and date", async () => {
@@ -188,8 +194,108 @@ describe("createMatchAction", () => {
       expect.objectContaining({
         kickoff_time: "10:00",
         meetup_time: "09:30",
+        stage: null,
       }),
     );
+  });
+
+  it("copies tournament details onto the match and keeps the chosen stage", async () => {
+    getCompetitionMock.mockResolvedValue({
+      data: {
+        id: "comp-t",
+        kind: "tournament",
+        date: "2026-06-01",
+        meetup_time: "09:00",
+        home_away: "neutral",
+        venue_mode: "venue",
+        venue_id: "venue-1",
+        periods: "1",
+      },
+      error: null,
+    });
+    listVenuesMock.mockResolvedValue({
+      data: [{ id: "venue-1" }],
+      error: null,
+    });
+    createMatchMock.mockResolvedValue({
+      data: plainMatchFixture({ id: "match-new" }),
+      error: null,
+    });
+
+    await expect(
+      createMatchAction(
+        {},
+        validCreateForm({
+          competition_id: "comp-t",
+          date: "2026-05-01",
+          meetup_time: "08:00",
+          home_away: "home",
+          venue_id: "venue-other",
+          periods: "4",
+          stage: "final",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/matches/match-new");
+
+    expect(createMatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        date: "2026-06-01",
+        meetup_time: "09:00",
+        home_away: "neutral",
+        venue_id: "venue-1",
+        competition_id: "comp-t",
+        is_friendly: false,
+        stage: "final",
+      }),
+    );
+    expect(createPeriodsWithStartersMock).toHaveBeenCalledWith(
+      "match-new",
+      ["Single period match"],
+      [],
+    );
+  });
+
+  it("defaults a cup match to the group stage", async () => {
+    getCompetitionMock.mockResolvedValue({
+      data: { id: "comp-cup", kind: "cup", periods: "2" },
+      error: null,
+    });
+    createMatchMock.mockResolvedValue({
+      data: plainMatchFixture({ id: "match-new" }),
+      error: null,
+    });
+
+    await expect(
+      createMatchAction({}, validCreateForm({ competition_id: "comp-cup" })),
+    ).rejects.toThrow("redirect:/matches/match-new");
+
+    expect(createMatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        competition_id: "comp-cup",
+        date: "2025-09-01",
+        stage: "group",
+      }),
+    );
+  });
+
+  it("rejects an invalid stage and an unknown competition", async () => {
+    getCompetitionMock.mockResolvedValue({
+      data: { id: "comp-cup", kind: "cup", periods: "2" },
+      error: null,
+    });
+    const invalidStage = await createMatchAction(
+      {},
+      validCreateForm({ competition_id: "comp-cup", stage: "bronze" }),
+    );
+    expect(invalidStage.error).toMatch(/stage/i);
+
+    getCompetitionMock.mockResolvedValue({ data: null, error: null });
+    const missing = await createMatchAction(
+      {},
+      validCreateForm({ competition_id: "missing" }),
+    );
+    expect(missing.error).toMatch(/competition/i);
+    expect(createMatchMock).not.toHaveBeenCalled();
   });
 });
 
@@ -346,6 +452,7 @@ describe("updateMatchAction", () => {
     });
     listVenuesMock.mockResolvedValue({ data: [], error: null });
     updateMatchMock.mockResolvedValue({ data: {}, error: null });
+    getCompetitionMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("returns not found when the match is missing", async () => {
@@ -418,6 +525,48 @@ describe("updateMatchAction", () => {
       "match-1",
       expect.objectContaining({
         meetup_time: null,
+        stage: null,
+      }),
+    );
+  });
+
+  it("applies tournament details when the match competition changes", async () => {
+    getCompetitionMock.mockResolvedValue({
+      data: {
+        id: "comp-t",
+        kind: "tournament",
+        date: "2026-06-01",
+        meetup_time: "09:15",
+        home_away: "away",
+        venue_mode: "unknown",
+        venue_id: null,
+        periods: "1",
+      },
+      error: null,
+    });
+
+    await expect(
+      updateMatchAction(
+        "match-1",
+        {},
+        validCreateForm({
+          status: "scheduled",
+          competition_id: "comp-t",
+          date: "2026-05-01",
+          venue_id: "venue-1",
+          stage: "semi_final",
+        }),
+      ),
+    ).rejects.toThrow("redirect:/matches/match-1");
+
+    expect(updateMatchMock).toHaveBeenCalledWith(
+      "match-1",
+      expect.objectContaining({
+        date: "2026-06-01",
+        meetup_time: "09:15",
+        home_away: "away",
+        venue_id: null,
+        stage: "semi_final",
       }),
     );
   });

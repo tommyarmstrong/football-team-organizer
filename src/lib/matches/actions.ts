@@ -27,19 +27,25 @@ import { listMatchPlayers } from "@/lib/data/match-players";
 import { createPeriodsWithStarters } from "@/lib/data/match-periods";
 import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
+import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
+import {
+  applyTournamentMatchFields,
+  resolveMatchStage,
+} from "@/lib/matches/tournament-defaults";
 import type {
+  Competition,
   CompetitionPeriods,
   MatchHomeAway,
   MatchStatus,
 } from "@/lib/supabase/database.types";
 
 async function parseVenueId(
-  formData: FormData,
+  venueId: string | null,
   clubId: string,
 ): Promise<{ venue_id: string | null } | { error: string }> {
-  const venue_id = str(formData, "venue_id") || null;
+  const venue_id = venueId;
   if (!venue_id) return { venue_id: null };
 
   const { data: venues, error } = await listVenues(clubId);
@@ -64,14 +70,30 @@ async function defaultStarterPlayerIds(
   return roster.map((player) => player.id);
 }
 
-async function createMatchRecord(
+type ParsedMatchFields = {
+  opponent_name: string;
+  date: string;
+  kickoff_time: string | null;
+  meetup_time: string | null;
+  home_away: MatchHomeAway;
+  status: MatchStatus;
+  competition_id: string | null;
+  is_friendly: boolean;
+  notes: string | null;
+  club_notes: string | null;
+  periods: CompetitionPeriods;
+  stageRaw: string;
+  venue_id: string | null;
+};
+
+function parseMatchFields(
   formData: FormData,
-): Promise<{ error: string } | { id: string }> {
+): ParsedMatchFields | { error: string } {
   const opponent_name = str(formData, "opponent_name");
   const date = str(formData, "date");
   const kickoff_time = str(formData, "kickoff_time") || null;
   const meetup_time = str(formData, "meetup_time") || null;
-  const home_away = str(formData, "home_away") as MatchHomeAway;
+  const homeAwayRaw = str(formData, "home_away");
   const status = (str(formData, "status") || "scheduled") as MatchStatus;
   const competitionRaw = str(formData, "competition_id");
   const is_friendly = competitionRaw === FRIENDLY_COMPETITION_VALUE;
@@ -83,15 +105,48 @@ async function createMatchRecord(
     ? periodsRaw
     : DEFAULT_MATCH_PERIODS;
 
-  if (!opponent_name || !date) {
+  if (!opponent_name) {
     return { error: "Opponent and date are required." };
   }
-  if (!MATCH_HOME_AWAYS.includes(home_away)) {
+  if (homeAwayRaw && !MATCH_HOME_AWAYS.includes(homeAwayRaw as MatchHomeAway)) {
     return { error: "Invalid home/away value." };
   }
   if (!MATCH_STATUSES.includes(status)) {
     return { error: "Invalid status." };
   }
+
+  return {
+    opponent_name,
+    date,
+    kickoff_time,
+    meetup_time,
+    home_away: (homeAwayRaw || "home") as MatchHomeAway,
+    status,
+    competition_id,
+    is_friendly,
+    notes,
+    club_notes,
+    periods,
+    stageRaw: str(formData, "stage"),
+    venue_id: str(formData, "venue_id") || null,
+  };
+}
+
+async function loadMatchCompetition(
+  competitionId: string | null,
+): Promise<{ competition: Competition | null } | { error: string }> {
+  if (!competitionId) return { competition: null };
+  const { data, error } = await getCompetition(competitionId);
+  if (error) return { error };
+  if (!data) return { error: "Invalid competition." };
+  return { competition: data };
+}
+
+async function createMatchRecord(
+  formData: FormData,
+): Promise<{ error: string } | { id: string }> {
+  const parsed = parseMatchFields(formData);
+  if ("error" in parsed) return parsed;
 
   const [team, ctx] = await Promise.all([getActiveTeam(), getViewerContext()]);
   if (!team) return { error: "No team selected." };
@@ -99,21 +154,31 @@ async function createMatchRecord(
     return { error: "You do not have permission to add fixtures." };
   }
 
-  const venueResult = await parseVenueId(formData, team.club_id);
+  const loaded = await loadMatchCompetition(parsed.competition_id);
+  if ("error" in loaded) return loaded;
+  const stage = resolveMatchStage(parsed.stageRaw, loaded.competition?.kind);
+  if ("error" in stage) return stage;
+  const scheduled = applyTournamentMatchFields(parsed, loaded.competition);
+  if (!scheduled.date) {
+    return { error: "Opponent and date are required." };
+  }
+
+  const venueResult = await parseVenueId(scheduled.venue_id, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
   const { data, error } = await createMatch({
-    opponent_name,
-    date,
-    kickoff_time,
-    meetup_time,
-    home_away,
+    opponent_name: scheduled.opponent_name,
+    date: scheduled.date,
+    kickoff_time: scheduled.kickoff_time,
+    meetup_time: scheduled.meetup_time,
+    home_away: scheduled.home_away,
     venue_id: venueResult.venue_id,
-    competition_id,
-    is_friendly,
-    notes,
-    club_notes,
-    status,
+    competition_id: scheduled.competition_id,
+    is_friendly: scheduled.is_friendly,
+    notes: scheduled.notes,
+    club_notes: scheduled.club_notes,
+    status: scheduled.status,
+    stage: stage.stage,
     player_of_the_match_id: null,
     players_player_of_the_match_id: null,
   });
@@ -121,7 +186,7 @@ async function createMatchRecord(
   if (error) return { error };
   if (!data) return { error: "Could not create match." };
 
-  const periodNames = periodNamesForCompetitionPeriods(periods);
+  const periodNames = periodNamesForCompetitionPeriods(scheduled.periods);
   if (periodNames.length > 0) {
     const starterIds = await defaultStarterPlayerIds(data.id, team.id);
     const { error: periodsError } = await createPeriodsWithStarters(
@@ -161,31 +226,13 @@ export async function updateMatchOnPageAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const opponent_name = str(formData, "opponent_name");
-  const date = str(formData, "date");
-  const kickoff_time = str(formData, "kickoff_time") || null;
-  const meetup_time = str(formData, "meetup_time") || null;
-  const home_away = str(formData, "home_away") as MatchHomeAway;
-  const status = str(formData, "status") as MatchStatus;
-  const competitionRaw = str(formData, "competition_id");
-  const is_friendly = competitionRaw === FRIENDLY_COMPETITION_VALUE;
-  const competition_id = !competitionRaw || is_friendly ? null : competitionRaw;
+  const parsed = parseMatchFields(formData);
+  if ("error" in parsed) return parsed;
+
   const player_of_the_match_id =
     str(formData, "player_of_the_match_id") || null;
   const players_player_of_the_match_id =
     str(formData, "players_player_of_the_match_id") || null;
-  const notes = str(formData, "notes") || null;
-  const club_notes = str(formData, "club_notes") || null;
-
-  if (!opponent_name || !date) {
-    return { error: "Opponent and date are required." };
-  }
-  if (!MATCH_HOME_AWAYS.includes(home_away)) {
-    return { error: "Invalid home/away value." };
-  }
-  if (!MATCH_STATUSES.includes(status)) {
-    return { error: "Invalid status." };
-  }
 
   const [team, ctx, existing] = await Promise.all([
     getActiveTeam(),
@@ -199,24 +246,34 @@ export async function updateMatchOnPageAction(
     return { error: "You do not have permission to edit this match." };
   }
 
-  const venueResult = await parseVenueId(formData, team.club_id);
+  const loaded = await loadMatchCompetition(parsed.competition_id);
+  if ("error" in loaded) return loaded;
+  const stage = resolveMatchStage(parsed.stageRaw, loaded.competition?.kind);
+  if ("error" in stage) return stage;
+  const scheduled = applyTournamentMatchFields(parsed, loaded.competition);
+  if (!scheduled.date) {
+    return { error: "Opponent and date are required." };
+  }
+
+  const venueResult = await parseVenueId(scheduled.venue_id, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
-  const allowsEvents = matchAllowsEvents(status);
+  const allowsEvents = matchAllowsEvents(scheduled.status);
   const canEditPotm = canEditTeam(ctx, existing.data.team_id);
 
   const { error } = await updateMatch(id, {
-    opponent_name,
-    date,
-    kickoff_time,
-    meetup_time,
-    home_away,
+    opponent_name: scheduled.opponent_name,
+    date: scheduled.date,
+    kickoff_time: scheduled.kickoff_time,
+    meetup_time: scheduled.meetup_time,
+    home_away: scheduled.home_away,
     venue_id: venueResult.venue_id,
-    status,
-    competition_id,
-    is_friendly,
-    notes,
-    club_notes,
+    status: scheduled.status,
+    competition_id: scheduled.competition_id,
+    is_friendly: scheduled.is_friendly,
+    notes: scheduled.notes,
+    club_notes: scheduled.club_notes,
+    stage: stage.stage,
     ...(canEditPotm
       ? {
           player_of_the_match_id: allowsEvents ? player_of_the_match_id : null,

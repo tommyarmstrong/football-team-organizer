@@ -28,6 +28,7 @@ import {
   labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
+  labelMatchStage,
   labelCompetitionPeriods,
   labelCompetitionResult,
   labelGender,
@@ -315,6 +316,18 @@ describe("matchCompetitionLabel", () => {
     expect(
       matchCompetitionLabel({ is_friendly: false, competition: null }),
     ).toBeNull();
+  });
+
+  it("appends the stage for a cup or tournament fixture", () => {
+    expect(
+      matchCompetitionLabel({
+        is_friendly: false,
+        stage: "quarter_final",
+        competition: { name: "Women's Euros", display_name: "Euros" },
+      }),
+    ).toBe("Euros · Quarter-final");
+    expect(labelMatchStage("group")).toBe("Group");
+    expect(labelMatchStage(null)).toBe("—");
   });
 });
 

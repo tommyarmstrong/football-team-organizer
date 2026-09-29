@@ -8,11 +8,14 @@ import {
   type CompetitionVenueSpecial,
 } from "@/lib/constants";
 import {
+  formatKickoffTime,
+  formatMatchDate,
   labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
   labelCompetitionPeriods,
   labelCompetitionResult,
+  labelHomeAway,
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -80,6 +83,28 @@ export default async function CompetitionDetailPage({
                 value={labelCompetitionResult(competition.result)}
               />
               <Detail label="Season" value={competition.season ?? "—"} />
+              {competition.kind === "tournament" ? (
+                <>
+                  <Detail
+                    label="Date"
+                    value={
+                      competition.date ? formatMatchDate(competition.date) : "—"
+                    }
+                  />
+                  <Detail
+                    label="Meet-up"
+                    value={formatKickoffTime(competition.meetup_time) ?? "—"}
+                  />
+                  <Detail
+                    label="Home / away"
+                    value={
+                      competition.home_away
+                        ? labelHomeAway(competition.home_away)
+                        : "—"
+                    }
+                  />
+                </>
+              ) : null}
               <Detail
                 label="Format"
                 value={labelCompetitionFormat(competition.format)}

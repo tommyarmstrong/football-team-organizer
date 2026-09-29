@@ -14,12 +14,15 @@
 --   - 22 England Men players (Euro 96 squad) + their people rows
 --   - 26 England Men players (World Cup 2026 squad) + their people rows
 --   - 23 England Women players (2022 Euros squad) + their people rows
---   - 4 competitions (World Cup 1965/66, Euro 96, World Cup 2025/26, UEFA Women's Euro 2021/22)
+--   - 5 competitions (World Cup 1965/66, Euro 96, World Cup 2025/26, UEFA Women's Euro 2021/22,
+--     and the Wembley Invitational tournament)
+--   - Cup and tournament matches include a stage (group, quarter-final, semi-final, final, knockout)
 --   - 6 England Men 1966 matches (Uruguay, Mexico, France, Argentina, Portugal, West Germany)
 --   - 5 England Men Euro 96 matches (Switzerland, Scotland, Netherlands, Spain, Germany) — historical
 --   - 8 England Men World Cup 2026 matches (Croatia, Ghana, Panama, DR Congo, Mexico, Norway,
 --     Argentina, France) — historical / publicly reported throughout (3rd place finish)
 --   - 6 England Women matches (Austria, Norway, Northern Ireland, Spain, Sweden, Germany)
+--   - 2 Wembley Invitational matches (Scotland, France) sharing the tournament date, meet-up, and venue
 --   - Match periods (halves; extra time on AET ties) linked on every match
 --   - Goals with period, minute, and assist where applicable
 --   - Sample disciplinary cards on selected fixtures
@@ -3516,5 +3519,144 @@ cross join (
     ('a0000004-0000-4000-8000-000000000026'::uuid)
 ) as squad(player_id)
 on conflict (period_id, player_id) do nothing;
+
+-- One-day tournament. Date, meet-up, home/away, and venue live on the competition
+-- and are copied onto each match.
+insert into public.competitions (
+  id, team_id, name, kind, season, format, age_group, gender,
+  players_per_team, periods, minutes_per_period, result, venue_mode, venue_id,
+  date, meetup_time, home_away, notes
+)
+values (
+  'd0000001-0000-4000-8000-000000000005',
+  'bbbbbbbb-bbbb-cccc-dddd-ffffffffffff',
+  'Wembley Invitational',
+  'tournament',
+  '2021/22',
+  'groups_and_knockout',
+  'Adults',
+  'female',
+  7,
+  '1',
+  10,
+  'ongoing',
+  'venue',
+  'a0000003-0000-4000-8000-000000000003',
+  '2022-06-01',
+  '09:00',
+  'neutral',
+  'One-day tournament. Shared date, meet-up, venue, and home/away apply to every match.'
+)
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  name = excluded.name,
+  kind = excluded.kind,
+  season = excluded.season,
+  format = excluded.format,
+  age_group = excluded.age_group,
+  gender = excluded.gender,
+  players_per_team = excluded.players_per_team,
+  periods = excluded.periods,
+  minutes_per_period = excluded.minutes_per_period,
+  result = excluded.result,
+  venue_mode = excluded.venue_mode,
+  venue_id = excluded.venue_id,
+  date = excluded.date,
+  meetup_time = excluded.meetup_time,
+  home_away = excluded.home_away,
+  notes = excluded.notes;
+
+insert into public.matches (
+  id, team_id, opponent_name, date, kickoff_time, meetup_time, home_away,
+  venue_id, competition_id, status, notes
+)
+values
+  (
+    'e0000005-0000-4000-8000-000000000001',
+    'bbbbbbbb-bbbb-cccc-dddd-ffffffffffff',
+    'Scotland',
+    '2022-06-01',
+    '09:30',
+    '09:00',
+    'neutral',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000005',
+    'scheduled',
+    'Group game at the Wembley Invitational'
+  ),
+  (
+    'e0000005-0000-4000-8000-000000000002',
+    'bbbbbbbb-bbbb-cccc-dddd-ffffffffffff',
+    'France',
+    '2022-06-01',
+    '12:00',
+    '09:00',
+    'neutral',
+    'a0000003-0000-4000-8000-000000000003',
+    'd0000001-0000-4000-8000-000000000005',
+    'scheduled',
+    'Final at the Wembley Invitational'
+  )
+on conflict (id) do update set
+  team_id = excluded.team_id,
+  opponent_name = excluded.opponent_name,
+  date = excluded.date,
+  kickoff_time = excluded.kickoff_time,
+  meetup_time = excluded.meetup_time,
+  home_away = excluded.home_away,
+  venue_id = excluded.venue_id,
+  competition_id = excluded.competition_id,
+  status = excluded.status,
+  notes = excluded.notes;
+
+delete from public.match_periods
+where match_id in (
+  'e0000005-0000-4000-8000-000000000001',
+  'e0000005-0000-4000-8000-000000000002'
+);
+
+insert into public.match_periods (id, match_id, name, sort_order)
+values
+  ('a2000005-0000-4000-8000-000000000011', 'e0000005-0000-4000-8000-000000000001', 'Single period match', 70),
+  ('a2000005-0000-4000-8000-000000000021', 'e0000005-0000-4000-8000-000000000002', 'Single period match', 70)
+on conflict (id) do update set
+  match_id = excluded.match_id,
+  name = excluded.name,
+  sort_order = excluded.sort_order;
+
+-- Stage for every cup and tournament fixture in this seed.
+update public.matches as m
+set stage = v.stage::public.match_stage
+from (
+  values
+    ('e0000001-0000-4000-8000-000000000001', 'group'),
+    ('e0000001-0000-4000-8000-000000000002', 'group'),
+    ('e0000001-0000-4000-8000-000000000003', 'group'),
+    ('e0000001-0000-4000-8000-000000000004', 'quarter_final'),
+    ('e0000001-0000-4000-8000-000000000005', 'semi_final'),
+    ('e0000001-0000-4000-8000-000000000006', 'final'),
+    ('e0000002-0000-4000-8000-000000000001', 'group'),
+    ('e0000002-0000-4000-8000-000000000002', 'group'),
+    ('e0000002-0000-4000-8000-000000000003', 'group'),
+    ('e0000002-0000-4000-8000-000000000004', 'quarter_final'),
+    ('e0000002-0000-4000-8000-000000000005', 'semi_final'),
+    ('e0000002-0000-4000-8000-000000000006', 'final'),
+    ('e0000003-0000-4000-8000-000000000001', 'group'),
+    ('e0000003-0000-4000-8000-000000000002', 'group'),
+    ('e0000003-0000-4000-8000-000000000003', 'group'),
+    ('e0000003-0000-4000-8000-000000000004', 'quarter_final'),
+    ('e0000003-0000-4000-8000-000000000005', 'semi_final'),
+    ('e0000004-0000-4000-8000-000000000001', 'group'),
+    ('e0000004-0000-4000-8000-000000000002', 'group'),
+    ('e0000004-0000-4000-8000-000000000003', 'group'),
+    ('e0000004-0000-4000-8000-000000000004', 'knockout'),
+    ('e0000004-0000-4000-8000-000000000005', 'knockout'),
+    ('e0000004-0000-4000-8000-000000000006', 'quarter_final'),
+    ('e0000004-0000-4000-8000-000000000007', 'semi_final'),
+    ('e0000004-0000-4000-8000-000000000008', 'knockout'),
+    ('e0000005-0000-4000-8000-000000000001', 'group'),
+    ('e0000005-0000-4000-8000-000000000002', 'final')
+) as v(id, stage)
+where m.id = v.id::uuid;
 
 commit;
