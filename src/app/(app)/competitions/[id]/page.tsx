@@ -8,6 +8,7 @@ import {
   type CompetitionVenueSpecial,
 } from "@/lib/constants";
 import {
+  labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
   labelCompetitionPeriods,
@@ -80,8 +81,8 @@ export default async function CompetitionDetailPage({
               />
               <Detail label="Season" value={competition.season ?? "—"} />
               <Detail
-                label="Knock out"
-                value={competition.knockout ? "Yes" : "No"}
+                label="Format"
+                value={labelCompetitionFormat(competition.format)}
               />
               <Detail label="Age group" value={competition.age_group ?? "—"} />
               <Detail

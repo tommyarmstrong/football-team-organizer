@@ -5,6 +5,8 @@ import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   AGE_GROUPS,
+  COMPETITION_FORMATS,
+  COMPETITION_FORMAT_LABELS,
   COMPETITION_GENDERS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_KINDS,
@@ -14,6 +16,7 @@ import {
   COMPETITION_RESULT_LABELS,
   COMPETITION_VENUE_SPECIAL,
   COMPETITION_VENUE_SPECIAL_LABELS,
+  DEFAULT_COMPETITION_FORMAT,
   DEFAULT_COMPETITION_PERIODS,
   DEFAULT_COMPETITION_RESULT,
 } from "@/lib/constants";
@@ -169,15 +172,18 @@ export function CompetitionForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="knockout">Knock out</Label>
+          <Label htmlFor="format">Format</Label>
           <NativeSelect
-            id="knockout"
-            name="knockout"
-            defaultValue={competition?.knockout ? "yes" : "no"}
+            id="format"
+            name="format"
+            defaultValue={competition?.format ?? DEFAULT_COMPETITION_FORMAT}
             disabled={pending}
           >
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
+            {COMPETITION_FORMATS.map((format) => (
+              <option key={format} value={format}>
+                {COMPETITION_FORMAT_LABELS[format]}
+              </option>
+            ))}
           </NativeSelect>
         </div>
         <div className="space-y-2">

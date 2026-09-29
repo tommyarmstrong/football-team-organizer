@@ -2,6 +2,7 @@ import type {
   CardType,
   CoachObjectiveStatus,
   CoachObjectiveType,
+  CompetitionFormat,
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
@@ -106,6 +107,22 @@ export const COMPETITION_KINDS: CompetitionKind[] = [
   "tournament",
   "other",
 ];
+
+export const COMPETITION_FORMATS: CompetitionFormat[] = [
+  "league",
+  "knockout",
+  "groups_and_knockout",
+  "other",
+];
+
+export const COMPETITION_FORMAT_LABELS: Record<CompetitionFormat, string> = {
+  league: "League",
+  knockout: "Knockout",
+  groups_and_knockout: "Groups and knockout",
+  other: "Other",
+};
+
+export const DEFAULT_COMPETITION_FORMAT: CompetitionFormat = "league";
 
 /** Form/select value for a friendly fixture (not a competitions row). */
 export const FRIENDLY_COMPETITION_VALUE = "__friendly__";
