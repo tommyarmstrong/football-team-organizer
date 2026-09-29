@@ -95,7 +95,7 @@ describe("GET /people/[id]/player-card", () => {
       "https://cdn.example/crest.png",
       "http://localhost",
     );
-    expect(photoDataUrlMock).toHaveBeenCalledWith("http://localhost");
+    expect(photoDataUrlMock).toHaveBeenCalledWith();
   });
 
   it("still renders when the placeholder artwork cannot load", async () => {

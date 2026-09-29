@@ -1,41 +1,29 @@
+import { readFile } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  PLAYER_PHOTO_PLACEHOLDER_PATH,
-  playerPhotoPlaceholderDataUrl,
-} from "@/lib/postcards/player-photo";
+import { playerPhotoPlaceholderDataUrl } from "@/lib/postcards/player-photo";
 
-function stubFetch(response: Response | Error) {
-  const fetchMock = vi.fn(async () => {
-    if (response instanceof Error) throw response;
-    return response;
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-}
+vi.mock("node:fs/promises", () => ({
+  readFile: vi.fn(),
+}));
+
+const readFileMock = vi.mocked(readFile);
 
 describe("playerPhotoPlaceholderDataUrl", () => {
   afterEach(() => {
-    vi.unstubAllGlobals();
+    readFileMock.mockReset();
   });
 
-  it("inlines the placeholder served from the request origin", async () => {
-    const fetchMock = stubFetch(
-      new Response(new Uint8Array([1, 2, 3]), {
-        headers: { "content-type": "image/jpeg" },
-      }),
-    );
-    const url = await playerPhotoPlaceholderDataUrl("http://localhost:3000");
-    expect(fetchMock).toHaveBeenCalledWith(
-      `http://localhost:3000${PLAYER_PHOTO_PLACEHOLDER_PATH}`,
+  it("inlines the placeholder from disk", async () => {
+    readFileMock.mockResolvedValue(Buffer.from([1, 2, 3]));
+    const url = await playerPhotoPlaceholderDataUrl();
+    expect(readFileMock).toHaveBeenCalledWith(
+      expect.stringMatching(/public[/\\]player-card-photo\.jpg$/),
     );
     expect(url).toBe("data:image/jpeg;base64,AQID");
   });
 
-  it("returns null when the placeholder cannot be loaded", async () => {
-    stubFetch(new Response("nope", { status: 404 }));
-    expect(await playerPhotoPlaceholderDataUrl("http://x")).toBeNull();
-
-    stubFetch(new Error("network down"));
-    expect(await playerPhotoPlaceholderDataUrl("http://x")).toBeNull();
+  it("returns null when the placeholder cannot be read", async () => {
+    readFileMock.mockRejectedValue(new Error("ENOENT"));
+    expect(await playerPhotoPlaceholderDataUrl()).toBeNull();
   });
 });

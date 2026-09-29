@@ -40,7 +40,7 @@ export async function GET(
 
   const [crestSrc, photoSrc] = await Promise.all([
     crestDataUrl(data.clubIconUrl, url.origin),
-    playerPhotoPlaceholderDataUrl(url.origin),
+    playerPhotoPlaceholderDataUrl(),
   ]);
 
   try {
