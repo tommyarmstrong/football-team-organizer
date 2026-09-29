@@ -429,7 +429,7 @@ describe("competition actions", () => {
     expect(result.error).toMatch(/name/i);
   });
 
-  it("validates competition season, age group, gender, and ints", async () => {
+  it("validates competition season, age group, gender, format, and ints", async () => {
     expect(
       await createCompetitionAction(
         {},
@@ -454,6 +454,13 @@ describe("competition actions", () => {
     expect(
       await createCompetitionAction(
         {},
+        formDataFrom({ name: "League", format: "round_robin" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/format/i) });
+
+    expect(
+      await createCompetitionAction(
+        {},
         formDataFrom({ name: "League", players_per_team: "nope" }),
       ),
     ).toMatchObject({ error: expect.stringMatching(/players per team/i) });
@@ -473,6 +480,51 @@ describe("competition actions", () => {
       }),
     );
     expect(result.success).toMatch(/added/i);
+    expect(createCompetitionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ format: "league" }),
+    );
+  });
+
+  it("persists each competition format and defaults when omitted", async () => {
+    for (const format of [
+      "league",
+      "knockout",
+      "groups_and_knockout",
+      "other",
+    ] as const) {
+      await updateCompetitionAction(
+        "comp-1",
+        {},
+        formDataFrom({
+          name: "Cup",
+          kind: "cup",
+          season: "2025/26",
+          format,
+          periods: "2",
+          result: "ongoing",
+          venue: "unknown",
+        }),
+      );
+      expect(updateCompetitionMock).toHaveBeenCalledWith(
+        "comp-1",
+        expect.objectContaining({ format }),
+      );
+    }
+
+    await createCompetitionAction(
+      {},
+      formDataFrom({
+        name: "County League",
+        kind: "league",
+        season: "2025/26",
+        periods: "2",
+        result: "ongoing",
+        venue: "unknown",
+      }),
+    );
+    expect(createCompetitionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ format: "league" }),
+    );
   });
 
   it("updates competitions and supports venue mode", async () => {
@@ -488,7 +540,7 @@ describe("competition actions", () => {
         periods: "2",
         result: "ongoing",
         venue: "venue-1",
-        knockout: "yes",
+        format: "knockout",
       }),
     );
     expect(result.success).toMatch(/updated/i);
@@ -497,7 +549,7 @@ describe("competition actions", () => {
       expect.objectContaining({
         venue_mode: "venue",
         venue_id: "venue-1",
-        knockout: true,
+        format: "knockout",
       }),
     );
   });

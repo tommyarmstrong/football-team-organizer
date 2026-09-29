@@ -2,6 +2,7 @@ import {
   CARD_TYPE_LABELS,
   COACH_OBJECTIVE_STATUS_LABELS,
   COACH_OBJECTIVE_TYPE_LABELS,
+  COMPETITION_FORMAT_LABELS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_PERIOD_LABELS,
   COMPETITION_RESULT_LABELS,
@@ -21,6 +22,7 @@ import type {
   CardType,
   CoachObjectiveStatus,
   CoachObjectiveType,
+  CompetitionFormat,
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
@@ -379,6 +381,13 @@ export function labelMatchStatus(status: MatchStatus): string {
 export function labelCompetitionKind(kind: CompetitionKind | null): string {
   if (!kind) return "—";
   return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+export function labelCompetitionFormat(
+  format: CompetitionFormat | null | undefined,
+): string {
+  if (!format) return "—";
+  return COMPETITION_FORMAT_LABELS[format];
 }
 
 export function labelCompetitionGender(

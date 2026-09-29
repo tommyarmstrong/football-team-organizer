@@ -4,7 +4,9 @@
 --   - 1 generic club (Demo Club)
 --   - 1 club manager (John Hall) + people row
 --
--- Does not create Auth users, teams, venues, players, coaches, or matches.
+-- Does not create Auth users, teams, venues, players, coaches, competitions, or matches.
+-- Competition rows, including format (league, knockout, groups_and_knockout, or
+-- other), live in supabase/england.sql.
 -- For the full England demo dataset, also load (or only load) supabase/england.sql.
 -- england.sql uses the same club and manager ids, so it can run alone or after
 -- this file.

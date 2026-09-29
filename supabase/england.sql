@@ -1103,6 +1103,7 @@ insert into public.competitions (
   name,
   kind,
   season,
+  format,
   result,
   venue_mode,
   venue_id
@@ -1113,6 +1114,7 @@ values (
   'World Cup',
   'cup',
   '1965/66',
+  'groups_and_knockout',
   'champions',
   'multiple',
   null
@@ -1122,6 +1124,7 @@ on conflict (id) do update set
   name = excluded.name,
   kind = excluded.kind,
   season = excluded.season,
+  format = excluded.format,
   result = excluded.result,
   venue_mode = excluded.venue_mode,
   venue_id = excluded.venue_id;
@@ -1750,7 +1753,7 @@ insert into public.competitions (
   name,
   kind,
   season,
-  knockout,
+  format,
   age_group,
   gender,
   players_per_team,
@@ -1766,7 +1769,7 @@ values (
   'Women''s Euros',
   'cup',
   '2021/22',
-  true,
+  'groups_and_knockout',
   'Adults',
   'female',
   11,
@@ -1781,7 +1784,7 @@ on conflict (id) do update set
   name = excluded.name,
   kind = excluded.kind,
   season = excluded.season,
-  knockout = excluded.knockout,
+  format = excluded.format,
   age_group = excluded.age_group,
   gender = excluded.gender,
   players_per_team = excluded.players_per_team,
@@ -2369,7 +2372,7 @@ on conflict (team_id, player_id) do update set
 
 -- Euro 96 competition for England Men.
 insert into public.competitions (
-  id, team_id, name, kind, season, knockout, age_group, gender,
+  id, team_id, name, kind, season, format, age_group, gender,
   players_per_team, periods, minutes_per_period, result, venue_mode, venue_id
 )
 values (
@@ -2378,7 +2381,7 @@ values (
   'Euro 96',
   'cup',
   '1995/96',
-  true,
+  'groups_and_knockout',
   'Adults',
   'male',
   11,
@@ -2393,7 +2396,7 @@ on conflict (id) do update set
   name = excluded.name,
   kind = excluded.kind,
   season = excluded.season,
-  knockout = excluded.knockout,
+  format = excluded.format,
   age_group = excluded.age_group,
   gender = excluded.gender,
   players_per_team = excluded.players_per_team,
@@ -2840,7 +2843,7 @@ on conflict (team_id, player_id) do update set
 
 -- World Cup 2025/26 competition for England Men (result: third_place).
 insert into public.competitions (
-  id, team_id, name, kind, season, knockout, age_group, gender,
+  id, team_id, name, kind, season, format, age_group, gender,
   players_per_team, periods, minutes_per_period, result, venue_mode, venue_id, notes
 )
 values (
@@ -2849,7 +2852,7 @@ values (
   'World Cup',
   'cup',
   '2025/26',
-  true,
+  'groups_and_knockout',
   'Adults',
   'male',
   11,
@@ -2865,7 +2868,7 @@ on conflict (id) do update set
   name = excluded.name,
   kind = excluded.kind,
   season = excluded.season,
-  knockout = excluded.knockout,
+  format = excluded.format,
   age_group = excluded.age_group,
   gender = excluded.gender,
   players_per_team = excluded.players_per_team,

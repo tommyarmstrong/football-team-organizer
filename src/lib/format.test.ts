@@ -25,6 +25,7 @@ import {
   labelCardType,
   labelCoachObjectiveStatus,
   labelCoachObjectiveType,
+  labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
   labelCompetitionPeriods,
@@ -517,6 +518,17 @@ describe("label helpers", () => {
 
   it("returns an em dash for null competition kind", () => {
     expect(labelCompetitionKind(null)).toBe("—");
+  });
+
+  it("labels competition format", () => {
+    expect(labelCompetitionFormat("league")).toBe("League");
+    expect(labelCompetitionFormat("knockout")).toBe("Knockout");
+    expect(labelCompetitionFormat("groups_and_knockout")).toBe(
+      "Groups and knockout",
+    );
+    expect(labelCompetitionFormat("other")).toBe("Other");
+    expect(labelCompetitionFormat(null)).toBe("—");
+    expect(labelCompetitionFormat(undefined)).toBe("—");
   });
 
   it("labels competition gender, periods, and result", () => {

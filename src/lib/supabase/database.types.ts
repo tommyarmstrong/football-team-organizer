@@ -708,10 +708,10 @@ export type Database = {
           age_group: string | null;
           created_at: string;
           display_name: string | null;
+          format: Database["public"]["Enums"]["competition_format"];
           gender: Database["public"]["Enums"]["competition_gender"] | null;
           id: string;
           kind: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout: boolean;
           minutes_per_period: number | null;
           name: string;
           notes: string | null;
@@ -728,10 +728,10 @@ export type Database = {
           age_group?: string | null;
           created_at?: string;
           display_name?: string | null;
+          format?: Database["public"]["Enums"]["competition_format"];
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout?: boolean;
           minutes_per_period?: number | null;
           name: string;
           notes?: string | null;
@@ -748,10 +748,10 @@ export type Database = {
           age_group?: string | null;
           created_at?: string;
           display_name?: string | null;
+          format?: Database["public"]["Enums"]["competition_format"];
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout?: boolean;
           minutes_per_period?: number | null;
           name?: string;
           notes?: string | null;
@@ -1324,6 +1324,8 @@ export type Database = {
       guardian_relationship:
         "parent" | "guardian" | "football_contact" | "other";
       competition_kind: "league" | "cup" | "tournament" | "other";
+      competition_format:
+        "league" | "knockout" | "groups_and_knockout" | "other";
       competition_gender: "female" | "male" | "mixed";
       competition_periods: "1" | "2" | "4" | "other";
       competition_result:
@@ -1425,6 +1427,7 @@ export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
 export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
+export type CompetitionFormat = Enums<"competition_format">;
 export type CompetitionGender = Enums<"competition_gender">;
 export type CompetitionPeriods = Enums<"competition_periods">;
 export type CompetitionResult = Enums<"competition_result">;

@@ -29,18 +29,19 @@ import { setTeamHeadCoach } from "@/lib/data/coaches";
 import {
   boolFromCheckbox,
   parseOptionalInt,
-  parseYesNo,
   str as formStr,
 } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import { isValidSeasonLabel, SEASON_FORMAT_HINT } from "@/lib/team/season";
 import {
   AGE_GROUPS,
+  COMPETITION_FORMATS,
   COMPETITION_GENDERS,
   COMPETITION_KINDS,
   COMPETITION_PERIODS,
   COMPETITION_RESULTS,
   COMPETITION_VENUE_SPECIAL,
+  DEFAULT_COMPETITION_FORMAT,
   DEFAULT_COMPETITION_PERIODS,
   DEFAULT_COMPETITION_RESULT,
   TEAM_GENDER_LABELS,
@@ -53,6 +54,7 @@ import {
   type TrainingDay,
 } from "@/lib/constants";
 import type {
+  CompetitionFormat,
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
@@ -464,7 +466,15 @@ function parseCompetitionUpdate(
   if (season && !isValidSeasonLabel(season)) {
     return { error: SEASON_FORMAT_HINT };
   }
-  const knockout = parseYesNo(formData, "knockout", false);
+  const formatRaw = str(formData, "format");
+  let format: CompetitionFormat = DEFAULT_COMPETITION_FORMAT;
+  if (formatRaw) {
+    if (!COMPETITION_FORMATS.includes(formatRaw as CompetitionFormat)) {
+      return { error: "Invalid format." };
+    }
+    format = formatRaw as CompetitionFormat;
+  }
+
   const organizer = str(formData, "organizer") || null;
 
   const ageGroupRaw = str(formData, "age_group");
@@ -523,7 +533,7 @@ function parseCompetitionUpdate(
     display_name: str(formData, "display_name") || null,
     kind,
     season,
-    knockout,
+    format,
     organizer,
     age_group,
     gender,
