@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { crestDataUrl } from "@/lib/postcards/crest";
+import { crestDataUrl, imageDataUrl } from "@/lib/postcards/crest";
 
 function stubFetch(response: Response | Error) {
   const fetchMock = vi.fn(async () => {
@@ -51,5 +51,33 @@ describe("crestDataUrl", () => {
     expect(
       await crestDataUrl("https://cdn.example/a.png", "http://x"),
     ).toBeNull();
+  });
+});
+
+describe("imageDataUrl", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("inlines any raster image as a data URL", async () => {
+    stubFetch(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { "content-type": "image/jpeg" },
+      }),
+    );
+    expect(await imageDataUrl("http://x/a.jpg")).toBe(
+      "data:image/jpeg;base64,AQID",
+    );
+  });
+
+  it("returns null for failed, non-raster, or unreachable images", async () => {
+    stubFetch(new Response("nope", { status: 500 }));
+    expect(await imageDataUrl("http://x/a.jpg")).toBeNull();
+
+    stubFetch(new Response("x", { headers: { "content-type": "text/html" } }));
+    expect(await imageDataUrl("http://x/a.jpg")).toBeNull();
+
+    stubFetch(new Error("network down"));
+    expect(await imageDataUrl("http://x/a.jpg")).toBeNull();
   });
 });
