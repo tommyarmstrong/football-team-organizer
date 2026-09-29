@@ -59,8 +59,8 @@ function ellipsisStyle(extra?: CSSProperties): CSSProperties {
 }
 
 /**
- * Placeholder for the player photo until uploads exist: a shadowed
- * head-and-shoulders silhouette.
+ * Fallback for the player photo when the placeholder artwork cannot be
+ * loaded: a shadowed head-and-shoulders silhouette.
  */
 function Silhouette() {
   const width = 540;
@@ -83,6 +83,27 @@ function Silhouette() {
         <path d="M30 640C30 500 130 430 245 408L375 408C490 430 590 500 590 640Z" />
       </g>
     </svg>
+  );
+}
+
+/** Full-bleed placeholder artwork filling the photo area. */
+function PhotoArt({ photoSrc }: { photoSrc: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={photoSrc}
+      width={FRAME_INNER_WIDTH}
+      height={PHOTO_HEIGHT}
+      alt=""
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: FRAME_INNER_WIDTH,
+        height: PHOTO_HEIGHT,
+        objectFit: "cover",
+      }}
+    />
   );
 }
 
@@ -261,9 +282,12 @@ function StatBox({
 export function PlayerCardImage({
   payload,
   crestSrc,
+  photoSrc = null,
 }: {
   payload: PlayerCardPayload;
   crestSrc: string | null;
+  /** Photo-area artwork; the plain silhouette is used when null. */
+  photoSrc?: string | null;
 }) {
   const base = payload.clubColour ?? DEFAULT_CLUB_COLOUR;
   const deep = mixColour(base, "#000000", 0.45);
@@ -333,7 +357,7 @@ export function PlayerCardImage({
               transform: "rotate(24deg)",
             }}
           />
-          <Silhouette />
+          {photoSrc ? <PhotoArt photoSrc={photoSrc} /> : <Silhouette />}
           <Crest crestSrc={crestSrc} />
           {payload.shirtNumber != null ? (
             <ShirtBadge number={payload.shirtNumber} colour={deep} />

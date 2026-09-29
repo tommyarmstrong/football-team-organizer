@@ -8,18 +8,10 @@ const RASTER_TYPES = new Set([
 ]);
 
 /**
- * Loads a club crest as a data URL Satori can embed. Returns null (never
- * throws) for missing, unreachable, or non-raster icons so a broken crest
- * falls back to the club initial instead of failing the share.
+ * Fetches a raster image as a data URL Satori can embed. Returns null (never
+ * throws) for missing, unreachable, or non-raster images.
  */
-export async function crestDataUrl(
-  iconUrl: string | null,
-  origin: string,
-): Promise<string | null> {
-  const src = clubIconSrc(iconUrl);
-  const absolute = src.startsWith("http")
-    ? src
-    : new URL(src, origin).toString();
+export async function imageDataUrl(absolute: string): Promise<string | null> {
   try {
     const response = await fetch(absolute);
     if (!response.ok) return null;
@@ -33,4 +25,20 @@ export async function crestDataUrl(
   } catch {
     return null;
   }
+}
+
+/**
+ * Loads a club crest as a data URL Satori can embed. Returns null (never
+ * throws) for missing, unreachable, or non-raster icons so a broken crest
+ * falls back to the club initial instead of failing the share.
+ */
+export async function crestDataUrl(
+  iconUrl: string | null,
+  origin: string,
+): Promise<string | null> {
+  const src = clubIconSrc(iconUrl);
+  const absolute = src.startsWith("http")
+    ? src
+    : new URL(src, origin).toString();
+  return imageDataUrl(absolute);
 }

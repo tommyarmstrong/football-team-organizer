@@ -49,9 +49,10 @@ const tinyPng =
 async function renderCard(
   payload: PlayerCardPayload,
   crestSrc: string | null = null,
+  photoSrc: string | null = null,
 ) {
   const response = new ImageResponse(
-    createElement(PlayerCardImage, { payload, crestSrc }),
+    createElement(PlayerCardImage, { payload, crestSrc, photoSrc }),
     { width: PLAYER_CARD_WIDTH, height: PLAYER_CARD_HEIGHT },
   );
   return Buffer.from(await response.arrayBuffer());
@@ -155,6 +156,44 @@ describe("PlayerCardImage", { timeout: 30_000 }, () => {
   it("renders with a crest image", async () => {
     const png = await renderCard(basePayload, tinyPng);
     expect(png.subarray(0, 4).equals(PNG_MAGIC)).toBe(true);
+  });
+
+  it("renders with photo-area artwork", async () => {
+    const png = await renderCard(basePayload, null, tinyPng);
+    expect(png.subarray(0, 4).equals(PNG_MAGIC)).toBe(true);
+  });
+});
+
+describe("PlayerCardImage photo area", () => {
+  /** Names of every function component in the unrendered element tree. */
+  function componentNames(photoSrc?: string | null): string[] {
+    const names: string[] = [];
+    const walk = (node: unknown) => {
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (!node || typeof node !== "object") return;
+      const element = node as {
+        type?: unknown;
+        props?: { children?: unknown };
+      };
+      if (typeof element.type === "function") names.push(element.type.name);
+      walk(element.props?.children);
+    };
+    walk(PlayerCardImage({ payload: basePayload, crestSrc: null, photoSrc }));
+    return names;
+  }
+
+  it("shows the artwork instead of the silhouette when given", () => {
+    const names = componentNames(tinyPng);
+    expect(names).toContain("PhotoArt");
+    expect(names).not.toContain("Silhouette");
+  });
+
+  it("falls back to the silhouette without artwork", () => {
+    for (const photoSrc of [null, undefined]) {
+      const names = componentNames(photoSrc);
+      expect(names).toContain("Silhouette");
+      expect(names).not.toContain("PhotoArt");
+    }
   });
 });
 
