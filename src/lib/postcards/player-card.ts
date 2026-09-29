@@ -18,6 +18,13 @@ import type { PlayerCardPayload } from "@/lib/postcards/types";
 
 export type { PlayerCardPayload } from "@/lib/postcards/types";
 
+/** One entry per goal / assist / award; friendlies are left out of the card. */
+function countCompetitive(
+  events: ReadonlyArray<{ isFriendly: boolean }> | undefined,
+): number {
+  return (events ?? []).filter((event) => !event.isFriendly).length;
+}
+
 /**
  * Assembles a player card for the signed-in viewer.
  *
@@ -83,13 +90,16 @@ export async function buildPlayerCardPayload(
     wins,
     draws,
     losses,
-    goals:
-      stats.goalsByPlayer.find((row) => row.playerId === playerId)?.goals ?? 0,
-    assists:
-      stats.assistsByPlayer.find((row) => row.playerId === playerId)?.count ??
-      0,
-    potm:
-      stats.potmByPlayer.find((row) => row.playerId === playerId)?.count ?? 0,
+    goals: countCompetitive(
+      stats.goalsByPlayer.find((row) => row.playerId === playerId)
+        ?.goalCompetitions,
+    ),
+    assists: countCompetitive(
+      stats.assistsByPlayer.find((row) => row.playerId === playerId)?.events,
+    ),
+    potm: countCompetitive(
+      stats.potmByPlayer.find((row) => row.playerId === playerId)?.events,
+    ),
   };
   const clubName = club?.name ?? "";
 
