@@ -46,13 +46,21 @@ const player = {
   last_name: "Hall",
 };
 
+const competitive = { isFriendly: false };
+const friendly = { isFriendly: true };
+const events = (competitiveCount: number, friendlyCount: number) => [
+  ...Array.from({ length: competitiveCount }, () => competitive),
+  ...Array.from({ length: friendlyCount }, () => friendly),
+];
+
+// Player 1 also has friendly goals / assists / awards that must not count.
 const stats = {
   goalsByPlayer: [
-    { playerId: "player-1", goals: 9 },
-    { playerId: "player-2", goals: 3 },
+    { playerId: "player-1", goals: 12, goalCompetitions: events(9, 3) },
+    { playerId: "player-2", goals: 3, goalCompetitions: events(3, 0) },
   ],
-  assistsByPlayer: [{ playerId: "player-1", count: 4 }],
-  potmByPlayer: [{ playerId: "player-1", count: 2 }],
+  assistsByPlayer: [{ playerId: "player-1", count: 6, events: events(4, 2) }],
+  potmByPlayer: [{ playerId: "player-1", count: 3, events: events(2, 1) }],
   matchesPlayed: [
     { playerId: "player-1", count: 14 },
     { playerId: "player-2", count: 10 },
@@ -140,6 +148,22 @@ describe("buildPlayerCardPayload", () => {
     });
     expect(data?.caption).toContain("Maya 7 · Forward");
     expect(data?.caption).not.toContain("Hall");
+  });
+
+  it("leaves friendly goals, assists, and POTM off the card", async () => {
+    getAllTeamStatsMock.mockResolvedValue({
+      ...stats,
+      goalsByPlayer: [
+        { playerId: "player-1", goals: 2, goalCompetitions: events(0, 2) },
+      ],
+      assistsByPlayer: [
+        { playerId: "player-1", count: 1, events: events(0, 1) },
+      ],
+      potmByPlayer: [{ playerId: "player-1", count: 1, events: events(0, 1) }],
+    });
+    const { data } = await buildPlayerCardPayload("player-1");
+    expect(data?.stats).toMatchObject({ goals: 0, assists: 0, potm: 0 });
+    expect(data?.caption).toContain("Goals: 0");
   });
 
   it("zeroes stats for a player with no recorded activity", async () => {
