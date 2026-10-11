@@ -112,7 +112,7 @@ export async function createPeriodAction(
   redirect(`/matches/${matchId}`);
 }
 
-/** Saves period name/order and returns to the match page. */
+/** Saves the period name and starting players, then returns to the match page. */
 export async function savePeriodAndReturnToMatchAction(
   matchId: string,
   periodId: string,
@@ -159,6 +159,12 @@ export async function savePeriodAndReturnToMatchAction(
   });
   if (error) return { error };
 
+  const { error: startersError } = await setPeriodStarters(
+    periodId,
+    parseStarterPlayerIds(formData),
+  );
+  if (startersError) return { error: startersError };
+
   revalidateMatch(matchId, periodId);
   redirect(`/matches/${matchId}`);
 }
@@ -191,28 +197,4 @@ export async function deletePeriodAndReturnToMatchAction(
   const result = await deletePeriodAction(matchId, periodId);
   if (result.error) return result;
   redirect(`/matches/${matchId}`);
-}
-
-export async function savePeriodStartersAction(
-  matchId: string,
-  periodId: string,
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const [ctx, loaded] = await Promise.all([
-    getViewerContext(),
-    getMatch(matchId),
-  ]);
-  if (loaded.error) return { error: loaded.error };
-  if (!loaded.data) return { error: "Match not found." };
-  if (!ctx || !canEditMatchDay(ctx, loaded.data.team_id)) {
-    return { error: "You do not have permission to edit this match." };
-  }
-
-  const playerIds = parseStarterPlayerIds(formData);
-  const { error } = await setPeriodStarters(periodId, playerIds);
-  if (error) return { error };
-
-  revalidateMatch(matchId, periodId);
-  return { success: "Starting players saved." };
 }
