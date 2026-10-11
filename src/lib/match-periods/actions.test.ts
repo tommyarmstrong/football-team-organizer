@@ -50,7 +50,6 @@ import {
   deletePeriodAction,
   deletePeriodAndReturnToMatchAction,
   savePeriodAndReturnToMatchAction,
-  savePeriodStartersAction,
 } from "@/lib/match-periods/actions";
 
 describe("match period actions", () => {
@@ -146,24 +145,46 @@ describe("match period actions", () => {
     ).toMatchObject({ error: expect.stringMatching(/in progress or played/i) });
   });
 
-  it("saves period renames and starters", async () => {
+  it("saves period renames and starters together", async () => {
     await expect(
       savePeriodAndReturnToMatchAction(
         "match-1",
         "period-1",
         {},
-        formDataFrom({ name: "Extra time 2" }),
+        formDataFrom({ name: "Extra time 2", player_id: ["p1", "p2"] }),
       ),
     ).rejects.toThrow("redirect:/matches/match-1");
+    expect(setPeriodStartersMock).toHaveBeenCalledWith("period-1", [
+      "p1",
+      "p2",
+    ]);
+  });
 
-    expect(
-      await savePeriodStartersAction(
+  it("clears starters when the saved list is empty", async () => {
+    await expect(
+      savePeriodAndReturnToMatchAction(
         "match-1",
         "period-1",
         {},
-        formDataFrom({ player_id: ["p1"] }),
+        formDataFrom({ name: "Extra time 1" }),
       ),
-    ).toMatchObject({ success: expect.stringMatching(/starting players/i) });
+    ).rejects.toThrow("redirect:/matches/match-1");
+    expect(setPeriodStartersMock).toHaveBeenCalledWith("period-1", []);
+  });
+
+  it("stays on the period page when starter save fails", async () => {
+    setPeriodStartersMock.mockResolvedValue({
+      error: "Could not save starters.",
+    });
+    expect(
+      await savePeriodAndReturnToMatchAction(
+        "match-1",
+        "period-1",
+        {},
+        formDataFrom({ name: "Extra time 1", player_id: ["p1"] }),
+      ),
+    ).toEqual({ error: "Could not save starters." });
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("deletes periods", async () => {
