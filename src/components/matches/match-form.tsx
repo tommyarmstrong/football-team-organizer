@@ -100,29 +100,16 @@ export function MatchForm({
       ? FRIENDLY_COMPETITION_VALUE
       : (match?.competition_id ?? ""),
   );
-  const initialCompetition = competitions.find(
-    (competition) => competition.id === competitionId,
-  );
-  const initialSchedule = applyTournamentMatchFields(
-    {
-      date: match?.date ?? "",
-      meetup_time: match?.meetup_time ?? null,
-      home_away: match?.home_away ?? "home",
-      venue_id: match?.venue_id ?? null,
-      periods: initialCompetition?.periods ?? DEFAULT_MATCH_PERIODS,
-    },
-    initialCompetition ?? null,
-  );
-  const [date, setDate] = useState(initialSchedule.date);
+  const [date, setDate] = useState(match?.date ?? "");
   const [meetupTime, setMeetupTime] = useState(
-    initialSchedule.meetup_time?.slice(0, 5) ?? "",
+    match?.meetup_time?.slice(0, 5) ?? "",
   );
   const [homeAway, setHomeAway] = useState<MatchHomeAway>(
-    initialSchedule.home_away,
+    match?.home_away ?? "home",
   );
-  const [venueId, setVenueId] = useState(initialSchedule.venue_id ?? "");
+  const [venueId, setVenueId] = useState(match?.venue_id ?? "");
   const [periods, setPeriods] = useState<CompetitionPeriods>(
-    initialSchedule.periods,
+    DEFAULT_MATCH_PERIODS,
   );
   const [stage, setStage] = useState<MatchStage>(
     match?.stage ?? DEFAULT_MATCH_STAGE,
@@ -135,12 +122,6 @@ export function MatchForm({
     ? selectedCompetition
     : null;
   const showStage = competitionHasMatchStage(selectedCompetition?.kind);
-  const dateLocked = Boolean(tournament?.date);
-  const meetupLocked = Boolean(tournament?.meetup_time);
-  const homeAwayLocked = Boolean(tournament?.home_away);
-  const venueLocked =
-    tournament?.venue_mode === "venue" || tournament?.venue_mode === "unknown";
-  const periodsLocked = Boolean(tournament);
 
   function handleCompetitionChange(nextId: string) {
     setCompetitionId(nextId);
@@ -170,9 +151,9 @@ export function MatchForm({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
+    <form action={formAction} className="w-full min-w-0 space-y-4">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="opponent_name">
             Opponent <span className="text-muted-foreground">(required)</span>
           </Label>
@@ -185,97 +166,7 @@ export function MatchForm({
             disabled={pending}
           />
         </div>
-        <div className="grid min-w-0 gap-4 sm:col-span-2">
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="date">
-              Date <span className="text-muted-foreground">(required)</span>
-            </Label>
-            <Input
-              id="date"
-              name="date"
-              type="date"
-              required
-              aria-required="true"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              readOnly={dateLocked}
-              disabled={pending}
-            />
-          </div>
-          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-            <div className="min-w-0 space-y-2">
-              <Label htmlFor="kickoff_time">
-                Kick-off <OptionalHint />
-              </Label>
-              <Input
-                id="kickoff_time"
-                name="kickoff_time"
-                type="time"
-                defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
-                disabled={pending}
-              />
-            </div>
-            <div className="min-w-0 space-y-2">
-              <Label htmlFor="meetup_time">
-                Meet-up <OptionalHint />
-              </Label>
-              <Input
-                id="meetup_time"
-                name="meetup_time"
-                type="time"
-                value={meetupTime}
-                onChange={(event) => setMeetupTime(event.target.value)}
-                readOnly={meetupLocked}
-                disabled={pending}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="home_away">Home / away</Label>
-          {homeAwayLocked ? (
-            <input type="hidden" name="home_away" value={homeAway} />
-          ) : null}
-          <NativeSelect
-            id="home_away"
-            name={homeAwayLocked ? undefined : "home_away"}
-            required={!homeAwayLocked}
-            value={homeAway}
-            onChange={(event) =>
-              setHomeAway(event.target.value as MatchHomeAway)
-            }
-            disabled={pending || homeAwayLocked}
-          >
-            {MATCH_HOME_AWAYS.map((value) => (
-              <option key={value} value={value}>
-                {labelHomeAway(value)}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="venue_id">
-            Venue <OptionalHint />
-          </Label>
-          {venueLocked ? (
-            <input type="hidden" name="venue_id" value={venueId} />
-          ) : null}
-          <NativeSelect
-            id="venue_id"
-            name={venueLocked ? undefined : "venue_id"}
-            value={venueId}
-            onChange={(event) => setVenueId(event.target.value)}
-            disabled={pending || venueLocked}
-          >
-            <option value="">Unknown</option>
-            {venues.map((venue) => (
-              <option key={venue.id} value={venue.id}>
-                {venue.name}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="competition_id">
             Competition <OptionalHint />
           </Label>
@@ -296,14 +187,14 @@ export function MatchForm({
           </NativeSelect>
         </div>
         {tournament ? (
-          <p className="text-muted-foreground text-sm sm:col-span-2">
-            Date, meet-up, home/away, venue, and periods are filled from this
-            tournament when the tournament has them.
+          <p className="text-muted-foreground text-sm">
+            Date, meet-up, home/away, venue, and periods start from this
+            tournament. You can change them for this match.
           </p>
         ) : null}
 
         {showStage ? (
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label htmlFor="stage">Stage</Label>
             <NativeSelect
               id="stage"
@@ -321,18 +212,94 @@ export function MatchForm({
           </div>
         ) : null}
 
+        <div className="min-w-0 space-y-2 overflow-hidden">
+          <Label htmlFor="date">
+            Date <span className="text-muted-foreground">(required)</span>
+          </Label>
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            required
+            aria-required="true"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            disabled={pending}
+          />
+        </div>
+        <div className="min-w-0 space-y-2 overflow-hidden">
+          <Label htmlFor="kickoff_time">
+            Kick-off <OptionalHint />
+          </Label>
+          <Input
+            id="kickoff_time"
+            name="kickoff_time"
+            type="time"
+            defaultValue={match?.kickoff_time?.slice(0, 5) ?? ""}
+            disabled={pending}
+          />
+        </div>
+        <div className="min-w-0 space-y-2 overflow-hidden">
+          <Label htmlFor="meetup_time">
+            Meet-up <OptionalHint />
+          </Label>
+          <Input
+            id="meetup_time"
+            name="meetup_time"
+            type="time"
+            value={meetupTime}
+            onChange={(event) => setMeetupTime(event.target.value)}
+            disabled={pending}
+          />
+        </div>
+        <div className="min-w-0 space-y-2">
+          <Label htmlFor="home_away">Home / away</Label>
+          <NativeSelect
+            id="home_away"
+            name="home_away"
+            required
+            value={homeAway}
+            onChange={(event) =>
+              setHomeAway(event.target.value as MatchHomeAway)
+            }
+            disabled={pending}
+          >
+            {MATCH_HOME_AWAYS.map((value) => (
+              <option key={value} value={value}>
+                {labelHomeAway(value)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="min-w-0 space-y-2">
+          <Label htmlFor="venue_id">
+            Venue <OptionalHint />
+          </Label>
+          <NativeSelect
+            id="venue_id"
+            name="venue_id"
+            value={venueId}
+            onChange={(event) => setVenueId(event.target.value)}
+            disabled={pending}
+          >
+            <option value="">Unknown</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+
         {mode === "create" ? (
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label htmlFor="periods">Periods</Label>
-            {periodsLocked ? (
-              <input type="hidden" name="periods" value={periods} />
-            ) : null}
             <NativeSelect
               id="periods"
-              name={periodsLocked ? undefined : "periods"}
+              name="periods"
               value={periods}
               onChange={(e) => setPeriods(e.target.value as CompetitionPeriods)}
-              disabled={pending || periodsLocked}
+              disabled={pending}
             >
               {COMPETITION_PERIODS.map((value) => (
                 <option key={value} value={value}>
@@ -343,21 +310,7 @@ export function MatchForm({
           </div>
         ) : null}
 
-        {mode === "edit" ? (
-          <div className="space-y-2">
-            <Label htmlFor="match_day_squad_count">Match-day squad</Label>
-            <Input
-              id="match_day_squad_count"
-              readOnly
-              value={
-                matchDaySquadCount == null ? "—" : String(matchDaySquadCount)
-              }
-              disabled
-            />
-          </div>
-        ) : null}
-
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="status">Status</Label>
           <NativeSelect
             id="status"
@@ -376,9 +329,23 @@ export function MatchForm({
         </div>
 
         {mode === "edit" ? (
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="match_day_squad_count">Match-day squad</Label>
+            <Input
+              id="match_day_squad_count"
+              readOnly
+              value={
+                matchDaySquadCount == null ? "—" : String(matchDaySquadCount)
+              }
+              disabled
+            />
+          </div>
+        ) : null}
+
+        {mode === "edit" ? (
           showEvents ? (
             <>
-              <div className="space-y-2 sm:col-span-2">
+              <div className="min-w-0 space-y-2">
                 <p className="text-muted-foreground text-sm">
                   Score is taken from goals recorded on the match page
                   (including opposition goals). Goals and cards unlock when
@@ -432,13 +399,13 @@ export function MatchForm({
             </>
           ) : null
         ) : showEvents ? (
-          <p className="text-muted-foreground text-sm sm:col-span-2">
+          <p className="text-muted-foreground text-sm">
             After you create this fixture, you can record goals and cards on the
             match page.
           </p>
         ) : null}
 
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="notes">
             Coach&apos;s notes <OptionalHint />
           </Label>
@@ -449,7 +416,7 @@ export function MatchForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="club_notes">
             Club notes <OptionalHint />
           </Label>

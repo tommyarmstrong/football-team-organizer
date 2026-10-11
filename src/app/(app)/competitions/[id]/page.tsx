@@ -10,7 +10,6 @@ import {
 import {
   formatKickoffTime,
   formatMatchDate,
-  labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
   labelCompetitionPeriods,
@@ -19,8 +18,8 @@ import {
 } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
+import { EditCompetitionDialog } from "@/components/team/edit-competition-dialog";
 import { CompetitionResultChip } from "@/components/team/competition-result-chip";
 
 export default async function CompetitionDetailPage({
@@ -67,7 +66,6 @@ export default async function CompetitionDetailPage({
         title={competition.name}
         description={
           <div className="space-y-2">
-            <p>{labelCompetitionKind(competition.kind)}</p>
             <CompetitionResultChip result={competition.result} />
             <dl className="grid gap-2 sm:grid-cols-2">
               <Detail
@@ -77,6 +75,10 @@ export default async function CompetitionDetailPage({
               <Detail
                 label="Organizer"
                 value={competition.organizer?.trim() || "—"}
+              />
+              <Detail
+                label="Kind"
+                value={labelCompetitionKind(competition.kind)}
               />
               <Detail
                 label="Result"
@@ -105,10 +107,6 @@ export default async function CompetitionDetailPage({
                   />
                 </>
               ) : null}
-              <Detail
-                label="Format"
-                value={labelCompetitionFormat(competition.format)}
-              />
               <Detail label="Age group" value={competition.age_group ?? "—"} />
               <Detail
                 label="Gender"
@@ -144,9 +142,9 @@ export default async function CompetitionDetailPage({
         actions={
           canEdit ? (
             <>
-              <EditIconLink
-                href={`/competitions/${competition.id}/edit`}
-                label="Edit competition"
+              <EditCompetitionDialog
+                competition={competition}
+                venues={venues}
               />
               <DeleteCompetitionButton
                 competitionId={competition.id}

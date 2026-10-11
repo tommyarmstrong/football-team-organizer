@@ -212,18 +212,22 @@ export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
 
 export const MATCH_STAGES: MatchStage[] = [
   "group",
+  "knockout",
   "quarter_final",
   "semi_final",
+  "playoff",
+  "playoff_final",
   "final",
-  "knockout",
 ];
 
 export const MATCH_STAGE_LABELS: Record<MatchStage, string> = {
   group: "Group",
-  quarter_final: "Quarter-final",
-  semi_final: "Semi-final",
-  final: "Final",
   knockout: "Knockout",
+  quarter_final: "Quarter Final",
+  semi_final: "Semi Final",
+  playoff: "Playoff",
+  playoff_final: "Playoff Final",
+  final: "Final",
 };
 
 export const DEFAULT_MATCH_STAGE: MatchStage = "group";

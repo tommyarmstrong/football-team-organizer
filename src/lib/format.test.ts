@@ -325,8 +325,11 @@ describe("matchCompetitionLabel", () => {
         stage: "quarter_final",
         competition: { name: "Women's Euros", display_name: "Euros" },
       }),
-    ).toBe("Euros · Quarter-final");
+    ).toBe("Euros · Quarter Final");
     expect(labelMatchStage("group")).toBe("Group");
+    expect(labelMatchStage("semi_final")).toBe("Semi Final");
+    expect(labelMatchStage("playoff")).toBe("Playoff");
+    expect(labelMatchStage("playoff_final")).toBe("Playoff Final");
     expect(labelMatchStage(null)).toBe("—");
   });
 });

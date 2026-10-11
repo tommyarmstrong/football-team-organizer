@@ -178,6 +178,12 @@ describe("resolveMatchStage", () => {
     expect(resolveMatchStage("semi_final", "cup")).toEqual({
       stage: "semi_final",
     });
+    expect(resolveMatchStage("playoff", "tournament")).toEqual({
+      stage: "playoff",
+    });
+    expect(resolveMatchStage("playoff_final", "cup")).toEqual({
+      stage: "playoff_final",
+    });
     expect(resolveMatchStage("final", "tournament")).toEqual({
       stage: "final",
     });
