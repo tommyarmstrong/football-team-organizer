@@ -1357,7 +1357,13 @@ export type Database = {
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";
       match_stage:
-        "group" | "final" | "semi_final" | "quarter_final" | "knockout";
+        | "group"
+        | "final"
+        | "semi_final"
+        | "quarter_final"
+        | "knockout"
+        | "playoff"
+        | "playoff_final";
       team_gender: "boys" | "girls" | "men" | "women" | "mixed";
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
       venue_surface:

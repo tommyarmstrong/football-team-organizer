@@ -4,6 +4,8 @@ import {
   isCompetitionPeriods,
   isExtraTimeOrPenaltyPeriodName,
   isMatchPeriodName,
+  MATCH_STAGE_LABELS,
+  MATCH_STAGES,
   matchAllowsEvents,
   matchAllowsPostcard,
   matchPeriodSortOrder,
@@ -109,6 +111,24 @@ describe("availableExtraTimeOrPenaltyPeriodNames", () => {
         "Penalty Shootout",
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("MATCH_STAGES", () => {
+  it("offers playoff rounds and unhyphenated final labels", () => {
+    expect(MATCH_STAGES).toEqual([
+      "group",
+      "knockout",
+      "quarter_final",
+      "semi_final",
+      "playoff",
+      "playoff_final",
+      "final",
+    ]);
+    expect(MATCH_STAGE_LABELS.quarter_final).toBe("Quarter Final");
+    expect(MATCH_STAGE_LABELS.semi_final).toBe("Semi Final");
+    expect(MATCH_STAGE_LABELS.playoff).toBe("Playoff");
+    expect(MATCH_STAGE_LABELS.playoff_final).toBe("Playoff Final");
   });
 });
 

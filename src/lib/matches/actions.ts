@@ -30,10 +30,7 @@ import { getActiveTeam } from "@/lib/data/team";
 import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
 import { str } from "@/lib/form-parse";
-import {
-  applyTournamentMatchFields,
-  resolveMatchStage,
-} from "@/lib/matches/tournament-defaults";
+import { resolveMatchStage } from "@/lib/matches/tournament-defaults";
 import type {
   Competition,
   CompetitionPeriods,
@@ -158,26 +155,25 @@ async function createMatchRecord(
   if ("error" in loaded) return loaded;
   const stage = resolveMatchStage(parsed.stageRaw, loaded.competition?.kind);
   if ("error" in stage) return stage;
-  const scheduled = applyTournamentMatchFields(parsed, loaded.competition);
-  if (!scheduled.date) {
+  if (!parsed.date) {
     return { error: "Opponent and date are required." };
   }
 
-  const venueResult = await parseVenueId(scheduled.venue_id, team.club_id);
+  const venueResult = await parseVenueId(parsed.venue_id, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
   const { data, error } = await createMatch({
-    opponent_name: scheduled.opponent_name,
-    date: scheduled.date,
-    kickoff_time: scheduled.kickoff_time,
-    meetup_time: scheduled.meetup_time,
-    home_away: scheduled.home_away,
+    opponent_name: parsed.opponent_name,
+    date: parsed.date,
+    kickoff_time: parsed.kickoff_time,
+    meetup_time: parsed.meetup_time,
+    home_away: parsed.home_away,
     venue_id: venueResult.venue_id,
-    competition_id: scheduled.competition_id,
-    is_friendly: scheduled.is_friendly,
-    notes: scheduled.notes,
-    club_notes: scheduled.club_notes,
-    status: scheduled.status,
+    competition_id: parsed.competition_id,
+    is_friendly: parsed.is_friendly,
+    notes: parsed.notes,
+    club_notes: parsed.club_notes,
+    status: parsed.status,
     stage: stage.stage,
     player_of_the_match_id: null,
     players_player_of_the_match_id: null,
@@ -186,7 +182,7 @@ async function createMatchRecord(
   if (error) return { error };
   if (!data) return { error: "Could not create match." };
 
-  const periodNames = periodNamesForCompetitionPeriods(scheduled.periods);
+  const periodNames = periodNamesForCompetitionPeriods(parsed.periods);
   if (periodNames.length > 0) {
     const starterIds = await defaultStarterPlayerIds(data.id, team.id);
     const { error: periodsError } = await createPeriodsWithStarters(
@@ -250,29 +246,28 @@ export async function updateMatchOnPageAction(
   if ("error" in loaded) return loaded;
   const stage = resolveMatchStage(parsed.stageRaw, loaded.competition?.kind);
   if ("error" in stage) return stage;
-  const scheduled = applyTournamentMatchFields(parsed, loaded.competition);
-  if (!scheduled.date) {
+  if (!parsed.date) {
     return { error: "Opponent and date are required." };
   }
 
-  const venueResult = await parseVenueId(scheduled.venue_id, team.club_id);
+  const venueResult = await parseVenueId(parsed.venue_id, team.club_id);
   if ("error" in venueResult) return { error: venueResult.error };
 
-  const allowsEvents = matchAllowsEvents(scheduled.status);
+  const allowsEvents = matchAllowsEvents(parsed.status);
   const canEditPotm = canEditTeam(ctx, existing.data.team_id);
 
   const { error } = await updateMatch(id, {
-    opponent_name: scheduled.opponent_name,
-    date: scheduled.date,
-    kickoff_time: scheduled.kickoff_time,
-    meetup_time: scheduled.meetup_time,
-    home_away: scheduled.home_away,
+    opponent_name: parsed.opponent_name,
+    date: parsed.date,
+    kickoff_time: parsed.kickoff_time,
+    meetup_time: parsed.meetup_time,
+    home_away: parsed.home_away,
     venue_id: venueResult.venue_id,
-    status: scheduled.status,
-    competition_id: scheduled.competition_id,
-    is_friendly: scheduled.is_friendly,
-    notes: scheduled.notes,
-    club_notes: scheduled.club_notes,
+    status: parsed.status,
+    competition_id: parsed.competition_id,
+    is_friendly: parsed.is_friendly,
+    notes: parsed.notes,
+    club_notes: parsed.club_notes,
     stage: stage.stage,
     ...(canEditPotm
       ? {

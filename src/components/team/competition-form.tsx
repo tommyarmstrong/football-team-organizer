@@ -5,8 +5,6 @@ import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
   AGE_GROUPS,
-  COMPETITION_FORMATS,
-  COMPETITION_FORMAT_LABELS,
   COMPETITION_GENDERS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_KINDS,
@@ -17,7 +15,6 @@ import {
   COMPETITION_RESULT_LABELS,
   COMPETITION_VENUE_SPECIAL,
   COMPETITION_VENUE_SPECIAL_LABELS,
-  DEFAULT_COMPETITION_FORMAT,
   DEFAULT_COMPETITION_PERIODS,
   DEFAULT_COMPETITION_RESULT,
 } from "@/lib/constants";
@@ -25,6 +22,7 @@ import {
   createCompetitionAction,
   createCompetitionAndReturnAction,
   saveCompetitionAndReturnAction,
+  updateCompetitionAction,
 } from "@/lib/team/actions";
 import { labelCompetitionKind, labelHomeAway } from "@/lib/format";
 import type {
@@ -76,11 +74,14 @@ export function CompetitionForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  const boundReturn = stayOnPage
-    ? createCompetitionAction
-    : mode === "edit" && competition
-      ? saveCompetitionAndReturnAction.bind(null, competition.id)
-      : createCompetitionAndReturnAction;
+  const boundReturn =
+    mode === "edit" && competition
+      ? stayOnPage
+        ? updateCompetitionAction.bind(null, competition.id)
+        : saveCompetitionAndReturnAction.bind(null, competition.id)
+      : stayOnPage
+        ? createCompetitionAction
+        : createCompetitionAndReturnAction;
   const [state, formAction, pending] = useToastActionState(
     boundReturn,
     INITIAL_ACTION_STATE,
@@ -101,8 +102,8 @@ export function CompetitionForm({
       : "Update competition details. Use Save to save and return.";
 
   const form = (
-    <form id={formId} action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form id={formId} action={formAction} className="w-full min-w-0 space-y-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">
             Name <span className="text-muted-foreground">(required)</span>
@@ -181,8 +182,8 @@ export function CompetitionForm({
           />
         </div>
         {kind === "tournament" ? (
-          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
-            <div className="space-y-2">
+          <div className="grid min-w-0 gap-4 sm:col-span-2 sm:grid-cols-3">
+            <div className="min-w-0 space-y-2 overflow-hidden">
               <Label htmlFor="date">
                 Date <OptionalHint />
               </Label>
@@ -194,7 +195,7 @@ export function CompetitionForm({
                 disabled={pending}
               />
             </div>
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2 overflow-hidden">
               <Label htmlFor="meetup_time">
                 Meet-up <OptionalHint />
               </Label>
@@ -206,7 +207,7 @@ export function CompetitionForm({
                 disabled={pending}
               />
             </div>
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="home_away">Home / away</Label>
               <NativeSelect
                 id="home_away"
@@ -222,26 +223,11 @@ export function CompetitionForm({
               </NativeSelect>
             </div>
             <p className="text-muted-foreground text-sm sm:col-span-3">
-              These are copied onto each match in this tournament, along with
-              the venue and periods.
+              New matches in this tournament start with this date, meet-up,
+              home/away, venue, and periods. Each match can change them.
             </p>
           </div>
         ) : null}
-        <div className="space-y-2">
-          <Label htmlFor="format">Format</Label>
-          <NativeSelect
-            id="format"
-            name="format"
-            defaultValue={competition?.format ?? DEFAULT_COMPETITION_FORMAT}
-            disabled={pending}
-          >
-            {COMPETITION_FORMATS.map((format) => (
-              <option key={format} value={format}>
-                {COMPETITION_FORMAT_LABELS[format]}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
         <div className="space-y-2">
           <Label htmlFor="age_group">
             Age group <OptionalHint />

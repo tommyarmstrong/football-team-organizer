@@ -199,7 +199,7 @@ describe("createMatchAction", () => {
     );
   });
 
-  it("copies tournament details onto the match and keeps the chosen stage", async () => {
+  it("keeps tournament match overrides and the chosen stage", async () => {
     getCompetitionMock.mockResolvedValue({
       data: {
         id: "comp-t",
@@ -214,7 +214,7 @@ describe("createMatchAction", () => {
       error: null,
     });
     listVenuesMock.mockResolvedValue({
-      data: [{ id: "venue-1" }],
+      data: [{ id: "venue-1" }, { id: "venue-other" }],
       error: null,
     });
     createMatchMock.mockResolvedValue({
@@ -239,10 +239,10 @@ describe("createMatchAction", () => {
 
     expect(createMatchMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        date: "2026-06-01",
-        meetup_time: "09:00",
-        home_away: "neutral",
-        venue_id: "venue-1",
+        date: "2026-05-01",
+        meetup_time: "08:00",
+        home_away: "home",
+        venue_id: "venue-other",
         competition_id: "comp-t",
         is_friendly: false,
         stage: "final",
@@ -250,7 +250,7 @@ describe("createMatchAction", () => {
     );
     expect(createPeriodsWithStartersMock).toHaveBeenCalledWith(
       "match-new",
-      ["Single period match"],
+      ["Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"],
       [],
     );
   });
@@ -530,7 +530,7 @@ describe("updateMatchAction", () => {
     );
   });
 
-  it("applies tournament details when the match competition changes", async () => {
+  it("keeps edited match details when the competition is a tournament", async () => {
     getCompetitionMock.mockResolvedValue({
       data: {
         id: "comp-t",
@@ -544,6 +544,10 @@ describe("updateMatchAction", () => {
       },
       error: null,
     });
+    listVenuesMock.mockResolvedValue({
+      data: [{ id: "venue-1" }],
+      error: null,
+    });
 
     await expect(
       updateMatchAction(
@@ -553,8 +557,10 @@ describe("updateMatchAction", () => {
           status: "scheduled",
           competition_id: "comp-t",
           date: "2026-05-01",
+          meetup_time: "08:30",
+          home_away: "home",
           venue_id: "venue-1",
-          stage: "semi_final",
+          stage: "playoff",
         }),
       ),
     ).rejects.toThrow("redirect:/matches/match-1");
@@ -562,11 +568,11 @@ describe("updateMatchAction", () => {
     expect(updateMatchMock).toHaveBeenCalledWith(
       "match-1",
       expect.objectContaining({
-        date: "2026-06-01",
-        meetup_time: "09:15",
-        home_away: "away",
-        venue_id: null,
-        stage: "semi_final",
+        date: "2026-05-01",
+        meetup_time: "08:30",
+        home_away: "home",
+        venue_id: "venue-1",
+        stage: "playoff",
       }),
     );
   });
