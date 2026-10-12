@@ -3,13 +3,11 @@ import { ImageResponse } from "next/og";
 import { describe, expect, it } from "vitest";
 import {
   bannerNameFontSize,
-  colourHsl,
-  contrastRatio,
+  clubMarkColour,
   Crest,
   mixColour,
   PLAYER_CARD_HEIGHT,
   PLAYER_CARD_WIDTH,
-  playerCardColours,
   PlayerCardImage,
 } from "@/lib/postcards/player-card-image";
 import type { PlayerCardPayload } from "@/lib/postcards/types";
@@ -76,66 +74,15 @@ describe("mixColour", () => {
   });
 });
 
-describe("playerCardColours", () => {
-  function hueDelta(a: string, b: string): number {
-    const diff = Math.abs(colourHsl(a).h - colourHsl(b).h);
-    return Math.min(diff, 360 - diff);
-  }
-
-  it("keeps the light stop saturated instead of mixing toward white", () => {
-    const club = "#146C4A";
-    const colours = playerCardColours(club);
-    const washed = mixColour(club, "#FFFFFF", 0.38);
-    expect(colourHsl(colours.light).s).toBeGreaterThan(colourHsl(washed).s);
-    expect(hueDelta(colours.light, club)).toBeLessThan(2);
+describe("clubMarkColour", () => {
+  it("uses the club colour when white type already reads on it", () => {
+    expect(clubMarkColour("#146C4A")).toBe("#146c4a");
+    expect(clubMarkColour("#1B4D8E")).toBe("#1b4d8e");
   });
 
-  it("uses one hue for the frame, banner, field, and footer text", () => {
-    const colours = playerCardColours("#1B4D8E");
-    for (const shade of [
-      colours.deep,
-      colours.light,
-      colours.field,
-      colours.muted,
-      colours.accent,
-    ]) {
-      expect(hueDelta(shade, colours.base)).toBeLessThan(2);
-    }
-  });
-
-  it("lifts a dull club colour so the card does not stay grey", () => {
-    const club = "#5B7F72";
-    const colours = playerCardColours(club);
-    expect(colourHsl(colours.base).s).toBeGreaterThan(colourHsl(club).s);
-    expect(colourHsl(colours.muted).s).toBeGreaterThan(colourHsl(club).s);
-  });
-
-  it("keeps white banner text and footer text readable", () => {
-    for (const club of [
-      "#146C4A",
-      "#FFD100",
-      "#000000",
-      "#FFFFFF",
-      "#C4B5A0",
-    ]) {
-      const colours = playerCardColours(club);
-      expect(contrastRatio("#FFFFFF", colours.deep)).toBeGreaterThanOrEqual(
-        4.5,
-      );
-      expect(contrastRatio("#FFFFFF", colours.accent)).toBeGreaterThanOrEqual(
-        4.5,
-      );
-      expect(
-        contrastRatio(colours.muted, colours.field),
-      ).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-
-  it("leaves a black club colour neutral", () => {
-    const colours = playerCardColours("#000000");
-    expect(colourHsl(colours.base).s).toBe(0);
-    expect(colourHsl(colours.deep).s).toBe(0);
-    expect(colourHsl(colours.field).s).toBe(0);
+  it("darkens a pale club colour only until white type is readable", () => {
+    expect(clubMarkColour("#FFD100")).toBe("#8c7300");
+    expect(clubMarkColour("#E85D04")).toBe("#c54f03");
   });
 });
 
@@ -265,13 +212,13 @@ describe("PlayerCardImage photo area", () => {
 
 describe("Crest", () => {
   it("shows the club logo when there is one", () => {
-    const tree = JSON.stringify(Crest({ crestSrc: tinyPng, field: "#E7F6EE" }));
+    const tree = JSON.stringify(Crest({ crestSrc: tinyPng }));
     expect(tree).toContain(tinyPng);
     expect(tree).not.toContain("⚽");
   });
 
   it("falls back to the football emoji when there is no logo", () => {
-    const tree = JSON.stringify(Crest({ crestSrc: null, field: "#E7F6EE" }));
+    const tree = JSON.stringify(Crest({ crestSrc: null }));
     expect(tree).toContain("⚽");
     expect(tree).not.toContain("<img");
   });
