@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -8,6 +8,7 @@ import {
   COMPETITION_GENDERS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_KINDS,
+  MATCH_HOME_AWAYS,
   COMPETITION_PERIODS,
   COMPETITION_PERIOD_LABELS,
   COMPETITION_RESULTS,
@@ -21,9 +22,14 @@ import {
   createCompetitionAction,
   createCompetitionAndReturnAction,
   saveCompetitionAndReturnAction,
+  updateCompetitionAction,
 } from "@/lib/team/actions";
-import { labelCompetitionKind } from "@/lib/format";
-import type { Competition, Venue } from "@/lib/supabase/database.types";
+import { labelCompetitionKind, labelHomeAway } from "@/lib/format";
+import type {
+  Competition,
+  CompetitionKind,
+  Venue,
+} from "@/lib/supabase/database.types";
 import { Input } from "@/components/ui/input";
 import { Label, OptionalHint } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -68,11 +74,14 @@ export function CompetitionForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  const boundReturn = stayOnPage
-    ? createCompetitionAction
-    : mode === "edit" && competition
-      ? saveCompetitionAndReturnAction.bind(null, competition.id)
-      : createCompetitionAndReturnAction;
+  const boundReturn =
+    mode === "edit" && competition
+      ? stayOnPage
+        ? updateCompetitionAction.bind(null, competition.id)
+        : saveCompetitionAndReturnAction.bind(null, competition.id)
+      : stayOnPage
+        ? createCompetitionAction
+        : createCompetitionAndReturnAction;
   const [state, formAction, pending] = useToastActionState(
     boundReturn,
     INITIAL_ACTION_STATE,
@@ -82,6 +91,9 @@ export function CompetitionForm({
     if (state.success) onSuccess?.();
   }, [state.success, onSuccess]);
 
+  const [kind, setKind] = useState<CompetitionKind>(
+    competition?.kind ?? "league",
+  );
   const formId = "competition-details-form";
   const title = mode === "create" ? "New competition" : "Competition details";
   const description =
@@ -90,9 +102,9 @@ export function CompetitionForm({
       : "Update competition details. Use Save to save and return.";
 
   const form = (
-    <form id={formId} action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
+    <form id={formId} action={formAction} className="w-full min-w-0 space-y-4">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="name">
             Name <span className="text-muted-foreground">(required)</span>
           </Label>
@@ -105,7 +117,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="display_name">
             Display Name <OptionalHint />
           </Label>
@@ -116,7 +128,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="organizer">
             Organizer <OptionalHint />
           </Label>
@@ -127,12 +139,13 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="kind">Kind</Label>
           <NativeSelect
             id="kind"
             name="kind"
-            defaultValue={competition?.kind ?? "league"}
+            value={kind}
+            onChange={(event) => setKind(event.target.value as CompetitionKind)}
             disabled={pending}
           >
             {COMPETITION_KINDS.map((kind) => (
@@ -142,7 +155,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="result">Result</Label>
           <NativeSelect
             id="result"
@@ -157,7 +170,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="season">
             Season <OptionalHint />
           </Label>
@@ -168,19 +181,54 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="knockout">Knock out</Label>
-          <NativeSelect
-            id="knockout"
-            name="knockout"
-            defaultValue={competition?.knockout ? "yes" : "no"}
-            disabled={pending}
-          >
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
+        {kind === "tournament" ? (
+          <>
+            <div className="min-w-0 space-y-2 overflow-hidden">
+              <Label htmlFor="date">
+                Date <OptionalHint />
+              </Label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                defaultValue={competition?.date ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="min-w-0 space-y-2 overflow-hidden">
+              <Label htmlFor="meetup_time">
+                Meet-up <OptionalHint />
+              </Label>
+              <Input
+                id="meetup_time"
+                name="meetup_time"
+                type="time"
+                defaultValue={competition?.meetup_time?.slice(0, 5) ?? ""}
+                disabled={pending}
+              />
+            </div>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="home_away">Home / away</Label>
+              <NativeSelect
+                id="home_away"
+                name="home_away"
+                defaultValue={competition?.home_away ?? "neutral"}
+                disabled={pending}
+              >
+                {MATCH_HOME_AWAYS.map((value) => (
+                  <option key={value} value={value}>
+                    {labelHomeAway(value)}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              New matches in this tournament start with this date, meet-up,
+              home/away, venue, and periods. Each match can change them.
+            </p>
+          </>
+        ) : null}
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="age_group">
             Age group <OptionalHint />
           </Label>
@@ -198,7 +246,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="gender">
             Gender <OptionalHint />
           </Label>
@@ -216,7 +264,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="venue">Venue</Label>
           <NativeSelect
             id="venue"
@@ -236,7 +284,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="players_per_team">
             Players per team <OptionalHint />
           </Label>
@@ -251,7 +299,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="periods">Periods per match</Label>
           <NativeSelect
             id="periods"
@@ -266,7 +314,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="minutes_per_period">
             Minutes per period <OptionalHint />
           </Label>
@@ -281,7 +329,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="notes">
             Notes <OptionalHint />
           </Label>

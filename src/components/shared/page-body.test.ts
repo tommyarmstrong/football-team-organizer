@@ -15,6 +15,7 @@ const pages = [
   "club/page.tsx",
   "people/page.tsx",
   "people/[id]/page.tsx",
+  "competitions/[id]/page.tsx",
 ] as const;
 
 describe("pageBodyClassName", () => {

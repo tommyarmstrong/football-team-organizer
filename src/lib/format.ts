@@ -2,10 +2,12 @@ import {
   CARD_TYPE_LABELS,
   COACH_OBJECTIVE_STATUS_LABELS,
   COACH_OBJECTIVE_TYPE_LABELS,
+  COMPETITION_FORMAT_LABELS,
   COMPETITION_GENDER_LABELS,
   COMPETITION_PERIOD_LABELS,
   COMPETITION_RESULT_LABELS,
   GOAL_KIND_LABELS,
+  MATCH_STAGE_LABELS,
   MATCH_STATUS_LABELS,
   OPPOSITION_GOAL_LABEL,
   OWN_GOAL_LABEL,
@@ -21,11 +23,13 @@ import type {
   CardType,
   CoachObjectiveStatus,
   CoachObjectiveType,
+  CompetitionFormat,
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
   CompetitionResult,
   MatchHomeAway,
+  MatchStage,
   MatchStatus,
   PlayerObjectiveStatus,
   PlayerObjectiveType,
@@ -135,11 +139,15 @@ export function competitionDisplayName(competition: {
 /** Competition line for a fixture: friendlies show as "Friendly". */
 export function matchCompetitionLabel(match: {
   is_friendly?: boolean;
+  stage?: MatchStage | null;
   competition?: { name: string; display_name?: string | null } | null;
 }): string | null {
   if (match.is_friendly) return "Friendly";
   if (!match.competition) return null;
-  return competitionDisplayName(match.competition) || null;
+  const name = competitionDisplayName(match.competition);
+  if (!name) return null;
+  if (!match.stage) return name;
+  return `${name} · ${labelMatchStage(match.stage)}`;
 }
 
 /**
@@ -290,6 +298,11 @@ export function labelHomeAway(homeAway: MatchHomeAway): string {
   return homeAway.charAt(0).toUpperCase() + homeAway.slice(1);
 }
 
+export function labelMatchStage(stage: MatchStage | null | undefined): string {
+  if (!stage) return "—";
+  return MATCH_STAGE_LABELS[stage];
+}
+
 /** Away: opposition first; home / neutral / unknown: our team first. */
 export function formatMatchVersusTitle(
   teamName: string,
@@ -379,6 +392,13 @@ export function labelMatchStatus(status: MatchStatus): string {
 export function labelCompetitionKind(kind: CompetitionKind | null): string {
   if (!kind) return "—";
   return kind.charAt(0).toUpperCase() + kind.slice(1);
+}
+
+export function labelCompetitionFormat(
+  format: CompetitionFormat | null | undefined,
+): string {
+  if (!format) return "—";
+  return COMPETITION_FORMAT_LABELS[format];
 }
 
 export function labelCompetitionGender(

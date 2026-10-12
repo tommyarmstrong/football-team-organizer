@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { MatchWithRelations } from "@/lib/data/matches";
-import { competitionDisplayName, labelMatchStatus } from "@/lib/format";
+import { labelMatchStatus, matchCompetitionLabel } from "@/lib/format";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 import { MatchHero } from "@/components/matches/match-hero";
 
@@ -23,7 +23,7 @@ export function MatchesDirectoryList({
           match.opponent_name,
           teamName,
           match.venue?.name ?? "",
-          match.competition ? competitionDisplayName(match.competition) : "",
+          matchCompetitionLabel(match) ?? "",
           match.is_friendly ? "Friendly" : "",
           labelMatchStatus(match.status),
         ].join(" ")
@@ -48,13 +48,7 @@ export function MatchesDirectoryList({
             status={match.status}
             goalsFor={match.goals_for}
             goalsAgainst={match.goals_against}
-            competitionName={
-              match.is_friendly
-                ? "Friendly"
-                : match.competition
-                  ? competitionDisplayName(match.competition)
-                  : null
-            }
+            competitionName={matchCompetitionLabel(match)}
             date={match.date}
             kickoffTime={match.kickoff_time}
             meetupTime={match.meetup_time}

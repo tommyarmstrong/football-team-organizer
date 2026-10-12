@@ -25,8 +25,10 @@ import {
   labelCardType,
   labelCoachObjectiveStatus,
   labelCoachObjectiveType,
+  labelCompetitionFormat,
   labelCompetitionGender,
   labelCompetitionKind,
+  labelMatchStage,
   labelCompetitionPeriods,
   labelCompetitionResult,
   labelGender,
@@ -315,6 +317,21 @@ describe("matchCompetitionLabel", () => {
       matchCompetitionLabel({ is_friendly: false, competition: null }),
     ).toBeNull();
   });
+
+  it("appends the stage for a cup or tournament fixture", () => {
+    expect(
+      matchCompetitionLabel({
+        is_friendly: false,
+        stage: "quarter_final",
+        competition: { name: "Women's Euros", display_name: "Euros" },
+      }),
+    ).toBe("Euros · Quarter Final");
+    expect(labelMatchStage("group")).toBe("Group");
+    expect(labelMatchStage("semi_final")).toBe("Semi Final");
+    expect(labelMatchStage("playoff")).toBe("Playoff");
+    expect(labelMatchStage("playoff_final")).toBe("Playoff Final");
+    expect(labelMatchStage(null)).toBe("—");
+  });
 });
 
 describe("competitionDisplayName", () => {
@@ -517,6 +534,17 @@ describe("label helpers", () => {
 
   it("returns an em dash for null competition kind", () => {
     expect(labelCompetitionKind(null)).toBe("—");
+  });
+
+  it("labels competition format", () => {
+    expect(labelCompetitionFormat("league")).toBe("League");
+    expect(labelCompetitionFormat("knockout")).toBe("Knockout");
+    expect(labelCompetitionFormat("groups_and_knockout")).toBe(
+      "Groups and knockout",
+    );
+    expect(labelCompetitionFormat("other")).toBe("Other");
+    expect(labelCompetitionFormat(null)).toBe("—");
+    expect(labelCompetitionFormat(undefined)).toBe("—");
   });
 
   it("labels competition gender, periods, and result", () => {

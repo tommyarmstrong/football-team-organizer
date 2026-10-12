@@ -46,6 +46,8 @@ describe("period page layout", () => {
     expect(editSection).not.toContain(
       '<h3 className="text-sm font-medium">Goals</h3>',
     );
+    expect(editSection).toContain('name="player_id"');
+    expect(editSection).not.toContain("savePeriodStartersAction");
   });
 
   it("uses a Section heading for starters on the create section", () => {

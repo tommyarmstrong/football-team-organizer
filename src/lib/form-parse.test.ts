@@ -7,7 +7,6 @@ import {
   parseOptionalInt,
   parseOptionalMinute,
   parseShirtNumber,
-  parseYesNo,
   str,
 } from "@/lib/form-parse";
 
@@ -210,34 +209,5 @@ describe("parseOptionalMinute", () => {
     expect(parseOptionalMinute("12.5")).toEqual({
       error: "Minute must be between 0 and 120.",
     });
-  });
-});
-
-describe("parseYesNo", () => {
-  it("parses yes/true and no/false case-insensitively", () => {
-    const yes = new FormData();
-    yes.set("knockout", "Yes");
-    expect(parseYesNo(yes, "knockout")).toBe(true);
-
-    const trueValue = new FormData();
-    trueValue.set("knockout", "TRUE");
-    expect(parseYesNo(trueValue, "knockout")).toBe(true);
-
-    const no = new FormData();
-    no.set("knockout", "no");
-    expect(parseYesNo(no, "knockout", true)).toBe(false);
-
-    const falseValue = new FormData();
-    falseValue.set("knockout", "false");
-    expect(parseYesNo(falseValue, "knockout", true)).toBe(false);
-  });
-
-  it("falls back to the default for blank or unknown values", () => {
-    expect(parseYesNo(new FormData(), "knockout")).toBe(false);
-    expect(parseYesNo(new FormData(), "knockout", true)).toBe(true);
-
-    const unknown = new FormData();
-    unknown.set("knockout", "maybe");
-    expect(parseYesNo(unknown, "knockout", false)).toBe(false);
   });
 });

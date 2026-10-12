@@ -2,11 +2,13 @@ import type {
   CardType,
   CoachObjectiveStatus,
   CoachObjectiveType,
+  CompetitionFormat,
   CompetitionGender,
   CompetitionKind,
   CompetitionPeriods,
   CompetitionResult,
   MatchHomeAway,
+  MatchStage,
   MatchStatus,
   PlayerObjectiveStatus,
   PlayerObjectiveType,
@@ -107,6 +109,22 @@ export const COMPETITION_KINDS: CompetitionKind[] = [
   "other",
 ];
 
+export const COMPETITION_FORMATS: CompetitionFormat[] = [
+  "league",
+  "knockout",
+  "groups_and_knockout",
+  "other",
+];
+
+export const COMPETITION_FORMAT_LABELS: Record<CompetitionFormat, string> = {
+  league: "League",
+  knockout: "Knockout",
+  groups_and_knockout: "Groups and knockout",
+  other: "Other",
+};
+
+export const DEFAULT_COMPETITION_FORMAT: CompetitionFormat = "league";
+
 /** Form/select value for a friendly fixture (not a competitions row). */
 export const FRIENDLY_COMPETITION_VALUE = "__friendly__";
 
@@ -191,6 +209,28 @@ export const STATS_FORM_LIMIT = 8;
 export const DEFAULT_COMPETITION_RESULT: CompetitionResult = "ongoing";
 
 export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
+
+export const MATCH_STAGES: MatchStage[] = [
+  "group",
+  "knockout",
+  "quarter_final",
+  "semi_final",
+  "playoff",
+  "playoff_final",
+  "final",
+];
+
+export const MATCH_STAGE_LABELS: Record<MatchStage, string> = {
+  group: "Group",
+  knockout: "Knockout",
+  quarter_final: "Quarter Final",
+  semi_final: "Semi Final",
+  playoff: "Playoff",
+  playoff_final: "Playoff Final",
+  final: "Final",
+};
+
+export const DEFAULT_MATCH_STAGE: MatchStage = "group";
 
 export const VENUE_SURFACES: VenueSurface[] = [
   "astro",

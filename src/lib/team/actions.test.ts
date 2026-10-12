@@ -473,6 +473,10 @@ describe("competition actions", () => {
       }),
     );
     expect(result.success).toMatch(/added/i);
+    const created = createCompetitionMock.mock.calls.at(-1)?.[0] as {
+      format?: string;
+    };
+    expect(created).not.toHaveProperty("format");
   });
 
   it("updates competitions and supports venue mode", async () => {
@@ -488,7 +492,6 @@ describe("competition actions", () => {
         periods: "2",
         result: "ongoing",
         venue: "venue-1",
-        knockout: "yes",
       }),
     );
     expect(result.success).toMatch(/updated/i);
@@ -497,9 +500,77 @@ describe("competition actions", () => {
       expect.objectContaining({
         venue_mode: "venue",
         venue_id: "venue-1",
-        knockout: true,
       }),
     );
+    expect(updateCompetitionMock.mock.calls.at(-1)?.[1]).not.toHaveProperty(
+      "format",
+    );
+  });
+
+  it("stores tournament schedule fields and clears them for other kinds", async () => {
+    const created = await createCompetitionAction(
+      {},
+      formDataFrom({
+        name: "Festival",
+        kind: "tournament",
+        season: "2025/26",
+        periods: "1",
+        result: "ongoing",
+        venue: "venue-1",
+        date: "2026-06-01",
+        meetup_time: "09:00",
+        home_away: "neutral",
+      }),
+    );
+    expect(created.success).toMatch(/added/i);
+    expect(createCompetitionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "tournament",
+        date: "2026-06-01",
+        meetup_time: "09:00",
+        home_away: "neutral",
+        venue_mode: "venue",
+        venue_id: "venue-1",
+      }),
+    );
+
+    await updateCompetitionAction(
+      "comp-1",
+      {},
+      formDataFrom({
+        name: "League",
+        kind: "league",
+        season: "2025/26",
+        periods: "2",
+        result: "ongoing",
+        venue: "unknown",
+        date: "2026-06-01",
+        meetup_time: "09:00",
+        home_away: "home",
+      }),
+    );
+    expect(updateCompetitionMock).toHaveBeenCalledWith(
+      "comp-1",
+      expect.objectContaining({
+        kind: "league",
+        date: null,
+        meetup_time: null,
+        home_away: null,
+      }),
+    );
+  });
+
+  it("rejects an invalid tournament date", async () => {
+    const result = await createCompetitionAction(
+      {},
+      formDataFrom({
+        name: "Festival",
+        kind: "tournament",
+        date: "2026-02-31",
+      }),
+    );
+    expect(result.error).toMatch(/date/i);
+    expect(createCompetitionMock).not.toHaveBeenCalled();
   });
 
   it("persists competition display_name", async () => {

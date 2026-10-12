@@ -32,7 +32,7 @@ export function InlineFormDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className={cn(
-            "overflow-y-auto",
+            "min-w-0 overflow-y-auto",
             size === "lg"
               ? "max-h-[min(90dvh,52rem)] sm:max-w-2xl"
               : "max-h-[min(90dvh,40rem)] sm:max-w-lg",

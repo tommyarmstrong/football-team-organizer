@@ -708,10 +708,10 @@ export type Database = {
           age_group: string | null;
           created_at: string;
           display_name: string | null;
+          format: Database["public"]["Enums"]["competition_format"];
           gender: Database["public"]["Enums"]["competition_gender"] | null;
           id: string;
           kind: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout: boolean;
           minutes_per_period: number | null;
           name: string;
           notes: string | null;
@@ -723,15 +723,18 @@ export type Database = {
           team_id: string;
           venue_id: string | null;
           venue_mode: string;
+          date: string | null;
+          meetup_time: string | null;
+          home_away: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Insert: {
           age_group?: string | null;
           created_at?: string;
           display_name?: string | null;
+          format?: Database["public"]["Enums"]["competition_format"];
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout?: boolean;
           minutes_per_period?: number | null;
           name: string;
           notes?: string | null;
@@ -743,15 +746,18 @@ export type Database = {
           team_id: string;
           venue_id?: string | null;
           venue_mode?: string;
+          date?: string | null;
+          meetup_time?: string | null;
+          home_away?: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Update: {
           age_group?: string | null;
           created_at?: string;
           display_name?: string | null;
+          format?: Database["public"]["Enums"]["competition_format"];
           gender?: Database["public"]["Enums"]["competition_gender"] | null;
           id?: string;
           kind?: Database["public"]["Enums"]["competition_kind"] | null;
-          knockout?: boolean;
           minutes_per_period?: number | null;
           name?: string;
           notes?: string | null;
@@ -763,6 +769,9 @@ export type Database = {
           team_id?: string;
           venue_id?: string | null;
           venue_mode?: string;
+          date?: string | null;
+          meetup_time?: string | null;
+          home_away?: Database["public"]["Enums"]["match_home_away"] | null;
         };
         Relationships: [
           {
@@ -841,6 +850,7 @@ export type Database = {
           player_of_the_match_id: string | null;
           players_player_of_the_match_id: string | null;
           status: Database["public"]["Enums"]["match_status"];
+          stage: Database["public"]["Enums"]["match_stage"] | null;
           team_id: string;
           updated_at: string;
           home_away: Database["public"]["Enums"]["match_home_away"];
@@ -860,6 +870,7 @@ export type Database = {
           player_of_the_match_id?: string | null;
           players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
+          stage?: Database["public"]["Enums"]["match_stage"] | null;
           team_id: string;
           updated_at?: string;
           home_away: Database["public"]["Enums"]["match_home_away"];
@@ -879,6 +890,7 @@ export type Database = {
           player_of_the_match_id?: string | null;
           players_player_of_the_match_id?: string | null;
           status?: Database["public"]["Enums"]["match_status"];
+          stage?: Database["public"]["Enums"]["match_stage"] | null;
           team_id?: string;
           updated_at?: string;
           home_away?: Database["public"]["Enums"]["match_home_away"];
@@ -1324,6 +1336,8 @@ export type Database = {
       guardian_relationship:
         "parent" | "guardian" | "football_contact" | "other";
       competition_kind: "league" | "cup" | "tournament" | "other";
+      competition_format:
+        "league" | "knockout" | "groups_and_knockout" | "other";
       competition_gender: "female" | "male" | "mixed";
       competition_periods: "1" | "2" | "4" | "other";
       competition_result:
@@ -1342,6 +1356,14 @@ export type Database = {
       match_status:
         "scheduled" | "played" | "in_progress" | "postponed" | "cancelled";
       match_home_away: "home" | "away" | "neutral";
+      match_stage:
+        | "group"
+        | "final"
+        | "semi_final"
+        | "quarter_final"
+        | "knockout"
+        | "playoff"
+        | "playoff_final";
       team_gender: "boys" | "girls" | "men" | "women" | "mixed";
       card_type: "yellow_1st" | "yellow_2nd" | "red" | "timeout" | "other";
       venue_surface:
@@ -1425,10 +1447,12 @@ export type TeamRole = Enums<"team_role">;
 export type GuardianRelationship = Enums<"guardian_relationship">;
 export type TeamGender = Enums<"team_gender">;
 export type CompetitionKind = Enums<"competition_kind">;
+export type CompetitionFormat = Enums<"competition_format">;
 export type CompetitionGender = Enums<"competition_gender">;
 export type CompetitionPeriods = Enums<"competition_periods">;
 export type CompetitionResult = Enums<"competition_result">;
 export type MatchHomeAway = Enums<"match_home_away">;
+export type MatchStage = Enums<"match_stage">;
 export type MatchStatus = Enums<"match_status">;
 export type CardType = Enums<"card_type">;
 export type VenueSurface = Enums<"venue_surface">;
