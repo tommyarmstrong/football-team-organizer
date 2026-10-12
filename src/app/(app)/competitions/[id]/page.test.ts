@@ -15,4 +15,14 @@ describe("competition detail page", () => {
     );
     expect(source).not.toContain("labelCompetitionFormat");
   });
+
+  it("shows a tournament squad editor only for tournaments", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("TournamentSquadSection");
+    expect(source).toContain('competition.kind === "tournament"');
+    expect(source).toContain('title="Tournament squad"');
+  });
 });

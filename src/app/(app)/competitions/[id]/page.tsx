@@ -1,6 +1,12 @@
 import { notFound, redirect } from "next/navigation";
-import { getViewerContext, canEditTeamHistory } from "@/lib/authz/context";
+import {
+  getViewerContext,
+  canEditMatchDay,
+  canEditTeamHistory,
+} from "@/lib/authz/context";
 import { getCompetition } from "@/lib/data/competitions";
+import { listCompetitionPlayers } from "@/lib/data/competition-players";
+import { listRosterForTeam, type RosterPlayer } from "@/lib/data/players";
 import { listVenues } from "@/lib/data/venues";
 import { getCurrentTeam } from "@/lib/data/team";
 import {
@@ -18,7 +24,9 @@ import {
 } from "@/lib/format";
 import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
+import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { TournamentSquadSection } from "@/components/competitions/tournament-squad-section";
 import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
 import { EditCompetitionDialog } from "@/components/team/edit-competition-dialog";
 import { CompetitionResultChip } from "@/components/team/competition-result-chip";
@@ -60,6 +68,10 @@ export default async function CompetitionDetailPage({
   const team = await getCurrentTeam();
   const { data: venues } = await listVenues(team?.club_id);
   const venueLabel = competitionVenueLabel(competition, venues);
+  const tournamentSquad =
+    competition.kind === "tournament"
+      ? await loadTournamentSquad(competition.id, competition.team_id)
+      : null;
 
   return (
     <div className={pageBodyClassName("space-y-8")}>
@@ -156,8 +168,45 @@ export default async function CompetitionDetailPage({
           ) : undefined
         }
       />
+
+      {tournamentSquad ? (
+        <Section title="Tournament squad">
+          {tournamentSquad.error ? (
+            <ErrorBanner message={tournamentSquad.error} />
+          ) : (
+            <TournamentSquadSection
+              competitionId={competition.id}
+              roster={tournamentSquad.roster}
+              selectedPlayerIds={tournamentSquad.selectedPlayerIds}
+              canEdit={canEditMatchDay(ctx, competition.team_id)}
+            />
+          )}
+        </Section>
+      ) : null}
     </div>
   );
+}
+
+async function loadTournamentSquad(
+  competitionId: string,
+  teamId: string,
+): Promise<{
+  roster: RosterPlayer[];
+  selectedPlayerIds: string[];
+  error: string | null;
+}> {
+  const [rosterResult, squadResult] = await Promise.all([
+    listRosterForTeam(teamId, { includeInactive: true }),
+    listCompetitionPlayers(competitionId),
+  ]);
+  const error = [rosterResult.error, squadResult.error]
+    .filter(Boolean)
+    .join(" ");
+  return {
+    roster: rosterResult.data,
+    selectedPlayerIds: squadResult.data.map((row) => row.player_id),
+    error: error || null,
+  };
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

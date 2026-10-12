@@ -9,6 +9,7 @@ import {
   mapGoalRow,
   type GoalWithPlayers,
 } from "@/lib/data/goals";
+import { initialMatchSquadPlayerIds } from "@/lib/data/competition-players";
 import { setMatchSquad } from "@/lib/data/match-players";
 import {
   mapPeriodRow,
@@ -16,7 +17,6 @@ import {
   type MatchPeriodWithStarters,
   type PeriodRow,
 } from "@/lib/data/match-periods";
-import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import type { MatchListFilter } from "@/lib/constants";
@@ -189,15 +189,14 @@ export async function createMatch(
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: "Could not create match." };
 
-  // Default match-day squad: every active player on the team roster.
-  const { data: roster, error: rosterError } = await listRosterForTeam(team.id);
-  if (rosterError) return { data: null, error: rosterError };
+  // Tournament matches start from the tournament squad. Other matches start
+  // from every active player on the team roster.
+  const { data: squadPlayerIds, error: squadIdsError } =
+    await initialMatchSquadPlayerIds(team.id, input.competition_id ?? null);
+  if (squadIdsError) return { data: null, error: squadIdsError };
 
-  if (roster.length > 0) {
-    const { error: squadError } = await setMatchSquad(
-      data.id,
-      roster.map((player) => player.id),
-    );
+  if (squadPlayerIds.length > 0) {
+    const { error: squadError } = await setMatchSquad(data.id, squadPlayerIds);
     if (squadError) return { data: null, error: squadError };
   }
 
