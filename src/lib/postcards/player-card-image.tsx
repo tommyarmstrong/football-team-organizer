@@ -10,11 +10,12 @@ export const PLAYER_CARD_WIDTH = POSTCARD_WIDTH;
 export const PLAYER_CARD_HEIGHT = POSTCARD_HEIGHT;
 
 const DEFAULT_CLUB_COLOUR = "#146C4A";
-const GOLD = "#FFC107";
+const CREAM = "#FAF6E6";
+const GOLD = "#F2C94C";
+const INK = "#183B2B";
+const MUTED = "#5E6F64";
 const WHITE = "#FFFFFF";
 const FOOTBALL_EMOJI = "⚽";
-/** Large banner type and stat figures need this contrast on their fills. */
-const READABLE_CONTRAST = 4.5;
 
 const FRAME_INSET = 36;
 const FRAME_BORDER = 10;
@@ -37,139 +38,6 @@ export function mixColour(hex: string, target: string, amount: number): string {
       .padStart(2, "0");
   });
   return `#${parts.join("")}`;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-export function colourHsl(hex: string): { h: number; s: number; l: number } {
-  const rn = channel(hex, 0) / 255;
-  const gn = channel(hex, 1) / 255;
-  const bn = channel(hex, 2) / 255;
-  const max = Math.max(rn, gn, bn);
-  const min = Math.min(rn, gn, bn);
-  const l = (max + min) / 2;
-  const delta = max - min;
-  if (delta === 0) return { h: 0, s: 0, l };
-  const s = delta / (1 - Math.abs(2 * l - 1));
-  let h = 0;
-  if (max === rn) h = ((gn - bn) / delta) % 6;
-  else if (max === gn) h = (bn - rn) / delta + 2;
-  else h = (rn - gn) / delta + 4;
-  h *= 60;
-  if (h < 0) h += 360;
-  return { h, s, l };
-}
-
-function hslToHex(h: number, s: number, l: number): string {
-  const hue = ((h % 360) + 360) % 360;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const hp = hue / 60;
-  const x = c * (1 - Math.abs((hp % 2) - 1));
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (hp < 1) [r, g, b] = [c, x, 0];
-  else if (hp < 2) [r, g, b] = [x, c, 0];
-  else if (hp < 3) [r, g, b] = [0, c, x];
-  else if (hp < 4) [r, g, b] = [0, x, c];
-  else if (hp < 5) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  const match = l - c / 2;
-  const parts = [r, g, b].map((part) =>
-    Math.round(clamp(part + match, 0, 1) * 255)
-      .toString(16)
-      .padStart(2, "0"),
-  );
-  return `#${parts.join("")}`;
-}
-
-export function contrastRatio(foreground: string, background: string): number {
-  const luminance = (hex: string) => {
-    const channels = [0, 1, 2].map((index) => {
-      const value = channel(hex, index) / 255;
-      return value <= 0.04045
-        ? value / 12.92
-        : ((value + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-  };
-  const lighter = Math.max(luminance(foreground), luminance(background));
-  const darker = Math.min(luminance(foreground), luminance(background));
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-export type PlayerCardColours = {
-  /** Club colour, with a small saturation lift when it is chromatic. */
-  base: string;
-  /** Dark shade for the banner and shirt badge. White text stays readable. */
-  deep: string;
-  /** Brighter shade for gradients. Lightness moves; saturation does not drop. */
-  light: string;
-  /** Inner card, frame, and pills — the same hue as the club, kept light. */
-  field: string;
-  /** Club name. */
-  ink: string;
-  /** Secondary lines, still the club hue rather than a grey-green. */
-  muted: string;
-  /** Stat tiles. White figures stay readable, including on pale club colours. */
-  accent: string;
-  /** Position line. Gold when it clears the banner, otherwise white. */
-  position: string;
-};
-
-/**
- * One club hue across the card. Mixing toward white or black in RGB is what
- * was greying the photo wash, the banner, and the footer out of step with
- * each other.
- */
-export function playerCardColours(clubColour: string): PlayerCardColours {
-  const { h, s, l } = colourHsl(clubColour);
-  const chromatic = s >= 0.12;
-  const vividS = chromatic ? Math.min(1, s + (1 - s) * 0.28) : 0;
-  const base = hslToHex(h, vividS, l);
-
-  let deepL = clamp(Math.min(l * 0.7, 0.32), 0, l);
-  let deep = hslToHex(h, vividS, deepL);
-  while (contrastRatio(WHITE, deep) < READABLE_CONTRAST && deepL > 0.08) {
-    deepL -= 0.02;
-    deep = hslToHex(h, vividS, deepL);
-  }
-
-  // Pale clubs get a slightly deeper light stop so the gradient does not
-  // fade toward white. Darker clubs get a brighter stop at the same hue.
-  const lightL = l >= 0.5 ? Math.max(0.42, l - 0.06) : Math.min(0.5, l + 0.14);
-  const light = hslToHex(h, vividS, lightL);
-
-  const field = hslToHex(
-    h,
-    chromatic ? Math.min(0.72, Math.max(vividS, 0.55)) : 0,
-    0.76,
-  );
-
-  let mutedL = 0.3;
-  const mutedS = chromatic ? Math.max(vividS, 0.55) : 0;
-  let muted = hslToHex(h, mutedS, mutedL);
-  while (contrastRatio(muted, field) < READABLE_CONTRAST && mutedL > 0.16) {
-    mutedL -= 0.02;
-    muted = hslToHex(h, mutedS, mutedL);
-  }
-
-  const accent = contrastRatio(WHITE, base) >= READABLE_CONTRAST ? base : deep;
-  const position =
-    contrastRatio(GOLD, deep) >= READABLE_CONTRAST ? GOLD : WHITE;
-
-  return {
-    base,
-    deep,
-    light,
-    field,
-    ink: deep,
-    muted,
-    accent,
-    position,
-  };
 }
 
 /** Name size that keeps a single line inside the banner. */
@@ -240,13 +108,7 @@ function PhotoArt({ photoSrc }: { photoSrc: string }) {
 }
 
 /** The club crest, or a football emoji when the club has no usable logo. */
-export function Crest({
-  crestSrc,
-  field,
-}: {
-  crestSrc: string | null;
-  field: string;
-}) {
+export function Crest({ crestSrc }: { crestSrc: string | null }) {
   return (
     <div
       style={{
@@ -257,7 +119,7 @@ export function Crest({
         height: 132,
         borderRadius: 66,
         backgroundColor: WHITE,
-        border: `6px solid ${field}`,
+        border: `6px solid ${CREAM}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -279,15 +141,7 @@ export function Crest({
   );
 }
 
-function ShirtBadge({
-  number,
-  colour,
-  field,
-}: {
-  number: number;
-  colour: string;
-  field: string;
-}) {
+function ShirtBadge({ number, colour }: { number: number; colour: string }) {
   return (
     <div
       style={{
@@ -298,7 +152,7 @@ function ShirtBadge({
         height: 132,
         borderRadius: 30,
         backgroundColor: colour,
-        border: `6px solid ${field}`,
+        border: `6px solid ${CREAM}`,
         color: WHITE,
         display: "flex",
         alignItems: "center",
@@ -314,10 +168,10 @@ function ShirtBadge({
 
 function Banner({
   payload,
-  colours,
+  colour,
 }: {
   payload: PlayerCardPayload;
-  colours: PlayerCardColours;
+  colour: string;
 }) {
   const mainName = payload.lastName ?? payload.firstName;
   return (
@@ -329,7 +183,7 @@ function Banner({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: colours.deep,
+        backgroundColor: colour,
         borderTop: `8px solid ${GOLD}`,
         borderBottom: `8px solid ${GOLD}`,
         color: WHITE,
@@ -342,7 +196,7 @@ function Banner({
             fontSize: 38,
             letterSpacing: 8,
             textTransform: "uppercase",
-            color: WHITE,
+            color: CREAM,
             maxWidth: 900,
             marginBottom: 2,
           })}
@@ -367,7 +221,7 @@ function Banner({
             fontSize: 34,
             letterSpacing: 8,
             textTransform: "uppercase",
-            color: colours.position,
+            color: GOLD,
             marginTop: 4,
             maxWidth: 900,
           })}
@@ -382,12 +236,12 @@ function Banner({
 function StatBox({
   value,
   label,
-  colours,
+  colour,
   last,
 }: {
   value: number;
   label: string;
-  colours: PlayerCardColours;
+  colour: string;
   last: boolean;
 }) {
   return (
@@ -397,7 +251,8 @@ function StatBox({
         height: 150,
         marginRight: last ? 0 : 14,
         borderRadius: 22,
-        backgroundColor: colours.accent,
+        backgroundColor: WHITE,
+        border: `5px solid ${colour}`,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -405,12 +260,7 @@ function StatBox({
       }}
     >
       <div
-        style={{
-          fontSize: 76,
-          fontWeight: 700,
-          color: WHITE,
-          lineHeight: 1,
-        }}
+        style={{ fontSize: 76, fontWeight: 700, color: colour, lineHeight: 1 }}
       >
         {String(value)}
       </div>
@@ -419,7 +269,7 @@ function StatBox({
           fontSize: 26,
           letterSpacing: 3,
           textTransform: "uppercase",
-          color: WHITE,
+          color: MUTED,
           marginTop: 8,
         }}
       >
@@ -439,7 +289,9 @@ export function PlayerCardImage({
   /** Photo-area artwork; the plain silhouette is used when null. */
   photoSrc?: string | null;
 }) {
-  const colours = playerCardColours(payload.clubColour ?? DEFAULT_CLUB_COLOUR);
+  const base = payload.clubColour ?? DEFAULT_CLUB_COLOUR;
+  const deep = mixColour(base, "#000000", 0.45);
+  const light = mixColour(base, "#FFFFFF", 0.38);
   const stats = [
     { label: "Apps", value: payload.stats.appearances },
     { label: "Wins", value: payload.stats.wins },
@@ -456,7 +308,7 @@ export function PlayerCardImage({
         display: "flex",
         flexDirection: "column",
         padding: FRAME_INSET,
-        backgroundImage: `linear-gradient(150deg, ${colours.light}, ${colours.base} 46%, ${colours.deep})`,
+        backgroundImage: `linear-gradient(150deg, ${base}, ${deep})`,
         fontFamily: "sans-serif",
       }}
     >
@@ -466,9 +318,9 @@ export function PlayerCardImage({
           display: "flex",
           flexDirection: "column",
           borderRadius: 48,
-          border: `${FRAME_BORDER}px solid ${colours.field}`,
+          border: `${FRAME_BORDER}px solid ${CREAM}`,
           overflow: "hidden",
-          backgroundColor: colours.field,
+          backgroundColor: CREAM,
         }}
       >
         <div
@@ -478,7 +330,7 @@ export function PlayerCardImage({
             display: "flex",
             position: "relative",
             overflow: "hidden",
-            backgroundImage: `linear-gradient(180deg, ${colours.light}, ${colours.base})`,
+            backgroundImage: `linear-gradient(180deg, ${light}, ${base})`,
           }}
         >
           <div
@@ -489,7 +341,7 @@ export function PlayerCardImage({
               width: 220,
               height: 1200,
               backgroundColor: WHITE,
-              opacity: 0.1,
+              opacity: 0.12,
               transform: "rotate(24deg)",
             }}
           />
@@ -501,18 +353,14 @@ export function PlayerCardImage({
               width: 120,
               height: 1200,
               backgroundColor: WHITE,
-              opacity: 0.1,
+              opacity: 0.12,
               transform: "rotate(24deg)",
             }}
           />
           {photoSrc ? <PhotoArt photoSrc={photoSrc} /> : <Silhouette />}
-          <Crest crestSrc={crestSrc} field={colours.field} />
+          <Crest crestSrc={crestSrc} />
           {payload.shirtNumber != null ? (
-            <ShirtBadge
-              number={payload.shirtNumber}
-              colour={colours.deep}
-              field={colours.field}
-            />
+            <ShirtBadge number={payload.shirtNumber} colour={deep} />
           ) : null}
           <div
             style={{
@@ -522,8 +370,8 @@ export function PlayerCardImage({
               display: "flex",
               padding: "8px 26px",
               borderRadius: 999,
-              backgroundColor: colours.field,
-              color: colours.accent,
+              backgroundColor: CREAM,
+              color: deep,
               fontSize: 40,
               fontWeight: 700,
               letterSpacing: 3,
@@ -533,7 +381,7 @@ export function PlayerCardImage({
           </div>
         </div>
 
-        <Banner payload={payload} colours={colours} />
+        <Banner payload={payload} colour={deep} />
 
         <div
           style={{
@@ -541,7 +389,7 @@ export function PlayerCardImage({
             display: "flex",
             flexDirection: "column",
             padding: "24px 32px 26px",
-            backgroundColor: colours.field,
+            backgroundColor: CREAM,
           }}
         >
           <div style={{ display: "flex", marginBottom: 22 }}>
@@ -550,7 +398,7 @@ export function PlayerCardImage({
                 key={stat.label}
                 value={stat.value}
                 label={stat.label}
-                colours={colours}
+                colour={deep}
                 last={index === stats.length - 1}
               />
             ))}
@@ -566,7 +414,7 @@ export function PlayerCardImage({
               style={ellipsisStyle({
                 fontSize: 40,
                 fontWeight: 700,
-                color: colours.ink,
+                color: INK,
                 maxWidth: 920,
               })}
             >
@@ -575,7 +423,7 @@ export function PlayerCardImage({
             <div
               style={ellipsisStyle({
                 fontSize: 30,
-                color: colours.muted,
+                color: MUTED,
                 marginTop: 6,
                 maxWidth: 920,
               })}
@@ -585,7 +433,7 @@ export function PlayerCardImage({
             <div
               style={ellipsisStyle({
                 fontSize: 30,
-                color: colours.muted,
+                color: MUTED,
                 marginTop: 6,
                 maxWidth: 920,
               })}
