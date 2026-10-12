@@ -18,6 +18,13 @@ import {
 import { SearchableSelect } from "@/components/shared/searchable-select";
 import { SquadPlayerIdentity } from "@/components/shared/squad-player-identity";
 
+/** True when both lists contain the same players, ignoring order. */
+export function sameSquadSelection(saved: string[], next: string[]): boolean {
+  if (saved.length !== next.length) return false;
+  const savedIds = new Set(saved);
+  return next.every((id) => savedIds.has(id));
+}
+
 export type SquadSelectionLabels = {
   emptyTitle: string;
   emptyDescription: string;
@@ -35,12 +42,15 @@ export function SquadSelectionSection({
   canEdit = true,
   saveAction,
   labels,
+  saveOnSubmit = false,
 }: {
   roster: RosterPlayer[];
   selectedPlayerIds: string[];
   canEdit?: boolean;
   saveAction: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   labels: SquadSelectionLabels;
+  /** Keep add and remove local until Save writes the full squad once. */
+  saveOnSubmit?: boolean;
 }) {
   const selected = new Set(selectedPlayerIds);
   const selectedPlayers = roster.filter((player) => selected.has(player.id));
@@ -86,6 +96,7 @@ export function SquadSelectionSection({
       selectedPlayerIds={selectedPlayerIds}
       saveAction={saveAction}
       labels={labels}
+      saveOnSubmit={saveOnSubmit}
     />
   );
 }
@@ -95,11 +106,13 @@ function SquadForm({
   selectedPlayerIds,
   saveAction,
   labels,
+  saveOnSubmit,
 }: {
   roster: RosterPlayer[];
   selectedPlayerIds: string[];
   saveAction: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   labels: SquadSelectionLabels;
+  saveOnSubmit: boolean;
 }) {
   const [state, formAction, actionPending] = useToastActionState(
     saveAction,
@@ -112,10 +125,12 @@ function SquadForm({
   const selected = new Set(selectedIds);
   const selectedPlayers = roster.filter((player) => selected.has(player.id));
   const availablePlayers = roster.filter((player) => !selected.has(player.id));
-  const isPending = pending || actionPending;
+  const isPending = saveOnSubmit ? actionPending : pending || actionPending;
+  const dirty = !sameSquadSelection(selectedPlayerIds, selectedIds);
 
   function persist(nextIds: string[]) {
     setSelectedIds(nextIds);
+    if (saveOnSubmit) return;
     const formData = new FormData();
     for (const id of nextIds) {
       formData.append("player_id", id);
@@ -196,10 +211,34 @@ function SquadForm({
             />
           </div>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Adding…" : "Add"}
+            {isPending && !saveOnSubmit ? "Adding…" : "Add"}
           </Button>
         </form>
       )}
+
+      {saveOnSubmit ? (
+        <form action={formAction} className="flex flex-wrap items-center gap-3">
+          {selectedIds.map((id) => (
+            <input key={id} type="hidden" name="player_id" value={id} />
+          ))}
+          <Button type="submit" disabled={isPending || !dirty}>
+            {isPending ? "Saving…" : "Save"}
+          </Button>
+          {dirty ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => {
+                setSelectedIds(selectedPlayerIds);
+                setAddKey((key) => key + 1);
+              }}
+            >
+              Cancel
+            </Button>
+          ) : null}
+        </form>
+      ) : null}
 
       {state.error ? <ErrorBanner message={state.error} /> : null}
     </div>
