@@ -18,6 +18,7 @@
   <a href="#who-its-for">Roles</a> ·
   <a href="docs/development.md">Development</a> ·
   <a href="docs/deployment.md">Deploy</a>
+  <a href="docs/release-notes.md">Release Notes</a>
 </p>
 
 ---
