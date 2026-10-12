@@ -21,6 +21,7 @@ export function TournamentSquadSection({
       selectedPlayerIds={selectedPlayerIds}
       canEdit={canEdit}
       saveAction={saveTournamentSquadAction.bind(null, competitionId)}
+      saveOnSubmit
       labels={{
         emptyTitle: "No tournament squad",
         emptyDescription:
