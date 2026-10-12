@@ -16,6 +16,7 @@ import {
   labelCompetitionResult,
   labelHomeAway,
 } from "@/lib/format";
+import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { DeleteCompetitionButton } from "@/components/team/delete-competition-button";
@@ -37,7 +38,7 @@ export default async function CompetitionDetailPage({
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={pageBodyClassName("space-y-4")}>
         <PageHeader title="Competition" />
         <ErrorBanner message={error} />
       </div>
@@ -61,7 +62,7 @@ export default async function CompetitionDetailPage({
   const venueLabel = competitionVenueLabel(competition, venues);
 
   return (
-    <div className="space-y-8">
+    <div className={pageBodyClassName("space-y-8")}>
       <PageHeader
         title={competition.name}
         description={
