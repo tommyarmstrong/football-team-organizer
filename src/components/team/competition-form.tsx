@@ -103,8 +103,8 @@ export function CompetitionForm({
 
   const form = (
     <form id={formId} action={formAction} className="w-full min-w-0 space-y-4">
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="name">
             Name <span className="text-muted-foreground">(required)</span>
           </Label>
@@ -117,7 +117,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="display_name">
             Display Name <OptionalHint />
           </Label>
@@ -128,7 +128,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="organizer">
             Organizer <OptionalHint />
           </Label>
@@ -139,7 +139,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="kind">Kind</Label>
           <NativeSelect
             id="kind"
@@ -155,7 +155,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="result">Result</Label>
           <NativeSelect
             id="result"
@@ -170,7 +170,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="season">
             Season <OptionalHint />
           </Label>
@@ -182,7 +182,7 @@ export function CompetitionForm({
           />
         </div>
         {kind === "tournament" ? (
-          <div className="grid min-w-0 gap-4 sm:col-span-2 sm:grid-cols-3">
+          <>
             <div className="min-w-0 space-y-2 overflow-hidden">
               <Label htmlFor="date">
                 Date <OptionalHint />
@@ -222,13 +222,13 @@ export function CompetitionForm({
                 ))}
               </NativeSelect>
             </div>
-            <p className="text-muted-foreground text-sm sm:col-span-3">
+            <p className="text-muted-foreground text-sm">
               New matches in this tournament start with this date, meet-up,
               home/away, venue, and periods. Each match can change them.
             </p>
-          </div>
+          </>
         ) : null}
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="age_group">
             Age group <OptionalHint />
           </Label>
@@ -246,7 +246,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="gender">
             Gender <OptionalHint />
           </Label>
@@ -264,7 +264,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="venue">Venue</Label>
           <NativeSelect
             id="venue"
@@ -284,7 +284,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="players_per_team">
             Players per team <OptionalHint />
           </Label>
@@ -299,7 +299,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="periods">Periods per match</Label>
           <NativeSelect
             id="periods"
@@ -314,7 +314,7 @@ export function CompetitionForm({
             ))}
           </NativeSelect>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="minutes_per_period">
             Minutes per period <OptionalHint />
           </Label>
@@ -329,7 +329,7 @@ export function CompetitionForm({
             disabled={pending}
           />
         </div>
-        <div className="space-y-2 sm:col-span-2">
+        <div className="min-w-0 space-y-2">
           <Label htmlFor="notes">
             Notes <OptionalHint />
           </Label>

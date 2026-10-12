@@ -9,6 +9,7 @@ describe("competition detail page", () => {
       "utf8",
     );
     expect(source).toContain("EditCompetitionDialog");
+    expect(source).toContain("pageBodyClassName");
     expect(source).not.toContain(
       "href={`/competitions/${competition.id}/edit`}",
     );

@@ -26,6 +26,20 @@ describe("CompetitionForm", () => {
     expect(source).not.toContain('name="format"');
   });
 
+  it("stacks fields in one column inside the edit dialog", () => {
+    expect(source).toContain("grid-cols-1");
+    expect(source).not.toContain("sm:grid-cols-2");
+    expect(source).not.toContain("sm:grid-cols-3");
+  });
+
+  it("keeps date and meet-up inside the dialog width", () => {
+    for (const id of ["date", "meetup_time"]) {
+      const index = source.indexOf(`htmlFor="${id}"`);
+      const field = source.slice(Math.max(0, index - 80), index);
+      expect(field).toContain("overflow-hidden");
+    }
+  });
+
   it("saves an open edit dialog without leaving the page", () => {
     expect(source).toContain(
       "updateCompetitionAction.bind(null, competition.id)",
