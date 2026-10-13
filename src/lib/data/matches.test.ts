@@ -241,6 +241,84 @@ describe("createMatch / updateMatch / deleteMatch", () => {
     expect(result.data?.id).toBe("m-new");
   });
 
+  it("copies the tournament squad onto a new match", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult({
+          id: "m-new",
+          team_id: "team-1",
+          competition_id: "comp-t",
+        }),
+        competitions: okResult({ kind: "tournament" }),
+        competition_players: okResult([
+          { player_id: "player-a" },
+          { player_id: "player-b" },
+        ]),
+      }),
+    );
+    listRosterForTeamMock.mockResolvedValue({
+      data: [{ id: "player-a" }, { id: "player-b" }, { id: "player-c" }],
+      error: null,
+    });
+
+    const result = await createMatch({
+      opponent_name: "Rivals",
+      date: "2025-09-01",
+      kickoff_time: null,
+      meetup_time: null,
+      home_away: "home",
+      venue_id: null,
+      competition_id: "comp-t",
+      is_friendly: false,
+      notes: null,
+      club_notes: null,
+      status: "scheduled",
+      player_of_the_match_id: null,
+      players_player_of_the_match_id: null,
+    });
+    expect(result.error).toBeNull();
+    expect(setMatchSquadMock).toHaveBeenCalledWith("m-new", [
+      "player-a",
+      "player-b",
+    ]);
+  });
+
+  it("does not fall back to the full squad when a tournament squad is empty", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult({
+          id: "m-new",
+          team_id: "team-1",
+          competition_id: "comp-t",
+        }),
+        competitions: okResult({ kind: "tournament" }),
+        competition_players: okResult([]),
+      }),
+    );
+    listRosterForTeamMock.mockResolvedValue({
+      data: [{ id: "player-a" }, { id: "player-b" }],
+      error: null,
+    });
+
+    const result = await createMatch({
+      opponent_name: "Rivals",
+      date: "2025-09-01",
+      kickoff_time: null,
+      meetup_time: null,
+      home_away: "home",
+      venue_id: null,
+      competition_id: "comp-t",
+      is_friendly: false,
+      notes: null,
+      club_notes: null,
+      status: "scheduled",
+      player_of_the_match_id: null,
+      players_player_of_the_match_id: null,
+    });
+    expect(result.error).toBeNull();
+    expect(setMatchSquadMock).not.toHaveBeenCalled();
+  });
+
   it("maps create insert, roster, and squad errors", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({ matches: errResult("insert fail") }),

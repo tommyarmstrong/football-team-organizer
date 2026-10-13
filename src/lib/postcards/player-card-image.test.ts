@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { describe, expect, it } from "vitest";
 import {
   bannerNameFontSize,
+  clubMarkColour,
   Crest,
   mixColour,
   PLAYER_CARD_HEIGHT,
@@ -70,6 +71,18 @@ describe("mixColour", () => {
     expect(mixColour("#FF0000", "#000000", 1)).toBe("#000000");
     expect(mixColour("#FF0000", "#000000", 0.5)).toBe("#800000");
     expect(mixColour("#000000", "#FFFFFF", 0.5)).toBe("#808080");
+  });
+});
+
+describe("clubMarkColour", () => {
+  it("uses the club colour when white type already reads on it", () => {
+    expect(clubMarkColour("#146C4A")).toBe("#146c4a");
+    expect(clubMarkColour("#1B4D8E")).toBe("#1b4d8e");
+  });
+
+  it("darkens a pale club colour only until white type is readable", () => {
+    expect(clubMarkColour("#FFD100")).toBe("#8c7300");
+    expect(clubMarkColour("#E85D04")).toBe("#c54f03");
   });
 });
 

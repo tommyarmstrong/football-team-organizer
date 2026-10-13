@@ -9,10 +9,22 @@ describe("competition detail page", () => {
       "utf8",
     );
     expect(source).toContain("EditCompetitionDialog");
-    expect(source).toContain("pageBodyClassName");
+    expect(source.match(/pageBodyClassName\(/g)).toHaveLength(2);
+    expect(source).toContain('pageBodyClassName("space-y-4")');
+    expect(source).toContain('pageBodyClassName("space-y-8")');
     expect(source).not.toContain(
       "href={`/competitions/${competition.id}/edit`}",
     );
     expect(source).not.toContain("labelCompetitionFormat");
+  });
+
+  it("shows a tournament squad editor only for tournaments", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("TournamentSquadSection");
+    expect(source).toContain('competition.kind === "tournament"');
+    expect(source).toContain('title="Tournament squad"');
   });
 });
