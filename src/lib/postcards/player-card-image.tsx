@@ -40,6 +40,35 @@ export function mixColour(hex: string, target: string, amount: number): string {
   return `#${parts.join("")}`;
 }
 
+function contrastWithWhite(hex: string): number {
+  const luminance = (colour: string) => {
+    const channels = [0, 1, 2].map((index) => {
+      const value = channel(colour, index) / 255;
+      return value <= 0.04045
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const lighter = Math.max(luminance(WHITE), luminance(hex));
+  const darker = Math.min(luminance(WHITE), luminance(hex));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Club colour for the name banner, shirt badge, and stat marks.
+ * Stays on the club colour, and only steps toward black while white
+ * type on that fill (or this colour on white) would be hard to read.
+ */
+export function clubMarkColour(hex: string): string {
+  let colour = hex;
+  for (let amount = 0; amount <= 0.6; amount += 0.05) {
+    colour = mixColour(hex, "#000000", amount);
+    if (contrastWithWhite(colour) >= 4.5) return colour;
+  }
+  return colour;
+}
+
 /** Name size that keeps a single line inside the banner. */
 export function bannerNameFontSize(name: string): number {
   const length = name.length;
@@ -292,6 +321,7 @@ export function PlayerCardImage({
   const base = payload.clubColour ?? DEFAULT_CLUB_COLOUR;
   const deep = mixColour(base, "#000000", 0.45);
   const light = mixColour(base, "#FFFFFF", 0.38);
+  const mark = clubMarkColour(base);
   const stats = [
     { label: "Apps", value: payload.stats.appearances },
     { label: "Wins", value: payload.stats.wins },
@@ -360,7 +390,7 @@ export function PlayerCardImage({
           {photoSrc ? <PhotoArt photoSrc={photoSrc} /> : <Silhouette />}
           <Crest crestSrc={crestSrc} />
           {payload.shirtNumber != null ? (
-            <ShirtBadge number={payload.shirtNumber} colour={deep} />
+            <ShirtBadge number={payload.shirtNumber} colour={mark} />
           ) : null}
           <div
             style={{
@@ -381,7 +411,7 @@ export function PlayerCardImage({
           </div>
         </div>
 
-        <Banner payload={payload} colour={deep} />
+        <Banner payload={payload} colour={mark} />
 
         <div
           style={{
@@ -398,7 +428,7 @@ export function PlayerCardImage({
                 key={stat.label}
                 value={stat.value}
                 label={stat.label}
-                colour={deep}
+                colour={mark}
                 last={index === stats.length - 1}
               />
             ))}

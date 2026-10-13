@@ -790,6 +790,42 @@ export type Database = {
           },
         ];
       };
+      competition_players: {
+        Row: {
+          id: string;
+          competition_id: string;
+          player_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          competition_id: string;
+          player_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          competition_id?: string;
+          player_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "competition_players_competition_id_fkey";
+            columns: ["competition_id"];
+            isOneToOne: false;
+            referencedRelation: "competitions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "competition_players_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       player_of_the_month: {
         Row: {
           id: string;
@@ -1428,6 +1464,7 @@ export type PlayerGuardian = Tables<"player_guardians">;
 export type Guardian = Tables<"guardians">;
 export type TeamPlayer = Tables<"team_players">;
 export type Competition = Tables<"competitions">;
+export type CompetitionPlayer = Tables<"competition_players">;
 export type PlayerOfTheMonth = Tables<"player_of_the_month">;
 export type Coach = Tables<"coaches">;
 export type TeamCoach = Tables<"team_coaches">;

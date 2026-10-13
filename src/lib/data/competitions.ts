@@ -1,6 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  ensureTournamentSquad,
+  seedDefaultTournamentSquad,
+} from "@/lib/data/competition-players";
 import { getCurrentTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import type {
@@ -88,6 +92,18 @@ export async function createCompetition(
     return { data: null, error: error.message };
   }
 
+  if (data?.kind === "tournament") {
+    const seeded = await seedDefaultTournamentSquad(data.id, team.id);
+    if (seeded.error) {
+      await supabase
+        .from("competitions")
+        .delete()
+        .eq("id", data.id)
+        .eq("team_id", team.id);
+      return { data: null, error: seeded.error };
+    }
+  }
+
   return { data, error: null };
 }
 
@@ -103,6 +119,15 @@ export async function updateCompetition(
   if (archivedError) return { data: null, error: archivedError };
 
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("competitions")
+    .select("kind")
+    .eq("id", id)
+    .eq("team_id", team.id)
+    .maybeSingle();
+  if (existingError) return { data: null, error: existingError.message };
+  if (!existing) return { data: null, error: "Competition not found." };
+
   const { data, error } = await supabase
     .from("competitions")
     .update(input)
@@ -113,6 +138,11 @@ export async function updateCompetition(
 
   if (error) {
     return { data: null, error: error.message };
+  }
+
+  if (data?.kind === "tournament" && existing.kind !== "tournament") {
+    const seeded = await ensureTournamentSquad(data.id, team.id);
+    if (seeded.error) return { data: null, error: seeded.error };
   }
 
   return { data, error: null };
