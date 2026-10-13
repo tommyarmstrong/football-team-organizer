@@ -10,7 +10,11 @@ const source = readFileSync(
 describe("CompetitionsSection", () => {
   it("opens add competition in an inline dialog", () => {
     expect(source).toContain("InlineFormDialog");
+    expect(source).toContain('size="lg"');
+    expect(source).toContain("<CompetitionForm");
+    expect(source).toContain('mode="create"');
     expect(source).toContain("stayOnPage");
+    expect(source).toContain("onCancel={close}");
     expect(source).not.toContain('href="/competitions/new"');
   });
 });
