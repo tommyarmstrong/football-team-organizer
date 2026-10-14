@@ -8,6 +8,11 @@ import {
 } from "@/lib/people/named-player";
 import type { CompetitionKind } from "@/lib/supabase/database.types";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
+import {
+  ALL_COMPETITIONS,
+  ALL_LEAGUE_AND_CUP,
+  matchesCompetitionFilters,
+} from "@/lib/stats/competition-filters";
 
 // ---------------------------------------------------------------------------
 // §5.1 + §6.4 — Composite stats RPC
@@ -393,6 +398,20 @@ function bumpPlayerCount(
   });
 }
 
+const DASHBOARD_LEAGUE_AND_CUP_KINDS = ["league", "cup"] as const;
+
+/** Dashboard leaderboards count league and cup matches only (no friendlies). */
+function isDashboardLeagueOrCup(matchRaw: unknown): boolean {
+  const competition = competitionFromMatch(matchRaw);
+  return matchesCompetitionFilters({
+    competitionId: competition.competitionId,
+    competitionKind: competition.competitionKind,
+    isFriendly: competition.isFriendly,
+    selectedCompetitionId: ALL_COMPETITIONS,
+    selectedCompetitionKind: ALL_LEAGUE_AND_CUP,
+  });
+}
+
 function competitionFromMatch(matchRaw: unknown): {
   competitionId: string | null;
   competitionKind: CompetitionKind | null;
@@ -431,10 +450,12 @@ export async function getTopScorers(
     supabase
       .from("goals")
       .select(
-        `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status)`,
+        `player_id, player:players!goals_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status, is_friendly, competition:competitions!inner(id, kind))`,
       )
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
+      .eq("match.is_friendly", false)
+      .in("match.competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
       .eq("is_opposition", false),
     getShirtByPlayer(team.id),
   ]);
@@ -443,6 +464,7 @@ export async function getTopScorers(
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
+    if (!isDashboardLeagueOrCup(row.match)) continue;
     const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -483,10 +505,12 @@ export async function getTopAssists(
     supabase
       .from("goals")
       .select(
-        `assist_player_id, assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status)`,
+        `assist_player_id, assist:players!goals_assist_player_id_fkey(${PLAYER_NAME_EMBED}), match:matches!inner(team_id, status, is_friendly, competition:competitions!inner(id, kind))`,
       )
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
+      .eq("match.is_friendly", false)
+      .in("match.competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
       .eq("is_opposition", false)
       .not("assist_player_id", "is", null),
     getShirtByPlayer(team.id),
@@ -496,6 +520,7 @@ export async function getTopAssists(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
+    if (!isDashboardLeagueOrCup(row.match)) continue;
     const playerRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -518,11 +543,13 @@ export async function getTopPlayersOfTheMatch(
     supabase
       .from("matches")
       .select(
-        `player_of_the_match_id,
+        `player_of_the_match_id, is_friendly, competition:competitions!inner(id, kind),
          coach_potm:players!matches_player_of_the_match_id_fkey(${PLAYER_NAME_EMBED})`,
       )
       .eq("team_id", team.id)
       .eq("status", "played")
+      .eq("is_friendly", false)
+      .in("competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
       .not("player_of_the_match_id", "is", null),
     getShirtByPlayer(team.id),
   ]);
@@ -531,6 +558,7 @@ export async function getTopPlayersOfTheMatch(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
+    if (!isDashboardLeagueOrCup(row)) continue;
     const playerRaw = Array.isArray(row.coach_potm)
       ? row.coach_potm[0]
       : row.coach_potm;
