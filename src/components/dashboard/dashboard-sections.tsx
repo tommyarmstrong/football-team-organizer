@@ -10,6 +10,11 @@ import {
   playerDisplayName,
 } from "@/lib/format";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
+import {
+  ALL_COMPETITIONS,
+  ALL_LEAGUE_AND_CUP,
+} from "@/lib/stats/competition-filters";
+import { filterResults } from "@/lib/stats/results-view";
 import type { Team } from "@/lib/supabase/database.types";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -31,7 +36,15 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const { stats } = await getDashboardData(teamId);
   if (stats.error) return null;
 
-  return <SeasonTiles results={stats.resultsOverTime} />;
+  return (
+    <SeasonTiles
+      results={filterResults(
+        stats.resultsOverTime,
+        ALL_COMPETITIONS,
+        ALL_LEAGUE_AND_CUP,
+      )}
+    />
+  );
 }
 
 export async function DashboardFixtures({

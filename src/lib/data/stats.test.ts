@@ -41,6 +41,18 @@ const namedPlayer = {
   person: { first_name: "Sam", last_name: "Striker" },
 };
 
+const leagueMatch = {
+  is_friendly: false,
+  competition_id: "comp-league",
+  competition: { id: "comp-league", kind: "league" as const },
+};
+
+const cupMatch = {
+  is_friendly: false,
+  competition_id: "comp-cup",
+  competition: { id: "comp-cup", kind: "cup" as const },
+};
+
 describe("stats data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,8 +73,8 @@ describe("stats data", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         goals: okResult([
-          { player_id: "player-1", player: namedPlayer },
-          { player_id: "player-1", player: namedPlayer },
+          { player_id: "player-1", player: namedPlayer, match: leagueMatch },
+          { player_id: "player-1", player: namedPlayer, match: leagueMatch },
         ]),
         team_players: okResult([{ player_id: "player-1", shirt_number: 7 }]),
       }),
@@ -73,7 +85,11 @@ describe("stats data", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         goals: okResult([
-          { assist_player_id: "player-1", assist: namedPlayer },
+          {
+            assist_player_id: "player-1",
+            assist: namedPlayer,
+            match: leagueMatch,
+          },
         ]),
         team_players: okResult([{ player_id: "player-1", shirt_number: 7 }]),
       }),
@@ -88,6 +104,7 @@ describe("stats data", () => {
             players_player_of_the_match_id: "player-1",
             coach_potm: namedPlayer,
             players_potm: namedPlayer,
+            ...leagueMatch,
           },
         ]),
         team_players: okResult([{ player_id: "player-1", shirt_number: 7 }]),
@@ -97,6 +114,143 @@ describe("stats data", () => {
     expect(potm.data).toHaveLength(1);
     expect(potm.data[0]?.count).toBe(1);
     expect(potm.data[0]?.player.id).toBe("player-1");
+  });
+
+  it("counts league and cup matches only on dashboard leaderboards", async () => {
+    const friendly = {
+      is_friendly: true,
+      competition_id: null,
+      competition: null,
+    };
+    const tournament = {
+      is_friendly: false,
+      competition_id: "comp-tournament",
+      competition: { id: "comp-tournament", kind: "tournament" as const },
+    };
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult([
+          { player_id: "player-1", player: namedPlayer, match: leagueMatch },
+          { player_id: "player-1", player: namedPlayer, match: cupMatch },
+          { player_id: "player-1", player: namedPlayer, match: friendly },
+          { player_id: "player-1", player: namedPlayer, match: tournament },
+          { player_id: "player-1", player: namedPlayer, match: [leagueMatch] },
+        ]),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopScorers()).data[0]?.goals).toBe(3);
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult([
+          {
+            assist_player_id: "player-1",
+            assist: namedPlayer,
+            match: leagueMatch,
+          },
+          {
+            assist_player_id: "player-1",
+            assist: namedPlayer,
+            match: friendly,
+          },
+          {
+            assist_player_id: "player-1",
+            assist: namedPlayer,
+            match: tournament,
+          },
+        ]),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopAssists()).data).toEqual([
+      expect.objectContaining({ count: 1 }),
+    ]);
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            player_of_the_match_id: "player-1",
+            coach_potm: namedPlayer,
+            ...leagueMatch,
+          },
+          {
+            player_of_the_match_id: "player-1",
+            coach_potm: namedPlayer,
+            ...friendly,
+          },
+          {
+            player_of_the_match_id: "player-1",
+            coach_potm: namedPlayer,
+            ...tournament,
+          },
+        ]),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(1);
+  });
+
+  it("queries dashboard leaderboards for played league and cup matches", async () => {
+    const goalsBuilder = queryChain(okResult([])) as Record<string, unknown>;
+    const goalsEq = vi.fn(() => goalsBuilder);
+    const goalsIn = vi.fn(() => goalsBuilder);
+    goalsBuilder.eq = goalsEq;
+    goalsBuilder.in = goalsIn;
+
+    const matchesBuilder = queryChain(okResult([])) as Record<string, unknown>;
+    const matchesEq = vi.fn(() => matchesBuilder);
+    const matchesIn = vi.fn(() => matchesBuilder);
+    matchesBuilder.eq = matchesEq;
+    matchesBuilder.in = matchesIn;
+
+    const from = vi.fn((table: string) =>
+      table === "matches" ? matchesBuilder : goalsBuilder,
+    );
+    createClientMock.mockResolvedValue({ from });
+
+    await getTopScorers();
+    expect(goalsEq.mock.calls).toEqual(
+      expect.arrayContaining([
+        ["match.team_id", "team-1"],
+        ["match.status", "played"],
+        ["match.is_friendly", false],
+        ["is_opposition", false],
+      ]),
+    );
+    expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
+      "league",
+      "cup",
+    ]);
+
+    goalsEq.mockClear();
+    goalsIn.mockClear();
+    await getTopAssists();
+    expect(goalsEq.mock.calls).toEqual(
+      expect.arrayContaining([
+        ["match.is_friendly", false],
+        ["is_opposition", false],
+      ]),
+    );
+    expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
+      "league",
+      "cup",
+    ]);
+
+    await getTopPlayersOfTheMatch();
+    expect(matchesEq.mock.calls).toEqual(
+      expect.arrayContaining([
+        ["team_id", "team-1"],
+        ["status", "played"],
+        ["is_friendly", false],
+      ]),
+    );
+    expect(matchesIn).toHaveBeenCalledWith("competition.kind", [
+      "league",
+      "cup",
+    ]);
   });
 
   it("ignores players-only player of the match and ties coach awards", async () => {
@@ -123,36 +277,42 @@ describe("stats data", () => {
             players_player_of_the_match_id: "player-2",
             coach_potm: namedPlayer,
             players_potm: peers,
+            ...leagueMatch,
           },
           {
             player_of_the_match_id: "player-1",
             players_player_of_the_match_id: null,
             coach_potm: namedPlayer,
             players_potm: null,
+            ...cupMatch,
           },
           {
             player_of_the_match_id: "player-3",
             players_player_of_the_match_id: "player-2",
             coach_potm: third,
             players_potm: peers,
+            ...leagueMatch,
           },
           {
             player_of_the_match_id: "player-3",
             players_player_of_the_match_id: null,
             coach_potm: third,
             players_potm: null,
+            ...leagueMatch,
           },
           {
             player_of_the_match_id: "player-4",
             players_player_of_the_match_id: "player-2",
             coach_potm: fourth,
             players_potm: peers,
+            ...leagueMatch,
           },
           {
             player_of_the_match_id: null,
             players_player_of_the_match_id: "player-2",
             coach_potm: null,
             players_potm: peers,
+            ...leagueMatch,
           },
         ]),
         team_players: okResult([]),
@@ -313,8 +473,8 @@ describe("stats data", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         goals: okResult([
-          { player_id: "player-1", player: null },
-          { player_id: "player-1", player: [namedPlayer] },
+          { player_id: "player-1", player: null, match: leagueMatch },
+          { player_id: "player-1", player: [namedPlayer], match: leagueMatch },
           {
             player_id: "player-2",
             player: {
@@ -322,6 +482,7 @@ describe("stats data", () => {
               person_id: "person-2",
               person: { first_name: "Bea", last_name: "Bench" },
             },
+            match: cupMatch,
           },
         ]),
         team_players: okResult([]),
@@ -335,9 +496,17 @@ describe("stats data", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         goals: okResult([
-          { assist_player_id: "player-1", assist: null },
-          { assist_player_id: "player-1", assist: [namedPlayer] },
-          { assist_player_id: "player-1", assist: namedPlayer },
+          { assist_player_id: "player-1", assist: null, match: leagueMatch },
+          {
+            assist_player_id: "player-1",
+            assist: [namedPlayer],
+            match: leagueMatch,
+          },
+          {
+            assist_player_id: "player-1",
+            assist: namedPlayer,
+            match: cupMatch,
+          },
         ]),
         team_players: okResult([]),
       }),
@@ -354,10 +523,12 @@ describe("stats data", () => {
               person_id: "person-2",
               person: { first_name: "Pat", last_name: "Peers" },
             },
+            ...leagueMatch,
           },
           {
             coach_potm: [namedPlayer],
             players_potm: namedPlayer,
+            ...cupMatch,
           },
         ]),
         team_players: okResult([]),
