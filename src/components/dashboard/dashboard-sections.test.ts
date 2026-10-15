@@ -201,7 +201,71 @@ describe("DashboardSeasonTiles", () => {
     expect(tree?.type).toBe(SeasonTiles);
     expect(tree?.props.results).toHaveLength(1);
   });
+
+  it("counts league and cup matches and drops friendlies and other competitions", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [
+          result("league-win", "league", false),
+          result("cup-draw", "cup", false),
+          result("friendly", null, true),
+          result("tournament", "tournament", false),
+          result("other", "other", false),
+        ],
+        form: [],
+        error: null,
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(
+      tree?.props.results.map((row: { matchId: string }) => row.matchId),
+    ).toEqual(["league-win", "cup-draw"]);
+  });
+
+  it("passes no results when every played match is outside league and cup", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      stats: {
+        resultsOverTime: [result("friendly", null, true)],
+        form: ["W"],
+        error: null,
+      },
+    });
+
+    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    expect(tree?.props.results).toEqual([]);
+  });
+
+  it("does not offer a competition filter on the dashboard", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "dashboard-sections.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("ALL_LEAGUE_AND_CUP");
+    expect(source).not.toContain("StatsCompetitionFilters");
+    expect(source).not.toContain("onCompetitionKindChange");
+    expect(source).not.toContain("setCompetitionKind");
+  });
 });
+
+function result(
+  matchId: string,
+  competitionKind: "league" | "cup" | "tournament" | "other" | null,
+  isFriendly: boolean,
+) {
+  return {
+    matchId,
+    date: "2026-01-01",
+    label: matchId,
+    goalsFor: 1,
+    goalsAgainst: 0,
+    result: "W" as const,
+    competitionId: competitionKind ? `c-${matchId}` : null,
+    competitionKind,
+    competitionName: isFriendly ? "Friendly" : competitionKind,
+    isFriendly,
+  };
+}
 
 describe("DashboardFixtures last result share", () => {
   const source = readFileSync(
