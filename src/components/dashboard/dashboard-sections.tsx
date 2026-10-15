@@ -12,7 +12,7 @@ import {
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
-  ALL_LEAGUE_AND_CUP,
+  ALL_COMPETITIVE,
 } from "@/lib/stats/competition-filters";
 import { filterResults } from "@/lib/stats/results-view";
 import type { Team } from "@/lib/supabase/database.types";
@@ -41,7 +41,7 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
       results={filterResults(
         stats.resultsOverTime,
         ALL_COMPETITIONS,
-        ALL_LEAGUE_AND_CUP,
+        ALL_COMPETITIVE,
       )}
     />
   );
@@ -72,7 +72,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next match."
+          emptyDescription="Schedule the next competitive match."
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -88,7 +88,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={lastMatch}
           emptyTitle="No results yet"
-          emptyDescription="Played matches will show here."
+          emptyDescription="Played competitive matches will show here."
           share={
             postcard ? (
               <SharePostcardButton
@@ -125,13 +125,13 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
   return (
     <Section
       title="Form"
-      description={`Most recent ${STATS_FORM_LIMIT} played matches (oldest → newest)`}
+      description={`Most recent ${STATS_FORM_LIMIT} competitive matches (oldest → newest)`}
     >
       {results.error ? <ErrorBanner message={results.error} /> : null}
       {!results.error && results.form.length === 0 ? (
         <EmptyState
           title="No played matches"
-          description="Form appears after you record results."
+          description="Form appears after you record competitive results."
         />
       ) : null}
       {!results.error && results.form.length > 0 ? (

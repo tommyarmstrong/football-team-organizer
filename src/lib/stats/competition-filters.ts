@@ -28,11 +28,15 @@ export const ALL_COMPETITIVE = "competitive";
 export const COMPETITION_KIND_FILTER_OPTIONS = COMPETITION_KINDS;
 
 const LEAGUE_AND_CUP_KINDS = new Set<CompetitionKind>(["league", "cup"]);
-const COMPETITIVE_KINDS = new Set<CompetitionKind>([
+/** League, cup, and tournament. Friendlies and other competitions are excluded. */
+export const COMPETITIVE_COMPETITION_KINDS = [
   "league",
   "cup",
   "tournament",
-]);
+] as const satisfies readonly CompetitionKind[];
+const COMPETITIVE_KINDS = new Set<CompetitionKind>(
+  COMPETITIVE_COMPETITION_KINDS,
+);
 
 function matchesCompetitionKindFilter(
   competitionKind: CompetitionKind | null,
@@ -106,4 +110,19 @@ export function hasCompetitionFilter(
     selectedCompetitionId !== ALL_COMPETITIONS ||
     selectedCompetitionKind !== ALL_COMPETITION_KINDS
   );
+}
+
+/** True for the stats page's "All Competitive" set: league, cup, and tournament. */
+export function isCompetitiveMatch(input: {
+  competitionId?: string | null;
+  competitionKind: CompetitionKind | null;
+  isFriendly?: boolean;
+}): boolean {
+  return matchesCompetitionFilters({
+    competitionId: input.competitionId ?? null,
+    competitionKind: input.competitionKind,
+    isFriendly: input.isFriendly,
+    selectedCompetitionId: ALL_COMPETITIONS,
+    selectedCompetitionKind: ALL_COMPETITIVE,
+  });
 }

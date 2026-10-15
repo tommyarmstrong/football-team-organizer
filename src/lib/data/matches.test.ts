@@ -565,16 +565,21 @@ describe("getNextFixture / getLastResult", () => {
           meetup_time: null,
           home_away: "away",
           venue_id: null,
-          competition_id: null,
-          is_friendly: true,
+          competition_id: "comp-league",
+          is_friendly: false,
           player_of_the_match_id: null,
           players_player_of_the_match_id: null,
           status: "played",
+          competition: {
+            id: "comp-league",
+            name: "League",
+            display_name: null,
+            kind: "league",
+          },
           notes: null,
           club_notes: null,
           created_at: "2025-01-01T00:00:00Z",
           updated_at: "2025-01-01T00:00:00Z",
-          competition: null,
           venue: null,
           goals: [{ is_opposition: true }],
         }),
@@ -599,8 +604,8 @@ describe("getNextFixture / getLastResult", () => {
             meetup_time: null,
             home_away: "home",
             venue_id: null,
-            competition_id: null,
-            is_friendly: true,
+            competition_id: "comp-league",
+            is_friendly: false,
             player_of_the_match_id: null,
             players_player_of_the_match_id: null,
             status: "scheduled",
@@ -608,7 +613,12 @@ describe("getNextFixture / getLastResult", () => {
             club_notes: null,
             created_at: "2025-01-01T00:00:00Z",
             updated_at: "2025-01-01T00:00:00Z",
-            competition: null,
+            competition: {
+              id: "comp-league",
+              name: "League",
+              display_name: null,
+              kind: "league",
+            },
             venue: null,
             goals: [],
           },
@@ -634,8 +644,8 @@ describe("getNextFixture / getLastResult", () => {
             meetup_time: null,
             home_away: "home",
             venue_id: null,
-            competition_id: null,
-            is_friendly: true,
+            competition_id: "comp-league",
+            is_friendly: false,
             player_of_the_match_id: null,
             players_player_of_the_match_id: null,
             status: "scheduled",
@@ -643,7 +653,12 @@ describe("getNextFixture / getLastResult", () => {
             club_notes: null,
             created_at: "2025-01-01T00:00:00Z",
             updated_at: "2025-01-01T00:00:00Z",
-            competition: null,
+            competition: {
+              id: "comp-league",
+              name: "League",
+              display_name: null,
+              kind: "league",
+            },
             venue: null,
             goals: [],
           },
@@ -656,8 +671,8 @@ describe("getNextFixture / getLastResult", () => {
             meetup_time: null,
             home_away: "home",
             venue_id: null,
-            competition_id: null,
-            is_friendly: true,
+            competition_id: "comp-cup",
+            is_friendly: false,
             player_of_the_match_id: null,
             players_player_of_the_match_id: null,
             status: "scheduled",
@@ -665,7 +680,14 @@ describe("getNextFixture / getLastResult", () => {
             club_notes: null,
             created_at: "2025-01-01T00:00:00Z",
             updated_at: "2025-01-01T00:00:00Z",
-            competition: [],
+            competition: [
+              {
+                id: "comp-cup",
+                name: "Cup",
+                display_name: null,
+                kind: "cup",
+              },
+            ],
             venue: [],
             goals: null,
           },
@@ -705,6 +727,86 @@ describe("getNextFixture / getLastResult", () => {
       mockFromClient({ matches: okResult(null) }),
     );
     expect(await getLastResult()).toEqual({ data: null, error: null });
+  });
+
+  it("skips friendlies and other competitions for the next fixture and last result", async () => {
+    const friendly = {
+      team_id: "team-1",
+      kickoff_time: null,
+      meetup_time: null,
+      home_away: "home" as const,
+      venue_id: null,
+      competition_id: null,
+      is_friendly: true,
+      player_of_the_match_id: null,
+      players_player_of_the_match_id: null,
+      notes: null,
+      club_notes: null,
+      created_at: "2025-01-01T00:00:00Z",
+      updated_at: "2025-01-01T00:00:00Z",
+      competition: null,
+      venue: null,
+      goals: [],
+    };
+    const tournament = {
+      ...friendly,
+      is_friendly: false,
+      competition_id: "comp-tournament",
+      competition: {
+        id: "comp-tournament",
+        name: "Tournament",
+        display_name: null,
+        kind: "tournament" as const,
+      },
+    };
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            ...friendly,
+            id: "m-friendly-next",
+            opponent_name: "Friends",
+            date: "2099-01-01",
+            status: "scheduled",
+          },
+          {
+            ...tournament,
+            id: "m-tournament-next",
+            opponent_name: "Rivals",
+            date: "2099-02-01",
+            status: "scheduled",
+          },
+        ]),
+      }),
+    );
+    expect((await getNextFixture()).data?.id).toBe("m-tournament-next");
+
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            ...friendly,
+            id: "m-friendly-last",
+            opponent_name: "Friends",
+            date: "2025-09-20",
+            status: "played",
+            goals: [{ is_opposition: false }],
+          },
+          {
+            ...tournament,
+            id: "m-tournament-last",
+            opponent_name: "Rivals",
+            date: "2025-09-01",
+            status: "played",
+            goals: [{ is_opposition: true }],
+          },
+        ]),
+      }),
+    );
+    const last = await getLastResult();
+    expect(last.data?.id).toBe("m-tournament-last");
+    expect(last.data?.goals_against).toBe(1);
   });
 });
 
