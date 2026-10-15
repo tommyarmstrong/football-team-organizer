@@ -9,9 +9,8 @@ import {
 import type { CompetitionKind } from "@/lib/supabase/database.types";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
-  ALL_COMPETITIONS,
-  ALL_LEAGUE_AND_CUP,
-  matchesCompetitionFilters,
+  COMPETITIVE_COMPETITION_KINDS,
+  isCompetitiveMatch,
 } from "@/lib/stats/competition-filters";
 
 // ---------------------------------------------------------------------------
@@ -398,18 +397,10 @@ function bumpPlayerCount(
   });
 }
 
-const DASHBOARD_LEAGUE_AND_CUP_KINDS = ["league", "cup"] as const;
-
-/** Dashboard leaderboards count league and cup matches only (no friendlies). */
-function isDashboardLeagueOrCup(matchRaw: unknown): boolean {
+/** Dashboard leaderboards count competitive matches: league, cup, and tournament. */
+function isDashboardCompetitive(matchRaw: unknown): boolean {
   const competition = competitionFromMatch(matchRaw);
-  return matchesCompetitionFilters({
-    competitionId: competition.competitionId,
-    competitionKind: competition.competitionKind,
-    isFriendly: competition.isFriendly,
-    selectedCompetitionId: ALL_COMPETITIONS,
-    selectedCompetitionKind: ALL_LEAGUE_AND_CUP,
-  });
+  return isCompetitiveMatch(competition);
 }
 
 function competitionFromMatch(matchRaw: unknown): {
@@ -455,7 +446,7 @@ export async function getTopScorers(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
+      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
       .eq("is_opposition", false),
     getShirtByPlayer(team.id),
   ]);
@@ -464,7 +455,7 @@ export async function getTopScorers(
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
-    if (!isDashboardLeagueOrCup(row.match)) continue;
+    if (!isDashboardCompetitive(row.match)) continue;
     const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -510,7 +501,7 @@ export async function getTopAssists(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
+      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
       .eq("is_opposition", false)
       .not("assist_player_id", "is", null),
     getShirtByPlayer(team.id),
@@ -520,7 +511,7 @@ export async function getTopAssists(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardLeagueOrCup(row.match)) continue;
+    if (!isDashboardCompetitive(row.match)) continue;
     const playerRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -549,7 +540,7 @@ export async function getTopPlayersOfTheMatch(
       .eq("team_id", team.id)
       .eq("status", "played")
       .eq("is_friendly", false)
-      .in("competition.kind", [...DASHBOARD_LEAGUE_AND_CUP_KINDS])
+      .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
       .not("player_of_the_match_id", "is", null),
     getShirtByPlayer(team.id),
   ]);
@@ -558,7 +549,7 @@ export async function getTopPlayersOfTheMatch(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardLeagueOrCup(row)) continue;
+    if (!isDashboardCompetitive(row)) continue;
     const playerRaw = Array.isArray(row.coach_potm)
       ? row.coach_potm[0]
       : row.coach_potm;
@@ -939,7 +930,7 @@ export async function getResultsOverTime(): Promise<{
   return { data: points, error: null, form: recentForm };
 }
 
-/** Last N played-match results for the dashboard form strip (oldest → newest). */
+/** Last N competitive results for the dashboard form strip (oldest → newest). */
 export async function getRecentForm(
   limit = STATS_FORM_LIMIT,
 ): Promise<{ form: Array<"W" | "D" | "L">; error: string | null }> {
@@ -949,16 +940,23 @@ export async function getRecentForm(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
-    .select("id, date, goals(is_opposition)")
+    .select(
+      "id, date, is_friendly, competition_id, competition:competitions(id, kind), goals(is_opposition)",
+    )
     .eq("team_id", team.id)
     .eq("status", "played")
+    .eq("is_friendly", false)
+    .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
     .order("date", { ascending: false })
     .limit(limit);
 
   if (error) return { form: [], error: error.message };
 
   const form: Array<"W" | "D" | "L"> = [];
-  for (const match of [...(data ?? [])].reverse()) {
+  const competitive = (data ?? [])
+    .filter((match) => isDashboardCompetitive(match))
+    .slice(0, limit);
+  for (const match of [...competitive].reverse()) {
     const { goalsFor, goalsAgainst } = scoreFromGoals(
       Array.isArray(match.goals) ? match.goals : [],
     );

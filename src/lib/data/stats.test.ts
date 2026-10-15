@@ -116,7 +116,7 @@ describe("stats data", () => {
     expect(potm.data[0]?.player.id).toBe("player-1");
   });
 
-  it("counts league and cup matches only on dashboard leaderboards", async () => {
+  it("counts competitive matches only on dashboard leaderboards", async () => {
     const friendly = {
       is_friendly: true,
       competition_id: null,
@@ -127,6 +127,11 @@ describe("stats data", () => {
       competition_id: "comp-tournament",
       competition: { id: "comp-tournament", kind: "tournament" as const },
     };
+    const other = {
+      is_friendly: false,
+      competition_id: "comp-other",
+      competition: { id: "comp-other", kind: "other" as const },
+    };
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -135,12 +140,13 @@ describe("stats data", () => {
           { player_id: "player-1", player: namedPlayer, match: cupMatch },
           { player_id: "player-1", player: namedPlayer, match: friendly },
           { player_id: "player-1", player: namedPlayer, match: tournament },
+          { player_id: "player-1", player: namedPlayer, match: other },
           { player_id: "player-1", player: namedPlayer, match: [leagueMatch] },
         ]),
         team_players: okResult([]),
       }),
     );
-    expect((await getTopScorers()).data[0]?.goals).toBe(3);
+    expect((await getTopScorers()).data[0]?.goals).toBe(4);
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -160,12 +166,13 @@ describe("stats data", () => {
             assist: namedPlayer,
             match: tournament,
           },
+          { assist_player_id: "player-1", assist: namedPlayer, match: other },
         ]),
         team_players: okResult([]),
       }),
     );
     expect((await getTopAssists()).data).toEqual([
-      expect.objectContaining({ count: 1 }),
+      expect.objectContaining({ count: 2 }),
     ]);
 
     createClientMock.mockResolvedValue(
@@ -186,14 +193,19 @@ describe("stats data", () => {
             coach_potm: namedPlayer,
             ...tournament,
           },
+          {
+            player_of_the_match_id: "player-1",
+            coach_potm: namedPlayer,
+            ...other,
+          },
         ]),
         team_players: okResult([]),
       }),
     );
-    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(1);
+    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(2);
   });
 
-  it("queries dashboard leaderboards for played league and cup matches", async () => {
+  it("queries dashboard leaderboards for played competitive matches", async () => {
     const goalsBuilder = queryChain(okResult([])) as Record<string, unknown>;
     const goalsEq = vi.fn(() => goalsBuilder);
     const goalsIn = vi.fn(() => goalsBuilder);
@@ -223,6 +235,7 @@ describe("stats data", () => {
     expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
       "league",
       "cup",
+      "tournament",
     ]);
 
     goalsEq.mockClear();
@@ -237,6 +250,7 @@ describe("stats data", () => {
     expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
       "league",
       "cup",
+      "tournament",
     ]);
 
     await getTopPlayersOfTheMatch();
@@ -250,6 +264,7 @@ describe("stats data", () => {
     expect(matchesIn).toHaveBeenCalledWith("competition.kind", [
       "league",
       "cup",
+      "tournament",
     ]);
   });
 
@@ -931,11 +946,13 @@ describe("stats data", () => {
             id: "m-new",
             date: "2025-09-08",
             goals: [{ is_opposition: true }],
+            ...leagueMatch,
           },
           {
             id: "m-old",
             date: "2025-09-01",
             goals: [{ is_opposition: false }, { is_opposition: false }],
+            ...cupMatch,
           },
         ]),
       }),
@@ -943,6 +960,46 @@ describe("stats data", () => {
     const recent = await getRecentForm();
     expect(recent.error).toBeNull();
     expect(recent.form).toEqual(["W", "L"]);
+  });
+
+  it("builds recent form from competitive matches only", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-friendly",
+            date: "2025-09-20",
+            is_friendly: true,
+            competition_id: null,
+            competition: null,
+            goals: [{ is_opposition: true }],
+          },
+          {
+            id: "m-other",
+            date: "2025-09-15",
+            is_friendly: false,
+            competition_id: "comp-other",
+            competition: { id: "comp-other", kind: "other" },
+            goals: [{ is_opposition: false }],
+          },
+          {
+            id: "m-tournament",
+            date: "2025-09-10",
+            is_friendly: false,
+            competition_id: "comp-tournament",
+            competition: { id: "comp-tournament", kind: "tournament" },
+            goals: [{ is_opposition: false }, { is_opposition: true }],
+          },
+          {
+            id: "m-league",
+            date: "2025-09-01",
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+            ...leagueMatch,
+          },
+        ]),
+      }),
+    );
+    expect((await getRecentForm()).form).toEqual(["W", "D"]);
   });
 
   it("builds form through a specific match, always ending with that result", async () => {
