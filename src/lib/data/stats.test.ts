@@ -1002,7 +1002,7 @@ describe("stats data", () => {
     expect((await getRecentForm()).form).toEqual(["W", "D"]);
   });
 
-  it("builds form through a specific match, always ending with that result", async () => {
+  it("builds form through a league or cup match, always ending with that result", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         matches: okResult([
@@ -1011,18 +1011,21 @@ describe("stats data", () => {
             date: "2025-09-01",
             created_at: "2025-09-01T10:00:00Z",
             goals: [{ is_opposition: false }, { is_opposition: false }],
+            ...leagueMatch,
           },
           {
             id: "m-this",
             date: "2025-09-08",
             created_at: "2025-09-08T10:00:00Z",
             goals: [{ is_opposition: true }],
+            ...cupMatch,
           },
           {
             id: "m-same-day-later",
             date: "2025-09-08",
             created_at: "2025-09-08T18:00:00Z",
             goals: [{ is_opposition: false }],
+            ...leagueMatch,
           },
         ]),
       }),
@@ -1038,6 +1041,133 @@ describe("stats data", () => {
     );
     expect(result.error).toBeNull();
     expect(result.form).toEqual(["W", "L"]);
+  });
+
+  it("builds match-card form from league and cup games only", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-friendly",
+            date: "2025-09-01",
+            created_at: "2025-09-01T10:00:00Z",
+            is_friendly: true,
+            competition_id: null,
+            competition: null,
+            goals: [{ is_opposition: true }],
+          },
+          {
+            id: "m-tournament",
+            date: "2025-09-03",
+            created_at: "2025-09-03T10:00:00Z",
+            is_friendly: false,
+            competition_id: "comp-tournament",
+            competition: { id: "comp-tournament", kind: "tournament" },
+            goals: [{ is_opposition: false }],
+          },
+          {
+            id: "m-other",
+            date: "2025-09-05",
+            created_at: "2025-09-05T10:00:00Z",
+            is_friendly: false,
+            competition_id: "comp-other",
+            competition: { id: "comp-other", kind: "other" },
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+          },
+          {
+            id: "m-cup",
+            date: "2025-09-07",
+            created_at: "2025-09-07T10:00:00Z",
+            goals: [{ is_opposition: false }, { is_opposition: true }],
+            ...cupMatch,
+          },
+          {
+            id: "m-this",
+            date: "2025-09-08",
+            created_at: "2025-09-08T10:00:00Z",
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+            ...leagueMatch,
+          },
+        ]),
+      }),
+    );
+    const result = await getFormThroughMatch(
+      "team-1",
+      {
+        id: "m-this",
+        date: "2025-09-08",
+        created_at: "2025-09-08T10:00:00Z",
+      },
+      "W",
+    );
+    expect(result.error).toBeNull();
+    expect(result.form).toEqual(["D", "W"]);
+  });
+
+  it("leaves a non-league match off the match-card form", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult([
+          {
+            id: "m-league",
+            date: "2025-09-01",
+            created_at: "2025-09-01T10:00:00Z",
+            goals: [{ is_opposition: false }, { is_opposition: false }],
+            ...leagueMatch,
+          },
+          {
+            id: "m-friendly",
+            date: "2025-09-08",
+            created_at: "2025-09-08T10:00:00Z",
+            is_friendly: true,
+            competition_id: null,
+            competition: null,
+            goals: [{ is_opposition: true }],
+          },
+        ]),
+      }),
+    );
+    const result = await getFormThroughMatch(
+      "team-1",
+      {
+        id: "m-friendly",
+        date: "2025-09-08",
+        created_at: "2025-09-08T10:00:00Z",
+      },
+      "L",
+    );
+    expect(result.form).toEqual(["W"]);
+  });
+
+  it("queries played league and cup matches for the match-card form", async () => {
+    const builder = queryChain(okResult([])) as Record<string, unknown>;
+    const eq = vi.fn(() => builder);
+    const inFilter = vi.fn(() => builder);
+    builder.eq = eq;
+    builder.in = inFilter;
+    createClientMock.mockResolvedValue({ from: vi.fn(() => builder) });
+
+    await getFormThroughMatch(
+      "team-1",
+      {
+        id: "m-this",
+        date: "2025-09-08",
+        created_at: "2025-09-08T10:00:00Z",
+      },
+      "W",
+    );
+
+    expect(eq.mock.calls).toEqual(
+      expect.arrayContaining([
+        ["team_id", "team-1"],
+        ["status", "played"],
+        ["is_friendly", false],
+      ]),
+    );
+    expect(inFilter).toHaveBeenCalledWith("competition.kind", [
+      "league",
+      "cup",
+    ]);
   });
 });
 
