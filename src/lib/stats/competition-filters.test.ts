@@ -6,6 +6,7 @@ import {
   ALL_LEAGUE_AND_CUP,
   FRIENDLY_KIND,
   FRIENDLY_MATCHES,
+  isLeagueAndCupMatch,
   matchesCompetitionFilters,
   NO_COMPETITION,
 } from "@/lib/stats/competition-filters";
@@ -155,6 +156,34 @@ describe("matchesCompetitionFilters", () => {
         selectedCompetitionKind: FRIENDLY_KIND,
       }),
     ).toBe(true);
+  });
+
+  it("recognises league and cup matches", () => {
+    expect(
+      isLeagueAndCupMatch({
+        competitionId: "c1",
+        competitionKind: "league",
+      }),
+    ).toBe(true);
+    expect(
+      isLeagueAndCupMatch({
+        competitionId: "c2",
+        competitionKind: "cup",
+      }),
+    ).toBe(true);
+    expect(
+      isLeagueAndCupMatch({
+        competitionId: "c3",
+        competitionKind: "tournament",
+      }),
+    ).toBe(false);
+    expect(
+      isLeagueAndCupMatch({
+        competitionId: null,
+        competitionKind: null,
+        isFriendly: true,
+      }),
+    ).toBe(false);
   });
 
   it("filters all league and cup competitions", () => {
