@@ -10,7 +10,9 @@ import type { CompetitionKind } from "@/lib/supabase/database.types";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   COMPETITIVE_COMPETITION_KINDS,
+  LEAGUE_AND_CUP_COMPETITION_KINDS,
   isCompetitiveMatch,
+  isLeagueAndCupMatch,
 } from "@/lib/stats/competition-filters";
 
 // ---------------------------------------------------------------------------
@@ -978,8 +980,9 @@ function isMatchOnOrBefore(
 }
 
 /**
- * Form strip for a postcard: played matches up to and including `through`,
- * oldest → newest, with this match always last.
+ * Form strip for a match card: played league and cup matches up to and
+ * including `through`, oldest → newest. This match is last when it is a
+ * league or cup game.
  */
 export async function getFormThroughMatch(
   teamId: string,
@@ -990,17 +993,25 @@ export async function getFormThroughMatch(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
-    .select("id, date, created_at, goals(is_opposition)")
+    .select(
+      "id, date, created_at, is_friendly, competition_id, competition:competitions(id, kind), goals(is_opposition)",
+    )
     .eq("team_id", teamId)
     .eq("status", "played")
+    .eq("is_friendly", false)
+    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .lte("date", through.date)
     .order("date", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (error) return { form: [thisResult], error: error.message };
 
+  const rows = (data ?? []).filter((row) =>
+    isLeagueAndCupMatch(competitionFromMatch(row)),
+  );
+  const includesThis = rows.some((row) => row.id === through.id);
   const prior: Array<"W" | "D" | "L"> = [];
-  for (const row of data ?? []) {
+  for (const row of rows) {
     if (!isMatchOnOrBefore(row, through) || row.id === through.id) continue;
     const { goalsFor, goalsAgainst } = scoreFromGoals(
       Array.isArray(row.goals) ? row.goals : [],
@@ -1009,7 +1020,8 @@ export async function getFormThroughMatch(
     if (letter) prior.push(letter);
   }
 
-  return { form: [...prior, thisResult].slice(-limit), error: null };
+  const form = includesThis ? [...prior, thisResult] : prior;
+  return { form: form.slice(-limit), error: null };
 }
 
 export type PlayerRecord = { wins: number; draws: number; losses: number };
