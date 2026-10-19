@@ -91,6 +91,22 @@ describe("parsePersonPlayerForm", () => {
     });
   });
 
+  it("accepts a winger", () => {
+    expect(
+      parsePersonPlayerForm(
+        form({
+          player_id: "player-1",
+          position: "WNG",
+        }),
+      ),
+    ).toEqual({
+      player_id: "player-1",
+      date_of_birth: null,
+      position: "WNG",
+      school: null,
+    });
+  });
+
   it("rejects invalid positions and dates", () => {
     expect(
       parsePersonPlayerForm(
