@@ -317,7 +317,7 @@ export const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export const PLAYER_POSITIONS = ["GK", "DEF", "MID", "FWD"] as const;
+export const PLAYER_POSITIONS = ["GK", "DEF", "MID", "WNG", "FWD"] as const;
 
 export const TEAM_ROLES: TeamRole[] = [
   "management",

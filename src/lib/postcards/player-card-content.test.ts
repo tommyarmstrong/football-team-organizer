@@ -13,6 +13,7 @@ describe("playerPositionLabel", () => {
     expect(playerPositionLabel("GK")).toBe("Goalkeeper");
     expect(playerPositionLabel("DEF")).toBe("Defender");
     expect(playerPositionLabel("MID")).toBe("Midfielder");
+    expect(playerPositionLabel("WNG")).toBe("Winger");
     expect(playerPositionLabel("FWD")).toBe("Forward");
     expect(playerPositionLabel("fwd")).toBe("Forward");
   });

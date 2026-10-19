@@ -84,6 +84,10 @@ describe("toggleGoalsPositionFilter", () => {
     expect(toggleGoalsPositionFilter(["DEF"], "MID")).toEqual(["MID", "DEF"]);
   });
 
+  it("places wingers with the attacking positions", () => {
+    expect(toggleGoalsPositionFilter(["FWD"], "WNG")).toEqual(["FWD", "WNG"]);
+  });
+
   it("falls back to ALL when the last position is cleared", () => {
     expect(toggleGoalsPositionFilter(["GK"], "GK")).toEqual(["ALL"]);
   });

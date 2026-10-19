@@ -11,6 +11,7 @@ const POSITION_LABELS: Record<string, string> = {
   GK: "Goalkeeper",
   DEF: "Defender",
   MID: "Midfielder",
+  WNG: "Winger",
   FWD: "Forward",
 };
 

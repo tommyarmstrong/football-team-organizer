@@ -9,6 +9,7 @@ import {
 export const GOALS_POSITION_FILTERS = [
   "ALL",
   "FWD",
+  "WNG",
   "MID",
   "DEF",
   "GK",
