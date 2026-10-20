@@ -21,6 +21,7 @@ import {
   DashboardLeaderboards,
   DashboardSeasonTiles,
 } from "@/components/dashboard/dashboard-sections";
+import { AWARD_TONE_CLASS } from "@/components/shared/award-badge";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 
 describe("DashboardLeaderboards", () => {
@@ -76,7 +77,7 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("3 awards");
   });
 
-  it("ranks equal goal counts 1, 1, then 3 and marks monthly awards with a ribbon", async () => {
+  it("colours tied goal ribbons gold, gold, then bronze, and monthly awards gold", async () => {
     getDashboardDataMock.mockResolvedValue({
       next: { data: null, error: null },
       last: { data: null, error: null },
@@ -89,11 +90,26 @@ describe("DashboardLeaderboards", () => {
           playerStat("player-1", "person-1", "Ada", "Ace", 5),
           playerStat("player-2", "person-2", "Bea", "Best", 5),
           playerStat("player-3", "person-3", "Cleo", "Cross", 3),
+          playerStat("player-4", "person-4", "Dee", "Dale", 1),
         ].map((player) => ({ player, goals: player.goals })),
         error: null,
       },
-      assists: { data: [], error: null },
-      potm: { data: [], error: null },
+      assists: {
+        data: [
+          countStat("player-1", "person-1", "Ada", "Ace", 4),
+          countStat("player-2", "person-2", "Bea", "Best", 2),
+          countStat("player-5", "person-5", "Eve", "East", 2),
+          countStat("player-6", "person-6", "Fay", "Fell", 1),
+        ],
+        error: null,
+      },
+      potm: {
+        data: [
+          countStat("player-1", "person-1", "Ada", "Ace", 2),
+          countStat("player-2", "person-2", "Bea", "Best", 1),
+        ],
+        error: null,
+      },
       potMonth: {
         data: [
           {
@@ -115,18 +131,35 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(rankBadgesInSection(html, "Top scorers")).toEqual(["1", "1", "3"]);
-    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
-    expect(awardMarksInSection(html, "Player of the month")).toBe(1);
-    expect(awardMarksInSection(html, "Player of the match")).toBe(0);
+    expect(awardTonesInSection(html, "Goals")).toEqual([
+      "gold",
+      "gold",
+      "bronze",
+      "black",
+    ]);
+    expect(awardTonesInSection(html, "Assists")).toEqual([
+      "gold",
+      "silver",
+      "silver",
+      "black",
+    ]);
+    expect(awardTonesInSection(html, "Player of the match")).toEqual([
+      "gold",
+      "silver",
+    ]);
+    expect(awardTonesInSection(html, "Player of the month")).toEqual(["gold"]);
+    expect(sectionHtml(html, "Player of the month")).not.toContain(
+      "text-primary",
+    );
+    expect(sectionHtml(html, "Goals")).not.toContain("bg-[#F5C518]");
     expect(sectionTitles(html)).toEqual([
       "Player of the month",
       "Player of the match",
-      "Top scorers",
-      "Most assists",
+      "Goals",
+      "Assists",
     ]);
     expect(html).toContain("March 2025");
-    expect(html).toContain("coach&#x27;s player of the match");
+    expect(html).toContain("2 awards");
   });
 
   it("lists monthly awards in month order with a ribbon, not a rank", async () => {
@@ -153,8 +186,11 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
-    expect(awardMarksInSection(html, "Player of the month")).toBe(3);
+    expect(awardTonesInSection(html, "Player of the month")).toEqual([
+      "gold",
+      "gold",
+      "gold",
+    ]);
     expect(html.indexOf("March 2025")).toBeLessThan(
       html.indexOf("February 2025"),
     );
@@ -163,6 +199,25 @@ describe("DashboardLeaderboards", () => {
     );
   });
 });
+
+function countStat(
+  id: string,
+  personId: string,
+  firstName: string,
+  lastName: string,
+  count: number,
+) {
+  return {
+    player: {
+      id,
+      person_id: personId,
+      first_name: firstName,
+      last_name: lastName,
+      shirt_number: null,
+    },
+    count,
+  };
+}
 
 function playerStat(
   id: string,
@@ -185,8 +240,8 @@ function sectionTitles(html: string): string[] {
   return [
     "Player of the month",
     "Player of the match",
-    "Top scorers",
-    "Most assists",
+    "Goals",
+    "Assists",
   ].sort((a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`));
 }
 
@@ -209,20 +264,21 @@ function monthlyAward(
   };
 }
 
-function awardMarksInSection(html: string, title: string): number {
+function sectionHtml(html: string, title: string): string {
   const start = html.indexOf(`>${title}<`);
   const next = html.indexOf("<h2", start + 1);
-  const section = html.slice(start, next === -1 ? undefined : next);
-  return section.match(/lucide-award/g)?.length ?? 0;
+  return html.slice(start, next === -1 ? undefined : next);
 }
 
-function rankBadgesInSection(html: string, title: string): string[] {
-  const start = html.indexOf(`>${title}<`);
-  const next = html.indexOf("<h2", start + 1);
-  const section = html.slice(start, next === -1 ? undefined : next);
-  return [...section.matchAll(/rounded-full[^>]*>(\d+)</g)].map(
-    (match) => match[1] ?? "",
-  );
+function awardTonesInSection(html: string, title: string): string[] {
+  const section = sectionHtml(html, title);
+  return [...section.matchAll(/text-\[(#[A-Fa-f0-9]+)\]/g)].map((match) => {
+    const colour = match[1] ?? "";
+    const tone = (
+      Object.entries(AWARD_TONE_CLASS) as Array<[string, string]>
+    ).find(([, className]) => className === `text-[${colour}]`);
+    return tone?.[0] ?? colour;
+  });
 }
 
 describe("DashboardSeasonTiles", () => {
