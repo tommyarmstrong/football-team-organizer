@@ -42,8 +42,10 @@ type RpcAssistsEntry = {
   player_id: string;
   first_name: string;
   last_name: string;
+  position?: string | null;
   assists: number;
   matches_played: number;
+  periods_played?: number;
   competitions: Array<{
     competitionId: string | null;
     competitionKind: CompetitionKind | null;
@@ -67,7 +69,9 @@ type RpcMatchesPlayedEntry = {
   player_id: string;
   first_name: string;
   last_name: string;
+  position?: string | null;
   count: number;
+  periods_played?: number;
   competitions: Array<{
     competitionId: string | null;
     competitionKind: CompetitionKind | null;
@@ -177,7 +181,9 @@ export const getAllTeamStats = cache(
       playerId: entry.player_id,
       name: `${entry.first_name} ${entry.last_name}`,
       count: Number(entry.assists),
+      position: entry.position ?? null,
       matchesPlayed: Number(entry.matches_played),
+      periodsPlayed: Number(entry.periods_played ?? 0),
       events: (entry.competitions ?? []).map((c) => ({
         competitionId: c.competitionId,
         competitionKind: c.competitionKind,
@@ -210,6 +216,8 @@ export const getAllTeamStats = cache(
       playerId: entry.player_id,
       name: `${entry.first_name} ${entry.last_name}`,
       count: Number(entry.count),
+      position: entry.position ?? null,
+      periodsPlayed: Number(entry.periods_played ?? 0),
       events: (entry.competitions ?? []).map((c) => ({
         competitionId: c.competitionId,
         competitionKind: c.competitionKind,
@@ -306,7 +314,9 @@ export type PlayerCountPoint = {
   playerId: string;
   name: string;
   count: number;
+  position?: string | null;
   matchesPlayed?: number;
+  periodsPlayed?: number;
   events?: Array<{
     competitionId: string | null;
     competitionKind: CompetitionKind | null;

@@ -13,10 +13,7 @@ import {
 import type { GoalsByPlayerPoint } from "@/lib/data/stats";
 import {
   buildGoalsViewRows,
-  GOALS_METRIC_OPTIONS,
-  GOALS_POSITION_FILTERS,
   goalsMetricLabel,
-  toggleGoalsPositionFilter,
   type GoalsMetric,
   type GoalsPositionFilter,
 } from "@/lib/stats/goals-view";
@@ -26,30 +23,8 @@ import {
 } from "@/lib/stats/competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
-import { Button } from "@/components/ui/button";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
-
-function FilterButton({
-  label,
-  pressed,
-  onClick,
-}: {
-  label: string;
-  pressed: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant={pressed ? "default" : "outline"}
-      aria-pressed={pressed}
-      onClick={onClick}
-    >
-      {label}
-    </Button>
-  );
-}
+import { StatFilters } from "@/components/stats/stat-filters";
 
 export function GoalsSection({
   data,
@@ -85,49 +60,13 @@ export function GoalsSection({
           />
         ) : (
           <>
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Position
-              </p>
-              <div
-                className="flex flex-wrap gap-2"
-                role="group"
-                aria-label="Position filters"
-              >
-                {GOALS_POSITION_FILTERS.map((value) => (
-                  <FilterButton
-                    key={value}
-                    label={value}
-                    pressed={positions.includes(value)}
-                    onClick={() =>
-                      setPositions((current) =>
-                        toggleGoalsPositionFilter(current, value),
-                      )
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                View
-              </p>
-              <div
-                className="flex flex-wrap gap-2"
-                role="group"
-                aria-label="Goals metric"
-              >
-                {GOALS_METRIC_OPTIONS.map((option) => (
-                  <FilterButton
-                    key={option.value}
-                    label={option.label}
-                    pressed={metric === option.value}
-                    onClick={() => setMetric(option.value)}
-                  />
-                ))}
-              </div>
-            </div>
+            <StatFilters
+              positions={positions}
+              onPositionsChange={setPositions}
+              metric={metric}
+              onMetricChange={setMetric}
+              metricAriaLabel="Goals metric"
+            />
 
             {rows.length === 0 ? (
               <EmptyState
