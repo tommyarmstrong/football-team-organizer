@@ -9,9 +9,7 @@ import {
 import type { CompetitionKind } from "@/lib/supabase/database.types";
 import { DASHBOARD_MEDAL_RANKS, STATS_FORM_LIMIT } from "@/lib/constants";
 import {
-  COMPETITIVE_COMPETITION_KINDS,
   LEAGUE_AND_CUP_COMPETITION_KINDS,
-  isCompetitiveMatch,
   isLeagueAndCupMatch,
 } from "@/lib/stats/competition-filters";
 
@@ -443,10 +441,10 @@ function bumpPlayerCount(
   });
 }
 
-/** Dashboard leaderboards count competitive matches: league, cup, and tournament. */
-function isDashboardCompetitive(matchRaw: unknown): boolean {
+/** Dashboard leaderboards and form count league and cup matches only. */
+function isDashboardLeagueAndCup(matchRaw: unknown): boolean {
   const competition = competitionFromMatch(matchRaw);
-  return isCompetitiveMatch(competition);
+  return isLeagueAndCupMatch(competition);
 }
 
 function competitionFromMatch(matchRaw: unknown): {
@@ -492,7 +490,7 @@ export async function getTopScorers(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("match.competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .eq("is_opposition", false),
     getShirtByPlayer(team.id),
   ]);
@@ -501,7 +499,7 @@ export async function getTopScorers(
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row.match)) continue;
+    if (!isDashboardLeagueAndCup(row.match)) continue;
     const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -548,7 +546,7 @@ export async function getTopAssists(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("match.competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .eq("is_opposition", false)
       .not("assist_player_id", "is", null),
     getShirtByPlayer(team.id),
@@ -558,7 +556,7 @@ export async function getTopAssists(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row.match)) continue;
+    if (!isDashboardLeagueAndCup(row.match)) continue;
     const playerRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -587,7 +585,7 @@ export async function getTopPlayersOfTheMatch(
       .eq("team_id", team.id)
       .eq("status", "played")
       .eq("is_friendly", false)
-      .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .not("player_of_the_match_id", "is", null),
     getShirtByPlayer(team.id),
   ]);
@@ -596,7 +594,7 @@ export async function getTopPlayersOfTheMatch(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row)) continue;
+    if (!isDashboardLeagueAndCup(row)) continue;
     const playerRaw = Array.isArray(row.coach_potm)
       ? row.coach_potm[0]
       : row.coach_potm;
@@ -977,7 +975,7 @@ export async function getResultsOverTime(): Promise<{
   return { data: points, error: null, form: recentForm };
 }
 
-/** Last N competitive results for the dashboard form strip (oldest → newest). */
+/** Last N league and cup results for the dashboard form strip (oldest → newest). */
 export async function getRecentForm(
   limit = STATS_FORM_LIMIT,
 ): Promise<{ form: Array<"W" | "D" | "L">; error: string | null }> {
@@ -993,7 +991,7 @@ export async function getRecentForm(
     .eq("team_id", team.id)
     .eq("status", "played")
     .eq("is_friendly", false)
-    .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: false })
     .limit(limit);
 
@@ -1001,7 +999,7 @@ export async function getRecentForm(
 
   const form: Array<"W" | "D" | "L"> = [];
   const competitive = (data ?? [])
-    .filter((match) => isDashboardCompetitive(match))
+    .filter((match) => isDashboardLeagueAndCup(match))
     .slice(0, limit);
   for (const match of [...competitive].reverse()) {
     const { goalsFor, goalsAgainst } = scoreFromGoals(

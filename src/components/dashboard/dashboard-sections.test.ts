@@ -333,7 +333,7 @@ describe("DashboardSeasonTiles", () => {
     expect(tree?.props.results).toHaveLength(1);
   });
 
-  it("counts competitive matches and drops friendlies and other competitions", async () => {
+  it("counts league and cup matches and drops friendlies, tournaments, and other competitions", async () => {
     getDashboardDataMock.mockResolvedValue({
       stats: {
         resultsOverTime: [
@@ -351,13 +351,16 @@ describe("DashboardSeasonTiles", () => {
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(
       tree?.props.results.map((row: { matchId: string }) => row.matchId),
-    ).toEqual(["league-win", "cup-draw", "tournament"]);
+    ).toEqual(["league-win", "cup-draw"]);
   });
 
-  it("passes no results when every played match is outside competitive matches", async () => {
+  it("passes no results when every played match is outside league and cup matches", async () => {
     getDashboardDataMock.mockResolvedValue({
       stats: {
-        resultsOverTime: [result("friendly", null, true)],
+        resultsOverTime: [
+          result("friendly", null, true),
+          result("tournament", "tournament", false),
+        ],
         form: ["W"],
         error: null,
       },
@@ -372,9 +375,10 @@ describe("DashboardSeasonTiles", () => {
       path.join(import.meta.dirname, "dashboard-sections.tsx"),
       "utf8",
     );
-    expect(source).toContain("ALL_COMPETITIVE");
-    expect(source).toContain("competitive matches");
-    expect(source).not.toContain("ALL_LEAGUE_AND_CUP");
+    expect(source).toContain("ALL_LEAGUE_AND_CUP");
+    expect(source).toContain("league and cup matches");
+    expect(source).not.toContain("ALL_COMPETITIVE");
+    expect(source).not.toContain("competitive");
     expect(source).not.toContain("StatsCompetitionFilters");
     expect(source).not.toContain("onCompetitionKindChange");
     expect(source).not.toContain("setCompetitionKind");

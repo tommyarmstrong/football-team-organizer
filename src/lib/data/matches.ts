@@ -22,8 +22,8 @@ import { archivedTeamWriteError } from "@/lib/team/season";
 import type { MatchListFilter } from "@/lib/constants";
 import { scoreFromGoals } from "@/lib/format";
 import {
-  COMPETITIVE_COMPETITION_KINDS,
-  isCompetitiveMatch,
+  LEAGUE_AND_CUP_COMPETITION_KINDS,
+  isLeagueAndCupMatch,
 } from "@/lib/stats/competition-filters";
 import type {
   Competition,
@@ -289,12 +289,12 @@ export async function getNextFixture(): Promise<{
     .eq("team_id", team.id)
     .eq("status", "scheduled")
     .eq("is_friendly", false)
-    .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: true });
 
   if (error) return { data: null, error: error.message };
 
-  const rows = matchRows(data).filter(isCompetitiveFixture);
+  const rows = matchRows(data).filter(isLeagueAndCupFixture);
   const chosen = rows.find((row) => row.date >= today) ?? rows[0] ?? null;
   if (!chosen) return { data: null, error: null };
   return { data: normalizeMatchRow(chosen), error: null };
@@ -314,11 +314,11 @@ export async function getLastResult(): Promise<{
     .eq("team_id", team.id)
     .eq("status", "played")
     .eq("is_friendly", false)
-    .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: false });
 
   if (error) return { data: null, error: error.message };
-  const chosen = matchRows(data).find(isCompetitiveFixture) ?? null;
+  const chosen = matchRows(data).find(isLeagueAndCupFixture) ?? null;
   if (!chosen) return { data: null, error: null };
   return { data: normalizeMatchRow(chosen), error: null };
 }
@@ -328,7 +328,7 @@ function matchRows<T>(data: T | T[] | null): T[] {
   return Array.isArray(data) ? data : [data];
 }
 
-function isCompetitiveFixture(row: {
+function isLeagueAndCupFixture(row: {
   is_friendly: boolean;
   competition_id: string | null;
   competition: unknown;
@@ -347,7 +347,7 @@ function isCompetitiveFixture(row: {
     competition && typeof competition === "object" && "kind" in competition
       ? ((competition.kind as CompetitionKind | null) ?? null)
       : null;
-  return isCompetitiveMatch({
+  return isLeagueAndCupMatch({
     competitionId,
     competitionKind,
     isFriendly: row.is_friendly,

@@ -729,7 +729,7 @@ describe("getNextFixture / getLastResult", () => {
     expect(await getLastResult()).toEqual({ data: null, error: null });
   });
 
-  it("skips friendlies and other competitions for the next fixture and last result", async () => {
+  it("skips friendlies and tournaments for the next fixture and last result", async () => {
     const friendly = {
       team_id: "team-1",
       kickoff_time: null,
@@ -759,6 +759,16 @@ describe("getNextFixture / getLastResult", () => {
         kind: "tournament" as const,
       },
     };
+    const league = {
+      ...tournament,
+      competition_id: "comp-league",
+      competition: {
+        ...tournament.competition,
+        id: "comp-league",
+        name: "League",
+        kind: "league" as const,
+      },
+    };
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -777,10 +787,17 @@ describe("getNextFixture / getLastResult", () => {
             date: "2099-02-01",
             status: "scheduled",
           },
+          {
+            ...league,
+            id: "m-league-next",
+            opponent_name: "Town",
+            date: "2099-03-01",
+            status: "scheduled",
+          },
         ]),
       }),
     );
-    expect((await getNextFixture()).data?.id).toBe("m-tournament-next");
+    expect((await getNextFixture()).data?.id).toBe("m-league-next");
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -797,6 +814,14 @@ describe("getNextFixture / getLastResult", () => {
             ...tournament,
             id: "m-tournament-last",
             opponent_name: "Rivals",
+            date: "2025-09-10",
+            status: "played",
+            goals: [{ is_opposition: false }],
+          },
+          {
+            ...league,
+            id: "m-league-last",
+            opponent_name: "Town",
             date: "2025-09-01",
             status: "played",
             goals: [{ is_opposition: true }],
@@ -805,7 +830,7 @@ describe("getNextFixture / getLastResult", () => {
       }),
     );
     const last = await getLastResult();
-    expect(last.data?.id).toBe("m-tournament-last");
+    expect(last.data?.id).toBe("m-league-last");
     expect(last.data?.goals_against).toBe(1);
   });
 });

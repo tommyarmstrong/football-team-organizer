@@ -12,7 +12,7 @@ import {
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
-  ALL_COMPETITIVE,
+  ALL_LEAGUE_AND_CUP,
 } from "@/lib/stats/competition-filters";
 import { filterResults } from "@/lib/stats/results-view";
 import type { Team } from "@/lib/supabase/database.types";
@@ -41,7 +41,7 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
       results={filterResults(
         stats.resultsOverTime,
         ALL_COMPETITIONS,
-        ALL_COMPETITIVE,
+        ALL_LEAGUE_AND_CUP,
       )}
     />
   );
@@ -72,7 +72,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next competitive match."
+          emptyDescription="Schedule the next league or cup match."
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -88,7 +88,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={lastMatch}
           emptyTitle="No results yet"
-          emptyDescription="Played competitive matches will show here."
+          emptyDescription="Played league and cup matches will show here."
           share={
             postcard ? (
               <SharePostcardButton
@@ -125,13 +125,13 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
   return (
     <Section
       title="Form"
-      description={`Most recent ${STATS_FORM_LIMIT} competitive matches (oldest → newest)`}
+      description={`Most recent ${STATS_FORM_LIMIT} league and cup matches (oldest → newest)`}
     >
       {results.error ? <ErrorBanner message={results.error} /> : null}
       {!results.error && results.form.length === 0 ? (
         <EmptyState
           title="No played matches"
-          description="Form appears after you record competitive results."
+          description="Form appears after you record league or cup results."
         />
       ) : null}
       {!results.error && results.form.length > 0 ? (
