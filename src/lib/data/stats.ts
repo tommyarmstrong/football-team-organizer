@@ -7,7 +7,7 @@ import {
   PLAYER_NAME_EMBED,
 } from "@/lib/people/named-player";
 import type { CompetitionKind } from "@/lib/supabase/database.types";
-import { STATS_FORM_LIMIT } from "@/lib/constants";
+import { DASHBOARD_MEDAL_RANKS, STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   COMPETITIVE_COMPETITION_KINDS,
   LEAGUE_AND_CUP_COMPETITION_KINDS,
@@ -379,6 +379,19 @@ function rankPlayerCounts(
 }
 
 /**
+ * Keeps every row whose competition rank is at most `maxRank`, so players tied
+ * on the same value are never split by a row cut-off.
+ */
+export function takeThroughRank<T>(
+  rowsDescending: readonly T[],
+  metric: (row: T) => number,
+  maxRank: number,
+): T[] {
+  const ranks = competitionRanks(rowsDescending.map(metric));
+  return rowsDescending.filter((_, index) => ranks[index]! <= maxRank);
+}
+
+/**
  * Standard competition ranking ("1224") for metrics already sorted descending.
  * Equal values share the best rank. The next distinct value is
  * 1 + the number of rows strictly ahead.
@@ -463,7 +476,7 @@ function competitionFromMatch(matchRaw: unknown): {
 }
 
 export async function getTopScorers(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: TopScorer[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -510,15 +523,16 @@ export async function getTopScorers(
     }
   }
 
-  const ranked = [...counts.values()]
-    .sort((a, b) => b.goals - a.goals)
-    .slice(0, limit);
+  const sorted = [...counts.values()].sort((a, b) => b.goals - a.goals);
 
-  return { data: ranked, error: null };
+  return {
+    data: takeThroughRank(sorted, (row) => row.goals, maxRank),
+    error: null,
+  };
 }
 
 export async function getTopAssists(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: PlayerStatLeader[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -552,7 +566,12 @@ export async function getTopAssists(
     bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
-  return { data: rankPlayerCounts(counts, limit), error: null };
+  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
+
+  return {
+    data: takeThroughRank(sorted, (row) => row.count, maxRank),
+    error: null,
+  };
 }
 
 export async function getTopPlayersOfTheMatch(

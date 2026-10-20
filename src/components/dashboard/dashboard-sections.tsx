@@ -205,7 +205,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         )}
       />
       <LeaderboardSection
-        title="Goals"
+        title="Goals leaderboard"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
         rows={rankedLeaderboardRows(
@@ -219,7 +219,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         )}
       />
       <LeaderboardSection
-        title="Assists"
+        title="Assists leaderboard"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
         rows={rankedLeaderboardRows(

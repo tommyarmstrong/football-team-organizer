@@ -206,6 +206,9 @@ export const COMPETITION_VENUE_SPECIAL_LABELS: Record<
 /** Recent form boxes shown on the Stats page. */
 export const STATS_FORM_LIMIT = 8;
 
+/** Dashboard goals and assists tables show ranks 1 to 3 (gold, silver, bronze), ties included. */
+export const DASHBOARD_MEDAL_RANKS = 3;
+
 export const DEFAULT_COMPETITION_RESULT: CompetitionResult = "ongoing";
 
 export const MATCH_HOME_AWAYS: MatchHomeAway[] = ["home", "away", "neutral"];
