@@ -183,12 +183,27 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the month"
         emptyTitle="No monthly awards yet"
         emptyDescription="Add player of the month awards from the Team page."
-        rows={potMonth.data.map((award) => ({
+        rows={potMonth.data.map((award, index) => ({
           id: award.id,
           personId: award.player.person_id,
           name: playerDisplayName(award.player),
           valueLabel: formatAwardMonth(award.month),
+          rank: index + 1,
         }))}
+      />
+      <LeaderboardSection
+        title="Player of the match"
+        emptyTitle="No awards yet"
+        emptyDescription="Select the coach's player of the match on played fixtures."
+        rows={rankedLeaderboardRows(
+          potm.data.map((row) => ({
+            id: row.player.id,
+            personId: row.player.person_id,
+            name: playerDisplayName(row.player),
+            valueLabel: formatCountLabel(row.count, "award", "awards"),
+            metric: row.count,
+          })),
+        )}
       />
       <LeaderboardSection
         title="Top scorers"
@@ -214,20 +229,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
             personId: row.player.person_id,
             name: playerDisplayName(row.player),
             valueLabel: formatCountLabel(row.count, "assist", "assists"),
-            metric: row.count,
-          })),
-        )}
-      />
-      <LeaderboardSection
-        title="Player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on played fixtures."
-        rows={rankedLeaderboardRows(
-          potm.data.map((row) => ({
-            id: row.player.id,
-            personId: row.player.person_id,
-            name: playerDisplayName(row.player),
-            valueLabel: formatCountLabel(row.count, "award", "awards"),
             metric: row.count,
           })),
         )}

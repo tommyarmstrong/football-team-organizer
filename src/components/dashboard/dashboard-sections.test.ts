@@ -76,7 +76,7 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("3 awards");
   });
 
-  it("ranks equal goal counts 1, 1, then 3 and leaves monthly awards unranked", async () => {
+  it("ranks equal goal counts 1, 1, then 3 and numbers monthly awards in month order", async () => {
     getDashboardDataMock.mockResolvedValue({
       next: { data: null, error: null },
       last: { data: null, error: null },
@@ -116,9 +116,52 @@ describe("DashboardLeaderboards", () => {
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
     expect(rankBadgesInSection(html, "Top scorers")).toEqual(["1", "1", "3"]);
-    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual(["1"]);
+    expect(sectionTitles(html)).toEqual([
+      "Player of the month",
+      "Player of the match",
+      "Top scorers",
+      "Most assists",
+    ]);
     expect(html).toContain("March 2025");
     expect(html).toContain("coach&#x27;s player of the match");
+  });
+
+  it("numbers monthly awards in month order", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      next: { data: null, error: null },
+      last: { data: null, error: null },
+      canEditMatch: false,
+      form: { form: [], error: null },
+      competitions: { data: [], error: null },
+      canEditTeam: false,
+      scorers: { data: [], error: null },
+      assists: { data: [], error: null },
+      potm: { data: [], error: null },
+      potMonth: {
+        data: [
+          monthlyAward("award-1", "2025-03", "person-1", "Nia", "North"),
+          monthlyAward("award-2", "2025-02", "person-2", "Bea", "Best"),
+          monthlyAward("award-3", "2025-01", "person-3", "Cleo", "Cross"),
+        ],
+        error: null,
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      await DashboardLeaderboards({ teamId: "team-1" }),
+    );
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual([
+      "1",
+      "2",
+      "3",
+    ]);
+    expect(html.indexOf("March 2025")).toBeLessThan(
+      html.indexOf("February 2025"),
+    );
+    expect(html.indexOf("February 2025")).toBeLessThan(
+      html.indexOf("January 2025"),
+    );
   });
 });
 
@@ -136,6 +179,34 @@ function playerStat(
     last_name: lastName,
     shirt_number: null,
     goals,
+  };
+}
+
+function sectionTitles(html: string): string[] {
+  return [
+    "Player of the month",
+    "Player of the match",
+    "Top scorers",
+    "Most assists",
+  ].sort((a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`));
+}
+
+function monthlyAward(
+  id: string,
+  month: string,
+  personId: string,
+  firstName: string,
+  lastName: string,
+) {
+  return {
+    id,
+    month,
+    player: {
+      id: `player-${id}`,
+      person_id: personId,
+      first_name: firstName,
+      last_name: lastName,
+    },
   };
 }
 
