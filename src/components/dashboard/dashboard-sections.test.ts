@@ -76,7 +76,7 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("3 awards");
   });
 
-  it("ranks equal goal counts 1, 1, then 3 and leaves monthly awards unranked", async () => {
+  it("ranks equal goal counts 1, 1, then 3 and marks monthly awards with a ribbon", async () => {
     getDashboardDataMock.mockResolvedValue({
       next: { data: null, error: null },
       last: { data: null, error: null },
@@ -117,8 +117,50 @@ describe("DashboardLeaderboards", () => {
     );
     expect(rankBadgesInSection(html, "Top scorers")).toEqual(["1", "1", "3"]);
     expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(awardMarksInSection(html, "Player of the month")).toBe(1);
+    expect(awardMarksInSection(html, "Player of the match")).toBe(0);
+    expect(sectionTitles(html)).toEqual([
+      "Player of the month",
+      "Player of the match",
+      "Top scorers",
+      "Most assists",
+    ]);
     expect(html).toContain("March 2025");
     expect(html).toContain("coach&#x27;s player of the match");
+  });
+
+  it("lists monthly awards in month order with a ribbon, not a rank", async () => {
+    getDashboardDataMock.mockResolvedValue({
+      next: { data: null, error: null },
+      last: { data: null, error: null },
+      canEditMatch: false,
+      form: { form: [], error: null },
+      competitions: { data: [], error: null },
+      canEditTeam: false,
+      scorers: { data: [], error: null },
+      assists: { data: [], error: null },
+      potm: { data: [], error: null },
+      potMonth: {
+        data: [
+          monthlyAward("award-1", "2025-03", "person-1", "Nia", "North"),
+          monthlyAward("award-2", "2025-02", "person-2", "Bea", "Best"),
+          monthlyAward("award-3", "2025-01", "person-3", "Cleo", "Cross"),
+        ],
+        error: null,
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      await DashboardLeaderboards({ teamId: "team-1" }),
+    );
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(awardMarksInSection(html, "Player of the month")).toBe(3);
+    expect(html.indexOf("March 2025")).toBeLessThan(
+      html.indexOf("February 2025"),
+    );
+    expect(html.indexOf("February 2025")).toBeLessThan(
+      html.indexOf("January 2025"),
+    );
   });
 });
 
@@ -137,6 +179,41 @@ function playerStat(
     shirt_number: null,
     goals,
   };
+}
+
+function sectionTitles(html: string): string[] {
+  return [
+    "Player of the month",
+    "Player of the match",
+    "Top scorers",
+    "Most assists",
+  ].sort((a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`));
+}
+
+function monthlyAward(
+  id: string,
+  month: string,
+  personId: string,
+  firstName: string,
+  lastName: string,
+) {
+  return {
+    id,
+    month,
+    player: {
+      id: `player-${id}`,
+      person_id: personId,
+      first_name: firstName,
+      last_name: lastName,
+    },
+  };
+}
+
+function awardMarksInSection(html: string, title: string): number {
+  const start = html.indexOf(`>${title}<`);
+  const next = html.indexOf("<h2", start + 1);
+  const section = html.slice(start, next === -1 ? undefined : next);
+  return section.match(/lucide-award/g)?.length ?? 0;
 }
 
 function rankBadgesInSection(html: string, title: string): string[] {
