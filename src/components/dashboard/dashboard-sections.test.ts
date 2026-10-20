@@ -76,7 +76,7 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("3 awards");
   });
 
-  it("ranks equal goal counts 1, 1, then 3 and numbers monthly awards in month order", async () => {
+  it("ranks equal goal counts 1, 1, then 3 and marks monthly awards with a ribbon", async () => {
     getDashboardDataMock.mockResolvedValue({
       next: { data: null, error: null },
       last: { data: null, error: null },
@@ -116,7 +116,9 @@ describe("DashboardLeaderboards", () => {
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
     expect(rankBadgesInSection(html, "Top scorers")).toEqual(["1", "1", "3"]);
-    expect(rankBadgesInSection(html, "Player of the month")).toEqual(["1"]);
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(awardMarksInSection(html, "Player of the month")).toBe(1);
+    expect(awardMarksInSection(html, "Player of the match")).toBe(0);
     expect(sectionTitles(html)).toEqual([
       "Player of the month",
       "Player of the match",
@@ -127,7 +129,7 @@ describe("DashboardLeaderboards", () => {
     expect(html).toContain("coach&#x27;s player of the match");
   });
 
-  it("numbers monthly awards in month order", async () => {
+  it("lists monthly awards in month order with a ribbon, not a rank", async () => {
     getDashboardDataMock.mockResolvedValue({
       next: { data: null, error: null },
       last: { data: null, error: null },
@@ -151,11 +153,8 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(rankBadgesInSection(html, "Player of the month")).toEqual([
-      "1",
-      "2",
-      "3",
-    ]);
+    expect(rankBadgesInSection(html, "Player of the month")).toEqual([]);
+    expect(awardMarksInSection(html, "Player of the month")).toBe(3);
     expect(html.indexOf("March 2025")).toBeLessThan(
       html.indexOf("February 2025"),
     );
@@ -208,6 +207,13 @@ function monthlyAward(
       last_name: lastName,
     },
   };
+}
+
+function awardMarksInSection(html: string, title: string): number {
+  const start = html.indexOf(`>${title}<`);
+  const next = html.indexOf("<h2", start + 1);
+  const section = html.slice(start, next === -1 ? undefined : next);
+  return section.match(/lucide-award/g)?.length ?? 0;
 }
 
 function rankBadgesInSection(html: string, title: string): string[] {

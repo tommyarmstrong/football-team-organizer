@@ -19,6 +19,7 @@ import type { Team } from "@/lib/supabase/database.types";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
+import { AwardBadge } from "@/components/shared/award-badge";
 import { RankBadge } from "@/components/shared/rank-badge";
 import { competitionRanks } from "@/lib/data/stats";
 import {
@@ -183,12 +184,12 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the month"
         emptyTitle="No monthly awards yet"
         emptyDescription="Add player of the month awards from the Team page."
-        rows={potMonth.data.map((award, index) => ({
+        mark="award"
+        rows={potMonth.data.map((award) => ({
           id: award.id,
           personId: award.player.person_id,
           name: playerDisplayName(award.player),
           valueLabel: formatAwardMonth(award.month),
-          rank: index + 1,
         }))}
       />
       <LeaderboardSection
@@ -311,11 +312,13 @@ function LeaderboardSection({
   title,
   emptyTitle,
   emptyDescription,
+  mark = "rank",
   rows,
 }: {
   title: string;
   emptyTitle: string;
   emptyDescription: string;
+  mark?: "rank" | "award";
   rows: Array<{
     id: string;
     personId: string;
@@ -337,7 +340,11 @@ function LeaderboardSection({
                 className={objectListRowClassName("justify-between")}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  {row.rank != null ? <RankBadge rank={row.rank} /> : null}
+                  {mark === "award" ? (
+                    <AwardBadge />
+                  ) : row.rank != null ? (
+                    <RankBadge rank={row.rank} />
+                  ) : null}
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
                 <span className="font-display text-foreground text-lg tabular-nums">
