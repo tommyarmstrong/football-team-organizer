@@ -26,6 +26,21 @@ describe("StatsPageContent", () => {
     expect(potm).not.toContain("metricNoun");
   });
 
+  it("places player of the month between goal difference and coach awards", () => {
+    const goalDifference = source.indexOf('title="Goal difference"');
+    const monthly = source.indexOf('title="Player of the month"');
+    const coach = source.indexOf('title="Coach\'s player of the match"');
+    expect(goalDifference).toBeGreaterThan(-1);
+    expect(monthly).toBeGreaterThan(goalDifference);
+    expect(coach).toBeGreaterThan(monthly);
+
+    const section = source.slice(monthly, coach);
+    expect(section).toContain('metricLabel="Awards"');
+    expect(section).toContain('ariaTitle="player of the month"');
+    expect(section).toContain("filtered={playerOfTheMonthByPlayer}");
+    expect(section).not.toContain("metricNoun");
+  });
+
   it("shows season tiles under the filters using the filtered results", () => {
     const filtersIndex = source.indexOf("<StatsCompetitionFilters");
     const tilesIndex = source.indexOf(

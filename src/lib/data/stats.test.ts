@@ -1297,6 +1297,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
         ],
       },
     ],
+    player_of_the_month_by_player: [
+      {
+        player_id: "player-2",
+        first_name: "Bea",
+        last_name: "Bench",
+        count: 3,
+      },
+    ],
     matches_played_by_player: [
       {
         player_id: "player-1",
@@ -1390,6 +1398,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     });
     expect(result.potmByPlayer[0]?.events).toHaveLength(2);
 
+    expect(result.playerOfTheMonthByPlayer).toEqual([
+      {
+        playerId: "player-2",
+        name: "Bea Bench",
+        count: 3,
+      },
+    ]);
+
     // Appearances
     expect(result.matchesPlayed).toHaveLength(1);
     expect(result.matchesPlayed[0]).toMatchObject({
@@ -1457,6 +1473,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     expect(result.goalsByPlayer).toEqual([]);
     expect(result.assistsByPlayer).toEqual([]);
     expect(result.potmByPlayer).toEqual([]);
+    expect(result.playerOfTheMonthByPlayer).toEqual([]);
     expect(result.matchesPlayed).toEqual([]);
     expect(result.resultsOverTime).toEqual([]);
     expect(result.form).toEqual([]);
@@ -1473,6 +1490,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     const result = await getAllTeamStats("team-1");
     expect(result.error).toBe("stats rpc failed");
     expect(result.goalsByPlayer).toEqual([]);
+    expect(result.playerOfTheMonthByPlayer).toEqual([]);
     expect(result.resultsOverTime).toEqual([]);
     expect(result.form).toEqual([]);
   });
@@ -1500,6 +1518,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
               ],
               assists_by_player: [],
               potm_by_player: [],
+              player_of_the_month_by_player: [
+                {
+                  player_id: "p2",
+                  first_name: "C",
+                  last_name: "D",
+                  count: "2",
+                },
+              ],
               matches_played_by_player: [
                 {
                   player_id: "p1",
@@ -1533,6 +1559,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     expect(result.goalsByPlayer[0]?.matchesPlayed).toBe(10);
     expect(result.goalsByPlayer[0]?.periodsPlayed).toBe(15);
     expect(result.matchesPlayed[0]?.count).toBe(10);
+    expect(result.playerOfTheMonthByPlayer[0]?.count).toBe(2);
     expect(result.resultsOverTime[0]?.goalsFor).toBe(3);
     expect(result.resultsOverTime[0]?.goalsAgainst).toBe(1);
   });
