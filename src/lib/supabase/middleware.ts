@@ -44,12 +44,16 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Cache headers Supabase asks us to send with any response that sets auth
+  // cookies, so a CDN never serves one user's session cookie to another.
+  let authResponseHeaders: Record<string, string> = {};
+
   const supabase = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
@@ -59,9 +63,32 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );
+        authResponseHeaders = headers ?? {};
+        Object.entries(authResponseHeaders).forEach(([key, value]) =>
+          supabaseResponse.headers.set(key, value),
+        );
       },
     },
   });
+
+  /**
+   * Redirect while keeping any session cookies `getUser()` just rotated or
+   * cleared. Refresh tokens are single-use, so a redirect that drops the new
+   * token leaves the browser holding a spent one and the next request can
+   * revoke the whole session.
+   */
+  function redirectTo(
+    destination: Parameters<typeof NextResponse.redirect>[0],
+  ) {
+    const response = NextResponse.redirect(destination);
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => response.cookies.set(cookie));
+    Object.entries(authResponseHeaders).forEach(([key, value]) =>
+      response.headers.set(key, value),
+    );
+    return response;
+  }
 
   // §3.1 — Check the cached access cookie before firing any network calls.
   const cachedAccess = request.cookies.get(FTO_ACCESS_COOKIE)?.value === "1";
@@ -93,14 +120,14 @@ export async function updateSession(request: NextRequest) {
     if (pathname !== "/" && pathname !== "/no-access") {
       redirectUrl.searchParams.set("next", pathname);
     }
-    return NextResponse.redirect(redirectUrl);
+    return redirectTo(redirectUrl);
   }
 
   if (user && setupKind && !isPasswordSetupPath(pathname, setupKind)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = passwordSetupDestination(setupKind);
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    return redirectTo(redirectUrl);
   }
 
   if (user) {
@@ -110,7 +137,7 @@ export async function updateSession(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/no-access";
       redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
+      return redirectTo(redirectUrl);
     }
 
     if (
@@ -125,7 +152,7 @@ export async function updateSession(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
       redirectUrl.search = "";
-      const res = NextResponse.redirect(redirectUrl);
+      const res = redirectTo(redirectUrl);
       // Carry the access cookie through the redirect so the next request is cached.
       if (!cachedAccess && hasTeam) {
         res.cookies.set(FTO_ACCESS_COOKIE, "1", {
@@ -142,7 +169,7 @@ export async function updateSession(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/no-access";
       redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
+      return redirectTo(redirectUrl);
     }
 
     // Persist the access result on pass-through responses.
