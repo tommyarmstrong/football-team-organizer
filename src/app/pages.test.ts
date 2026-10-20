@@ -243,6 +243,7 @@ describe("app pages", () => {
       goalsByPlayer: [],
       assistsByPlayer: [],
       potmByPlayer: [],
+      playerOfTheMonthByPlayer: [],
       matchesPlayed: [],
       resultsOverTime: [],
       form: [],
@@ -289,6 +290,7 @@ describe("app pages", () => {
       goalsByPlayer: [{ playerId: "p1", name: "Sam", goals: 1 }],
       assistsByPlayer: [],
       potmByPlayer: [],
+      playerOfTheMonthByPlayer: [],
       matchesPlayed: [],
       resultsOverTime: [],
       form: [],
@@ -297,6 +299,7 @@ describe("app pages", () => {
     const tree = await StatsBody({ team: teamFixture() });
     expect(JSON.stringify(tree)).toContain('"name":"League"');
     expect(JSON.stringify(tree)).toContain("goalsByPlayer");
+    expect(JSON.stringify(tree)).toContain("playerOfTheMonthByPlayer");
   });
 
   it("matches page renders empty state", async () => {

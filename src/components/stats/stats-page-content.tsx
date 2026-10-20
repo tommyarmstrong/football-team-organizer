@@ -143,6 +143,7 @@ export function StatsPageContent({
   goalsByPlayer,
   assistsByPlayer,
   potmByPlayer,
+  playerOfTheMonthByPlayer,
   matchesPlayed,
   results,
   competitions,
@@ -150,6 +151,7 @@ export function StatsPageContent({
   goalsByPlayer: GoalsByPlayerPoint[];
   assistsByPlayer: PlayerCountPoint[];
   potmByPlayer: PlayerCountPoint[];
+  playerOfTheMonthByPlayer: PlayerCountPoint[];
   matchesPlayed: PlayerCountPoint[];
   results: ResultOverTimePoint[];
   competitions: CompetitionFilterOption[];
@@ -250,6 +252,19 @@ export function StatsPageContent({
           <GoalDifferenceChart data={filteredResults} />
         )}
       </Section>
+
+      {/* Awards are recorded per team, so competition filters do not change this chart. */}
+      <PlayerCountSection
+        title="Player of the month"
+        emptyTitle="No awards yet"
+        emptyDescription="Add player of the month awards from the Team page to populate this chart."
+        emptyFilterTitle="No awards for this filter"
+        data={playerOfTheMonthByPlayer}
+        filtered={playerOfTheMonthByPlayer}
+        metricLabel="Awards"
+        ariaTitle="player of the month"
+        emptyFilterDescription={emptyFilterDescription}
+      />
 
       <PlayerCountSection
         title="Coach's player of the match"

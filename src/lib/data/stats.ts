@@ -91,11 +91,19 @@ type RpcResultEntry = {
   is_friendly: boolean;
 };
 
+type RpcPlayerOfTheMonthEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  count: number;
+};
+
 type TeamStatsRpcResult = {
   shirt_numbers: Record<string, number | null>;
   goals_by_player: RpcGoalsEntry[];
   assists_by_player: RpcAssistsEntry[];
   potm_by_player: RpcPotmEntry[];
+  player_of_the_month_by_player: RpcPlayerOfTheMonthEntry[];
   matches_played_by_player: RpcMatchesPlayedEntry[];
   results_over_time: RpcResultEntry[];
 };
@@ -115,6 +123,7 @@ export const getAllTeamStats = cache(
     goalsByPlayer: GoalsByPlayerPoint[];
     assistsByPlayer: PlayerCountPoint[];
     potmByPlayer: PlayerCountPoint[];
+    playerOfTheMonthByPlayer: PlayerCountPoint[];
     matchesPlayed: PlayerCountPoint[];
     resultsOverTime: ResultOverTimePoint[];
     form: Array<"W" | "D" | "L">;
@@ -130,6 +139,7 @@ export const getAllTeamStats = cache(
         goalsByPlayer: [],
         assistsByPlayer: [],
         potmByPlayer: [],
+        playerOfTheMonthByPlayer: [],
         matchesPlayed: [],
         resultsOverTime: [],
         form: [],
@@ -207,6 +217,15 @@ export const getAllTeamStats = cache(
       }),
     );
 
+    // Monthly awards are team-scoped, so they have no competition events.
+    const playerOfTheMonthByPlayer: PlayerCountPoint[] = (
+      raw.player_of_the_month_by_player ?? []
+    ).map((entry) => ({
+      playerId: entry.player_id,
+      name: `${entry.first_name} ${entry.last_name}`,
+      count: Number(entry.count),
+    }));
+
     // ------------------------------------------------------------------
     // Map matches_played_by_player
     // ------------------------------------------------------------------
@@ -265,6 +284,7 @@ export const getAllTeamStats = cache(
       goalsByPlayer,
       assistsByPlayer,
       potmByPlayer,
+      playerOfTheMonthByPlayer,
       matchesPlayed,
       resultsOverTime,
       form: recentForm,
