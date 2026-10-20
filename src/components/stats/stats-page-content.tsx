@@ -12,10 +12,13 @@ import {
   ALL_LEAGUE_AND_CUP,
   type CompetitionFilterOption,
 } from "@/lib/stats/competition-filters";
+import { buildCountViewRows, countMetricLabel } from "@/lib/stats/count-view";
 import {
   filterPlayerCountPoints,
   withPlayedAppearanceCounts,
 } from "@/lib/stats/player-counts";
+import type { GoalsMetric, GoalsPositionFilter } from "@/lib/stats/goals-view";
+import { StatFilters } from "@/components/stats/stat-filters";
 import {
   filterResults,
   tallyGoals,
@@ -277,6 +280,9 @@ export function StatsPageContent({
         perGameLabel="Assists per game"
         ariaTitle="assists"
         emptyFilterDescription={emptyFilterDescription}
+        metricNoun="Assists"
+        metricAriaLabel="Assists metric"
+        emptyViewTitle="No assists for this view"
       />
 
       <PlayerCountSection
@@ -289,6 +295,9 @@ export function StatsPageContent({
         metricLabel="Matches"
         ariaTitle="appearances"
         emptyFilterDescription={emptyFilterDescription}
+        metricNoun="Matches"
+        metricAriaLabel="Appearances metric"
+        emptyViewTitle="No appearances for this view"
       />
     </>
   );
@@ -305,6 +314,9 @@ function PlayerCountSection({
   metricLabel,
   perGameLabel,
   ariaTitle,
+  metricNoun,
+  metricAriaLabel,
+  emptyViewTitle,
 }: {
   title: string;
   emptyTitle: string;
@@ -316,7 +328,27 @@ function PlayerCountSection({
   metricLabel: string;
   perGameLabel?: string;
   ariaTitle: string;
+  metricNoun?: string;
+  metricAriaLabel?: string;
+  emptyViewTitle?: string;
 }) {
+  if (metricNoun && metricAriaLabel && emptyViewTitle) {
+    return (
+      <FilteredPlayerCountSection
+        title={title}
+        emptyTitle={emptyTitle}
+        emptyDescription={emptyDescription}
+        data={data}
+        filtered={filtered}
+        perGameLabel={perGameLabel}
+        ariaTitle={ariaTitle}
+        metricNoun={metricNoun}
+        metricAriaLabel={metricAriaLabel}
+        emptyViewTitle={emptyViewTitle}
+      />
+    );
+  }
+
   return (
     <Section title={title}>
       {data.length === 0 ? (
@@ -333,6 +365,71 @@ function PlayerCountSection({
           perGameLabel={perGameLabel}
           ariaTitle={ariaTitle}
         />
+      )}
+    </Section>
+  );
+}
+
+function FilteredPlayerCountSection({
+  title,
+  emptyTitle,
+  emptyDescription,
+  data,
+  filtered,
+  perGameLabel,
+  ariaTitle,
+  metricNoun,
+  metricAriaLabel,
+  emptyViewTitle,
+}: {
+  title: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  data: PlayerCountPoint[];
+  filtered: PlayerCountPoint[];
+  perGameLabel?: string;
+  ariaTitle: string;
+  metricNoun: string;
+  metricAriaLabel: string;
+  emptyViewTitle: string;
+}) {
+  const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
+  const [metric, setMetric] = useState<GoalsMetric>("total");
+  const rows = useMemo(
+    () => buildCountViewRows(filtered, positions, metric),
+    [filtered, metric, positions],
+  );
+
+  return (
+    <Section title={title}>
+      {data.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
+        <div className="space-y-4">
+          <StatFilters
+            positions={positions}
+            onPositionsChange={setPositions}
+            metric={metric}
+            onMetricChange={setMetric}
+            metricAriaLabel={metricAriaLabel}
+          />
+          {rows.length === 0 ? (
+            <EmptyState
+              title={emptyViewTitle}
+              description="Try another competition, position filter, or metric."
+            />
+          ) : (
+            <PlayerCountChart
+              data={rows}
+              metricLabel={metricNoun}
+              seriesLabel={countMetricLabel(metric, metricNoun)}
+              perGameLabel={perGameLabel}
+              ariaTitle={ariaTitle}
+              allowDecimals={metric !== "total"}
+              valueKey="value"
+            />
+          )}
+        </div>
       )}
     </Section>
   );
