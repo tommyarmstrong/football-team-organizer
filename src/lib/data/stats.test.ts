@@ -1267,8 +1267,10 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
         player_id: "player-2",
         first_name: "Bea",
         last_name: "Bench",
+        position: "MID",
         assists: 2,
         matches_played: 4,
+        periods_played: 6,
         competitions: [
           {
             competitionId: "comp-1",
@@ -1300,7 +1302,9 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
         player_id: "player-1",
         first_name: "Sam",
         last_name: "Striker",
+        position: "FWD",
         count: 5,
+        periods_played: 9,
         competitions: [
           {
             competitionId: "comp-1",
@@ -1371,7 +1375,9 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
       playerId: "player-2",
       name: "Bea Bench",
       count: 2,
+      position: "MID",
       matchesPlayed: 4,
+      periodsPlayed: 6,
     });
     expect(result.assistsByPlayer[0]?.events).toHaveLength(2);
 
@@ -1390,6 +1396,8 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
       playerId: "player-1",
       name: "Sam Striker",
       count: 5,
+      position: "FWD",
+      periodsPlayed: 9,
     });
 
     // Results

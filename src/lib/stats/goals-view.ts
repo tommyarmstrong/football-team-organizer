@@ -84,10 +84,10 @@ export function filterGoalsByCompetition(
     .filter((row): row is GoalsByPlayerPoint => row != null);
 }
 
-export function filterGoalsByPositions(
-  data: GoalsByPlayerPoint[],
+export function filterRowsByPositions<T extends { position?: string | null }>(
+  data: T[],
   selected: readonly GoalsPositionFilter[],
-): GoalsByPlayerPoint[] {
+): T[] {
   if (selected.includes("ALL") || selected.length === 0) return data;
 
   const positions = new Set<string>(
@@ -99,15 +99,36 @@ export function filterGoalsByPositions(
   );
 }
 
+export function filterGoalsByPositions(
+  data: GoalsByPlayerPoint[],
+  selected: readonly GoalsPositionFilter[],
+): GoalsByPlayerPoint[] {
+  return filterRowsByPositions(data, selected);
+}
+
+export function countMetricValue(
+  row: { count: number; matchesPlayed: number; periodsPlayed: number },
+  metric: GoalsMetric,
+): number | null {
+  if (metric === "total") return row.count;
+  if (metric === "per_game") {
+    return row.matchesPlayed > 0 ? row.count / row.matchesPlayed : null;
+  }
+  return row.periodsPlayed > 0 ? row.count / row.periodsPlayed : null;
+}
+
 export function goalsMetricValue(
   row: GoalsByPlayerPoint,
   metric: GoalsMetric,
 ): number | null {
-  if (metric === "total") return row.goals;
-  if (metric === "per_game") {
-    return row.matchesPlayed > 0 ? row.goals / row.matchesPlayed : null;
-  }
-  return row.periodsPlayed > 0 ? row.goals / row.periodsPlayed : null;
+  return countMetricValue(
+    {
+      count: row.goals,
+      matchesPlayed: row.matchesPlayed,
+      periodsPlayed: row.periodsPlayed,
+    },
+    metric,
+  );
 }
 
 export function formatGoalsMetricValue(

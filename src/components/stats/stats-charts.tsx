@@ -29,13 +29,27 @@ export function PlayerCountChart({
   metricLabel,
   ariaTitle,
   perGameLabel,
+  allowDecimals = false,
+  valueKey = "count",
+  seriesLabel,
 }: {
-  data: PlayerCountPoint[];
+  data: Array<PlayerCountPoint & { value?: number }>;
   metricLabel: string;
   ariaTitle: string;
   perGameLabel?: string;
+  allowDecimals?: boolean;
+  valueKey?: "count" | "value";
+  /** Chart series name. The table keeps `metricLabel` for the total column. */
+  seriesLabel?: string;
 }) {
-  const summary = data.map((row) => `${row.name}: ${row.count}`).join("; ");
+  const seriesName = seriesLabel ?? metricLabel;
+  const shownValue = (row: PlayerCountPoint & { value?: number }) =>
+    valueKey === "value" && row.value != null ? row.value : row.count;
+  const formatShown = (value: number) =>
+    allowDecimals ? value.toFixed(2) : String(value);
+  const summary = data
+    .map((row) => `${row.name}: ${formatShown(shownValue(row))}`)
+    .join("; ");
 
   return (
     <figure className={statsChartFrameClassName()}>
@@ -58,11 +72,24 @@ export function PlayerCountChart({
               textAnchor="end"
               height={60}
             />
-            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
-            <Tooltip />
+            <YAxis
+              allowDecimals={allowDecimals}
+              tick={{ fontSize: 12 }}
+              width={allowDecimals ? 40 : 32}
+            />
+            {allowDecimals ? (
+              <Tooltip
+                formatter={(value) => [
+                  typeof value === "number" ? value.toFixed(2) : value,
+                  seriesName,
+                ]}
+              />
+            ) : (
+              <Tooltip />
+            )}
             <Bar
-              dataKey="count"
-              name={metricLabel}
+              dataKey={valueKey}
+              name={seriesName}
               fill="var(--color-chart-1)"
               radius={4}
             />
@@ -70,7 +97,7 @@ export function PlayerCountChart({
         </ResponsiveContainer>
       </div>
       <figcaption className="sr-only">
-        {metricLabel} by player: {summary}
+        {seriesName} by player: {summary}
       </figcaption>
       <div className="overflow-x-auto">
         <table
