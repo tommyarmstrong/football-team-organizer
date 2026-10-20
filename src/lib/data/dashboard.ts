@@ -43,7 +43,7 @@ export const getDashboardData = cache(async (teamId: string) => {
     canEditActiveTeamHistory(),
     getTopScorers(DASHBOARD_MEDAL_RANKS),
     getTopAssists(DASHBOARD_MEDAL_RANKS),
-    getTopPlayersOfTheMatch(5),
+    getTopPlayersOfTheMatch(DASHBOARD_MEDAL_RANKS),
     listPlayerOfTheMonth(teamId, 5),
     getAllTeamStats(teamId),
   ]);

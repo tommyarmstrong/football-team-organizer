@@ -105,8 +105,7 @@ describe("DashboardLeaderboards", () => {
         data: [
           countStat("player-1", "person-1", "Ada", "Ace", 4),
           countStat("player-2", "person-2", "Bea", "Best", 3),
-          countStat("player-3", "person-3", "Cleo", "Cross", 2),
-          countStat("player-4", "person-4", "Dee", "Dale", 1),
+          countStat("player-3", "person-3", "Cleo", "Cross", 3),
         ],
         error: null,
       },
@@ -141,12 +140,9 @@ describe("DashboardLeaderboards", () => {
       "silver",
       "silver",
     ]);
-    expect(awardTonesInSection(html, "Player of the match")).toEqual([
-      "gold",
-      "silver",
-      "bronze",
-      "black",
-    ]);
+    expect(
+      awardTonesInSection(html, "Player of the match leaderboard"),
+    ).toEqual(["gold", "silver", "silver"]);
     expect(awardTonesInSection(html, "Player of the month")).toEqual(["gold"]);
     expect(sectionHtml(html, "Player of the month")).not.toContain(
       "text-primary",
@@ -156,7 +152,7 @@ describe("DashboardLeaderboards", () => {
     );
     expect(sectionTitles(html)).toEqual([
       "Player of the month",
-      "Player of the match",
+      "Player of the match leaderboard",
       "Goals leaderboard",
       "Assists leaderboard",
     ]);
@@ -241,7 +237,7 @@ function playerStat(
 function sectionTitles(html: string): string[] {
   return [
     "Player of the month",
-    "Player of the match",
+    "Player of the match leaderboard",
     "Goals leaderboard",
     "Assists leaderboard",
   ].sort((a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`));

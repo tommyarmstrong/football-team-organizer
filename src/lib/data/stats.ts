@@ -373,9 +373,10 @@ const getShirtByPlayer = cache(
 
 function rankPlayerCounts(
   counts: Map<string, PlayerStatLeader>,
-  limit: number,
+  maxRank: number,
 ): PlayerStatLeader[] {
-  return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, limit);
+  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
+  return takeThroughRank(sorted, (row) => row.count, maxRank);
 }
 
 /**
@@ -566,16 +567,11 @@ export async function getTopAssists(
     bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
-  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
-
-  return {
-    data: takeThroughRank(sorted, (row) => row.count, maxRank),
-    error: null,
-  };
+  return { data: rankPlayerCounts(counts, maxRank), error: null };
 }
 
 export async function getTopPlayersOfTheMatch(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: PlayerStatLeader[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -611,7 +607,7 @@ export async function getTopPlayersOfTheMatch(
     bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
-  return { data: rankPlayerCounts(counts, limit), error: null };
+  return { data: rankPlayerCounts(counts, maxRank), error: null };
 }
 
 export async function getGoalsByPlayerStats(): Promise<{

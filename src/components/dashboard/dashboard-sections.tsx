@@ -191,7 +191,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         }))}
       />
       <LeaderboardSection
-        title="Player of the match"
+        title="Player of the match leaderboard"
         emptyTitle="No awards yet"
         emptyDescription="Select the coach's player of the match on played fixtures."
         rows={rankedLeaderboardRows(

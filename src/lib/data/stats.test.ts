@@ -181,6 +181,42 @@ describe("stats data", () => {
       ["player-5", 3],
       ["player-6", 3],
     ]);
+
+    // Player of the match follows the same rule: ranks 1, 1, 3, 3, 5 keep four.
+    const potmRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          player_of_the_match_id: `player-${index + 1}`,
+          coach_potm: player(index + 1),
+          ...leagueMatch,
+        })),
+      );
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([3, 3, 2, 2, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopPlayersOfTheMatch()).data.map((row) => [
+        row.player.id,
+        row.count,
+      ]),
+    ).toEqual([
+      ["player-1", 3],
+      ["player-2", 3],
+      ["player-3", 2],
+      ["player-4", 2],
+    ]);
+
+    // Six players tied on one award all share 1st, so none are cut at five rows.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([1, 1, 1, 1, 1, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopPlayersOfTheMatch()).data).toHaveLength(6);
   });
 
   it("takes rows through a rank without splitting ties", () => {

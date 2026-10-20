@@ -88,7 +88,7 @@ describe("getDashboardData (§5.5)", () => {
     expect(listCompetitionsMock).toHaveBeenCalledWith("team-1");
     expect(getTopScorersMock).toHaveBeenCalledWith(3);
     expect(getTopAssistsMock).toHaveBeenCalledWith(3);
-    expect(getTopPlayersOfTheMatchMock).toHaveBeenCalledWith(5);
+    expect(getTopPlayersOfTheMatchMock).toHaveBeenCalledWith(3);
     expect(listPlayerOfTheMonthMock).toHaveBeenCalledWith("team-1", 5);
     expect(getAllTeamStatsMock).toHaveBeenCalledWith("team-1");
     expect(result.form).toEqual({ form: [], error: null });
