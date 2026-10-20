@@ -257,6 +257,140 @@ describe("§3.1 — fto_access cookie caching", () => {
   });
 });
 
+type SetAllOptions = {
+  cookies: {
+    setAll: (
+      cookies: {
+        name: string;
+        value: string;
+        options: Record<string, unknown>;
+      }[],
+      headers: Record<string, string>,
+    ) => Promise<void> | void;
+  };
+};
+
+/**
+ * Mocks a Supabase client whose getUser() rewrites the session cookie, the way
+ * @supabase/ssr does when it rotates a refresh token or clears a dead session.
+ */
+function mockSessionWrite({
+  user = { id: "auth-1" } as { id: string } | null,
+  hasAccess = true,
+  cookie,
+}: {
+  user?: { id: string } | null;
+  hasAccess?: boolean;
+  cookie: { value: string; maxAge: number };
+}) {
+  createServerClientMock.mockImplementation(
+    (_url: string, _key: string, options: SetAllOptions) => ({
+      auth: {
+        getUser: async () => {
+          await options.cookies.setAll(
+            [
+              {
+                name: "sb-test-auth-token",
+                value: cookie.value,
+                options: { path: "/", maxAge: cookie.maxAge },
+              },
+            ],
+            { "Cache-Control": "private, no-store" },
+          );
+          return { data: { user }, error: null };
+        },
+      },
+      rpc: vi.fn(async () => ({ data: hasAccess, error: null })),
+      from: () => ({
+        select: () => ({
+          order: () => ({
+            limit: () => ({
+              maybeSingle: async () => ({ data: null, error: null }),
+            }),
+          }),
+        }),
+      }),
+    }),
+  );
+}
+
+describe("session cookies written by getUser() survive redirects", () => {
+  beforeEach(() => {
+    createServerClientMock.mockReset();
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps the rotated session cookie on the login→dashboard redirect", async () => {
+    mockSessionWrite({ cookie: { value: "rotated", maxAge: 34560000 } });
+
+    const response = await updateSession(request("/login"));
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/dashboard",
+    );
+    const session = response.cookies.get("sb-test-auth-token");
+    expect(session?.value).toBe("rotated");
+    expect(session?.maxAge).toBe(34560000);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.cookies.get(FTO_ACCESS_COOKIE)?.value).toBe("1");
+  });
+
+  it("keeps the rotated session cookie on the /no-access redirect", async () => {
+    mockSessionWrite({
+      hasAccess: false,
+      cookie: { value: "rotated", maxAge: 34560000 },
+    });
+
+    const response = await updateSession(request("/dashboard"));
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/no-access",
+    );
+    expect(response.cookies.get("sb-test-auth-token")?.value).toBe("rotated");
+  });
+
+  it("keeps the rotated session cookie on the password-setup redirect", async () => {
+    mockSessionWrite({ cookie: { value: "rotated", maxAge: 34560000 } });
+
+    const response = await updateSession(
+      request("/dashboard", `${PASSWORD_SETUP_COOKIE}=invite`),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/auth/invite",
+    );
+    expect(response.cookies.get("sb-test-auth-token")?.value).toBe("rotated");
+  });
+
+  it("passes cleared session cookies to the browser on the /login redirect", async () => {
+    mockSessionWrite({ user: null, cookie: { value: "", maxAge: 0 } });
+
+    const response = await updateSession(request("/dashboard"));
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/login?next=%2Fdashboard",
+    );
+    const session = response.cookies.get("sb-test-auth-token");
+    expect(session?.value).toBe("");
+    expect(session?.maxAge).toBe(0);
+  });
+
+  it("sets Supabase's cache headers on pass-through responses", async () => {
+    mockSessionWrite({ cookie: { value: "rotated", maxAge: 34560000 } });
+
+    const response = await updateSession(request("/dashboard"));
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.cookies.get("sb-test-auth-token")?.value).toBe("rotated");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+});
+
 describe("§2.1 — club_colour_hint cookie in middleware", () => {
   beforeEach(() => {
     createServerClientMock.mockReset();

@@ -103,7 +103,20 @@ are forwarded to `/auth/invite` and recovery tokens to `/auth/reset-password`.
 
 - **Password policy** — minimum length 8; require lowercase + uppercase + digits.
   Must match `supabase/config.toml`.
-- **Session timebox** — 24 h so sessions expire daily.
+- **Session timebox** — 24 h so sessions expire daily. Requires a plan that
+  includes session timeouts; confirm it is enforced on the hosted project.
+- **JWT expiry** — 86400 s (24 h), matching the timebox. With a 1 h token, an
+  idle phone had to refresh on wake-up; concurrent requests could present the
+  same single-use refresh token and revoke the session. A 24 h token means no
+  refresh happens inside the session. Trade-off: a deleted user's token stays
+  signed until it expires, but the app re-checks the user on every request
+  (`getUser()`) and row-level security finds no linked person, so it grants no
+  access. Must match `supabase/config.toml`.
+- **Refresh token reuse interval** — 60 s (default 10 s). Gives slow mobile
+  connections time to deliver a rotated token before a reuse revokes the
+  session. Must match `supabase/config.toml`.
+- **Inactivity timeout** — not set. Sessions end 24 h after sign-in whether or
+  not the user is active.
 - **Public email signup** — disable in hosted projects. The app rejects sign-in
   unless the person is `invited` or `active`, but disabling signup is defence in
   depth.
