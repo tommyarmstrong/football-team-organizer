@@ -12,14 +12,14 @@ import {
 import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
-  ALL_COMPETITIVE,
+  ALL_LEAGUE_AND_CUP,
 } from "@/lib/stats/competition-filters";
 import { filterResults } from "@/lib/stats/results-view";
 import type { Team } from "@/lib/supabase/database.types";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { RankBadge } from "@/components/shared/rank-badge";
+import { AwardBadge, awardToneForRank } from "@/components/shared/award-badge";
 import { competitionRanks } from "@/lib/data/stats";
 import {
   objectListClassName,
@@ -41,7 +41,7 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
       results={filterResults(
         stats.resultsOverTime,
         ALL_COMPETITIONS,
-        ALL_COMPETITIVE,
+        ALL_LEAGUE_AND_CUP,
       )}
     />
   );
@@ -72,7 +72,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next competitive match."
+          emptyDescription="Schedule the next league or cup match."
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -88,7 +88,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={lastMatch}
           emptyTitle="No results yet"
-          emptyDescription="Played competitive matches will show here."
+          emptyDescription="Played league and cup matches will show here."
           share={
             postcard ? (
               <SharePostcardButton
@@ -125,13 +125,13 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
   return (
     <Section
       title="Form"
-      description={`Most recent ${STATS_FORM_LIMIT} competitive matches (oldest → newest)`}
+      description={`Most recent ${STATS_FORM_LIMIT} league and cup matches (oldest → newest)`}
     >
       {results.error ? <ErrorBanner message={results.error} /> : null}
       {!results.error && results.form.length === 0 ? (
         <EmptyState
           title="No played matches"
-          description="Form appears after you record competitive results."
+          description="Form appears after you record league or cup results."
         />
       ) : null}
       {!results.error && results.form.length > 0 ? (
@@ -191,7 +191,21 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         }))}
       />
       <LeaderboardSection
-        title="Top scorers"
+        title="Player of the match leaderboard"
+        emptyTitle="No awards yet"
+        emptyDescription="Select the coach's player of the match on played fixtures."
+        rows={rankedLeaderboardRows(
+          potm.data.map((row) => ({
+            id: row.player.id,
+            personId: row.player.person_id,
+            name: playerDisplayName(row.player),
+            valueLabel: formatCountLabel(row.count, "award", "awards"),
+            metric: row.count,
+          })),
+        )}
+      />
+      <LeaderboardSection
+        title="Goals leaderboard"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
         rows={rankedLeaderboardRows(
@@ -205,7 +219,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         )}
       />
       <LeaderboardSection
-        title="Most assists"
+        title="Assists leaderboard"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
         rows={rankedLeaderboardRows(
@@ -214,20 +228,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
             personId: row.player.person_id,
             name: playerDisplayName(row.player),
             valueLabel: formatCountLabel(row.count, "assist", "assists"),
-            metric: row.count,
-          })),
-        )}
-      />
-      <LeaderboardSection
-        title="Player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on played fixtures."
-        rows={rankedLeaderboardRows(
-          potm.data.map((row) => ({
-            id: row.player.id,
-            personId: row.player.person_id,
-            name: playerDisplayName(row.player),
-            valueLabel: formatCountLabel(row.count, "award", "awards"),
             metric: row.count,
           })),
         )}
@@ -336,7 +336,11 @@ function LeaderboardSection({
                 className={objectListRowClassName("justify-between")}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  {row.rank != null ? <RankBadge rank={row.rank} /> : null}
+                  <AwardBadge
+                    tone={
+                      row.rank == null ? "gold" : awardToneForRank(row.rank)
+                    }
+                  />
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
                 <span className="font-display text-foreground text-lg tabular-nums">

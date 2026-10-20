@@ -33,6 +33,7 @@ import {
   getTopAssists,
   getTopPlayersOfTheMatch,
   getTopScorers,
+  takeThroughRank,
 } from "@/lib/data/stats";
 
 const namedPlayer = {
@@ -116,7 +117,120 @@ describe("stats data", () => {
     expect(potm.data[0]?.player.id).toBe("player-1");
   });
 
-  it("counts competitive matches only on dashboard leaderboards", async () => {
+  it("keeps every tied player through bronze and drops 4th place on goals and assists", async () => {
+    const player = (n: number) => ({
+      id: `player-${n}`,
+      person_id: `person-${n}`,
+      person: { first_name: `First${n}`, last_name: `Last${n}` },
+    });
+    const goalRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          player_id: `player-${index + 1}`,
+          player: player(index + 1),
+          match: leagueMatch,
+        })),
+      );
+    const assistRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          assist_player_id: `player-${index + 1}`,
+          assist: player(index + 1),
+          match: leagueMatch,
+        })),
+      );
+
+    // Six players tied on one goal all share 1st, so none are cut at five rows.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(goalRows([1, 1, 1, 1, 1, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopScorers()).data).toHaveLength(6);
+
+    // Ranks are 1, 2, 2, 4: both tied silvers stay and 4th place is dropped.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(goalRows([3, 2, 2, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopScorers()).data.map((row) => [row.player.id, row.goals]),
+    ).toEqual([
+      ["player-1", 3],
+      ["player-2", 2],
+      ["player-3", 2],
+    ]);
+
+    // Ranks are 1, 2, 3, 3, 3, 3, 7: every tied bronze stays.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(assistRows([5, 4, 3, 3, 3, 3, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopAssists()).data.map((row) => [row.player.id, row.count]),
+    ).toEqual([
+      ["player-1", 5],
+      ["player-2", 4],
+      ["player-3", 3],
+      ["player-4", 3],
+      ["player-5", 3],
+      ["player-6", 3],
+    ]);
+
+    // Player of the match follows the same rule: ranks 1, 1, 3, 3, 5 keep four.
+    const potmRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          player_of_the_match_id: `player-${index + 1}`,
+          coach_potm: player(index + 1),
+          ...leagueMatch,
+        })),
+      );
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([3, 3, 2, 2, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopPlayersOfTheMatch()).data.map((row) => [
+        row.player.id,
+        row.count,
+      ]),
+    ).toEqual([
+      ["player-1", 3],
+      ["player-2", 3],
+      ["player-3", 2],
+      ["player-4", 2],
+    ]);
+
+    // Six players tied on one award all share 1st, so none are cut at five rows.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([1, 1, 1, 1, 1, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopPlayersOfTheMatch()).data).toHaveLength(6);
+  });
+
+  it("takes rows through a rank without splitting ties", () => {
+    const rows = [5, 5, 3, 3, 3, 1].map((value) => ({ value }));
+    expect(
+      takeThroughRank(rows, (row) => row.value, 3).map((row) => row.value),
+    ).toEqual([5, 5, 3, 3, 3]);
+    expect(takeThroughRank(rows, (row) => row.value, 1)).toHaveLength(2);
+    expect(
+      takeThroughRank([], (row: { value: number }) => row.value, 3),
+    ).toEqual([]);
+  });
+
+  it("counts league and cup matches only on dashboard leaderboards", async () => {
     const friendly = {
       is_friendly: true,
       competition_id: null,
@@ -146,7 +260,7 @@ describe("stats data", () => {
         team_players: okResult([]),
       }),
     );
-    expect((await getTopScorers()).data[0]?.goals).toBe(4);
+    expect((await getTopScorers()).data[0]?.goals).toBe(3);
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -172,7 +286,7 @@ describe("stats data", () => {
       }),
     );
     expect((await getTopAssists()).data).toEqual([
-      expect.objectContaining({ count: 2 }),
+      expect.objectContaining({ count: 1 }),
     ]);
 
     createClientMock.mockResolvedValue(
@@ -202,10 +316,10 @@ describe("stats data", () => {
         team_players: okResult([]),
       }),
     );
-    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(2);
+    expect((await getTopPlayersOfTheMatch()).data[0]?.count).toBe(1);
   });
 
-  it("queries dashboard leaderboards for played competitive matches", async () => {
+  it("queries dashboard leaderboards for played league and cup matches", async () => {
     const goalsBuilder = queryChain(okResult([])) as Record<string, unknown>;
     const goalsEq = vi.fn(() => goalsBuilder);
     const goalsIn = vi.fn(() => goalsBuilder);
@@ -235,7 +349,6 @@ describe("stats data", () => {
     expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
       "league",
       "cup",
-      "tournament",
     ]);
 
     goalsEq.mockClear();
@@ -250,7 +363,6 @@ describe("stats data", () => {
     expect(goalsIn).toHaveBeenCalledWith("match.competition.kind", [
       "league",
       "cup",
-      "tournament",
     ]);
 
     await getTopPlayersOfTheMatch();
@@ -264,7 +376,6 @@ describe("stats data", () => {
     expect(matchesIn).toHaveBeenCalledWith("competition.kind", [
       "league",
       "cup",
-      "tournament",
     ]);
   });
 
@@ -962,7 +1073,7 @@ describe("stats data", () => {
     expect(recent.form).toEqual(["W", "L"]);
   });
 
-  it("builds recent form from competitive matches only", async () => {
+  it("builds recent form from league and cup matches only", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         matches: okResult([
@@ -983,6 +1094,12 @@ describe("stats data", () => {
             goals: [{ is_opposition: false }],
           },
           {
+            id: "m-cup",
+            date: "2025-09-12",
+            goals: [{ is_opposition: true }],
+            ...cupMatch,
+          },
+          {
             id: "m-tournament",
             date: "2025-09-10",
             is_friendly: false,
@@ -999,7 +1116,8 @@ describe("stats data", () => {
         ]),
       }),
     );
-    expect((await getRecentForm()).form).toEqual(["W", "D"]);
+    // The 1-1 tournament draw is skipped, so form is the league win then the cup loss.
+    expect((await getRecentForm()).form).toEqual(["W", "L"]);
   });
 
   it("builds form through a league or cup match, always ending with that result", async () => {
@@ -1297,6 +1415,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
         ],
       },
     ],
+    player_of_the_month_by_player: [
+      {
+        player_id: "player-2",
+        first_name: "Bea",
+        last_name: "Bench",
+        count: 3,
+      },
+    ],
     matches_played_by_player: [
       {
         player_id: "player-1",
@@ -1390,6 +1516,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     });
     expect(result.potmByPlayer[0]?.events).toHaveLength(2);
 
+    expect(result.playerOfTheMonthByPlayer).toEqual([
+      {
+        playerId: "player-2",
+        name: "Bea Bench",
+        count: 3,
+      },
+    ]);
+
     // Appearances
     expect(result.matchesPlayed).toHaveLength(1);
     expect(result.matchesPlayed[0]).toMatchObject({
@@ -1457,6 +1591,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     expect(result.goalsByPlayer).toEqual([]);
     expect(result.assistsByPlayer).toEqual([]);
     expect(result.potmByPlayer).toEqual([]);
+    expect(result.playerOfTheMonthByPlayer).toEqual([]);
     expect(result.matchesPlayed).toEqual([]);
     expect(result.resultsOverTime).toEqual([]);
     expect(result.form).toEqual([]);
@@ -1473,6 +1608,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     const result = await getAllTeamStats("team-1");
     expect(result.error).toBe("stats rpc failed");
     expect(result.goalsByPlayer).toEqual([]);
+    expect(result.playerOfTheMonthByPlayer).toEqual([]);
     expect(result.resultsOverTime).toEqual([]);
     expect(result.form).toEqual([]);
   });
@@ -1500,6 +1636,14 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
               ],
               assists_by_player: [],
               potm_by_player: [],
+              player_of_the_month_by_player: [
+                {
+                  player_id: "p2",
+                  first_name: "C",
+                  last_name: "D",
+                  count: "2",
+                },
+              ],
               matches_played_by_player: [
                 {
                   player_id: "p1",
@@ -1533,6 +1677,7 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
     expect(result.goalsByPlayer[0]?.matchesPlayed).toBe(10);
     expect(result.goalsByPlayer[0]?.periodsPlayed).toBe(15);
     expect(result.matchesPlayed[0]?.count).toBe(10);
+    expect(result.playerOfTheMonthByPlayer[0]?.count).toBe(2);
     expect(result.resultsOverTime[0]?.goalsFor).toBe(3);
     expect(result.resultsOverTime[0]?.goalsAgainst).toBe(1);
   });

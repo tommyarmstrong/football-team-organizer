@@ -13,7 +13,7 @@ import {
   getTopScorers,
   getAllTeamStats,
 } from "@/lib/data/stats";
-import { matchAllowsPostcard } from "@/lib/constants";
+import { DASHBOARD_MEDAL_RANKS, matchAllowsPostcard } from "@/lib/constants";
 import { buildMatchPostcardPayload } from "@/lib/postcards/match-postcard";
 
 /**
@@ -41,9 +41,9 @@ export const getDashboardData = cache(async (teamId: string) => {
     getRecentForm(),
     listCompetitions(teamId),
     canEditActiveTeamHistory(),
-    getTopScorers(5),
-    getTopAssists(5),
-    getTopPlayersOfTheMatch(5),
+    getTopScorers(DASHBOARD_MEDAL_RANKS),
+    getTopAssists(DASHBOARD_MEDAL_RANKS),
+    getTopPlayersOfTheMatch(DASHBOARD_MEDAL_RANKS),
     listPlayerOfTheMonth(teamId, 5),
     getAllTeamStats(teamId),
   ]);

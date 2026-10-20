@@ -57,6 +57,7 @@ export async function StatsBody({ team }: { team: Team }) {
         goalsByPlayer={stats.goalsByPlayer}
         assistsByPlayer={stats.assistsByPlayer}
         potmByPlayer={stats.potmByPlayer}
+        playerOfTheMonthByPlayer={stats.playerOfTheMonthByPlayer}
         matchesPlayed={stats.matchesPlayed}
         results={stats.resultsOverTime}
         competitions={competitionOptions}

@@ -88,6 +88,24 @@ describe("get_team_stats RPC migration (§5.1 + §6.4)", () => {
     expect(sql).toMatch(/'isFriendly'/i);
   });
 
+  it("counts player of the month awards without competition events", () => {
+    const latest = readFileSync(
+      resolve(
+        process.cwd(),
+        "supabase/migrations/20261020190000_player_of_the_month_stats.sql",
+      ),
+      "utf8",
+    );
+    expect(latest).toMatch(
+      /create or replace function public\.get_team_stats\(p_team_id uuid\)/i,
+    );
+    expect(latest).toMatch(/player_of_the_month_by_player/i);
+    expect(latest).toMatch(/from public\.player_of_the_month potm/i);
+    expect(latest).toMatch(/where potm\.team_id = p_team_id/i);
+    expect(latest).toMatch(/'player_of_the_month_by_player'/i);
+    expect(latest).toMatch(/security invoker/i);
+  });
+
   it("revokes public execute permission and grants to authenticated only", () => {
     expect(sql).toMatch(
       /revoke all on function public\.get_team_stats\(uuid\) from public/i,

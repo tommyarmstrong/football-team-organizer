@@ -7,11 +7,9 @@ import {
   PLAYER_NAME_EMBED,
 } from "@/lib/people/named-player";
 import type { CompetitionKind } from "@/lib/supabase/database.types";
-import { STATS_FORM_LIMIT } from "@/lib/constants";
+import { DASHBOARD_MEDAL_RANKS, STATS_FORM_LIMIT } from "@/lib/constants";
 import {
-  COMPETITIVE_COMPETITION_KINDS,
   LEAGUE_AND_CUP_COMPETITION_KINDS,
-  isCompetitiveMatch,
   isLeagueAndCupMatch,
 } from "@/lib/stats/competition-filters";
 
@@ -91,11 +89,19 @@ type RpcResultEntry = {
   is_friendly: boolean;
 };
 
+type RpcPlayerOfTheMonthEntry = {
+  player_id: string;
+  first_name: string;
+  last_name: string;
+  count: number;
+};
+
 type TeamStatsRpcResult = {
   shirt_numbers: Record<string, number | null>;
   goals_by_player: RpcGoalsEntry[];
   assists_by_player: RpcAssistsEntry[];
   potm_by_player: RpcPotmEntry[];
+  player_of_the_month_by_player: RpcPlayerOfTheMonthEntry[];
   matches_played_by_player: RpcMatchesPlayedEntry[];
   results_over_time: RpcResultEntry[];
 };
@@ -115,6 +121,7 @@ export const getAllTeamStats = cache(
     goalsByPlayer: GoalsByPlayerPoint[];
     assistsByPlayer: PlayerCountPoint[];
     potmByPlayer: PlayerCountPoint[];
+    playerOfTheMonthByPlayer: PlayerCountPoint[];
     matchesPlayed: PlayerCountPoint[];
     resultsOverTime: ResultOverTimePoint[];
     form: Array<"W" | "D" | "L">;
@@ -130,6 +137,7 @@ export const getAllTeamStats = cache(
         goalsByPlayer: [],
         assistsByPlayer: [],
         potmByPlayer: [],
+        playerOfTheMonthByPlayer: [],
         matchesPlayed: [],
         resultsOverTime: [],
         form: [],
@@ -207,6 +215,15 @@ export const getAllTeamStats = cache(
       }),
     );
 
+    // Monthly awards are team-scoped, so they have no competition events.
+    const playerOfTheMonthByPlayer: PlayerCountPoint[] = (
+      raw.player_of_the_month_by_player ?? []
+    ).map((entry) => ({
+      playerId: entry.player_id,
+      name: `${entry.first_name} ${entry.last_name}`,
+      count: Number(entry.count),
+    }));
+
     // ------------------------------------------------------------------
     // Map matches_played_by_player
     // ------------------------------------------------------------------
@@ -265,6 +282,7 @@ export const getAllTeamStats = cache(
       goalsByPlayer,
       assistsByPlayer,
       potmByPlayer,
+      playerOfTheMonthByPlayer,
       matchesPlayed,
       resultsOverTime,
       form: recentForm,
@@ -353,9 +371,23 @@ const getShirtByPlayer = cache(
 
 function rankPlayerCounts(
   counts: Map<string, PlayerStatLeader>,
-  limit: number,
+  maxRank: number,
 ): PlayerStatLeader[] {
-  return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, limit);
+  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
+  return takeThroughRank(sorted, (row) => row.count, maxRank);
+}
+
+/**
+ * Keeps every row whose competition rank is at most `maxRank`, so players tied
+ * on the same value are never split by a row cut-off.
+ */
+export function takeThroughRank<T>(
+  rowsDescending: readonly T[],
+  metric: (row: T) => number,
+  maxRank: number,
+): T[] {
+  const ranks = competitionRanks(rowsDescending.map(metric));
+  return rowsDescending.filter((_, index) => ranks[index]! <= maxRank);
 }
 
 /**
@@ -409,10 +441,10 @@ function bumpPlayerCount(
   });
 }
 
-/** Dashboard leaderboards count competitive matches: league, cup, and tournament. */
-function isDashboardCompetitive(matchRaw: unknown): boolean {
+/** Dashboard leaderboards and form count league and cup matches only. */
+function isDashboardLeagueAndCup(matchRaw: unknown): boolean {
   const competition = competitionFromMatch(matchRaw);
-  return isCompetitiveMatch(competition);
+  return isLeagueAndCupMatch(competition);
 }
 
 function competitionFromMatch(matchRaw: unknown): {
@@ -443,7 +475,7 @@ function competitionFromMatch(matchRaw: unknown): {
 }
 
 export async function getTopScorers(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: TopScorer[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -458,7 +490,7 @@ export async function getTopScorers(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("match.competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .eq("is_opposition", false),
     getShirtByPlayer(team.id),
   ]);
@@ -467,7 +499,7 @@ export async function getTopScorers(
 
   const counts = new Map<string, TopScorer>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row.match)) continue;
+    if (!isDashboardLeagueAndCup(row.match)) continue;
     const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -490,15 +522,16 @@ export async function getTopScorers(
     }
   }
 
-  const ranked = [...counts.values()]
-    .sort((a, b) => b.goals - a.goals)
-    .slice(0, limit);
+  const sorted = [...counts.values()].sort((a, b) => b.goals - a.goals);
 
-  return { data: ranked, error: null };
+  return {
+    data: takeThroughRank(sorted, (row) => row.goals, maxRank),
+    error: null,
+  };
 }
 
 export async function getTopAssists(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: PlayerStatLeader[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -513,7 +546,7 @@ export async function getTopAssists(
       .eq("match.team_id", team.id)
       .eq("match.status", "played")
       .eq("match.is_friendly", false)
-      .in("match.competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("match.competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .eq("is_opposition", false)
       .not("assist_player_id", "is", null),
     getShirtByPlayer(team.id),
@@ -523,7 +556,7 @@ export async function getTopAssists(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row.match)) continue;
+    if (!isDashboardLeagueAndCup(row.match)) continue;
     const playerRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
@@ -532,11 +565,11 @@ export async function getTopAssists(
     bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
-  return { data: rankPlayerCounts(counts, limit), error: null };
+  return { data: rankPlayerCounts(counts, maxRank), error: null };
 }
 
 export async function getTopPlayersOfTheMatch(
-  limit = 5,
+  maxRank = DASHBOARD_MEDAL_RANKS,
 ): Promise<{ data: PlayerStatLeader[]; error: string | null }> {
   const team = await getActiveTeam();
   if (!team) return { data: [], error: "No team selected." };
@@ -552,7 +585,7 @@ export async function getTopPlayersOfTheMatch(
       .eq("team_id", team.id)
       .eq("status", "played")
       .eq("is_friendly", false)
-      .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+      .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
       .not("player_of_the_match_id", "is", null),
     getShirtByPlayer(team.id),
   ]);
@@ -561,7 +594,7 @@ export async function getTopPlayersOfTheMatch(
 
   const counts = new Map<string, PlayerStatLeader>();
   for (const row of data ?? []) {
-    if (!isDashboardCompetitive(row)) continue;
+    if (!isDashboardLeagueAndCup(row)) continue;
     const playerRaw = Array.isArray(row.coach_potm)
       ? row.coach_potm[0]
       : row.coach_potm;
@@ -572,7 +605,7 @@ export async function getTopPlayersOfTheMatch(
     bumpPlayerCount(counts, player, shirtByPlayer);
   }
 
-  return { data: rankPlayerCounts(counts, limit), error: null };
+  return { data: rankPlayerCounts(counts, maxRank), error: null };
 }
 
 export async function getGoalsByPlayerStats(): Promise<{
@@ -942,7 +975,7 @@ export async function getResultsOverTime(): Promise<{
   return { data: points, error: null, form: recentForm };
 }
 
-/** Last N competitive results for the dashboard form strip (oldest → newest). */
+/** Last N league and cup results for the dashboard form strip (oldest → newest). */
 export async function getRecentForm(
   limit = STATS_FORM_LIMIT,
 ): Promise<{ form: Array<"W" | "D" | "L">; error: string | null }> {
@@ -958,7 +991,7 @@ export async function getRecentForm(
     .eq("team_id", team.id)
     .eq("status", "played")
     .eq("is_friendly", false)
-    .in("competition.kind", [...COMPETITIVE_COMPETITION_KINDS])
+    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: false })
     .limit(limit);
 
@@ -966,7 +999,7 @@ export async function getRecentForm(
 
   const form: Array<"W" | "D" | "L"> = [];
   const competitive = (data ?? [])
-    .filter((match) => isDashboardCompetitive(match))
+    .filter((match) => isDashboardLeagueAndCup(match))
     .slice(0, limit);
   for (const match of [...competitive].reverse()) {
     const { goalsFor, goalsAgainst } = scoreFromGoals(

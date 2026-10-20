@@ -119,21 +119,6 @@ export function hasCompetitionFilter(
   );
 }
 
-/** True for the stats page's "All Competitive" set: league, cup, and tournament. */
-export function isCompetitiveMatch(input: {
-  competitionId?: string | null;
-  competitionKind: CompetitionKind | null;
-  isFriendly?: boolean;
-}): boolean {
-  return matchesCompetitionFilters({
-    competitionId: input.competitionId ?? null,
-    competitionKind: input.competitionKind,
-    isFriendly: input.isFriendly,
-    selectedCompetitionId: ALL_COMPETITIONS,
-    selectedCompetitionKind: ALL_COMPETITIVE,
-  });
-}
-
 /** True for league and cup matches. Tournaments, other competitions, and friendlies are excluded. */
 export function isLeagueAndCupMatch(input: {
   competitionId?: string | null;

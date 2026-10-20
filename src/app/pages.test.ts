@@ -179,7 +179,6 @@ vi.mock("@/components/brand/pitch-graphic", () => ({
 vi.mock("@/components/shared/section", () => ({
   Section: ({ children }: { children: unknown }) => children,
 }));
-vi.mock("@/components/shared/rank-badge", () => ({ RankBadge: () => null }));
 vi.mock("@/components/shared/initials-avatar", () => ({
   InitialsAvatar: () => null,
 }));
@@ -243,6 +242,7 @@ describe("app pages", () => {
       goalsByPlayer: [],
       assistsByPlayer: [],
       potmByPlayer: [],
+      playerOfTheMonthByPlayer: [],
       matchesPlayed: [],
       resultsOverTime: [],
       form: [],
@@ -289,6 +289,7 @@ describe("app pages", () => {
       goalsByPlayer: [{ playerId: "p1", name: "Sam", goals: 1 }],
       assistsByPlayer: [],
       potmByPlayer: [],
+      playerOfTheMonthByPlayer: [],
       matchesPlayed: [],
       resultsOverTime: [],
       form: [],
@@ -297,6 +298,7 @@ describe("app pages", () => {
     const tree = await StatsBody({ team: teamFixture() });
     expect(JSON.stringify(tree)).toContain('"name":"League"');
     expect(JSON.stringify(tree)).toContain("goalsByPlayer");
+    expect(JSON.stringify(tree)).toContain("playerOfTheMonthByPlayer");
   });
 
   it("matches page renders empty state", async () => {
