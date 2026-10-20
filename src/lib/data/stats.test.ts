@@ -33,6 +33,7 @@ import {
   getTopAssists,
   getTopPlayersOfTheMatch,
   getTopScorers,
+  takeThroughRank,
 } from "@/lib/data/stats";
 
 const namedPlayer = {
@@ -114,6 +115,119 @@ describe("stats data", () => {
     expect(potm.data).toHaveLength(1);
     expect(potm.data[0]?.count).toBe(1);
     expect(potm.data[0]?.player.id).toBe("player-1");
+  });
+
+  it("keeps every tied player through bronze and drops 4th place on goals and assists", async () => {
+    const player = (n: number) => ({
+      id: `player-${n}`,
+      person_id: `person-${n}`,
+      person: { first_name: `First${n}`, last_name: `Last${n}` },
+    });
+    const goalRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          player_id: `player-${index + 1}`,
+          player: player(index + 1),
+          match: leagueMatch,
+        })),
+      );
+    const assistRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          assist_player_id: `player-${index + 1}`,
+          assist: player(index + 1),
+          match: leagueMatch,
+        })),
+      );
+
+    // Six players tied on one goal all share 1st, so none are cut at five rows.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(goalRows([1, 1, 1, 1, 1, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopScorers()).data).toHaveLength(6);
+
+    // Ranks are 1, 2, 2, 4: both tied silvers stay and 4th place is dropped.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(goalRows([3, 2, 2, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopScorers()).data.map((row) => [row.player.id, row.goals]),
+    ).toEqual([
+      ["player-1", 3],
+      ["player-2", 2],
+      ["player-3", 2],
+    ]);
+
+    // Ranks are 1, 2, 3, 3, 3, 3, 7: every tied bronze stays.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        goals: okResult(assistRows([5, 4, 3, 3, 3, 3, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopAssists()).data.map((row) => [row.player.id, row.count]),
+    ).toEqual([
+      ["player-1", 5],
+      ["player-2", 4],
+      ["player-3", 3],
+      ["player-4", 3],
+      ["player-5", 3],
+      ["player-6", 3],
+    ]);
+
+    // Player of the match follows the same rule: ranks 1, 1, 3, 3, 5 keep four.
+    const potmRows = (counts: number[]) =>
+      counts.flatMap((count, index) =>
+        Array.from({ length: count }, () => ({
+          player_of_the_match_id: `player-${index + 1}`,
+          coach_potm: player(index + 1),
+          ...leagueMatch,
+        })),
+      );
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([3, 3, 2, 2, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect(
+      (await getTopPlayersOfTheMatch()).data.map((row) => [
+        row.player.id,
+        row.count,
+      ]),
+    ).toEqual([
+      ["player-1", 3],
+      ["player-2", 3],
+      ["player-3", 2],
+      ["player-4", 2],
+    ]);
+
+    // Six players tied on one award all share 1st, so none are cut at five rows.
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        matches: okResult(potmRows([1, 1, 1, 1, 1, 1])),
+        team_players: okResult([]),
+      }),
+    );
+    expect((await getTopPlayersOfTheMatch()).data).toHaveLength(6);
+  });
+
+  it("takes rows through a rank without splitting ties", () => {
+    const rows = [5, 5, 3, 3, 3, 1].map((value) => ({ value }));
+    expect(
+      takeThroughRank(rows, (row) => row.value, 3).map((row) => row.value),
+    ).toEqual([5, 5, 3, 3, 3]);
+    expect(takeThroughRank(rows, (row) => row.value, 1)).toHaveLength(2);
+    expect(
+      takeThroughRank([], (row: { value: number }) => row.value, 3),
+    ).toEqual([]);
   });
 
   it("counts competitive matches only on dashboard leaderboards", async () => {

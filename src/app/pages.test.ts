@@ -179,7 +179,6 @@ vi.mock("@/components/brand/pitch-graphic", () => ({
 vi.mock("@/components/shared/section", () => ({
   Section: ({ children }: { children: unknown }) => children,
 }));
-vi.mock("@/components/shared/rank-badge", () => ({ RankBadge: () => null }));
 vi.mock("@/components/shared/initials-avatar", () => ({
   InitialsAvatar: () => null,
 }));

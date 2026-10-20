@@ -19,8 +19,7 @@ import type { Team } from "@/lib/supabase/database.types";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { AwardBadge } from "@/components/shared/award-badge";
-import { RankBadge } from "@/components/shared/rank-badge";
+import { AwardBadge, awardToneForRank } from "@/components/shared/award-badge";
 import { competitionRanks } from "@/lib/data/stats";
 import {
   objectListClassName,
@@ -184,7 +183,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         title="Player of the month"
         emptyTitle="No monthly awards yet"
         emptyDescription="Add player of the month awards from the Team page."
-        mark="award"
         rows={potMonth.data.map((award) => ({
           id: award.id,
           personId: award.player.person_id,
@@ -193,7 +191,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         }))}
       />
       <LeaderboardSection
-        title="Player of the match"
+        title="Player of the match leaderboard"
         emptyTitle="No awards yet"
         emptyDescription="Select the coach's player of the match on played fixtures."
         rows={rankedLeaderboardRows(
@@ -207,7 +205,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         )}
       />
       <LeaderboardSection
-        title="Top scorers"
+        title="Goals leaderboard"
         emptyTitle="No goals yet"
         emptyDescription="Record goals on played matches to see the table."
         rows={rankedLeaderboardRows(
@@ -221,7 +219,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         )}
       />
       <LeaderboardSection
-        title="Most assists"
+        title="Assists leaderboard"
         emptyTitle="No assists yet"
         emptyDescription="Record assists on goals to see the table."
         rows={rankedLeaderboardRows(
@@ -312,13 +310,11 @@ function LeaderboardSection({
   title,
   emptyTitle,
   emptyDescription,
-  mark = "rank",
   rows,
 }: {
   title: string;
   emptyTitle: string;
   emptyDescription: string;
-  mark?: "rank" | "award";
   rows: Array<{
     id: string;
     personId: string;
@@ -340,11 +336,11 @@ function LeaderboardSection({
                 className={objectListRowClassName("justify-between")}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  {mark === "award" ? (
-                    <AwardBadge />
-                  ) : row.rank != null ? (
-                    <RankBadge rank={row.rank} />
-                  ) : null}
+                  <AwardBadge
+                    tone={
+                      row.rank == null ? "gold" : awardToneForRank(row.rank)
+                    }
+                  />
                   <span className="truncate font-medium">{row.name}</span>
                 </span>
                 <span className="font-display text-foreground text-lg tabular-nums">
