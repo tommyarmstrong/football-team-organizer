@@ -59,7 +59,7 @@ supabase/seed.private.sql
 /*.dump.gz
 
 # Work in progress feature development
-docs/feature_requests_1.md
-docs/roadmap.md
-docs/production-readiness-report.md
 design_docs/*
+
+# Cursor configs
+*.code-workspace
