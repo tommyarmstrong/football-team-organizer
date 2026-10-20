@@ -9,7 +9,7 @@ Run Football Team Organizer on your machine against a Supabase project.
 
 ## Prerequisites
 
-- **Node.js 20+** and **npm**
+- **Node.js 26** and **npm**
 - A [Supabase](https://supabase.com) project (hosted, or local CLI + Docker)
 - Git
 
