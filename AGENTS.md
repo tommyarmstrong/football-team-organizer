@@ -67,7 +67,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Cursor Cloud specific instructions
 
-Dependencies are refreshed automatically by the startup script (`npm install`). Node 20+ is required.
+Dependencies are refreshed automatically by the startup script (`npm install`). Node 26 is required.
 
 Full local/hosted setup: `docs/install.md` and `docs/deploy.md`. Roles and
 invite-only access: `docs/roles.md`.

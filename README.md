@@ -86,7 +86,7 @@ This repository is the app. To stand up your own club instance:
 
 | Guide          | What you need                                                                                         |
 | -------------- | ----------------------------------------------------------------------------------------------------- |
-| **Local**      | Node.js, a Supabase project, and a few env vars — [`docs/development.md`](docs/development.md)        |
+| **Local**      | Node.js 26, a Supabase project, and a few env vars — [`docs/development.md`](docs/development.md)     |
 | **Production** | Vercel + hosted Supabase, auth URLs, and email templates — [`docs/deployment.md`](docs/deployment.md) |
 
 ## Documentation
