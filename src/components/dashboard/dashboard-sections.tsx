@@ -191,7 +191,7 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         }))}
       />
       <LeaderboardSection
-        title="Player of the match leaderboard"
+        title="Player of the match"
         emptyTitle="No awards yet"
         emptyDescription="Select the coach's player of the match on played fixtures."
         rows={rankedLeaderboardRows(
@@ -296,8 +296,14 @@ function rankedLeaderboardRows(
     metric: number;
   }>,
 ) {
-  const ranks = competitionRanks(rows.map((row) => row.metric));
-  return rows.map((row, index) => ({
+  // Highest metric first; players sharing a rank are listed alphabetically.
+  const sorted = [...rows].sort(
+    (a, b) =>
+      b.metric - a.metric ||
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+  );
+  const ranks = competitionRanks(sorted.map((row) => row.metric));
+  return sorted.map((row, index) => ({
     id: row.id,
     personId: row.personId,
     name: row.name,
