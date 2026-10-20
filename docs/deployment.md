@@ -103,20 +103,26 @@ are forwarded to `/auth/invite` and recovery tokens to `/auth/reset-password`.
 
 - **Password policy** — minimum length 8; require lowercase + uppercase + digits.
   Must match `supabase/config.toml`.
-- **Session timebox** — 24 h so sessions expire daily. Requires a plan that
-  includes session timeouts; confirm it is enforced on the hosted project.
-- **JWT expiry** — 86400 s (24 h), matching the timebox. With a 1 h token, an
-  idle phone had to refresh on wake-up; concurrent requests could present the
-  same single-use refresh token and revoke the session. A 24 h token means no
-  refresh happens inside the session. Trade-off: a deleted user's token stays
-  signed until it expires, but the app re-checks the user on every request
+- **Session timebox** — `supabase/config.toml` sets 24 h for the local stack,
+  but hosted time-boxed sessions need a Supabase Pro plan. **On a plan without
+  it, the hosted project has no session limit:** the refresh token never
+  expires, so a user stays signed in until their cookie is cleared (Safari also
+  deletes script-written cookies after 7 days of use without interaction with
+  the site). Nothing in the app signs users out after a fixed time. The
+  `fto_access` cookie (90 minutes) only caches the access check.
+- **JWT expiry** — 86400 s (24 h). With a 1 h token, an idle phone had to
+  refresh on wake-up; concurrent requests could present the same single-use
+  refresh token and revoke the session. A 24 h token means a phone normally
+  refreshes at most once a day. Trade-off: a deleted user's token stays signed
+  until it expires, but the app re-checks the user on every request
   (`getUser()`) and row-level security finds no linked person, so it grants no
-  access. Must match `supabase/config.toml`.
+  access. With a time-box enabled, a session can last up to the time-box plus
+  this value, because the time-box is checked only at refresh. Must match
+  `supabase/config.toml`.
 - **Refresh token reuse interval** — 60 s (default 10 s). Gives slow mobile
   connections time to deliver a rotated token before a reuse revokes the
   session. Must match `supabase/config.toml`.
-- **Inactivity timeout** — not set. Sessions end 24 h after sign-in whether or
-  not the user is active.
+- **Inactivity timeout** — not set (also a Pro plan feature).
 - **Public email signup** — disable in hosted projects. The app rejects sign-in
   unless the person is `invited` or `active`, but disabling signup is defence in
   depth.
