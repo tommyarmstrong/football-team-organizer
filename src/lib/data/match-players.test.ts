@@ -74,8 +74,7 @@ describe("match-players data", () => {
   it("adds and removes squad members", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ team_id: "team-1" }),
-        teams: okResult({ archived_at: null }),
+        matches: okResult({ team_id: "team-1", team: { archived_at: null } }),
         match_players: [
           okResult([{ id: "mp-old", player_id: "player-1" }]),
           okResult([{ id: "mp-old" }]),
@@ -91,8 +90,7 @@ describe("match-players data", () => {
   it("reports when RLS silently blocks squad removals", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ team_id: "team-1" }),
-        teams: okResult({ archived_at: null }),
+        matches: okResult({ team_id: "team-1", team: { archived_at: null } }),
         match_players: [
           okResult([{ id: "mp-old", player_id: "player-1" }]),
           okResult([]),

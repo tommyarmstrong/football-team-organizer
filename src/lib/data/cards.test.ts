@@ -57,7 +57,12 @@ describe("cards data", () => {
   it("creates cards only when match allows events", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ id: "match-1", status: "scheduled" }),
+        matches: okResult({
+          id: "match-1",
+          status: "scheduled",
+          team_id: "team-1",
+          team: { archived_at: null },
+        }),
       }),
     );
     expect(
@@ -72,7 +77,12 @@ describe("cards data", () => {
 
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ id: "match-1", status: "played" }),
+        matches: okResult({
+          id: "match-1",
+          status: "played",
+          team_id: "team-1",
+          team: { archived_at: null },
+        }),
         cards: okResult({ id: "card-1", type: "yellow_1st" }),
       }),
     );

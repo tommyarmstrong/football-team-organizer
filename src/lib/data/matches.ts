@@ -18,6 +18,7 @@ import {
   type PeriodRow,
 } from "@/lib/data/match-periods";
 import { getActiveTeam } from "@/lib/data/team";
+import { loadMatchTeamState } from "@/lib/team/readonly-guard";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import type { MatchListFilter } from "@/lib/constants";
 import { scoreFromGoals } from "@/lib/format";
@@ -207,23 +208,10 @@ export async function updateMatch(
   id: string,
   input: TablesUpdate<"matches">,
 ): Promise<{ data: Match | null; error: string | null }> {
-  const supabase = await createClient();
-  const { data: existing, error: loadError } = await supabase
-    .from("matches")
-    .select("team_id")
-    .eq("id", id)
-    .maybeSingle();
-  if (loadError) return { data: null, error: loadError.message };
-  if (!existing) return { data: null, error: "Match not found." };
+  const archived = await archivedMatchError(id);
+  if (archived.error) return { data: null, error: archived.error };
 
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .select("archived_at")
-    .eq("id", existing.team_id)
-    .maybeSingle();
-  if (teamError) return { data: null, error: teamError.message };
-  const archivedError = archivedTeamWriteError(team);
-  if (archivedError) return { data: null, error: archivedError };
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("matches")
     .update(input)
@@ -245,25 +233,22 @@ export async function updateMatch(
 export async function deleteMatch(
   id: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { data: existing, error: loadError } = await supabase
-    .from("matches")
-    .select("team_id")
-    .eq("id", id)
-    .maybeSingle();
-  if (loadError) return { error: loadError.message };
-  if (!existing) return { error: "Match not found." };
+  const archived = await archivedMatchError(id);
+  if (archived.error) return { error: archived.error };
 
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .select("archived_at")
-    .eq("id", existing.team_id)
-    .maybeSingle();
-  if (teamError) return { error: teamError.message };
-  const archivedError = archivedTeamWriteError(team);
-  if (archivedError) return { error: archivedError };
+  const supabase = await createClient();
   const { error } = await supabase.from("matches").delete().eq("id", id);
   return { error: error?.message ?? null };
+}
+
+/** Load the match's team once and reject writes against an archived season. */
+async function archivedMatchError(
+  matchId: string,
+): Promise<{ error: string | null }> {
+  const { data, error } = await loadMatchTeamState(matchId);
+  if (error) return { error };
+  if (!data) return { error: "Match not found." };
+  return { error: archivedTeamWriteError(data.team) };
 }
 
 export async function getNextFixture(): Promise<{
@@ -276,20 +261,34 @@ export async function getNextFixture(): Promise<{
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  // §6.5 — One query for all scheduled matches, ordered by date. Pick the
-  // first on/after today, otherwise the earliest scheduled row (past fallback).
-  // Friendlies and every competition type are included.
-  const { data, error } = await supabase
+  // §6.5 — The soonest scheduled match on/after today. Friendlies and every
+  // competition type are included.
+  const upcoming = await supabase
     .from("matches")
     .select(MATCH_SELECT)
     .eq("team_id", team.id)
     .eq("status", "scheduled")
-    .order("date", { ascending: true });
+    .gte("date", today)
+    .order("date", { ascending: true })
+    .limit(1);
+  if (upcoming.error) return { data: null, error: upcoming.error.message };
 
-  if (error) return { data: null, error: error.message };
+  let chosen = matchRows(upcoming.data)[0] ?? null;
 
-  const rows = matchRows(data);
-  const chosen = rows.find((row) => row.date >= today) ?? rows[0] ?? null;
+  if (!chosen) {
+    // Past fallback: the earliest scheduled row, so an overdue fixture that
+    // was never marked played still shows rather than an empty card.
+    const earliest = await supabase
+      .from("matches")
+      .select(MATCH_SELECT)
+      .eq("team_id", team.id)
+      .eq("status", "scheduled")
+      .order("date", { ascending: true })
+      .limit(1);
+    if (earliest.error) return { data: null, error: earliest.error.message };
+    chosen = matchRows(earliest.data)[0] ?? null;
+  }
+
   if (!chosen) return { data: null, error: null };
   return { data: normalizeMatchRow(chosen), error: null };
 }
@@ -307,7 +306,8 @@ export async function getLastResult(): Promise<{
     .select(MATCH_SELECT)
     .eq("team_id", team.id)
     .eq("status", "played")
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(1);
 
   if (error) return { data: null, error: error.message };
   const chosen = matchRows(data)[0] ?? null;
