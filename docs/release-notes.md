@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 2 November 2026 — Match cards
+
+- Results headings on Stats match the other sections on that page.
+- Next fixture and last result include friendlies. Season totals, form, and the goals and assists leaderboards still count league and cup matches only.
+- Scheduled matches show a green Scheduled label instead of "vs", on the dashboard and the matches list.
+- Those cards can be shared. A fixture card includes the match-day squad and form under the venue.
+
+---
+
 ## 12 October 2026 — Tournaments and player cards
 
 ### Tournament squads
