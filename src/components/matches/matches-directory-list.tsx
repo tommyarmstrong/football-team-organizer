@@ -1,10 +1,8 @@
 "use client";
 
-import { matchAllowsPostcard } from "@/lib/constants";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import { labelMatchStatus, matchCompetitionLabel } from "@/lib/format";
-import { MatchHero } from "@/components/matches/match-hero";
-import { MatchCardShare } from "@/components/postcards/match-card-share";
+import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 
 export function MatchesDirectoryList({
@@ -37,29 +35,7 @@ export function MatchesDirectoryList({
       emptyFilterDescription="Try a different opponent, venue, or competition."
       listClassName="space-y-3"
       renderItem={(match) => (
-        <MatchHero
-          size="compact"
-          href={`/matches/${match.id}`}
-          teamName={teamName}
-          opponentName={match.opponent_name}
-          homeAway={match.home_away}
-          status={match.status}
-          goalsFor={match.goals_for}
-          goalsAgainst={match.goals_against}
-          competitionName={matchCompetitionLabel(match)}
-          date={match.date}
-          kickoffTime={match.kickoff_time}
-          meetupTime={match.meetup_time}
-          venueName={match.venue?.name ?? null}
-          actions={
-            matchAllowsPostcard(match.status) ? (
-              <MatchCardShare
-                matchId={match.id}
-                kind={match.status === "scheduled" ? "scheduled" : "played"}
-              />
-            ) : undefined
-          }
-        />
+        <MatchSummaryCard match={match} teamName={teamName} />
       )}
     />
   );

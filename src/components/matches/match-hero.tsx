@@ -88,7 +88,6 @@ export function MatchHero({
   venueId,
   actions,
   href,
-  scheduledBadge = false,
 }: {
   size?: MatchHeroSize;
   teamName: string;
@@ -105,8 +104,6 @@ export function MatchHero({
   venueId?: string | null;
   actions?: ReactNode;
   href?: string;
-  /** Replaces "vs" with a green throbbing Scheduled chip. */
-  scheduledBadge?: boolean;
 }) {
   const { homeName, awayName } = matchHeroSides(
     teamName,
@@ -151,7 +148,7 @@ export function MatchHero({
           : "px-4 py-3.5";
 
   const showActions = Boolean(actions);
-  const showScheduledBadge = scheduledBadge && status === "scheduled";
+  const showScheduledBadge = status === "scheduled" && size !== "hero";
   const masthead = (
     <div
       className={cn(

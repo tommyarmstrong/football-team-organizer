@@ -25,7 +25,7 @@ export function LiveIndicator() {
 export function ScheduledIndicator() {
   return (
     <span
-      className="text-win border-win relative inline-flex shrink-0 animate-[scheduled-throb_1.6s_ease-in-out_infinite] items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide"
+      className="text-win border-win inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide"
       aria-label="Scheduled"
       title="Scheduled"
     >

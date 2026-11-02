@@ -475,23 +475,15 @@ describe("DashboardFixtures last result share", () => {
     "utf8",
   );
 
-  it("places the same share control on the next fixture and the last result", () => {
-    expect(source).toContain("MatchCardShare");
+  it("places the shared summary card on the next fixture and the last result", () => {
+    expect(source).toContain("MatchSummaryCard");
     expect(source).toContain('title="Next fixture"');
     expect(source).toContain('title="Last result"');
-    expect(source).toContain("scheduledBadge");
-    expect(source).toContain("actions={share}");
     expect(source).toContain("Schedule the next match.");
     expect(source).toContain("Played matches will show here.");
+    expect(source).not.toContain("MatchHero");
+    expect(source).not.toContain("scheduledBadge");
     expect(source).not.toContain("SharePostcardButton");
-  });
-
-  it("passes dashboard match cards the same stack fields as the matches list", () => {
-    expect(source).toContain("MatchHero");
-    expect(source).toContain("meetupTime={match.meetup_time}");
-    expect(source).toContain("kickoffTime={match.kickoff_time}");
-    expect(source).toContain("venueName={match.venue?.name ?? null}");
-    expect(source).toContain("competitionName={matchCompetitionLabel(match)}");
     expect(source).not.toContain("matchDaySquadCount");
     expect(source).not.toContain("cards=");
   });

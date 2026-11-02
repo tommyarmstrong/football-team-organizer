@@ -8,21 +8,12 @@ const source = readFileSync(
 );
 
 describe("MatchesDirectoryList", () => {
-  it("reuses MatchHero compact rows", () => {
-    expect(source).toContain('size="compact"');
-    expect(source).toContain("MatchHero");
-    expect(source).toContain("href={`/matches/${match.id}`}");
-    expect(source).toContain("meetupTime={match.meetup_time}");
-    expect(source).toContain("kickoffTime={match.kickoff_time}");
-    expect(source).toContain("venueName={match.venue?.name ?? null}");
-  });
-
-  it("gives every shareable match card the same share control", () => {
-    expect(source).toContain("MatchCardShare");
-    expect(source).toContain("matchAllowsPostcard(match.status)");
-    expect(source).toContain(
-      'kind={match.status === "scheduled" ? "scheduled" : "played"}',
-    );
+  it("renders each row with the shared summary card", () => {
+    expect(source).toContain("MatchSummaryCard");
+    expect(source).toContain("match={match}");
+    expect(source).toContain("teamName={teamName}");
+    expect(source).not.toContain("MatchHero");
+    expect(source).not.toContain('size="compact"');
   });
 
   it("does not colour competition names with primary", () => {

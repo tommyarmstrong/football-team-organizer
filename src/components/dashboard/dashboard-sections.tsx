@@ -6,10 +6,9 @@ import { type MatchWithRelations } from "@/lib/data/matches";
 import {
   formatAwardMonth,
   formatCountLabel,
-  matchCompetitionLabel,
   playerDisplayName,
 } from "@/lib/format";
-import { STATS_FORM_LIMIT, matchAllowsPostcard } from "@/lib/constants";
+import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
   ALL_LEAGUE_AND_CUP,
@@ -25,12 +24,11 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { MatchHero } from "@/components/matches/match-hero";
+import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
-import { MatchCardShare } from "@/components/postcards/match-card-share";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const { stats } = await getDashboardData(teamId);
@@ -71,7 +69,6 @@ export async function DashboardFixtures({
           match={next.data}
           emptyTitle="No upcoming fixture"
           emptyDescription="Schedule the next match."
-          scheduledBadge
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -81,7 +78,6 @@ export async function DashboardFixtures({
               />
             ) : undefined
           }
-          share={matchCardShare(next.data)}
         />
         <FixtureSection
           title="Last result"
@@ -89,20 +85,9 @@ export async function DashboardFixtures({
           match={last.data}
           emptyTitle="No results yet"
           emptyDescription="Played matches will show here."
-          share={matchCardShare(last.data)}
         />
       </div>
     </div>
-  );
-}
-
-function matchCardShare(match: MatchWithRelations | null) {
-  if (!match || !matchAllowsPostcard(match.status)) return undefined;
-  return (
-    <MatchCardShare
-      matchId={match.id}
-      kind={match.status === "scheduled" ? "scheduled" : "played"}
-    />
   );
 }
 
@@ -230,8 +215,6 @@ function FixtureSection({
   emptyTitle,
   emptyDescription,
   emptyAction,
-  share,
-  scheduledBadge = false,
 }: {
   title: string;
   teamName: string;
@@ -239,8 +222,6 @@ function FixtureSection({
   emptyTitle: string;
   emptyDescription: string;
   emptyAction?: ReactNode;
-  share?: ReactNode;
-  scheduledBadge?: boolean;
 }) {
   if (!match) {
     return (
@@ -256,23 +237,7 @@ function FixtureSection({
 
   return (
     <Section title={title}>
-      <MatchHero
-        size="card"
-        href={`/matches/${match.id}`}
-        teamName={teamName}
-        opponentName={match.opponent_name}
-        homeAway={match.home_away}
-        status={match.status}
-        goalsFor={match.goals_for}
-        goalsAgainst={match.goals_against}
-        competitionName={matchCompetitionLabel(match)}
-        date={match.date}
-        kickoffTime={match.kickoff_time}
-        meetupTime={match.meetup_time}
-        venueName={match.venue?.name ?? null}
-        actions={share}
-        scheduledBadge={scheduledBadge}
-      />
+      <MatchSummaryCard match={match} teamName={teamName} />
     </Section>
   );
 }
