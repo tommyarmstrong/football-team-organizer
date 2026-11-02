@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { resultLetter, scoreFromGoals } from "@/lib/format";
@@ -106,6 +107,37 @@ type TeamStatsRpcResult = {
   results_over_time: RpcResultEntry[];
 };
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Check the top-level shape of the `get_team_stats` result. A missing series
+ * becomes an empty list; a result that is not an object at all is rejected so
+ * schema drift shows up as an error instead of a crash further down.
+ */
+export function parseTeamStatsRpc(data: unknown): TeamStatsRpcResult | null {
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+  const raw = data as Record<string, unknown>;
+  const shirtNumbers = raw.shirt_numbers;
+  return {
+    shirt_numbers:
+      shirtNumbers !== null &&
+      typeof shirtNumbers === "object" &&
+      !Array.isArray(shirtNumbers)
+        ? (shirtNumbers as Record<string, number | null>)
+        : {},
+    goals_by_player: asArray(raw.goals_by_player),
+    assists_by_player: asArray(raw.assists_by_player),
+    potm_by_player: asArray(raw.potm_by_player),
+    player_of_the_month_by_player: asArray(raw.player_of_the_month_by_player),
+    matches_played_by_player: asArray(raw.matches_played_by_player),
+    results_over_time: asArray(raw.results_over_time),
+  };
+}
+
 /**
  * §5.1 + §6.4 — Calls the `get_team_stats` Postgres RPC and maps the result
  * into the existing TypeScript stat types.  One DB call replaces ~11 separate
@@ -145,12 +177,24 @@ export const getAllTeamStats = cache(
       };
     }
 
-    const raw = data as TeamStatsRpcResult;
+    const raw = parseTeamStatsRpc(data);
+    if (!raw) {
+      return {
+        goalsByPlayer: [],
+        assistsByPlayer: [],
+        potmByPlayer: [],
+        playerOfTheMonthByPlayer: [],
+        matchesPlayed: [],
+        resultsOverTime: [],
+        form: [],
+        error: "Unexpected response from get_team_stats.",
+      };
+    }
 
     // ------------------------------------------------------------------
     // Map goals_by_player
     // ------------------------------------------------------------------
-    const goalsByPlayer: GoalsByPlayerPoint[] = (raw.goals_by_player ?? []).map(
+    const goalsByPlayer: GoalsByPlayerPoint[] = raw.goals_by_player.map(
       (entry) => ({
         playerId: entry.player_id,
         personId: entry.person_id,
@@ -170,27 +214,27 @@ export const getAllTeamStats = cache(
     // ------------------------------------------------------------------
     // Map assists_by_player
     // ------------------------------------------------------------------
-    const assistsByPlayer: PlayerCountPoint[] = (
-      raw.assists_by_player ?? []
-    ).map((entry) => ({
-      playerId: entry.player_id,
-      personId: entry.person_id,
-      name: `${entry.first_name} ${entry.last_name}`,
-      count: Number(entry.assists),
-      position: entry.position ?? null,
-      matchesPlayed: Number(entry.matches_played),
-      periodsPlayed: Number(entry.periods_played ?? 0),
-      events: (entry.competitions ?? []).map((c) => ({
-        competitionId: c.competitionId,
-        competitionKind: c.competitionKind,
-        isFriendly: c.isFriendly,
-      })),
-    }));
+    const assistsByPlayer: PlayerCountPoint[] = raw.assists_by_player.map(
+      (entry) => ({
+        playerId: entry.player_id,
+        personId: entry.person_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        count: Number(entry.assists),
+        position: entry.position ?? null,
+        matchesPlayed: Number(entry.matches_played),
+        periodsPlayed: Number(entry.periods_played ?? 0),
+        events: (entry.competitions ?? []).map((c) => ({
+          competitionId: c.competitionId,
+          competitionKind: c.competitionKind,
+          isFriendly: c.isFriendly,
+        })),
+      }),
+    );
 
     // ------------------------------------------------------------------
     // Map potm_by_player
     // ------------------------------------------------------------------
-    const potmByPlayer: PlayerCountPoint[] = (raw.potm_by_player ?? []).map(
+    const potmByPlayer: PlayerCountPoint[] = raw.potm_by_player.map(
       (entry) => ({
         playerId: entry.player_id,
         personId: entry.person_id,
@@ -205,33 +249,32 @@ export const getAllTeamStats = cache(
     );
 
     // Monthly awards are team-scoped, so they have no competition events.
-    const playerOfTheMonthByPlayer: PlayerCountPoint[] = (
-      raw.player_of_the_month_by_player ?? []
-    ).map((entry) => ({
-      playerId: entry.player_id,
-      personId: entry.person_id,
-      name: `${entry.first_name} ${entry.last_name}`,
-      count: Number(entry.count),
-    }));
+    const playerOfTheMonthByPlayer: PlayerCountPoint[] =
+      raw.player_of_the_month_by_player.map((entry) => ({
+        playerId: entry.player_id,
+        personId: entry.person_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        count: Number(entry.count),
+      }));
 
     // ------------------------------------------------------------------
     // Map matches_played_by_player
     // ------------------------------------------------------------------
-    const matchesPlayed: PlayerCountPoint[] = (
-      raw.matches_played_by_player ?? []
-    ).map((entry) => ({
-      playerId: entry.player_id,
-      personId: entry.person_id,
-      name: `${entry.first_name} ${entry.last_name}`,
-      count: Number(entry.count),
-      position: entry.position ?? null,
-      periodsPlayed: Number(entry.periods_played ?? 0),
-      events: (entry.competitions ?? []).map((c) => ({
-        competitionId: c.competitionId,
-        competitionKind: c.competitionKind,
-        isFriendly: c.isFriendly,
-      })),
-    }));
+    const matchesPlayed: PlayerCountPoint[] = raw.matches_played_by_player.map(
+      (entry) => ({
+        playerId: entry.player_id,
+        personId: entry.person_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        count: Number(entry.count),
+        position: entry.position ?? null,
+        periodsPlayed: Number(entry.periods_played ?? 0),
+        events: (entry.competitions ?? []).map((c) => ({
+          competitionId: c.competitionId,
+          competitionKind: c.competitionKind,
+          isFriendly: c.isFriendly,
+        })),
+      }),
+    );
 
     // ------------------------------------------------------------------
     // Map results_over_time
@@ -239,7 +282,7 @@ export const getAllTeamStats = cache(
     const resultsOverTime: ResultOverTimePoint[] = [];
     const form: Array<"W" | "D" | "L"> = [];
 
-    for (const entry of raw.results_over_time ?? []) {
+    for (const entry of raw.results_over_time) {
       const goalsFor = Number(entry.goals_for);
       const goalsAgainst = Number(entry.goals_against);
       const letter = resultLetter(goalsFor, goalsAgainst);
@@ -328,7 +371,7 @@ function competitionFromMatch(matchRaw: unknown): {
   competitionKind: CompetitionKind | null;
   isFriendly: boolean;
 } {
-  const match = Array.isArray(matchRaw) ? matchRaw[0] : matchRaw;
+  const match = one(matchRaw);
   if (!match || typeof match !== "object") {
     return { competitionId: null, competitionKind: null, isFriendly: false };
   }
@@ -340,9 +383,7 @@ function competitionFromMatch(matchRaw: unknown): {
       | Array<{ id?: string; kind?: CompetitionKind | null }>
       | null;
   };
-  const competitionRaw = Array.isArray(row.competition)
-    ? row.competition[0]
-    : row.competition;
+  const competitionRaw = one(row.competition);
   return {
     competitionId: competitionRaw?.id ?? row.competition_id ?? null,
     competitionKind: (competitionRaw?.kind as CompetitionKind | null) ?? null,
@@ -431,7 +472,7 @@ export async function getPlayerCompetitiveRecord(
   if (error) return { data: record, error: error.message };
 
   for (const row of data ?? []) {
-    const match = Array.isArray(row.match) ? row.match[0] : row.match;
+    const match = one(row.match);
     if (!match) continue;
     const { goalsFor, goalsAgainst } = scoreFromGoals(
       Array.isArray(match.goals) ? match.goals : [],

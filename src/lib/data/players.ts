@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -91,7 +92,7 @@ export async function listPlayers(): Promise<{
       }>;
     };
     const teams: PlayerTeamMembership[] = (team_players ?? []).map((tp) => {
-      const team = Array.isArray(tp.team) ? tp.team[0] : tp.team;
+      const team = one(tp.team);
       return {
         team_player_id: tp.id,
         team_id: tp.team_id,
@@ -130,7 +131,7 @@ type RosterRow = {
 function mapRosterRows(data: RosterRow[] | null): RosterPlayer[] {
   return (data ?? [])
     .map((row) => {
-      const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
+      const playerRaw = one(row.player);
       if (!playerRaw || !playerRaw.active_role) return null;
       // Prefer soft mapping: people embeds can be null under RLS without
       // crashing team/match pages (names may be blank until policy allows).
@@ -243,7 +244,7 @@ function mapTeamPlayerRows(
   }> | null,
 ): PlayerTeamMembership[] {
   return (data ?? []).map((tp) => {
-    const team = Array.isArray(tp.team) ? tp.team[0] : tp.team;
+    const team = one(tp.team);
     return {
       team_player_id: tp.id,
       team_id: tp.team_id,
@@ -311,7 +312,7 @@ export async function getPlayerGoals(playerId: string): Promise<{
   if (error) return { data: [], error: error.message };
 
   const rows = (data ?? []).map((row) => {
-    const match = Array.isArray(row.match) ? row.match[0] : row.match;
+    const match = one(row.match);
     return {
       id: row.id,
       match_id: row.match_id,

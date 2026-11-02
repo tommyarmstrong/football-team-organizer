@@ -22,6 +22,7 @@ vi.mock("@/lib/data/team", () => ({
 import {
   getAllTeamStats,
   getFormThroughMatch,
+  parseTeamStatsRpc,
   getPlayerCompetitiveRecord,
 } from "@/lib/data/stats";
 
@@ -691,5 +692,38 @@ describe("getAllTeamStats (§5.1 + §6.4 composite RPC)", () => {
 
     const result = await getAllTeamStats("team-1");
     expect(result.goalsByPlayer[0]?.goalCompetitions).toEqual([]);
+  });
+});
+
+describe("parseTeamStatsRpc", () => {
+  it("rejects results that are not objects", () => {
+    expect(parseTeamStatsRpc(null)).toBeNull();
+    expect(parseTeamStatsRpc("oops")).toBeNull();
+    expect(parseTeamStatsRpc([])).toBeNull();
+  });
+
+  it("turns missing or malformed series into empty lists", () => {
+    expect(
+      parseTeamStatsRpc({ goals_by_player: "nope", results_over_time: [] }),
+    ).toEqual({
+      shirt_numbers: {},
+      goals_by_player: [],
+      assists_by_player: [],
+      potm_by_player: [],
+      player_of_the_month_by_player: [],
+      matches_played_by_player: [],
+      results_over_time: [],
+    });
+  });
+});
+
+describe("getAllTeamStats with an unexpected RPC result", () => {
+  it("returns an error instead of throwing", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({}, { rpcResults: { get_team_stats: okResult("oops") } }),
+    );
+    const result = await getAllTeamStats("team-bad");
+    expect(result.error).toMatch(/unexpected response/i);
+    expect(result.goalsByPlayer).toEqual([]);
   });
 });

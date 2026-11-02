@@ -97,6 +97,35 @@ type ViewerContextRaw = {
   clubs: Club[];
 };
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Check the top-level shape of the `get_viewer_context` result. Missing lists
+ * become empty (no access) and a result that is not an object is rejected, so
+ * schema drift fails closed instead of crashing or granting anything.
+ */
+export function parseViewerContextRaw(raw: unknown): ViewerContextRaw | null {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    return null;
+  }
+  const value = raw as Record<string, unknown>;
+  const person = value.person;
+  return {
+    person:
+      person !== null && typeof person === "object" && !Array.isArray(person)
+        ? (person as RpcPerson)
+        : null,
+    managers: asArray(value.managers),
+    team_members: asArray(value.team_members),
+    guardians: asArray(value.guardians),
+    self_players: asArray(value.self_players),
+    teams: asArray(value.teams),
+    clubs: asArray(value.clubs),
+  };
+}
+
 /**
  * Fetch all viewer context data in a single Postgres RPC call.
  *
@@ -128,7 +157,8 @@ export const getViewerContext = cache(
 
     if (error || !raw) return null;
 
-    const result = raw as ViewerContextRaw;
+    const result = parseViewerContextRaw(raw);
+    if (!result) return null;
 
     const selfPerson = result.person;
     const personId = selfPerson?.id ?? null;

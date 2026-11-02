@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { createPerson, updatePerson } from "@/lib/data/people";
 import {
@@ -82,7 +83,7 @@ export async function listGuardians(): Promise<{
       }>;
     };
     const players: GuardianPlayerLink[] = (player_guardians ?? []).map((pg) => {
-      const player = Array.isArray(pg.player) ? pg.player[0] : pg.player;
+      const player = one(pg.player);
       const person = unwrapPersonName(player?.person ?? null);
       return {
         player_guardian_id: pg.id,
@@ -139,7 +140,7 @@ export async function getGuardianPlayers(
   if (error) return { data: [], error: error.message };
 
   const rows: GuardianPlayerLink[] = (data ?? []).map((pg) => {
-    const player = Array.isArray(pg.player) ? pg.player[0] : pg.player;
+    const player = one(pg.player);
     const person = unwrapPersonName(
       (
         player as {
@@ -192,7 +193,7 @@ export async function getPlayerGuardians(
   if (error) return { data: [], error: error.message };
 
   const rows: PlayerGuardianLink[] = (data ?? []).map((pg) => {
-    const guardian = Array.isArray(pg.guardian) ? pg.guardian[0] : pg.guardian;
+    const guardian = one(pg.guardian);
     const person = unwrapPerson(
       (guardian as { person?: Person | Person[] | null } | null)?.person ??
         null,

@@ -3,12 +3,25 @@ import {
   boolFromCheckbox,
   goalAssistsAllowed,
   goalKindFromFlags,
+  isOneOf,
   parseGoalKind,
   parseOptionalInt,
   parseOptionalMinute,
   parseShirtNumber,
   str,
 } from "@/lib/form-parse";
+
+describe("isOneOf", () => {
+  const allowed = ["a", "b"] as const;
+
+  it("accepts listed values and rejects everything else", () => {
+    expect(isOneOf(allowed, "a")).toBe(true);
+    expect(isOneOf(allowed, "c")).toBe(false);
+    expect(isOneOf(allowed, "")).toBe(false);
+    // Object prototype keys are not valid values.
+    expect(isOneOf(allowed, "toString")).toBe(false);
+  });
+});
 
 describe("str", () => {
   it("trims string values and coerces missing keys to empty string", () => {

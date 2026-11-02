@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
 import { unwrapPerson } from "@/lib/people/person";
@@ -67,9 +68,9 @@ export function mapCardRow(row: {
   coach: unknown;
   guardian: unknown;
 }): CardWithPerson {
-  const player = Array.isArray(row.player) ? row.player[0] : row.player;
-  const coach = Array.isArray(row.coach) ? row.coach[0] : row.coach;
-  const guardian = Array.isArray(row.guardian) ? row.guardian[0] : row.guardian;
+  const player = one(row.player);
+  const coach = one(row.coach);
+  const guardian = one(row.guardian);
   return {
     id: row.id,
     match_id: row.match_id,

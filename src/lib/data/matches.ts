@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import {
   CARD_PERSON_SELECT,
@@ -326,10 +327,9 @@ type RawMatchRow = Match & {
   goals?: Array<{ is_opposition: boolean }> | null;
 };
 
-function normalizeRelation<T>(value: unknown): T | null {
-  if (Array.isArray(value)) return (value[0] as T | undefined) ?? null;
-  return (value as T | null) ?? null;
-}
+/** An embedded to-one relation as PostgREST may return it: row or array. */
+type EmbeddedOf<K extends "competition" | "venue"> =
+  MatchWithRelations[K] | MatchWithRelations[K][];
 
 export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
   const { goalsFor, goalsAgainst } = scoreFromGoals(
@@ -357,7 +357,7 @@ export function normalizeMatchRow(row: RawMatchRow): MatchWithRelations {
     club_notes: row.club_notes,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    competition: normalizeRelation(row.competition),
-    venue: normalizeRelation(row.venue),
+    competition: one(row.competition as EmbeddedOf<"competition">),
+    venue: one(row.venue as EmbeddedOf<"venue">),
   };
 }

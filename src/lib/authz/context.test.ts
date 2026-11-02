@@ -104,6 +104,42 @@ describe("getViewerContext", () => {
     expect(await freshGetViewerContext()).toBeNull();
   });
 
+  it("returns null when the RPC result is not an object", async () => {
+    createClientMock.mockResolvedValue({
+      auth: {
+        getClaims: async () => ({
+          data: { claims: { sub: "user-1" } },
+          error: null,
+        }),
+      },
+      rpc: async () => ({ data: "oops", error: null }),
+    });
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    expect(await freshGetViewerContext()).toBeNull();
+  });
+
+  it("treats missing RPC lists as empty (no access)", async () => {
+    createClientMock.mockResolvedValue({
+      auth: {
+        getClaims: async () => ({
+          data: { claims: { sub: "user-1", email: "a@example.com" } },
+          error: null,
+        }),
+      },
+      rpc: async () => ({ data: { person: null }, error: null }),
+    });
+    const { getViewerContext: freshGetViewerContext } =
+      await import("@/lib/authz/context");
+    expect(await freshGetViewerContext()).toMatchObject({
+      userId: "user-1",
+      visibleTeams: [],
+      visibleClubs: [],
+      managementClubIds: [],
+      isManagement: false,
+    });
+  });
+
   it("returns null when the RPC returns an error", async () => {
     mockSupabase({
       user: { id: "user-1", email: "coach@example.com" },

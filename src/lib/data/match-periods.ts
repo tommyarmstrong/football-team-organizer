@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { matchPeriodSortOrder } from "@/lib/constants";
 import { rejectIfMatchTeamArchived } from "@/lib/team/readonly-guard";
@@ -34,7 +35,7 @@ export function mapPeriodRow(row: PeriodRow): MatchPeriodWithStarters {
   const starter_player_ids: string[] = [];
 
   for (const s of starterRows) {
-    const playerRaw = Array.isArray(s.player) ? s.player[0] : s.player;
+    const playerRaw = one(s.player);
     const player = mapPlayerNameEmbed(
       playerRaw as Parameters<typeof mapPlayerNameEmbed>[0],
     );
