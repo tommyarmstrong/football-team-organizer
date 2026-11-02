@@ -5,6 +5,7 @@ import { buildCountViewRows, countMetricLabel } from "@/lib/stats/count-view";
 const sample: PlayerCountPoint[] = [
   {
     playerId: "1",
+    personId: "person-1",
     name: "Ada Wing",
     count: 4,
     position: "WNG",
@@ -13,6 +14,7 @@ const sample: PlayerCountPoint[] = [
   },
   {
     playerId: "2",
+    personId: "person-2",
     name: "Bea Fwd",
     count: 2,
     position: "FWD",
@@ -21,6 +23,7 @@ const sample: PlayerCountPoint[] = [
   },
   {
     playerId: "3",
+    personId: "person-3",
     name: "Cal None",
     count: 6,
     position: null,
@@ -71,6 +74,7 @@ describe("buildCountViewRows", () => {
       [
         {
           playerId: "4",
+          personId: "person-4",
           name: "Dee Apps",
           count: 5,
           position: "DEF",

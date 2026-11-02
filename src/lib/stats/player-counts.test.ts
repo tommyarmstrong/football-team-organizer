@@ -13,6 +13,7 @@ import {
 const data: PlayerCountPoint[] = [
   {
     playerId: "1",
+    personId: "person-1",
     name: "Ada",
     count: 3,
     events: [
@@ -23,6 +24,7 @@ const data: PlayerCountPoint[] = [
   },
   {
     playerId: "2",
+    personId: "person-2",
     name: "Bea",
     count: 1,
     events: [
@@ -41,6 +43,7 @@ describe("withPlayedAppearanceCounts", () => {
       [
         {
           playerId: "1",
+          personId: "person-1",
           name: "Ada",
           count: 3,
           events: [],
@@ -88,6 +91,7 @@ describe("filterPlayerCountPoints", () => {
     const tied: PlayerCountPoint[] = [
       {
         playerId: "2",
+        personId: "person-2",
         name: "Zoe",
         count: 2,
         events: [
@@ -97,6 +101,7 @@ describe("filterPlayerCountPoints", () => {
       },
       {
         playerId: "1",
+        personId: "person-1",
         name: "Amy",
         count: 2,
         events: [
