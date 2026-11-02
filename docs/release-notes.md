@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 2 November 2026 — Speed and reliability
+
+- The dashboard loads faster. The fixtures, leaderboards, and season tiles appear as each one is ready instead of all at once.
+- Renaming a player or changing their details shows on rosters straight away, rather than after up to an hour.
+- When someone is removed from the app, they lose access to pages within 15 minutes at most (it was up to 90 minutes).
+- Club, venue, competition, and roster pages check that you can see that club or team before showing it.
+
+---
+
 ## 2 November 2026 — Match cards
 
 - Results headings on Stats match the other sections on that page.
