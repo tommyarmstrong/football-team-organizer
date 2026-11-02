@@ -17,14 +17,10 @@ const {
   getNextFixtureMock,
   getLastResultMock,
   getTopScorersMock,
+  getRecentFormMock,
   getTopAssistsMock,
   getTopPlayersOfTheMatchMock,
   listPlayerOfTheMonthMock,
-  getResultsOverTimeMock,
-  getGoalsByPlayerStatsMock,
-  getAssistsByPlayerStatsMock,
-  getPlayerOfTheMatchByPlayerStatsMock,
-  getMatchesPlayedByPlayerStatsMock,
   getAllTeamStatsMock,
   canAccessClubAndPeopleMock,
 } = vi.hoisted(() => ({
@@ -45,14 +41,10 @@ const {
   getNextFixtureMock: vi.fn(),
   getLastResultMock: vi.fn(),
   getTopScorersMock: vi.fn(),
+  getRecentFormMock: vi.fn(),
   getTopAssistsMock: vi.fn(),
   getTopPlayersOfTheMatchMock: vi.fn(),
   listPlayerOfTheMonthMock: vi.fn(),
-  getResultsOverTimeMock: vi.fn(),
-  getGoalsByPlayerStatsMock: vi.fn(),
-  getAssistsByPlayerStatsMock: vi.fn(),
-  getPlayerOfTheMatchByPlayerStatsMock: vi.fn(),
-  getMatchesPlayedByPlayerStatsMock: vi.fn(),
   getAllTeamStatsMock: vi.fn(),
   canAccessClubAndPeopleMock: vi.fn(),
 }));
@@ -85,14 +77,9 @@ vi.mock("@/lib/data/venues", () => ({
 }));
 vi.mock("@/lib/data/stats", () => ({
   getTopScorers: getTopScorersMock,
+  getRecentForm: getRecentFormMock,
   getTopAssists: getTopAssistsMock,
   getTopPlayersOfTheMatch: getTopPlayersOfTheMatchMock,
-  getResultsOverTime: getResultsOverTimeMock,
-  getRecentForm: getResultsOverTimeMock,
-  getGoalsByPlayerStats: getGoalsByPlayerStatsMock,
-  getAssistsByPlayerStats: getAssistsByPlayerStatsMock,
-  getPlayerOfTheMatchByPlayerStats: getPlayerOfTheMatchByPlayerStatsMock,
-  getMatchesPlayedByPlayerStats: getMatchesPlayedByPlayerStatsMock,
   getAllTeamStats: getAllTeamStatsMock,
 }));
 vi.mock("@/lib/data/player-of-the-month", () => ({
@@ -230,14 +217,10 @@ describe("app pages", () => {
     getNextFixtureMock.mockResolvedValue({ data: null, error: null });
     getLastResultMock.mockResolvedValue({ data: null, error: null });
     getTopScorersMock.mockResolvedValue(emptyStats());
+    getRecentFormMock.mockResolvedValue(emptyResults());
     getTopAssistsMock.mockResolvedValue(emptyStats());
     getTopPlayersOfTheMatchMock.mockResolvedValue(emptyStats());
     listPlayerOfTheMonthMock.mockResolvedValue({ data: [], error: null });
-    getResultsOverTimeMock.mockResolvedValue(emptyResults());
-    getGoalsByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getAssistsByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getPlayerOfTheMatchByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getMatchesPlayedByPlayerStatsMock.mockResolvedValue(emptyStats());
     getAllTeamStatsMock.mockResolvedValue({
       goalsByPlayer: [],
       assistsByPlayer: [],
