@@ -9,7 +9,7 @@ import {
   matchCompetitionLabel,
   playerDisplayName,
 } from "@/lib/format";
-import { STATS_FORM_LIMIT } from "@/lib/constants";
+import { STATS_FORM_LIMIT, matchAllowsPostcard } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
   ALL_LEAGUE_AND_CUP,
@@ -30,7 +30,7 @@ import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
-import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
+import { MatchCardShare } from "@/components/postcards/match-card-share";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const { stats } = await getDashboardData(teamId);
@@ -56,10 +56,8 @@ export async function DashboardFixtures({
   teamName: string;
   clubId: string;
 }) {
-  const [{ next, last, lastPostcard, canEditMatch, competitions }, venues] =
+  const [{ next, last, canEditMatch, competitions }, venues] =
     await Promise.all([getDashboardData(teamId), listVenues(clubId)]);
-  const lastMatch = last.data;
-  const postcard = lastPostcard?.data ?? null;
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -72,7 +70,8 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next league or cup match."
+          emptyDescription="Schedule the next match."
+          scheduledBadge
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -82,40 +81,28 @@ export async function DashboardFixtures({
               />
             ) : undefined
           }
+          share={matchCardShare(next.data)}
         />
         <FixtureSection
           title="Last result"
           teamName={teamName}
-          match={lastMatch}
+          match={last.data}
           emptyTitle="No results yet"
-          emptyDescription="Played league and cup matches will show here."
-          share={
-            postcard ? (
-              <SharePostcardButton
-                imageUrl={`/matches/${postcard.matchId}/postcard`}
-                caption={postcard.caption}
-                fileName={postcard.fileName}
-                title={
-                  postcard.kind === "scheduled"
-                    ? "Fixture postcard"
-                    : "Match postcard"
-                }
-                description={
-                  postcard.kind === "scheduled"
-                    ? "Share this upcoming fixture, including the venue address."
-                    : "Share a recap of this result. Player names follow the team’s privacy rules."
-                }
-                previewAlt={
-                  postcard.kind === "scheduled"
-                    ? "Fixture postcard"
-                    : "Match postcard"
-                }
-              />
-            ) : undefined
-          }
+          emptyDescription="Played matches will show here."
+          share={matchCardShare(last.data)}
         />
       </div>
     </div>
+  );
+}
+
+function matchCardShare(match: MatchWithRelations | null) {
+  if (!match || !matchAllowsPostcard(match.status)) return undefined;
+  return (
+    <MatchCardShare
+      matchId={match.id}
+      kind={match.status === "scheduled" ? "scheduled" : "played"}
+    />
   );
 }
 
@@ -244,6 +231,7 @@ function FixtureSection({
   emptyDescription,
   emptyAction,
   share,
+  scheduledBadge = false,
 }: {
   title: string;
   teamName: string;
@@ -252,6 +240,7 @@ function FixtureSection({
   emptyDescription: string;
   emptyAction?: ReactNode;
   share?: ReactNode;
+  scheduledBadge?: boolean;
 }) {
   if (!match) {
     return (
@@ -282,6 +271,7 @@ function FixtureSection({
         meetupTime={match.meetup_time}
         venueName={match.venue?.name ?? null}
         actions={share}
+        scheduledBadge={scheduledBadge}
       />
     </Section>
   );

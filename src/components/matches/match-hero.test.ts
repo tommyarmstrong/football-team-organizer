@@ -1,3 +1,5 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/link", () => ({
@@ -7,6 +9,7 @@ vi.mock("next/link", () => ({
   }),
 }));
 
+import { ScheduledIndicator } from "@/components/matches/match-header-meta";
 import {
   MatchHero,
   matchHeroAriaLabel,
@@ -306,10 +309,48 @@ describe("MatchHero", () => {
     expect(html).not.toContain("LIVE");
   });
 
-  it("does not include a share slot on compact size", () => {
+  it("includes a share slot on compact size", () => {
     const compact = JSON.stringify(
       MatchHero({ ...playedHome, size: "compact", actions: "Share" }),
     );
-    expect(compact).not.toContain("Share");
+    expect(compact).toContain("Share");
+  });
+
+  it("colours the scheduled chip with the win green and the live throb", () => {
+    const html = renderToStaticMarkup(createElement(ScheduledIndicator));
+    expect(html).toContain("Scheduled");
+    expect(html).toContain("text-win");
+    expect(html).toContain("border-win");
+    expect(html).toContain("scheduled-throb");
+    expect(html).not.toContain("text-red-600");
+  });
+
+  it("replaces vs with a scheduled chip when the dashboard next card asks for it", () => {
+    const html = renderTree(
+      MatchHero({
+        ...playedHome,
+        status: "scheduled",
+        size: "card",
+        scheduledBadge: true,
+        goalsFor: 0,
+        goalsAgainst: 0,
+      }),
+    );
+    expect(html).toContain("ScheduledIndicator");
+    expect(html).not.toContain('"vs"');
+  });
+
+  it("keeps vs for scheduled matches that do not ask for the chip", () => {
+    const html = JSON.stringify(
+      MatchHero({
+        ...playedHome,
+        status: "scheduled",
+        scheduledBadge: false,
+        goalsFor: 0,
+        goalsAgainst: 0,
+      }),
+    );
+    expect(html).toContain("vs");
+    expect(html).not.toContain("ScheduledIndicator");
   });
 });

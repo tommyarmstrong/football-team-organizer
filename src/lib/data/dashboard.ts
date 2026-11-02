@@ -13,8 +13,7 @@ import {
   getTopScorers,
   getAllTeamStats,
 } from "@/lib/data/stats";
-import { DASHBOARD_MEDAL_RANKS, matchAllowsPostcard } from "@/lib/constants";
-import { buildMatchPostcardPayload } from "@/lib/postcards/match-postcard";
+import { DASHBOARD_MEDAL_RANKS } from "@/lib/constants";
 
 /**
  * §5.5 — One cached fetch for dashboard sections that overlap on match/goal
@@ -48,15 +47,9 @@ export const getDashboardData = cache(async (teamId: string) => {
     getAllTeamStats(teamId),
   ]);
 
-  const lastPostcard =
-    last.data && matchAllowsPostcard(last.data.status)
-      ? await buildMatchPostcardPayload(last.data.id)
-      : { data: null, error: null };
-
   return {
     next,
     last,
-    lastPostcard,
     canEditMatch,
     form,
     competitions,

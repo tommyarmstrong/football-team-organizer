@@ -134,6 +134,8 @@ describe("MatchPostcardImage", () => {
       venueAddress: "1 Windmill Road, London, N18 1NB",
       kickoffLabel: "10:00",
       meetupLabel: "09:30",
+      squadLines: ["1 Ali, 4 Dexter, 5 Theo, 6 Ceyone"],
+      form: ["W", "D", "L", "W", "W"],
       caption: "U11 Girls vs Riverside Rovers",
       fileName: "u11-girls-2026-03-08-vs-riverside-rovers.png",
     };
@@ -160,6 +162,8 @@ describe("MatchPostcardImage", () => {
       venueAddress: null,
       kickoffLabel: "TBC",
       meetupLabel: "TBC",
+      squadLines: [],
+      form: [],
       caption: "U11 Girls vs Riverside Rovers",
       fileName: "u11-girls-vs-riverside-rovers.png",
     };
@@ -186,6 +190,8 @@ describe("MatchPostcardImage", () => {
       venueAddress: "1 Windmill Road, London, N18 1NB",
       kickoffLabel: "10:00",
       meetupLabel: "TBC",
+      squadLines: [],
+      form: ["W"],
       caption: "U11 Girls vs Riverside Rovers",
       fileName: "u11-girls-2026-03-08-vs-riverside-rovers.png",
     };

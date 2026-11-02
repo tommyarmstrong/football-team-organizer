@@ -21,26 +21,35 @@ import {
 const iconButtonClassName =
   "text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-11 items-center justify-center rounded-md transition-colors sm:size-9";
 
-export function SharePostcardButton({
-  imageUrl,
-  caption,
-  fileName,
-  title = "Match postcard",
-  description = "Share a recap of this result. Player names follow the team’s privacy rules.",
-  previewAlt = "Match postcard",
-  buttonLabel = "Share postcard",
-}: {
+type SharePostcardFields = {
   imageUrl: string;
-  caption: string;
-  fileName: string;
   title?: string;
   description?: string;
   previewAlt?: string;
   buttonLabel?: string;
-}) {
+};
+
+type SharePostcardButtonProps = SharePostcardFields &
+  (
+    | { caption: string; fileName: string; metaUrl?: undefined }
+    | { metaUrl: string; caption?: string; fileName?: string }
+  );
+
+export function SharePostcardButton({
+  imageUrl,
+  caption: captionProp = "",
+  fileName: fileNameProp = "match-postcard.png",
+  metaUrl,
+  title = "Match postcard",
+  description = "Share a recap of this result. Player names follow the team’s privacy rules.",
+  previewAlt = "Match postcard",
+  buttonLabel = "Share postcard",
+}: SharePostcardButtonProps) {
   const [open, setOpen] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [caption, setCaption] = useState(captionProp);
+  const [fileName, setFileName] = useState(fileNameProp);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -52,15 +61,37 @@ export function SharePostcardButton({
 
     void (async () => {
       try {
-        const response = await fetch(imageUrl, { cache: "no-store" });
+        const [response, metaResponse] = await Promise.all([
+          fetch(imageUrl, { cache: "no-store" }),
+          metaUrl
+            ? fetch(metaUrl, { cache: "no-store" })
+            : Promise.resolve(null),
+        ]);
         if (!response.ok) {
           throw new Error("Could not load postcard.");
         }
+        let nextCaption = captionProp;
+        let nextFileName = fileNameProp;
+        if (metaResponse) {
+          if (!metaResponse.ok) {
+            throw new Error("Could not load postcard.");
+          }
+          const meta = (await metaResponse.json()) as {
+            caption?: unknown;
+            fileName?: unknown;
+          };
+          if (typeof meta.caption === "string") nextCaption = meta.caption;
+          if (typeof meta.fileName === "string" && meta.fileName.length > 0) {
+            nextFileName = meta.fileName;
+          }
+        }
         const blob = await response.blob();
         if (cancelled) return;
-        const nextFile = postcardFileFromBlob(blob, fileName);
+        const nextFile = postcardFileFromBlob(blob, nextFileName);
         const url = URL.createObjectURL(blob);
         objectUrls.push(url);
+        setCaption(nextCaption);
+        setFileName(nextFileName);
         setFile(nextFile);
         setBlobUrl(url);
       } catch {
@@ -74,7 +105,7 @@ export function SharePostcardButton({
       cancelled = true;
       for (const url of objectUrls) URL.revokeObjectURL(url);
     };
-  }, [open, imageUrl, fileName]);
+  }, [open, imageUrl, captionProp, fileNameProp, metaUrl]);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -183,6 +214,7 @@ export function SharePostcardButton({
               type="button"
               variant="outline"
               onClick={() => void handleCopy()}
+              disabled={Boolean(metaUrl) && !file}
             >
               <CopyIcon />
               {copied ? "Copied" : "Copy caption"}

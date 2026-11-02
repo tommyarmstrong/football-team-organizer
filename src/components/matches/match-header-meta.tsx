@@ -22,6 +22,18 @@ export function LiveIndicator() {
   );
 }
 
+export function ScheduledIndicator() {
+  return (
+    <span
+      className="text-win border-win relative inline-flex shrink-0 animate-[scheduled-throb_1.6s_ease-in-out_infinite] items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide"
+      aria-label="Scheduled"
+      title="Scheduled"
+    >
+      Scheduled
+    </span>
+  );
+}
+
 function cardPersonLabel(card: CardWithPerson): string {
   if (card.player) return playerDisplayName(card.player);
   if (card.coach) return coachDisplayName(card.coach);

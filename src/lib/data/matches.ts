@@ -21,13 +21,8 @@ import { getActiveTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import type { MatchListFilter } from "@/lib/constants";
 import { scoreFromGoals } from "@/lib/format";
-import {
-  LEAGUE_AND_CUP_COMPETITION_KINDS,
-  isLeagueAndCupMatch,
-} from "@/lib/stats/competition-filters";
 import type {
   Competition,
-  CompetitionKind,
   Match,
   MatchPlayer,
   TablesInsert,
@@ -283,18 +278,17 @@ export async function getNextFixture(): Promise<{
 
   // §6.5 — One query for all scheduled matches, ordered by date. Pick the
   // first on/after today, otherwise the earliest scheduled row (past fallback).
+  // Friendlies and every competition type are included.
   const { data, error } = await supabase
     .from("matches")
     .select(MATCH_SELECT)
     .eq("team_id", team.id)
     .eq("status", "scheduled")
-    .eq("is_friendly", false)
-    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: true });
 
   if (error) return { data: null, error: error.message };
 
-  const rows = matchRows(data).filter(isLeagueAndCupFixture);
+  const rows = matchRows(data);
   const chosen = rows.find((row) => row.date >= today) ?? rows[0] ?? null;
   if (!chosen) return { data: null, error: null };
   return { data: normalizeMatchRow(chosen), error: null };
@@ -313,12 +307,10 @@ export async function getLastResult(): Promise<{
     .select(MATCH_SELECT)
     .eq("team_id", team.id)
     .eq("status", "played")
-    .eq("is_friendly", false)
-    .in("competition.kind", [...LEAGUE_AND_CUP_COMPETITION_KINDS])
     .order("date", { ascending: false });
 
   if (error) return { data: null, error: error.message };
-  const chosen = matchRows(data).find(isLeagueAndCupFixture) ?? null;
+  const chosen = matchRows(data)[0] ?? null;
   if (!chosen) return { data: null, error: null };
   return { data: normalizeMatchRow(chosen), error: null };
 }
@@ -326,32 +318,6 @@ export async function getLastResult(): Promise<{
 function matchRows<T>(data: T | T[] | null): T[] {
   if (data == null) return [];
   return Array.isArray(data) ? data : [data];
-}
-
-function isLeagueAndCupFixture(row: {
-  is_friendly: boolean;
-  competition_id: string | null;
-  competition: unknown;
-}): boolean {
-  const competition = Array.isArray(row.competition)
-    ? row.competition[0]
-    : row.competition;
-  const competitionId =
-    competition &&
-    typeof competition === "object" &&
-    "id" in competition &&
-    typeof competition.id === "string"
-      ? competition.id
-      : row.competition_id;
-  const competitionKind =
-    competition && typeof competition === "object" && "kind" in competition
-      ? ((competition.kind as CompetitionKind | null) ?? null)
-      : null;
-  return isLeagueAndCupMatch({
-    competitionId,
-    competitionKind,
-    isFriendly: row.is_friendly,
-  });
 }
 
 type RawMatchRow = Match & {

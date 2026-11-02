@@ -101,10 +101,7 @@ function ResultPieCharts({
 }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <div className="space-y-4">
-        <h2 className="font-heading text-xl font-semibold tracking-tight">
-          Results
-        </h2>
+      <Section title="Results">
         {results.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -118,7 +115,7 @@ function ResultPieCharts({
         ) : (
           <ResultsPieChart data={filteredResults} />
         )}
-      </div>
+      </Section>
 
       <Section title="Goals">
         {results.length === 0 ? (
