@@ -297,3 +297,15 @@ body:has(> [data-club-colour="true"])::before {
     box-shadow: 0 0 0 6px rgb(239 68 68 / 0);
   }
 }
+
+@keyframes scheduled-throb {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgb(27 122 74 / 0.45);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 6px rgb(27 122 74 / 0);
+  }
+}

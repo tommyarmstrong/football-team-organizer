@@ -475,10 +475,15 @@ describe("DashboardFixtures last result share", () => {
     "utf8",
   );
 
-  it("places a share postcard control on the last-result card", () => {
-    expect(source).toContain("SharePostcardButton");
+  it("places the same share control on the next fixture and the last result", () => {
+    expect(source).toContain("MatchCardShare");
+    expect(source).toContain('title="Next fixture"');
     expect(source).toContain('title="Last result"');
+    expect(source).toContain("scheduledBadge");
     expect(source).toContain("actions={share}");
+    expect(source).toContain("Schedule the next match.");
+    expect(source).toContain("Played matches will show here.");
+    expect(source).not.toContain("SharePostcardButton");
   });
 
   it("passes dashboard match cards the same stack fields as the matches list", () => {

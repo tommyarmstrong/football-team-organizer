@@ -729,7 +729,7 @@ describe("getNextFixture / getLastResult", () => {
     expect(await getLastResult()).toEqual({ data: null, error: null });
   });
 
-  it("skips friendlies and tournaments for the next fixture and last result", async () => {
+  it("includes friendlies and tournaments in the next fixture and last result", async () => {
     const friendly = {
       team_id: "team-1",
       kickoff_time: null,
@@ -797,7 +797,7 @@ describe("getNextFixture / getLastResult", () => {
         ]),
       }),
     );
-    expect((await getNextFixture()).data?.id).toBe("m-league-next");
+    expect((await getNextFixture()).data?.id).toBe("m-friendly-next");
 
     createClientMock.mockResolvedValue(
       mockFromClient({
@@ -830,8 +830,8 @@ describe("getNextFixture / getLastResult", () => {
       }),
     );
     const last = await getLastResult();
-    expect(last.data?.id).toBe("m-league-last");
-    expect(last.data?.goals_against).toBe(1);
+    expect(last.data?.id).toBe("m-friendly-last");
+    expect(last.data?.goals_for).toBe(1);
   });
 });
 

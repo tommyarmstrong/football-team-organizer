@@ -513,11 +513,36 @@ function PlayedPostcardBody({
         </div>
       ) : null}
 
-      {payload.squadLines.length > 0 ? (
+      <PostcardSquadAndForm
+        squadLines={payload.squadLines}
+        form={payload.form}
+      />
+    </div>
+  );
+}
+
+function PostcardSquadAndForm({
+  squadLines,
+  form,
+  marginTop = 0,
+}: {
+  squadLines: string[];
+  form: Array<"W" | "D" | "L">;
+  /** Gap above the block. Played cards already separate this from the awards. */
+  marginTop?: number;
+}) {
+  const squadMarginTop = squadLines.length > 0 ? marginTop : 0;
+  const formMarginTop = squadLines.length > 0 ? 28 : Math.max(marginTop, 28);
+  if (squadLines.length === 0 && form.length === 0) return null;
+
+  return (
+    <div style={stackStyle({ width: "100%" })}>
+      {squadLines.length > 0 ? (
         <div
           style={stackStyle({
             alignItems: "center",
             marginBottom: 10,
+            marginTop: squadMarginTop,
           })}
         >
           <div
@@ -532,7 +557,7 @@ function PlayedPostcardBody({
           >
             Matchday Squad
           </div>
-          {payload.squadLines.map((line, index) => (
+          {squadLines.map((line, index) => (
             <div
               key={`${line}-${index}`}
               style={centredStyle({
@@ -548,10 +573,10 @@ function PlayedPostcardBody({
         </div>
       ) : null}
 
-      {payload.form.length > 0 ? (
+      {form.length > 0 ? (
         <div
           style={stackStyle({
-            marginTop: 28,
+            marginTop: formMarginTop,
             alignItems: "center",
           })}
         >
@@ -568,7 +593,7 @@ function PlayedPostcardBody({
             Form
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            {payload.form.map((letter, index) => (
+            {form.map((letter, index) => (
               <FormBox
                 key={`${letter}-${index}`}
                 letter={letter}
@@ -693,6 +718,12 @@ function ScheduledPostcardBody({
           </div>
         ) : null}
       </div>
+
+      <PostcardSquadAndForm
+        squadLines={payload.squadLines}
+        form={payload.form}
+        marginTop={28}
+      />
     </div>
   );
 }

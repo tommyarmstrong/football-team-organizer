@@ -41,6 +41,13 @@ describe("StatsPageContent", () => {
     expect(section).not.toContain("metricNoun");
   });
 
+  it("uses the Goals section heading style for every Results heading", () => {
+    expect(source).not.toContain("font-heading");
+    expect(source).toContain('<Section title="Results">');
+    expect(source).toContain('<Section title="Goals">');
+    expect(source).toContain('<Section title="Goal difference">');
+  });
+
   it("shows season tiles under the filters using the filtered results", () => {
     const filtersIndex = source.indexOf("<StatsCompetitionFilters");
     const tilesIndex = source.indexOf(
