@@ -316,36 +316,38 @@ describe("MatchHero", () => {
     expect(compact).toContain("Share");
   });
 
-  it("colours the scheduled chip with the win green and the live throb", () => {
+  it("colours the scheduled chip with the win green and leaves it still", () => {
     const html = renderToStaticMarkup(createElement(ScheduledIndicator));
     expect(html).toContain("Scheduled");
     expect(html).toContain("text-win");
     expect(html).toContain("border-win");
-    expect(html).toContain("scheduled-throb");
+    expect(html).not.toContain("scheduled-throb");
+    expect(html).not.toContain("animate-");
     expect(html).not.toContain("text-red-600");
   });
 
-  it("replaces vs with a scheduled chip when the dashboard next card asks for it", () => {
-    const html = renderTree(
-      MatchHero({
-        ...playedHome,
-        status: "scheduled",
-        size: "card",
-        scheduledBadge: true,
-        goalsFor: 0,
-        goalsAgainst: 0,
-      }),
-    );
-    expect(html).toContain("ScheduledIndicator");
-    expect(html).not.toContain('"vs"');
+  it("replaces vs with a static scheduled chip on summary cards", () => {
+    for (const size of ["card", "compact"] as const) {
+      const html = renderTree(
+        MatchHero({
+          ...playedHome,
+          status: "scheduled",
+          size,
+          goalsFor: 0,
+          goalsAgainst: 0,
+        }),
+      );
+      expect(html).toContain("ScheduledIndicator");
+      expect(html).not.toContain('"vs"');
+    }
   });
 
-  it("keeps vs for scheduled matches that do not ask for the chip", () => {
+  it("keeps vs on the match detail hero", () => {
     const html = JSON.stringify(
       MatchHero({
         ...playedHome,
         status: "scheduled",
-        scheduledBadge: false,
+        size: "hero",
         goalsFor: 0,
         goalsAgainst: 0,
       }),
