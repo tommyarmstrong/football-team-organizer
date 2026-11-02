@@ -4,6 +4,7 @@ import { teamFixture } from "@/test/fixtures";
 
 const {
   revalidatePathMock,
+  updateTagMock,
   redirectMock,
   getActiveTeamMock,
   resolveStaffClubIdMock,
@@ -21,6 +22,7 @@ const {
   deletePlayerObjectiveMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
+  updateTagMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
@@ -43,7 +45,7 @@ const {
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
   revalidateTag: vi.fn(),
-  updateTag: vi.fn(),
+  updateTag: updateTagMock,
 }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/data/team", () => ({ getActiveTeam: getActiveTeamMock }));
@@ -143,12 +145,16 @@ describe("updatePlayerAction / deletePlayerAction", () => {
       formDataFrom({ first_name: "Sam", last_name: "Striker" }),
     );
     expect(result.success).toMatch(/saved/i);
+    // A renamed player must not linger on cached team rosters.
+    expect(updateTagMock).toHaveBeenCalledWith("rosters");
   });
 
   it("deletes and redirects to the person", async () => {
     await expect(deletePlayerAction("player-1")).rejects.toThrow(
       "redirect:/people/person-1",
     );
+    // A deactivated player must drop off cached team rosters.
+    expect(updateTagMock).toHaveBeenCalledWith("rosters");
   });
 });
 

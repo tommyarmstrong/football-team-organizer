@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mockFromClient, okResult, errResult } from "@/test/supabase-mock";
+import {
+  mockFromClient,
+  okResult,
+  errResult,
+  queryChain,
+} from "@/test/supabase-mock";
 import { personFixture, teamFixture } from "@/test/fixtures";
 
 const {
@@ -7,11 +12,13 @@ const {
   createPersonMock,
   updatePersonMock,
   getActiveTeamMock,
+  unstableCacheMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   createPersonMock: vi.fn(),
   updatePersonMock: vi.fn(),
   getActiveTeamMock: vi.fn(),
+  unstableCacheMock: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -21,10 +28,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => createClientMock(),
 }));
 vi.mock("next/cache", () => ({
-  unstable_cache:
-    <T extends unknown[], R>(fn: (...args: T) => Promise<R>) =>
-    (...args: T) =>
-      fn(...args),
+  unstable_cache: <T extends unknown[], R>(
+    fn: (...args: T) => Promise<R>,
+    keyParts?: string[],
+    options?: unknown,
+  ) => {
+    unstableCacheMock(keyParts, options);
+    return (...args: T) => fn(...args);
+  },
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
   updateTag: vi.fn(),
@@ -117,6 +128,31 @@ describe("players data", () => {
       shirt_number: 7,
       first_name: "Sam",
     });
+  });
+
+  it("tags the cached roster per team and for all rosters, without private columns", async () => {
+    const chain = queryChain(okResult([]));
+    const select = vi.fn<(columns: string) => unknown>(() => chain);
+    chain.select = select;
+    createClientMock.mockReturnValue({ from: () => chain });
+
+    await listRosterForTeam("team-1");
+
+    expect(unstableCacheMock).toHaveBeenCalledWith(
+      ["roster", "team-1"],
+      expect.objectContaining({ tags: ["roster:team-1", "rosters"] }),
+    );
+    const selected = String(select.mock.calls[0]?.[0]);
+    expect(selected).not.toContain("*");
+    for (const column of [
+      "date_of_birth",
+      "school",
+      "email",
+      "phone",
+      "auth_user_id",
+    ]) {
+      expect(selected).not.toContain(column);
+    }
   });
 
   it("lists players and active roster for the active team", async () => {

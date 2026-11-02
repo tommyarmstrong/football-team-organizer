@@ -45,6 +45,7 @@ import {
   setPlayerActiveRole,
   updatePlayer,
 } from "@/lib/data/players";
+import { invalidateAllRosters } from "@/lib/data/roster-cache";
 import { sendPersonInvitation } from "@/lib/people/invitations";
 import {
   parsePersonForm,
@@ -55,6 +56,8 @@ import { str } from "@/lib/form-parse";
 import type { PersonRoleKind } from "@/lib/people/roles";
 
 function revalidatePeople(personId?: string) {
+  // Person names and player roles show on cached team rosters.
+  invalidateAllRosters();
   revalidatePath("/people");
   revalidatePath("/club");
   if (personId) {
