@@ -183,7 +183,7 @@ function appendGoalToGroups(
       goals: [],
     });
   }
-  groups[index].goals.push(goal);
+  groups[index]?.goals.push(goal);
 }
 
 export function groupGoalsByPeriod(
@@ -207,7 +207,7 @@ export function groupGoalsByPeriod(
       const periodIndex =
         goal.period_id != null ? indexById.get(goal.period_id) : undefined;
       if (periodIndex != null) {
-        groups[periodIndex].goals.push(goal);
+        groups[periodIndex]?.goals.push(goal);
         continue;
       }
       appendGoalToGroups(orphans, orphanIndexByKey, goal);

@@ -258,7 +258,7 @@ describe("PersonDetailPage guardian relationships", () => {
       canManageLinks: true,
       selfGuardianIds: [],
     });
-    expect(sections[0].availableGuardians).toEqual([
+    expect(sections[0]?.availableGuardians).toEqual([
       { id: "g-2", club_id: "club-1", first_name: "Other", last_name: "Adult" },
     ]);
   });

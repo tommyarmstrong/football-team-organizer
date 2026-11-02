@@ -8,7 +8,9 @@ const source = readFileSync(
 );
 
 function fieldIds(markup: string): string[] {
-  return [...markup.matchAll(/htmlFor="([^"]+)"/g)].map((match) => match[1]);
+  return [...markup.matchAll(/htmlFor="([^"]+)"/g)].map(
+    (match) => match[1] ?? "",
+  );
 }
 
 function fieldWrapper(markup: string, id: string): string {

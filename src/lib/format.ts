@@ -509,6 +509,6 @@ export function labelPlayerObjectiveStatus(
 
 function parseDateOnly(date: string): Date {
   // Treat YYYY-MM-DD as local calendar date
-  const [y, m, d] = date.split("-").map(Number);
+  const [y = NaN, m = NaN, d = NaN] = date.split("-").map(Number);
   return new Date(y, m - 1, d);
 }

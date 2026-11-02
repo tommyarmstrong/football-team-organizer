@@ -35,7 +35,7 @@ export function competitionHasMatchStage(
 }
 
 function isRealDate(value: string): boolean {
-  const [year, month, day] = value.split("-").map(Number);
+  const [year = NaN, month = NaN, day = NaN] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return (
     date.getUTCFullYear() === year &&

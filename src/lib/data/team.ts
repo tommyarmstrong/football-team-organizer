@@ -80,7 +80,7 @@ export const getActiveTeam = cache(async (): Promise<Team | null> => {
     if (match) return match;
   }
 
-  return teams.find((team) => !isTeamArchived(team)) ?? teams[0];
+  return teams.find((team) => !isTeamArchived(team)) ?? teams[0] ?? null;
 });
 
 /** Backwards-compatible alias used across the app for the current team. */
