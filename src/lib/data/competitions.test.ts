@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockFromClient, okResult, errResult } from "@/test/supabase-mock";
-import { teamFixture } from "@/test/fixtures";
+import { teamFixture, viewerFixture } from "@/test/fixtures";
 
 const {
   createClientMock,
   getCurrentTeamMock,
+  getViewerContextMock,
   seedDefaultTournamentSquadMock,
   ensureTournamentSquadMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getCurrentTeamMock: vi.fn(),
+  getViewerContextMock: vi.fn(),
   seedDefaultTournamentSquadMock: vi.fn(
     async (): Promise<{ error: string | null }> => ({ error: null }),
   ),
@@ -33,6 +35,10 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
   updateTag: vi.fn(),
 }));
+vi.mock("@/lib/authz/context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authz/context")>();
+  return { ...actual, getViewerContext: getViewerContextMock };
+});
 vi.mock("@/lib/data/team", () => ({
   getCurrentTeam: getCurrentTeamMock,
 }));
@@ -62,8 +68,27 @@ describe("competitions data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getCurrentTeamMock.mockResolvedValue(teamFixture());
+    getViewerContextMock.mockResolvedValue(viewerFixture());
     seedDefaultTournamentSquadMock.mockResolvedValue({ error: null });
     ensureTournamentSquadMock.mockResolvedValue({ error: null });
+  });
+
+  it("does not read cached competitions for a team the viewer cannot read", async () => {
+    createClientMock.mockReturnValue(
+      mockFromClient({ competitions: okResult([competition]) }),
+    );
+
+    expect(await listCompetitions("team-other")).toEqual({
+      data: [],
+      error: "Team not found.",
+    });
+
+    getViewerContextMock.mockResolvedValue(null);
+    expect(await listCompetitions("team-1")).toEqual({
+      data: [],
+      error: "Team not found.",
+    });
+    expect(createClientMock).not.toHaveBeenCalled();
   });
 
   it("requires a team", async () => {

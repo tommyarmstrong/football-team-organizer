@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockFromClient, okResult, errResult } from "@/test/supabase-mock";
-import { venueFixture } from "@/test/fixtures";
+import { venueFixture, viewerFixture } from "@/test/fixtures";
 
-const { createClientMock } = vi.hoisted(() => ({
+const { createClientMock, getViewerContextMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
+  getViewerContextMock: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -12,6 +13,10 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => createClientMock(),
 }));
+vi.mock("@/lib/authz/context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authz/context")>();
+  return { ...actual, getViewerContext: getViewerContextMock };
+});
 // Provide a passthrough unstable_cache so data-layer tests run without the
 // Next.js incremental-cache infrastructure.
 vi.mock("next/cache", () => ({
@@ -35,6 +40,7 @@ import {
 describe("venues data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getViewerContextMock.mockResolvedValue(viewerFixture());
   });
 
   it("lists venues and filters by club", async () => {
@@ -46,6 +52,24 @@ describe("venues data", () => {
 
     const filtered = await listVenues("club-1");
     expect(filtered.error).toBeNull();
+  });
+
+  it("does not read the cached club venues for a viewer without access", async () => {
+    createClientMock.mockReturnValue(
+      mockFromClient({ venues: okResult([venueFixture()]) }),
+    );
+
+    expect(await listVenues("club-other")).toEqual({
+      data: [],
+      error: "Club not found.",
+    });
+
+    getViewerContextMock.mockResolvedValue(null);
+    expect(await listVenues("club-1")).toEqual({
+      data: [],
+      error: "Club not found.",
+    });
+    expect(createClientMock).not.toHaveBeenCalled();
   });
 
   it("gets, creates, updates, and deletes venues", async () => {

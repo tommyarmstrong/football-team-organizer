@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canReadTeam, getViewerContext } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
 import { rosterCacheTags } from "@/lib/data/roster-cache";
 import { archivedTeamWriteError } from "@/lib/team/season";
@@ -180,6 +181,13 @@ export async function listRosterForTeam(
       data: mapRosterRows(data as RosterRow[] | null),
       error: null,
     };
+  }
+
+  // The cached read below uses the service role (RLS is bypassed), so the
+  // viewer must be checked first.
+  const ctx = await getViewerContext();
+  if (!ctx || !canReadTeam(ctx, teamId)) {
+    return { data: [], error: "Team not found." };
   }
 
   return unstable_cache(

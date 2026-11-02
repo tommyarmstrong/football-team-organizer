@@ -199,6 +199,19 @@ export function canReadTeam(ctx: ViewerContext, teamId: string): boolean {
   return ctx.visibleTeams.some((team) => team.id === teamId);
 }
 
+/**
+ * True when the club is one the viewer can see: they manage it, or they can
+ * read at least one of its teams. Admin-cached readers must check this (or
+ * `canReadTeam`) before returning shared data.
+ */
+export function canReadClub(ctx: ViewerContext, clubId: string): boolean {
+  return (
+    ctx.visibleClubs.some((club) => club.id === clubId) ||
+    ctx.managementClubIds.includes(clubId) ||
+    ctx.visibleTeams.some((team) => team.club_id === clubId)
+  );
+}
+
 /** True when this people row is the signed-in user's own person. */
 export function isSelfPerson(
   ctx: ViewerContext,

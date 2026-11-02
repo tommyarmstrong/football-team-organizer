@@ -5,19 +5,21 @@ import {
   errResult,
   queryChain,
 } from "@/test/supabase-mock";
-import { personFixture, teamFixture } from "@/test/fixtures";
+import { personFixture, teamFixture, viewerFixture } from "@/test/fixtures";
 
 const {
   createClientMock,
   createPersonMock,
   updatePersonMock,
   getActiveTeamMock,
+  getViewerContextMock,
   unstableCacheMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   createPersonMock: vi.fn(),
   updatePersonMock: vi.fn(),
   getActiveTeamMock: vi.fn(),
+  getViewerContextMock: vi.fn(),
   unstableCacheMock: vi.fn(),
 }));
 
@@ -40,6 +42,10 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
   updateTag: vi.fn(),
 }));
+vi.mock("@/lib/authz/context", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authz/context")>();
+  return { ...actual, getViewerContext: getViewerContextMock };
+});
 vi.mock("@/lib/data/people", () => ({
   createPerson: createPersonMock,
   updatePerson: updatePersonMock,
@@ -85,7 +91,27 @@ describe("players data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getActiveTeamMock.mockResolvedValue(teamFixture());
+    getViewerContextMock.mockResolvedValue(viewerFixture());
     updatePersonMock.mockResolvedValue({ error: null });
+  });
+
+  it("does not read the cached roster for a team the viewer cannot read", async () => {
+    createClientMock.mockReturnValue(
+      mockFromClient({ team_players: okResult([]) }),
+    );
+
+    expect(await listRosterForTeam("team-other")).toEqual({
+      data: [],
+      error: "Team not found.",
+    });
+
+    getViewerContextMock.mockResolvedValue(null);
+    expect(await listRosterForTeam("team-1")).toEqual({
+      data: [],
+      error: "Team not found.",
+    });
+    expect(createClientMock).not.toHaveBeenCalled();
+    expect(unstableCacheMock).not.toHaveBeenCalled();
   });
 
   it("maps roster rows and skips inactive player roles", async () => {
