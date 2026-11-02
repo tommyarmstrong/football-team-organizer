@@ -107,11 +107,22 @@ type ViewerContextRaw = {
 export const getViewerContext = cache(
   async (): Promise<ViewerContext | null> => {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // The proxy has already validated this request with `getUser()`, so the
+    // render path only needs the verified claims. With asymmetric JWT signing
+    // keys `getClaims()` verifies locally (no Auth round-trip); with a shared
+    // secret it falls back to a network check, so it is never less safe.
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const claims = claimsData?.claims;
 
-    if (!user) return null;
+    if (!claims?.sub) return null;
+    const user = {
+      id: claims.sub,
+      email: typeof claims.email === "string" ? claims.email : null,
+      user_metadata: (claims.user_metadata ?? null) as Record<
+        string,
+        unknown
+      > | null,
+    };
 
     const { data: raw, error } = await supabase.rpc("get_viewer_context");
 
