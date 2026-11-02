@@ -6,7 +6,6 @@ import { type MatchWithRelations } from "@/lib/data/matches";
 import {
   formatAwardMonth,
   formatCountLabel,
-  matchCompetitionLabel,
   playerDisplayName,
 } from "@/lib/format";
 import { STATS_FORM_LIMIT } from "@/lib/constants";
@@ -25,12 +24,11 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
-import { MatchHero } from "@/components/matches/match-hero";
+import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
-import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const { stats } = await getDashboardData(teamId);
@@ -56,10 +54,8 @@ export async function DashboardFixtures({
   teamName: string;
   clubId: string;
 }) {
-  const [{ next, last, lastPostcard, canEditMatch, competitions }, venues] =
+  const [{ next, last, canEditMatch, competitions }, venues] =
     await Promise.all([getDashboardData(teamId), listVenues(clubId)]);
-  const lastMatch = last.data;
-  const postcard = lastPostcard?.data ?? null;
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -72,7 +68,7 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next league or cup match."
+          emptyDescription="Schedule the next match."
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -86,33 +82,9 @@ export async function DashboardFixtures({
         <FixtureSection
           title="Last result"
           teamName={teamName}
-          match={lastMatch}
+          match={last.data}
           emptyTitle="No results yet"
-          emptyDescription="Played league and cup matches will show here."
-          share={
-            postcard ? (
-              <SharePostcardButton
-                imageUrl={`/matches/${postcard.matchId}/postcard`}
-                caption={postcard.caption}
-                fileName={postcard.fileName}
-                title={
-                  postcard.kind === "scheduled"
-                    ? "Fixture postcard"
-                    : "Match postcard"
-                }
-                description={
-                  postcard.kind === "scheduled"
-                    ? "Share this upcoming fixture, including the venue address."
-                    : "Share a recap of this result. Player names follow the team’s privacy rules."
-                }
-                previewAlt={
-                  postcard.kind === "scheduled"
-                    ? "Fixture postcard"
-                    : "Match postcard"
-                }
-              />
-            ) : undefined
-          }
+          emptyDescription="Played matches will show here."
         />
       </div>
     </div>
@@ -243,7 +215,6 @@ function FixtureSection({
   emptyTitle,
   emptyDescription,
   emptyAction,
-  share,
 }: {
   title: string;
   teamName: string;
@@ -251,7 +222,6 @@ function FixtureSection({
   emptyTitle: string;
   emptyDescription: string;
   emptyAction?: ReactNode;
-  share?: ReactNode;
 }) {
   if (!match) {
     return (
@@ -267,22 +237,7 @@ function FixtureSection({
 
   return (
     <Section title={title}>
-      <MatchHero
-        size="card"
-        href={`/matches/${match.id}`}
-        teamName={teamName}
-        opponentName={match.opponent_name}
-        homeAway={match.home_away}
-        status={match.status}
-        goalsFor={match.goals_for}
-        goalsAgainst={match.goals_against}
-        competitionName={matchCompetitionLabel(match)}
-        date={match.date}
-        kickoffTime={match.kickoff_time}
-        meetupTime={match.meetup_time}
-        venueName={match.venue?.name ?? null}
-        actions={share}
-      />
+      <MatchSummaryCard match={match} teamName={teamName} />
     </Section>
   );
 }

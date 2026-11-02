@@ -10,7 +10,10 @@ import {
 } from "@/lib/format";
 import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { LiveIndicator } from "@/components/matches/match-header-meta";
+import {
+  LiveIndicator,
+  ScheduledIndicator,
+} from "@/components/matches/match-header-meta";
 
 export type MatchHeroSize = "hero" | "card" | "compact";
 
@@ -144,7 +147,8 @@ export function MatchHero({
           ? "px-4 py-4 sm:px-5 sm:py-5"
           : "px-4 py-3.5";
 
-  const showActions = Boolean(actions) && (size === "hero" || size === "card");
+  const showActions = Boolean(actions);
+  const showScheduledBadge = status === "scheduled" && size !== "hero";
   const masthead = (
     <div
       className={cn(
@@ -197,6 +201,10 @@ export function MatchHero({
               <span className="text-muted-foreground px-[0.15em]">–</span>
               <span>{awayGoals}</span>
             </p>
+          ) : showScheduledBadge ? (
+            <div className="flex justify-center">
+              <ScheduledIndicator />
+            </div>
           ) : (
             <p className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase">
               vs
@@ -255,7 +263,7 @@ export function MatchHero({
       {href ? (
         <Link
           href={href}
-          className="block rounded-[inherit] transition-opacity hover:opacity-80"
+          className="focus-visible:ring-ring block rounded-[inherit] transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none"
         >
           {masthead}
         </Link>

@@ -47,11 +47,6 @@ vi.mock("@/lib/data/competitions", () => ({
 vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
 }));
-vi.mock("@/lib/postcards/match-postcard", () => ({
-  buildMatchPostcardPayload: vi
-    .fn()
-    .mockResolvedValue({ data: null, error: null }),
-}));
 
 import { getDashboardData } from "@/lib/data/dashboard";
 
@@ -94,6 +89,7 @@ describe("getDashboardData (§5.5)", () => {
     expect(result.form).toEqual({ form: [], error: null });
     expect(result.stats.resultsOverTime).toEqual([]);
     expect(result.canEditMatch).toBe(false);
-    expect(result.lastPostcard).toEqual({ data: null, error: null });
+    expect(result.next).toEqual({ data: null, error: null });
+    expect(result.last).toEqual({ data: null, error: null });
   });
 });

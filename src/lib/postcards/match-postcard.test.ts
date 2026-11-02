@@ -802,7 +802,15 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.caption).toContain("👟 Kick off: 10:00");
     expect(data.caption).toContain("1 Windmill Road, London, N18 1NB");
     expect(data.fileName).toBe("u11-girls-2026-03-08-vs-riverside.png");
+    expect(data.squadLines).toEqual(["4 Luca, 7 Maya"]);
+    expect(data.form).toEqual(["W"]);
     expect(listGoalsForMatchMock).not.toHaveBeenCalled();
+    expect(listMatchPlayersMock).toHaveBeenCalledWith("match-1");
+    expect(getFormThroughMatchMock).toHaveBeenCalledWith(
+      "team-1",
+      expect.objectContaining({ id: "match-1", date: "2026-03-08" }),
+      "D",
+    );
   });
 
   it("uses TBC on a scheduled postcard when date, times, and venue are missing", async () => {
@@ -833,6 +841,31 @@ describe("buildMatchPostcardPayload", () => {
     expect(data.venueName).toBeNull();
     expect(data.caption).toContain("Venue: TBC");
     expect(data.caption).toContain("🏟️ Venue: TBC");
+    expect(data.squadLines).toEqual(["4 Luca, 7 Maya"]);
+    expect(data.form).toEqual(["W"]);
+  });
+
+  it("leaves form blank when the scheduled fixture form cannot be loaded", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({
+        status: "scheduled",
+        opponent_name: "Riverside",
+        date: "2026-03-08",
+      }),
+      error: null,
+    });
+    getFormThroughMatchMock.mockResolvedValue({
+      form: ["D"],
+      error: "form failed",
+    });
+    const { buildMatchPostcardPayload } =
+      await import("@/lib/postcards/match-postcard");
+    const { data, error } = await buildMatchPostcardPayload("match-1");
+    expect(error).toBeNull();
+    expect(data?.kind).toBe("scheduled");
+    if (data?.kind !== "scheduled") return;
+    expect(data.form).toEqual([]);
+    expect(data.squadLines).toEqual(["4 Luca, 7 Maya"]);
   });
 
   it("rejects postponed and cancelled matches", async () => {

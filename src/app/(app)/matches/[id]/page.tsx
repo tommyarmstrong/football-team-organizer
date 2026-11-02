@@ -20,6 +20,7 @@ import {
   teamDisplayName,
 } from "@/lib/format";
 import { MatchHero } from "@/components/matches/match-hero";
+import { matchCardShare } from "@/components/matches/match-summary-card";
 import { deleteMatchAction } from "@/lib/matches/actions";
 import { pageBodyClassName } from "@/components/shared/page-body";
 import { PageHeader } from "@/components/shared/page-header";
@@ -32,8 +33,6 @@ import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
 import { MatchStatusActions } from "@/components/matches/match-status-actions";
-import { SharePostcardButton } from "@/components/postcards/share-postcard-button";
-import { buildMatchPostcardPayload } from "@/lib/postcards/match-postcard";
 
 export default async function MatchDetailPage({
   params,
@@ -81,14 +80,10 @@ export default async function MatchDetailPage({
 
   const [
     { data: players, error: playersError },
-    postcardResult,
     { data: competitions, error: competitionsError },
     { data: venues, error: venuesError },
   ] = await Promise.all([
     listRosterForTeam(match.team_id, { includeInactive: true }),
-    matchAllowsPostcard(match.status)
-      ? buildMatchPostcardPayload(match.id)
-      : Promise.resolve({ data: null, error: null }),
     canEdit
       ? listCompetitions(match.team_id)
       : Promise.resolve({ data: [], error: null }),
@@ -96,7 +91,6 @@ export default async function MatchDetailPage({
       ? listVenues(clubId)
       : Promise.resolve({ data: [], error: null }),
   ]);
-  const postcard = postcardResult.data;
 
   const matchSquadIds = new Set(matchPlayerRows.map((r) => r.player_id));
   const hasMatchSquad = matchSquadIds.size > 0;
@@ -115,12 +109,7 @@ export default async function MatchDetailPage({
     periods.map((period) => period.name),
   );
 
-  const loadErrors = [
-    playersError,
-    postcardResult.error,
-    competitionsError,
-    venuesError,
-  ]
+  const loadErrors = [playersError, competitionsError, venuesError]
     .filter(Boolean)
     .join(" ");
 
@@ -153,30 +142,9 @@ export default async function MatchDetailPage({
           venueName={match.venue?.name ?? null}
           venueId={match.venue?.id ?? null}
           actions={
-            postcard || canEdit ? (
+            matchAllowsPostcard(match.status) || canEdit ? (
               <>
-                {postcard ? (
-                  <SharePostcardButton
-                    imageUrl={`/matches/${match.id}/postcard`}
-                    caption={postcard.caption}
-                    fileName={postcard.fileName}
-                    title={
-                      postcard.kind === "scheduled"
-                        ? "Fixture postcard"
-                        : "Match postcard"
-                    }
-                    description={
-                      postcard.kind === "scheduled"
-                        ? "Share this upcoming fixture, including the venue address."
-                        : "Share a recap of this result. Player names follow the team’s privacy rules."
-                    }
-                    previewAlt={
-                      postcard.kind === "scheduled"
-                        ? "Fixture postcard"
-                        : "Match postcard"
-                    }
-                  />
-                ) : null}
+                {matchCardShare(match)}
                 {canEdit ? (
                   <>
                     <EditMatchDialog

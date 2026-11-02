@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import { labelMatchStatus, matchCompetitionLabel } from "@/lib/format";
+import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
-import { MatchHero } from "@/components/matches/match-hero";
 
 export function MatchesDirectoryList({
   matches,
@@ -36,25 +35,7 @@ export function MatchesDirectoryList({
       emptyFilterDescription="Try a different opponent, venue, or competition."
       listClassName="space-y-3"
       renderItem={(match) => (
-        <Link
-          href={`/matches/${match.id}`}
-          className="focus-visible:ring-ring block rounded-2xl focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <MatchHero
-            size="compact"
-            teamName={teamName}
-            opponentName={match.opponent_name}
-            homeAway={match.home_away}
-            status={match.status}
-            goalsFor={match.goals_for}
-            goalsAgainst={match.goals_against}
-            competitionName={matchCompetitionLabel(match)}
-            date={match.date}
-            kickoffTime={match.kickoff_time}
-            meetupTime={match.meetup_time}
-            venueName={match.venue?.name ?? null}
-          />
-        </Link>
+        <MatchSummaryCard match={match} teamName={teamName} />
       )}
     />
   );

@@ -33,7 +33,7 @@ import {
 } from "@/lib/postcards/content";
 import { postcardStory } from "@/lib/postcards/story";
 import type { MatchPostcardPayload } from "@/lib/postcards/types";
-import type { Club, Team } from "@/lib/supabase/database.types";
+import type { Club, Team, TeamGender } from "@/lib/supabase/database.types";
 
 export type { MatchPostcardPayload } from "@/lib/postcards/types";
 export {
@@ -75,6 +75,42 @@ function postcardSides(
     homeName: isAway ? match.opponent_name : teamName,
     awayName: isAway ? teamName : match.opponent_name,
   };
+}
+
+async function loadPostcardSquad(
+  match: MatchWithRelations,
+  gender: TeamGender,
+): Promise<{ squadLines: string[]; error: string | null }> {
+  const [rosterResult, matchPlayersResult] = await Promise.all([
+    listRosterForTeam(match.team_id, { includeInactive: true }),
+    listMatchPlayers(match.id),
+  ]);
+  if (rosterResult.error) return { squadLines: [], error: rosterResult.error };
+  if (matchPlayersResult.error) {
+    return { squadLines: [], error: matchPlayersResult.error };
+  }
+  return {
+    squadLines: postcardSquadLines(
+      rosterResult.data,
+      matchPlayersResult.data.map((row) => row.player_id),
+      gender,
+    ),
+    error: null,
+  };
+}
+
+/** League and cup form going into a fixture that has not been played. */
+async function formBeforeMatch(
+  teamId: string,
+  match: MatchWithRelations,
+): Promise<Array<"W" | "D" | "L">> {
+  const { form, error } = await getFormThroughMatch(
+    teamId,
+    { id: match.id, date: match.date, created_at: match.created_at },
+    "D",
+  );
+  if (error) return [];
+  return form;
 }
 
 async function buildPlayedMatchPostcardPayload(
@@ -186,11 +222,18 @@ async function buildScheduledMatchPostcardPayload(
   const teamName = teamDisplayName(team);
   const { homeName, awayName } = postcardSides(match, teamName);
 
-  let venueAddress: string | null = null;
-  if (match.venue_id) {
-    const { data: venue } = await getVenue(match.venue_id);
-    if (venue) venueAddress = formatVenueAddress(venue);
-  }
+  const [squad, form, venueResult] = await Promise.all([
+    loadPostcardSquad(match, team.gender),
+    formBeforeMatch(team.id, match),
+    match.venue_id
+      ? getVenue(match.venue_id)
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  if (squad.error) return { data: null, error: squad.error };
+
+  const venueAddress = venueResult.data
+    ? formatVenueAddress(venueResult.data)
+    : null;
 
   const venueName = match.venue?.name?.trim() || null;
   const dateLabel = scheduledPostcardDateLabel(match.date);
@@ -225,6 +268,8 @@ async function buildScheduledMatchPostcardPayload(
       venueAddress,
       kickoffLabel: scheduledPostcardTimeLabel(match.kickoff_time),
       meetupLabel: scheduledPostcardTimeLabel(match.meetup_time),
+      squadLines: squad.squadLines,
+      form,
       caption,
       fileName: postcardFileName({
         teamName,

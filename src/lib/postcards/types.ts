@@ -59,6 +59,8 @@ export type ScheduledMatchPostcardPayload = MatchPostcardBase & {
   venueAddress: string | null;
   kickoffLabel: string;
   meetupLabel: string;
+  squadLines: string[];
+  form: Array<"W" | "D" | "L">;
 };
 
 export type MatchPostcardPayload =
