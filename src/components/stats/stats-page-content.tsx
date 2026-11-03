@@ -142,6 +142,7 @@ export function StatsPageContent({
   potmByPlayer,
   playerOfTheMonthByPlayer,
   matchesPlayed,
+  periodStartsByPlayer,
   results,
   competitions,
 }: {
@@ -150,6 +151,8 @@ export function StatsPageContent({
   potmByPlayer: PlayerCountPoint[];
   playerOfTheMonthByPlayer: PlayerCountPoint[];
   matchesPlayed: PlayerCountPoint[];
+  /** Club managers only. Omit for everyone else and the section is not shown. */
+  periodStartsByPlayer?: PlayerCountPoint[];
   results: ResultOverTimePoint[];
   competitions: CompetitionFilterOption[];
 }) {
@@ -173,6 +176,19 @@ export function StatsPageContent({
     () =>
       filterPlayerCountPoints(matchesPlayed, competitionId, competitionKind),
     [competitionId, competitionKind, matchesPlayed],
+  );
+  const filteredPeriodStarts = useMemo(
+    () =>
+      filterPlayerCountPoints(
+        periodStartsByPlayer ?? [],
+        competitionId,
+        competitionKind,
+      ),
+    [competitionId, competitionKind, periodStartsByPlayer],
+  );
+  const periodStartsForView = useMemo(
+    () => withPlayedAppearanceCounts(filteredPeriodStarts, filteredAppearances),
+    [filteredAppearances, filteredPeriodStarts],
   );
   const goalsForView = useMemo(
     () => withPlayedAppearanceCounts(goalsByPlayer, filteredAppearances),
@@ -311,6 +327,23 @@ export function StatsPageContent({
         metricAriaLabel="Appearances metric"
         emptyViewTitle="No appearances for this view"
       />
+
+      {periodStartsByPlayer ? (
+        <PlayerCountSection
+          title="Period starts"
+          emptyTitle="No period starts yet"
+          emptyDescription="Add starting players to match periods to populate this chart."
+          emptyFilterTitle="No period starts for this filter"
+          data={periodStartsByPlayer}
+          filtered={periodStartsForView}
+          metricLabel="Periods"
+          perGameLabel="Periods per game"
+          ariaTitle="period starts"
+          emptyFilterDescription={emptyFilterDescription}
+          metricNoun="Periods"
+          emptyViewTitle="No period starts for this view"
+        />
+      ) : null}
     </>
   );
 }
@@ -340,11 +373,13 @@ function PlayerCountSection({
   metricLabel: string;
   perGameLabel?: string;
   ariaTitle: string;
+  /** With `emptyViewTitle`, adds the position filters, using this as the unit. */
   metricNoun?: string;
+  /** Also adds the Total / Per game / Per period "View" filter. */
   metricAriaLabel?: string;
   emptyViewTitle?: string;
 }) {
-  if (metricNoun && metricAriaLabel && emptyViewTitle) {
+  if (metricNoun && emptyViewTitle) {
     return (
       <FilteredPlayerCountSection
         title={title}
@@ -402,7 +437,7 @@ function FilteredPlayerCountSection({
   perGameLabel?: string;
   ariaTitle: string;
   metricNoun: string;
-  metricAriaLabel: string;
+  metricAriaLabel?: string;
   emptyViewTitle: string;
 }) {
   const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
@@ -421,8 +456,8 @@ function FilteredPlayerCountSection({
           <StatFilters
             positions={positions}
             onPositionsChange={setPositions}
-            metric={metric}
-            onMetricChange={setMetric}
+            metric={metricAriaLabel ? metric : undefined}
+            onMetricChange={metricAriaLabel ? setMetric : undefined}
             metricAriaLabel={metricAriaLabel}
           />
           {rows.length === 0 ? (

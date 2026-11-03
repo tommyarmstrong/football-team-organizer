@@ -1,15 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import type { GoalsByPlayerPoint } from "@/lib/data/stats";
 import {
   buildGoalsViewRows,
@@ -23,7 +14,7 @@ import {
 } from "@/lib/stats/competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
-import { statsChartFrameClassName } from "@/components/stats/chart-frame";
+import { PlayerCountChart } from "@/components/stats/stats-charts";
 import { StatFilters } from "@/components/stats/stat-filters";
 
 export function GoalsSection({
@@ -46,12 +37,9 @@ export function GoalsSection({
     competitionKind,
   );
   const metricLabel = goalsMetricLabel(metric);
-  const summary = rows
-    .map((row) => `${row.name}: ${row.displayValue}`)
-    .join("; ");
 
   return (
-    <Section title="Goal Scorers">
+    <Section title="Goals">
       <div className="space-y-4">
         {data.length === 0 ? (
           <EmptyState
@@ -74,95 +62,15 @@ export function GoalsSection({
                 description="Try another competition, position filter, or metric."
               />
             ) : (
-              <figure className={statsChartFrameClassName()}>
-                <div
-                  className="h-72 w-full"
-                  role="img"
-                  aria-label={`Bar chart of ${metricLabel.toLowerCase()} by player. ${summary}`}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={rows}
-                      margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        className="stroke-border"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                        interval={0}
-                        angle={-35}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        allowDecimals={metric !== "total"}
-                        tick={{ fontSize: 12 }}
-                        width={40}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => [
-                          metric === "total" ? value : value.toFixed(2),
-                          metricLabel,
-                        ]}
-                      />
-                      <Bar
-                        dataKey="value"
-                        name={metricLabel}
-                        fill="var(--color-foreground)"
-                        radius={4}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <figcaption className="sr-only">
-                  {metricLabel} by player: {summary}
-                </figcaption>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[20rem] text-left text-sm">
-                    <caption className="sr-only">
-                      Goals and goals per game by player
-                    </caption>
-                    <thead>
-                      <tr className="border-border text-muted-foreground border-b">
-                        <th scope="col" className="py-2 pr-3 font-medium">
-                          Player
-                        </th>
-                        <th
-                          scope="col"
-                          className="py-2 pr-3 font-medium tabular-nums"
-                        >
-                          Goals
-                        </th>
-                        <th
-                          scope="col"
-                          className="py-2 font-medium tabular-nums"
-                        >
-                          Goals per game
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => (
-                        <tr
-                          key={row.playerId}
-                          className="border-border/60 border-b"
-                        >
-                          <td className="py-2 pr-3">{row.name}</td>
-                          <td className="py-2 pr-3 tabular-nums">
-                            {row.goalsDisplay}
-                          </td>
-                          <td className="py-2 tabular-nums">
-                            {row.goalsPerGameDisplay}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </figure>
+              <PlayerCountChart
+                data={rows}
+                metricLabel="Goals"
+                seriesLabel={metricLabel}
+                perGameLabel="Goals per game"
+                ariaTitle={`${metricLabel.toLowerCase()} by player`}
+                allowDecimals={metric !== "total"}
+                valueKey="value"
+              />
             )}
           </>
         )}
