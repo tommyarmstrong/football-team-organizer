@@ -4,6 +4,12 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 4 November 2026 — Squad changes and period starts
+
+- Taking a player out of a match-day squad now also removes them from that match's starting players. Before, they stayed in the starting lineups out of sight, and Period starts on Stats still counted those periods.
+
+---
+
 ## 4 November 2026 — Period starts on Stats
 
 - Club managers see a new "Period starts" section on Stats. It shows how many periods each player started, and periods as a percentage of appearances. The chart and table follow the style of Goals and Assists.

@@ -71,6 +71,16 @@ aggregate score is derived from `goals` rows (our goals where
 `opposition = false` and `own_goal = false`, minus own goals; opposition goals
 via `opposition = true`). This keeps the source of truth in goal events.
 
+### Match squad and period starts
+
+`match_players` is the match-day squad. `match_period_starters` holds the
+players who start each period. Starters are chosen from the squad, but there is
+no foreign key between the two tables (a match with no squad treats every
+rostered player as eligible). A trigger, `match_players_delete_period_starters`,
+keeps them in step: deleting a `match_players` row also deletes that player's
+`match_period_starters` rows for the same match. Stats count starters directly,
+so without it a player removed from the squad would keep their period starts.
+
 ### Sensitive player data
 
 Personal contact details (`phone`, `email`, `address`, `medical_notes`) live in
