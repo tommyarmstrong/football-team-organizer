@@ -21,6 +21,8 @@ describe("stats charts use the card frame", () => {
       "utf8",
     );
     expect(charts).toContain("statsChartFrameClassName()");
-    expect(goals).toContain("statsChartFrameClassName()");
+    // Goals draws its chart and table with the shared player chart.
+    expect(goals).toContain("<PlayerCountChart");
+    expect(goals).not.toContain("<BarChart");
   });
 });

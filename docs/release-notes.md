@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 3 November 2026 — Period starts on Stats
+
+- Club managers see a new Period starts section on Stats, under Appearances. It shows how many periods each player started, and periods per game, with a chart and table like Goals and Assists.
+- It follows the Competition and Competition type filters, and can be narrowed by position.
+- The Goal Scorers section on Stats is now called Goals.
+
+---
+
 ## 2 November 2026 — Speed and reliability
 
 - The dashboard loads faster. The fixtures, leaderboards, and season tiles appear as each one is ready instead of all at once.

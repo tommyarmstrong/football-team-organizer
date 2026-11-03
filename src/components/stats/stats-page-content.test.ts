@@ -58,4 +58,42 @@ describe("StatsPageContent", () => {
     expect(tilesIndex).toBeGreaterThan(filtersIndex);
     expect(piesIndex).toBeGreaterThan(tilesIndex);
   });
+
+  it("shows Period starts beneath Appearances, only when the data is passed", () => {
+    const appearances = source.indexOf('title="Appearances"');
+    const periodStarts = source.indexOf('title="Period starts"');
+    expect(appearances).toBeGreaterThan(-1);
+    expect(periodStarts).toBeGreaterThan(appearances);
+    expect(source).toContain("{periodStartsByPlayer ? (");
+  });
+
+  it("gives Period starts position filters but no view toggle, with the Periods columns", () => {
+    const section = source.slice(
+      source.indexOf('title="Period starts"'),
+      source.indexOf("</>", source.indexOf('title="Period starts"')),
+    );
+    expect(section).toContain('metricLabel="Periods"');
+    expect(section).toContain('perGameLabel="Periods per game"');
+    expect(section).toContain('metricNoun="Periods"');
+    expect(section).toContain("filtered={periodStartsForView}");
+    expect(section).not.toContain("metricAriaLabel");
+  });
+
+  it("applies the page competition filters and appearance counts to period starts", () => {
+    expect(source).toMatch(
+      /filterPlayerCountPoints\(\s*periodStartsByPlayer \?\? \[\],\s*competitionId,\s*competitionKind,?\s*\)/,
+    );
+    expect(source).toContain(
+      "withPlayedAppearanceCounts(filteredPeriodStarts, filteredAppearances)",
+    );
+  });
+
+  it("names the goals section Goals", () => {
+    const goals = readFileSync(
+      path.join(import.meta.dirname, "goals-section.tsx"),
+      "utf8",
+    );
+    expect(goals).toContain('<Section title="Goals">');
+    expect(goals).not.toContain("Goal Scorers");
+  });
 });

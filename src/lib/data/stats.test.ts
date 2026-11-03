@@ -22,6 +22,7 @@ vi.mock("@/lib/data/team", () => ({
 import {
   getAllTeamStats,
   getFormThroughMatch,
+  getPeriodStartsByPlayer,
   parseTeamStatsRpc,
   getPlayerCompetitiveRecord,
 } from "@/lib/data/stats";
@@ -725,5 +726,142 @@ describe("getAllTeamStats with an unexpected RPC result", () => {
     const result = await getAllTeamStats("team-bad");
     expect(result.error).toMatch(/unexpected response/i);
     expect(result.goalsByPlayer).toEqual([]);
+  });
+});
+
+describe("getPeriodStartsByPlayer", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("maps each player's period starts with one event per start", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_period_starts_by_player: okResult([
+              {
+                player_id: "player-1",
+                person_id: "person-1",
+                first_name: "Sam",
+                last_name: "Striker",
+                position: "FWD",
+                count: "3",
+                competitions: [
+                  {
+                    competitionId: "comp-1",
+                    competitionKind: "league",
+                    isFriendly: false,
+                  },
+                  {
+                    competitionId: "comp-1",
+                    competitionKind: "league",
+                    isFriendly: false,
+                  },
+                  {
+                    competitionId: null,
+                    competitionKind: null,
+                    isFriendly: true,
+                  },
+                ],
+              },
+            ]),
+          },
+        },
+      ),
+    );
+
+    const result = await getPeriodStartsByPlayer("team-ps-1");
+
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual([
+      {
+        playerId: "player-1",
+        personId: "person-1",
+        name: "Sam Striker",
+        count: 3,
+        position: "FWD",
+        events: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+          },
+          { competitionId: null, competitionKind: null, isFriendly: true },
+        ],
+      },
+    ]);
+  });
+
+  it("calls the RPC with the team id", async () => {
+    const rpc = vi.fn().mockResolvedValue(okResult([]));
+    createClientMock.mockResolvedValue({ rpc });
+
+    await getPeriodStartsByPlayer("team-ps-2");
+
+    expect(rpc).toHaveBeenCalledWith("get_period_starts_by_player", {
+      p_team_id: "team-ps-2",
+    });
+  });
+
+  it("defaults a missing position and missing competitions", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_period_starts_by_player: okResult([
+              {
+                player_id: "player-2",
+                person_id: "person-2",
+                first_name: "Bea",
+                last_name: "Bench",
+                count: 1,
+                competitions: null,
+              },
+            ]),
+          },
+        },
+      ),
+    );
+
+    const result = await getPeriodStartsByPlayer("team-ps-3");
+    expect(result.data[0]).toMatchObject({ position: null, events: [] });
+  });
+
+  it("returns an empty list for a non-array result", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        { rpcResults: { get_period_starts_by_player: okResult({}) } },
+      ),
+    );
+    expect(await getPeriodStartsByPlayer("team-ps-4")).toEqual({
+      data: [],
+      error: null,
+    });
+  });
+
+  it("returns the error and no rows when the RPC fails", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_period_starts_by_player: errResult("period starts failed"),
+          },
+        },
+      ),
+    );
+    expect(await getPeriodStartsByPlayer("team-ps-5")).toEqual({
+      data: [],
+      error: "period starts failed",
+    });
   });
 });

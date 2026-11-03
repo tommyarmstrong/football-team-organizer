@@ -49,6 +49,13 @@ type RpcAssistsEntry = {
   }>;
 };
 
+/** Competition details for one counted event (goal, assist, appearance, ...). */
+type RpcCompetitionEvent = {
+  competitionId: string | null;
+  competitionKind: CompetitionKind | null;
+  isFriendly: boolean;
+};
+
 type RpcPotmEntry = {
   player_id: string;
   person_id: string;
@@ -106,6 +113,16 @@ type TeamStatsRpcResult = {
   matches_played_by_player: RpcMatchesPlayedEntry[];
   results_over_time: RpcResultEntry[];
 };
+
+function mapCompetitionEvents(
+  events: RpcCompetitionEvent[] | null | undefined,
+): NonNullable<PlayerCountPoint["events"]> {
+  return (events ?? []).map((event) => ({
+    competitionId: event.competitionId,
+    competitionKind: event.competitionKind,
+    isFriendly: event.isFriendly,
+  }));
+}
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
@@ -203,11 +220,7 @@ export const getAllTeamStats = cache(
         position: entry.position ?? null,
         matchesPlayed: Number(entry.matches_played),
         periodsPlayed: Number(entry.periods_played),
-        goalCompetitions: (entry.goal_competitions ?? []).map((gc) => ({
-          competitionId: gc.competitionId,
-          competitionKind: gc.competitionKind,
-          isFriendly: gc.isFriendly,
-        })),
+        goalCompetitions: mapCompetitionEvents(entry.goal_competitions),
       }),
     );
 
@@ -223,11 +236,7 @@ export const getAllTeamStats = cache(
         position: entry.position ?? null,
         matchesPlayed: Number(entry.matches_played),
         periodsPlayed: Number(entry.periods_played ?? 0),
-        events: (entry.competitions ?? []).map((c) => ({
-          competitionId: c.competitionId,
-          competitionKind: c.competitionKind,
-          isFriendly: c.isFriendly,
-        })),
+        events: mapCompetitionEvents(entry.competitions),
       }),
     );
 
@@ -240,11 +249,7 @@ export const getAllTeamStats = cache(
         personId: entry.person_id,
         name: `${entry.first_name} ${entry.last_name}`,
         count: Number(entry.count),
-        events: (entry.competitions ?? []).map((c) => ({
-          competitionId: c.competitionId,
-          competitionKind: c.competitionKind,
-          isFriendly: c.isFriendly,
-        })),
+        events: mapCompetitionEvents(entry.competitions),
       }),
     );
 
@@ -268,11 +273,7 @@ export const getAllTeamStats = cache(
         count: Number(entry.count),
         position: entry.position ?? null,
         periodsPlayed: Number(entry.periods_played ?? 0),
-        events: (entry.competitions ?? []).map((c) => ({
-          competitionId: c.competitionId,
-          competitionKind: c.competitionKind,
-          isFriendly: c.isFriendly,
-        })),
+        events: mapCompetitionEvents(entry.competitions),
       }),
     );
 
@@ -315,6 +316,45 @@ export const getAllTeamStats = cache(
       matchesPlayed,
       resultsOverTime,
       form: recentForm,
+      error: null,
+    };
+  },
+);
+
+type RpcPeriodStartsEntry = {
+  player_id: string;
+  person_id: string;
+  first_name: string;
+  last_name: string;
+  position?: string | null;
+  count: number;
+  competitions: RpcCompetitionEvent[];
+};
+
+/**
+ * Period starts per player (club managers only; the RPC returns an empty list
+ * for anyone else). Each player's `events` has one entry per period they
+ * started, so the usual competition filters can count the matching ones.
+ */
+export const getPeriodStartsByPlayer = cache(
+  async (
+    teamId: string,
+  ): Promise<{ data: PlayerCountPoint[]; error: string | null }> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_period_starts_by_player", {
+      p_team_id: teamId,
+    });
+    if (error) return { data: [], error: error.message };
+
+    return {
+      data: asArray<RpcPeriodStartsEntry>(data).map((entry) => ({
+        playerId: entry.player_id,
+        personId: entry.person_id,
+        name: `${entry.first_name} ${entry.last_name}`,
+        count: Number(entry.count),
+        position: entry.position ?? null,
+        events: mapCompetitionEvents(entry.competitions),
+      })),
       error: null,
     };
   },

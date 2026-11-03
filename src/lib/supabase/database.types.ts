@@ -1364,6 +1364,10 @@ export type Database = {
         Args: { p_team_id: string };
         Returns: Json;
       };
+      get_period_starts_by_player: {
+        Args: { p_team_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";

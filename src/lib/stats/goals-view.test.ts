@@ -164,16 +164,20 @@ describe("buildGoalsViewRows", () => {
     ]);
   });
 
-  it("always includes goals and goals-per-game table values", () => {
-    const rows = buildGoalsViewRows(sample, ["ALL"], "total");
-    expect(rows[0]).toMatchObject({
-      name: "Ada Mid",
-      goalsDisplay: "6",
-      goalsPerGameDisplay: "2.00",
+  it("keeps total goals and games on each row whatever the metric", () => {
+    const rows = buildGoalsViewRows(sample, ["ALL"], "per_game");
+    expect(rows.find((row) => row.name === "Ada Mid")).toMatchObject({
+      count: 6,
+      matchesPlayed: 3,
+      value: 2,
     });
+  });
+
+  it("includes players with goals but no games in the total view", () => {
+    const rows = buildGoalsViewRows(sample, ["ALL"], "total");
     expect(rows.find((row) => row.name === "Cal Def")).toMatchObject({
-      goalsDisplay: "2",
-      goalsPerGameDisplay: "—",
+      count: 2,
+      matchesPlayed: 0,
     });
   });
 });
