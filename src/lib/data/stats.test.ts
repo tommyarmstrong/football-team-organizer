@@ -734,7 +734,7 @@ describe("getPeriodStartsByPlayer", () => {
     vi.clearAllMocks();
   });
 
-  it("maps each player's period starts with one event per start", async () => {
+  it("maps each player's period starts with one event per start and their periods in games", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient(
         {},
@@ -753,16 +753,33 @@ describe("getPeriodStartsByPlayer", () => {
                     competitionId: "comp-1",
                     competitionKind: "league",
                     isFriendly: false,
+                    periodType: "quarters",
                   },
                   {
                     competitionId: "comp-1",
                     competitionKind: "league",
                     isFriendly: false,
+                    periodType: "extra_time",
                   },
                   {
                     competitionId: null,
                     competitionKind: null,
                     isFriendly: true,
+                    periodType: "halves",
+                  },
+                ],
+                periods_in_games: [
+                  {
+                    competitionId: "comp-1",
+                    competitionKind: "league",
+                    isFriendly: false,
+                    periodType: "quarters",
+                  },
+                  {
+                    competitionId: "comp-1",
+                    competitionKind: "league",
+                    isFriendly: false,
+                    periodType: "halves",
                   },
                 ],
               },
@@ -787,16 +804,81 @@ describe("getPeriodStartsByPlayer", () => {
             competitionId: "comp-1",
             competitionKind: "league",
             isFriendly: false,
+            periodType: "quarters",
           },
           {
             competitionId: "comp-1",
             competitionKind: "league",
             isFriendly: false,
+            periodType: "extra_time",
           },
-          { competitionId: null, competitionKind: null, isFriendly: true },
+          {
+            competitionId: null,
+            competitionKind: null,
+            isFriendly: true,
+            periodType: "halves",
+          },
+        ],
+        periodsInGames: [
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+            periodType: "quarters",
+          },
+          {
+            competitionId: "comp-1",
+            competitionKind: "league",
+            isFriendly: false,
+            periodType: "halves",
+          },
         ],
       },
     ]);
+  });
+
+  it("treats a missing or unknown period type as other", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient(
+        {},
+        {
+          rpcResults: {
+            get_period_starts_by_player: okResult([
+              {
+                player_id: "player-3",
+                person_id: "person-3",
+                first_name: "Old",
+                last_name: "Shape",
+                count: 2,
+                competitions: [
+                  {
+                    competitionId: null,
+                    competitionKind: null,
+                    isFriendly: true,
+                  },
+                  {
+                    ...{
+                      competitionId: null,
+                      competitionKind: null,
+                      isFriendly: true,
+                      periodType: "halves",
+                    },
+                    periodType: "penalties",
+                  },
+                ],
+              },
+            ]),
+          },
+        },
+      ),
+    );
+
+    const result = await getPeriodStartsByPlayer("team-ps-5");
+    expect(result.data[0]?.events?.map((event) => event.periodType)).toEqual([
+      "other",
+      "other",
+    ]);
+    expect(result.data[0]?.periodsInGames).toEqual([]);
   });
 
   it("calls the RPC with the team id", async () => {
@@ -832,7 +914,11 @@ describe("getPeriodStartsByPlayer", () => {
     );
 
     const result = await getPeriodStartsByPlayer("team-ps-3");
-    expect(result.data[0]).toMatchObject({ position: null, events: [] });
+    expect(result.data[0]).toMatchObject({
+      position: null,
+      events: [],
+      periodsInGames: [],
+    });
   });
 
   it("returns an empty list for a non-array result", async () => {

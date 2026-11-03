@@ -22,12 +22,16 @@ import {
   tallyResults,
   withGoalDifference,
 } from "@/lib/stats/results-view";
+import {
+  formatPeriodsPerGamePercent,
+  periodsPerGamePercent,
+} from "@/lib/stats/period-starts-view";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
 /** What the per-player bar chart and table need from each player. */
 export type PlayerChartRow = Pick<
   PlayerCountPoint,
-  "playerId" | "name" | "count" | "matchesPlayed"
+  "playerId" | "name" | "count" | "matchesPlayed" | "periodsAvailable"
 > & { value?: number };
 
 export function PlayerCountChart({
@@ -38,6 +42,8 @@ export function PlayerCountChart({
   allowDecimals = false,
   valueKey = "count",
   seriesLabel,
+  perGameBasis = "matches",
+  percent = false,
 }: {
   data: PlayerChartRow[];
   metricLabel: string;
@@ -47,12 +53,24 @@ export function PlayerCountChart({
   valueKey?: "count" | "value";
   /** Chart series name. The table keeps `metricLabel` for the total column. */
   seriesLabel?: string;
+  /**
+   * What the per-game column divides by: the player's matches (default), or
+   * the periods in their games, shown as a percent.
+   */
+  perGameBasis?: "matches" | "periods";
+  /** The plotted values are percents (0-100), e.g. periods per game (%). */
+  percent?: boolean;
 }) {
   const seriesName = seriesLabel ?? metricLabel;
   const shownValue = (row: PlayerChartRow) =>
     valueKey === "value" && row.value != null ? row.value : row.count;
+  const plotsPercent = percent && valueKey === "value";
   const formatShown = (value: number) =>
-    allowDecimals ? value.toFixed(2) : String(value);
+    plotsPercent
+      ? formatPeriodsPerGamePercent(value)
+      : allowDecimals
+        ? value.toFixed(2)
+        : String(value);
   const summary = data
     .map((row) => `${row.name}: ${formatShown(shownValue(row))}`)
     .join("; ");
@@ -81,12 +99,13 @@ export function PlayerCountChart({
             <YAxis
               allowDecimals={allowDecimals}
               tick={{ fontSize: 12 }}
-              width={allowDecimals ? 40 : 32}
+              width={plotsPercent ? 48 : allowDecimals ? 40 : 32}
+              tickFormatter={plotsPercent ? (value) => `${value}%` : undefined}
             />
             {allowDecimals ? (
               <Tooltip
                 formatter={(value) => [
-                  typeof value === "number" ? value.toFixed(2) : value,
+                  typeof value === "number" ? formatShown(value) : value,
                   seriesName,
                 ]}
               />
@@ -135,9 +154,16 @@ export function PlayerCountChart({
           <tbody>
             {data.map((row) => {
               const perGame =
-                row.matchesPlayed != null && row.matchesPlayed > 0
-                  ? (row.count / row.matchesPlayed).toFixed(2)
-                  : "—";
+                perGameBasis === "periods"
+                  ? formatPeriodsPerGamePercent(
+                      periodsPerGamePercent(
+                        row.count,
+                        row.periodsAvailable ?? 0,
+                      ),
+                    )
+                  : row.matchesPlayed != null && row.matchesPlayed > 0
+                    ? (row.count / row.matchesPlayed).toFixed(2)
+                    : "—";
               return (
                 <tr key={row.playerId} className="border-border/60 border-b">
                   <td className="py-2 pr-3">{row.name}</td>

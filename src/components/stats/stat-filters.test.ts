@@ -62,4 +62,48 @@ describe("StatFilters", () => {
     // View sits under Position.
     expect(html.indexOf(">Position<")).toBeLessThan(html.indexOf(">View<"));
   });
+
+  it("omits the type filter unless it is wired up", () => {
+    const html = render({
+      metric: "total",
+      onMetricChange: vi.fn(),
+      metricAriaLabel: "Period starts metric",
+    });
+    expect(html).not.toContain(">Type<");
+    expect(html).not.toContain(">Quarters<");
+  });
+
+  it("offers All, Quarters, Halves and Extra time with the selected type pressed", () => {
+    const html = render({ periodType: "all", onPeriodTypeChange: vi.fn() });
+    expect(html).toContain('aria-label="Period type filters"');
+    for (const label of ["All", "Quarters", "Halves", "Extra time"]) {
+      expect(html).toContain(`>${label}</button>`);
+    }
+    expect(html).toMatch(/aria-pressed="true"[^>]*>All</);
+    expect(html).toMatch(/aria-pressed="false"[^>]*>Halves</);
+
+    const halves = render({
+      periodType: "halves",
+      onPeriodTypeChange: vi.fn(),
+    });
+    expect(halves).toMatch(/aria-pressed="true"[^>]*>Halves</);
+    expect(halves).toMatch(/aria-pressed="false"[^>]*>All</);
+  });
+
+  it("puts Type between Position and View", () => {
+    const html = render({
+      periodType: "all",
+      onPeriodTypeChange: vi.fn(),
+      metric: "total",
+      onMetricChange: vi.fn(),
+      metricAriaLabel: "Period starts metric",
+      metricOptions: PERIOD_STARTS_METRIC_OPTIONS,
+    });
+    const position = html.indexOf(">Position<");
+    const type = html.indexOf(">Type<");
+    const view = html.indexOf(">View<");
+    expect(position).toBeGreaterThan(-1);
+    expect(type).toBeGreaterThan(position);
+    expect(view).toBeGreaterThan(type);
+  });
 });
