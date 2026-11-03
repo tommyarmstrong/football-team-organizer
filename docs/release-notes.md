@@ -8,6 +8,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 - Period starts has a new Type filter between Position and View: All (the default), Quarters, Halves, or Extra time. It changes both the chart and the table.
 - Periods per game is now a percentage: the periods a player started as a share of the periods in the games they played. The table column is called Periods per game (%), and the View filter's Periods per game option uses the same figure. It follows the Type filter and the Competition filters.
+- Period starts is sorted highest first, and re-sorts when you change the filters or the View (in Periods per game, by the percentage).
 - Appearances no longer has a View filter. It still follows the Competition and Competition type filters, and can be narrowed by position.
 
 ---
