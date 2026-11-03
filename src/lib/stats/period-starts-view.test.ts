@@ -122,4 +122,36 @@ describe("period starts view", () => {
     const [row] = withPlayedAppearanceCounts(periodStarts, []);
     expect(row?.matchesPlayed).toBe(0);
   });
+
+  it("keeps the rows ordered by periods in both views", () => {
+    const withGames = withPlayedAppearanceCounts(periodStarts, appearances);
+    for (const metric of ["total", "per_game"] as const) {
+      const rows = buildCountViewRows(withGames, ["ALL"], metric, "count");
+      expect(rows.map((row) => row.count)).toEqual([5, 4, 1]);
+    }
+  });
+
+  it("plots periods per game in the per-game view", () => {
+    const rows = buildCountViewRows(
+      withPlayedAppearanceCounts(periodStarts, appearances),
+      ["ALL"],
+      "per_game",
+      "count",
+    );
+    expect(rows.map((row) => row.value.toFixed(2))).toEqual([
+      "1.67",
+      "2.00",
+      "1.00",
+    ]);
+  });
+
+  it("leaves out players with no games from the per-game view", () => {
+    const rows = buildCountViewRows(
+      withPlayedAppearanceCounts(periodStarts, appearances.slice(0, 2)),
+      ["ALL"],
+      "per_game",
+      "count",
+    );
+    expect(rows.map((row) => row.name)).toEqual(["Ada Wing", "Bea Def"]);
+  });
 });

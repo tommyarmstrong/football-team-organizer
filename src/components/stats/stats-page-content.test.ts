@@ -67,7 +67,7 @@ describe("StatsPageContent", () => {
     expect(source).toContain("{periodStartsByPlayer ? (");
   });
 
-  it("gives Period starts position filters but no view toggle, with the Periods columns", () => {
+  it("gives Period starts position filters and a Periods / Periods per game view, ordered by periods", () => {
     const section = source.slice(
       source.indexOf('title="Period starts"'),
       source.indexOf("</>", source.indexOf('title="Period starts"')),
@@ -76,7 +76,13 @@ describe("StatsPageContent", () => {
     expect(section).toContain('perGameLabel="Periods per game"');
     expect(section).toContain('metricNoun="Periods"');
     expect(section).toContain("filtered={periodStartsForView}");
-    expect(section).not.toContain("metricAriaLabel");
+    expect(section).toContain('metricAriaLabel="Period starts metric"');
+    expect(section).toContain("metricOptions={PERIOD_STARTS_METRIC_OPTIONS}");
+    expect(section).toContain('orderBy="count"');
+  });
+
+  it("starts every filtered section on the total view", () => {
+    expect(source).toContain('useState<GoalsMetric>("total")');
   });
 
   it("applies the page competition filters and appearance counts to period starts", () => {

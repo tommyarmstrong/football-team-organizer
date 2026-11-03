@@ -7,7 +7,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 ## 3 November 2026 — Period starts on Stats
 
 - Club managers see a new Period starts section on Stats, under Appearances. It shows how many periods each player started, and periods per game, with a chart and table like Goals and Assists.
-- It follows the Competition and Competition type filters, and can be narrowed by position.
+- It follows the Competition and Competition type filters, and can be narrowed by position. The chart can show periods or periods per game. Players are listed from most periods to fewest.
 - The Goal Scorers section on Stats is now called Goals.
 
 ---
