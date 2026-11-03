@@ -14,11 +14,17 @@ describe("StatsPageContent", () => {
     expect(source).toContain("withPlayedAppearanceCounts");
   });
 
-  it("gives assists and appearances the goal scorer filters", () => {
+  it("gives assists the goal scorer filters and appearances the position filters only", () => {
     expect(source).toContain('metricNoun="Assists"');
     expect(source).toContain('metricAriaLabel="Assists metric"');
     expect(source).toContain('metricNoun="Matches"');
-    expect(source).toContain('metricAriaLabel="Appearances metric"');
+    const appearances = source.slice(
+      source.indexOf('title="Appearances"'),
+      source.indexOf("{periodStartsByPlayer ? ("),
+    );
+    expect(appearances).toContain("filtered={filteredAppearances}");
+    expect(appearances).not.toContain("metricAriaLabel");
+    expect(appearances).not.toContain("perGameLabel");
     const potm = source.slice(
       source.indexOf('title="Coach\'s player of the match"'),
       source.indexOf("<GoalsSection"),
@@ -67,31 +73,45 @@ describe("StatsPageContent", () => {
     expect(source).toContain("{periodStartsByPlayer ? (");
   });
 
-  it("gives Period starts position filters and a Periods / Periods per game view, ordered by periods", () => {
+  it("gives Period starts position, Type and View filters, in that order", () => {
     const section = source.slice(
-      source.indexOf('title="Period starts"'),
-      source.indexOf("</>", source.indexOf('title="Period starts"')),
+      source.indexOf("function PeriodStartsSection"),
     );
-    expect(section).toContain('metricLabel="Periods"');
-    expect(section).toContain('perGameLabel="Periods per game"');
-    expect(section).toContain('metricNoun="Periods"');
-    expect(section).toContain("filtered={periodStartsForView}");
-    expect(section).toContain('metricAriaLabel="Period starts metric"');
-    expect(section).toContain("metricOptions={PERIOD_STARTS_METRIC_OPTIONS}");
-    expect(section).toContain('orderBy="count"');
+    const filters = section.slice(
+      section.indexOf("<StatFilters"),
+      section.indexOf("/>", section.indexOf("<StatFilters")),
+    );
+    expect(filters).toContain("onPositionsChange={setPositions}");
+    expect(filters).toContain("periodType={periodType}");
+    expect(filters).toContain("onPeriodTypeChange={setPeriodType}");
+    expect(filters).toContain('metricAriaLabel="Period starts metric"');
+    expect(filters).toContain("metricOptions={PERIOD_STARTS_METRIC_OPTIONS}");
+    expect(section).toContain("DEFAULT_PERIOD_TYPE_FILTER");
+    expect(section).toContain('useState<GoalsMetric>("total")');
   });
 
-  it("starts every filtered section on the total view", () => {
-    expect(source).toContain('useState<GoalsMetric>("total")');
+  it("shows Period starts as periods per game (%) from the filtered periods", () => {
+    const section = source.slice(
+      source.indexOf("function PeriodStartsSection"),
+    );
+    expect(section).toContain(
+      "filterPeriodStarts(data, competitionId, competitionKind, periodType)",
+    );
+    expect(section).toContain("buildPeriodStartsViewRows(");
+    expect(section).toContain("PERIODS_PER_GAME_PERCENT_LABEL");
+    expect(section).toContain('perGameBasis="periods"');
+    expect(section).toContain('percent={metric === "per_game"}');
   });
 
-  it("applies the page competition filters and appearance counts to period starts", () => {
-    expect(source).toMatch(
-      /filterPlayerCountPoints\(\s*periodStartsByPlayer \?\? \[\],\s*competitionId,\s*competitionKind,?\s*\)/,
+  it("passes the page competition filters to Period starts", () => {
+    const section = source.slice(
+      source.indexOf("{periodStartsByPlayer ? ("),
+      source.indexOf("</>", source.indexOf("{periodStartsByPlayer ? (")),
     );
-    expect(source).toContain(
-      "withPlayedAppearanceCounts(filteredPeriodStarts, filteredAppearances)",
-    );
+    expect(section).toContain("<PeriodStartsSection");
+    expect(section).toContain("data={periodStartsByPlayer}");
+    expect(section).toContain("competitionId={competitionId}");
+    expect(section).toContain("competitionKind={competitionKind}");
   });
 
   it("names the goals section Goals", () => {

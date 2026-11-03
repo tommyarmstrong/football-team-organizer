@@ -7,6 +7,10 @@ import {
   type GoalsMetric,
   type GoalsPositionFilter,
 } from "@/lib/stats/goals-view";
+import {
+  PERIOD_TYPE_FILTER_OPTIONS,
+  type PeriodTypeFilter,
+} from "@/lib/stats/period-starts-view";
 
 function FilterButton({
   label,
@@ -56,9 +60,11 @@ function FilterGroup({
 }
 
 /**
- * Position filters, plus the Total / Per game / Per period view when
- * `metric`, `onMetricChange` and `metricAriaLabel` are all given. Sections
- * that only make sense as a total (e.g. period starts) leave those out.
+ * Position filters, then the period Type filter when `periodType` and
+ * `onPeriodTypeChange` are given, then the Total / Per game / Per period view
+ * when `metric`, `onMetricChange` and `metricAriaLabel` are all given.
+ * Sections that only make sense as a total (e.g. appearances) leave the view
+ * out.
  */
 export function StatFilters({
   positions,
@@ -67,6 +73,8 @@ export function StatFilters({
   onMetricChange,
   metricAriaLabel,
   metricOptions = GOALS_METRIC_OPTIONS,
+  periodType,
+  onPeriodTypeChange,
 }: {
   positions: GoalsPositionFilter[];
   onPositionsChange: (next: GoalsPositionFilter[]) => void;
@@ -75,6 +83,9 @@ export function StatFilters({
   metricAriaLabel?: string;
   /** The buttons in the View row. Defaults to Total / Per game / Per period. */
   metricOptions?: ReadonlyArray<{ value: GoalsMetric; label: string }>;
+  /** Period Type filter (All / Quarters / Halves / Extra time). */
+  periodType?: PeriodTypeFilter;
+  onPeriodTypeChange?: (next: PeriodTypeFilter) => void;
 }) {
   return (
     <>
@@ -90,6 +101,19 @@ export function StatFilters({
           />
         ))}
       </FilterGroup>
+
+      {periodType && onPeriodTypeChange ? (
+        <FilterGroup heading="Type" groupLabel="Period type filters">
+          {PERIOD_TYPE_FILTER_OPTIONS.map((option) => (
+            <FilterButton
+              key={option.value}
+              label={option.label}
+              pressed={periodType === option.value}
+              onClick={() => onPeriodTypeChange(option.value)}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
 
       {metric && onMetricChange && metricAriaLabel ? (
         <FilterGroup heading="View" groupLabel={metricAriaLabel}>

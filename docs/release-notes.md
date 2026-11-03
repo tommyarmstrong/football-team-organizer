@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 4 November 2026 — Period starts filters
+
+- Period starts has a new Type filter between Position and View: All (the default), Quarters, Halves, or Extra time. It changes both the chart and the table.
+- Periods per game is now a percentage: the periods a player started as a share of the periods in the games they played. The table column is called Periods per game (%), and the View filter's Periods per game option uses the same figure. It follows the Type filter and the Competition filters.
+- Appearances no longer has a View filter. It still follows the Competition and Competition type filters, and can be narrowed by position.
+
+---
+
 ## 3 November 2026 — Period starts on Stats
 
 - Club managers see a new Period starts section on Stats, under Appearances. It shows how many periods each player started, and periods per game, with a chart and table like Goals and Assists.

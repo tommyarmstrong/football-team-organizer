@@ -321,6 +321,8 @@ export const getAllTeamStats = cache(
   },
 );
 
+type RpcPeriodEvent = RpcCompetitionEvent & { periodType?: string | null };
+
 type RpcPeriodStartsEntry = {
   player_id: string;
   person_id: string;
@@ -328,13 +330,37 @@ type RpcPeriodStartsEntry = {
   last_name: string;
   position?: string | null;
   count: number;
-  competitions: RpcCompetitionEvent[];
+  competitions: RpcPeriodEvent[];
+  /** Every period of the played matches the player was in. */
+  periods_in_games?: RpcPeriodEvent[] | null;
 };
+
+const PERIOD_TYPES: readonly PeriodType[] = [
+  "quarters",
+  "halves",
+  "extra_time",
+  "other",
+];
+
+function mapPeriodEvents(
+  events: RpcPeriodEvent[] | null | undefined,
+): PeriodEvent[] {
+  return (events ?? []).map((event) => ({
+    competitionId: event.competitionId,
+    competitionKind: event.competitionKind,
+    isFriendly: event.isFriendly,
+    periodType: PERIOD_TYPES.includes(event.periodType as PeriodType)
+      ? (event.periodType as PeriodType)
+      : "other",
+  }));
+}
 
 /**
  * Period starts per player (club managers only; the RPC returns an empty list
  * for anyone else). Each player's `events` has one entry per period they
- * started, so the usual competition filters can count the matching ones.
+ * started, so the usual competition and period-type filters can count the
+ * matching ones. `periodsInGames` has one entry per period of every played
+ * match the player was in, which is what "periods per game" is a percent of.
  */
 export const getPeriodStartsByPlayer = cache(
   async (
@@ -353,7 +379,8 @@ export const getPeriodStartsByPlayer = cache(
         name: `${entry.first_name} ${entry.last_name}`,
         count: Number(entry.count),
         position: entry.position ?? null,
-        events: mapCompetitionEvents(entry.competitions),
+        events: mapPeriodEvents(entry.competitions),
+        periodsInGames: mapPeriodEvents(entry.periods_in_games),
       })),
       error: null,
     };
@@ -377,6 +404,16 @@ export type GoalsByPlayerPoint = {
   }>;
 };
 
+/** How a match period is grouped for the Period starts "Type" filter. */
+export type PeriodType = "quarters" | "halves" | "extra_time" | "other";
+
+export type PeriodEvent = {
+  competitionId: string | null;
+  competitionKind: CompetitionKind | null;
+  isFriendly: boolean;
+  periodType: PeriodType;
+};
+
 export type PlayerCountPoint = {
   playerId: string;
   /** Links the player to /people/<personId>. */
@@ -390,7 +427,13 @@ export type PlayerCountPoint = {
     competitionId: string | null;
     competitionKind: CompetitionKind | null;
     isFriendly: boolean;
+    /** Period starts only. */
+    periodType?: PeriodType;
   }>;
+  /** Period starts only: every period of the played matches the player was in. */
+  periodsInGames?: PeriodEvent[];
+  /** Period starts only: how many of `periodsInGames` pass the active filters. */
+  periodsAvailable?: number;
 };
 
 export type ResultOverTimePoint = {
