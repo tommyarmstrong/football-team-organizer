@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import type {
   GoalsByPlayerPoint,
   PlayerCountPoint,
@@ -12,7 +12,11 @@ import {
   ALL_LEAGUE_AND_CUP,
   type CompetitionFilterOption,
 } from "@/lib/stats/competition-filters";
-import { buildCountViewRows, countMetricLabel } from "@/lib/stats/count-view";
+import {
+  buildCountViewRows,
+  countMetricLabel,
+  PERIOD_STARTS_METRIC_OPTIONS,
+} from "@/lib/stats/count-view";
 import {
   filterPlayerCountPoints,
   withPlayedAppearanceCounts,
@@ -341,6 +345,9 @@ export function StatsPageContent({
           ariaTitle="period starts"
           emptyFilterDescription={emptyFilterDescription}
           metricNoun="Periods"
+          metricAriaLabel="Period starts metric"
+          metricOptions={PERIOD_STARTS_METRIC_OPTIONS}
+          orderBy="count"
           emptyViewTitle="No period starts for this view"
         />
       ) : null}
@@ -361,6 +368,8 @@ function PlayerCountSection({
   ariaTitle,
   metricNoun,
   metricAriaLabel,
+  metricOptions,
+  orderBy,
   emptyViewTitle,
 }: {
   title: string;
@@ -377,6 +386,10 @@ function PlayerCountSection({
   metricNoun?: string;
   /** Also adds the Total / Per game / Per period "View" filter. */
   metricAriaLabel?: string;
+  /** Buttons for the "View" filter. Defaults to Total / Per game / Per period. */
+  metricOptions?: ComponentProps<typeof StatFilters>["metricOptions"];
+  /** "count" keeps rows ordered by the total in every view. */
+  orderBy?: "value" | "count";
   emptyViewTitle?: string;
 }) {
   if (metricNoun && emptyViewTitle) {
@@ -391,6 +404,8 @@ function PlayerCountSection({
         ariaTitle={ariaTitle}
         metricNoun={metricNoun}
         metricAriaLabel={metricAriaLabel}
+        metricOptions={metricOptions}
+        orderBy={orderBy}
         emptyViewTitle={emptyViewTitle}
       />
     );
@@ -427,6 +442,8 @@ function FilteredPlayerCountSection({
   ariaTitle,
   metricNoun,
   metricAriaLabel,
+  metricOptions,
+  orderBy,
   emptyViewTitle,
 }: {
   title: string;
@@ -438,13 +455,15 @@ function FilteredPlayerCountSection({
   ariaTitle: string;
   metricNoun: string;
   metricAriaLabel?: string;
+  metricOptions?: ComponentProps<typeof StatFilters>["metricOptions"];
+  orderBy?: "value" | "count";
   emptyViewTitle: string;
 }) {
   const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
   const [metric, setMetric] = useState<GoalsMetric>("total");
   const rows = useMemo(
-    () => buildCountViewRows(filtered, positions, metric),
-    [filtered, metric, positions],
+    () => buildCountViewRows(filtered, positions, metric, orderBy),
+    [filtered, metric, orderBy, positions],
   );
 
   return (
@@ -459,6 +478,7 @@ function FilteredPlayerCountSection({
             metric={metricAriaLabel ? metric : undefined}
             onMetricChange={metricAriaLabel ? setMetric : undefined}
             metricAriaLabel={metricAriaLabel}
+            metricOptions={metricOptions}
           />
           {rows.length === 0 ? (
             <EmptyState

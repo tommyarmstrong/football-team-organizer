@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { PERIOD_STARTS_METRIC_OPTIONS } from "@/lib/stats/count-view";
 import { StatFilters } from "@/components/stats/stat-filters";
 
 function render(props: Partial<Parameters<typeof StatFilters>[0]> = {}) {
@@ -45,5 +46,20 @@ describe("StatFilters", () => {
     expect(html).toMatch(/aria-pressed="true"[^>]*>Per game</);
     expect(html).toContain(">Total</button>");
     expect(html).toContain(">Per period</button>");
+  });
+
+  it("shows only the given view options", () => {
+    const html = render({
+      metric: "total",
+      onMetricChange: vi.fn(),
+      metricAriaLabel: "Period starts metric",
+      metricOptions: PERIOD_STARTS_METRIC_OPTIONS,
+    });
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Periods</);
+    expect(html).toContain(">Periods per game</button>");
+    expect(html).not.toContain(">Per period<");
+    expect(html).not.toContain(">Total<");
+    // View sits under Position.
+    expect(html.indexOf(">Position<")).toBeLessThan(html.indexOf(">View<"));
   });
 });
