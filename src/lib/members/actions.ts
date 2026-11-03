@@ -5,8 +5,7 @@ import type { ActionState } from "@/lib/action-state";
 import { getGuardian } from "@/lib/data/guardians";
 import { addTeamMember, removeTeamMember } from "@/lib/data/members";
 import { TEAM_ROLES } from "@/lib/constants";
-import type { TeamRole } from "@/lib/supabase/database.types";
-import { str } from "@/lib/form-parse";
+import { isOneOf, str } from "@/lib/form-parse";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -17,12 +16,12 @@ export async function addTeamMemberAction(
   formData: FormData,
 ): Promise<ActionState> {
   const userId = str(formData, "user_id");
-  const role = str(formData, "role") as TeamRole;
+  const role = str(formData, "role");
 
   if (!UUID_RE.test(userId)) {
     return { error: "Enter a valid Auth user UUID." };
   }
-  if (!TEAM_ROLES.includes(role)) {
+  if (!isOneOf(TEAM_ROLES, role)) {
     return { error: "Select a valid role." };
   }
 

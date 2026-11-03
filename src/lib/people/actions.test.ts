@@ -9,6 +9,7 @@ import {
 
 const {
   revalidatePathMock,
+  updateTagMock,
   redirectMock,
   getViewerContextMock,
   getPrimaryClubMock,
@@ -38,6 +39,7 @@ const {
   sendPersonInvitationMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
+  updateTagMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
@@ -69,7 +71,10 @@ const {
   sendPersonInvitationMock: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
+  updateTag: updateTagMock,
+}));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
@@ -355,6 +360,7 @@ describe("reactivatePersonAction", () => {
     const result = await reactivatePersonAction("person-1");
     expect(result.success).toMatch(/re-activated/i);
     expect(reactivatePersonMock).toHaveBeenCalledWith("person-1");
+    expect(updateTagMock).toHaveBeenCalledWith("rosters");
   });
 });
 
@@ -702,6 +708,8 @@ describe("removeClubRoleFromPersonAction", () => {
       "player-1",
     );
     expect(result.success).toMatch(/deactivated/i);
+    // A deactivated player must drop off cached team rosters.
+    expect(updateTagMock).toHaveBeenCalledWith("rosters");
   });
 
   it("maps missing and failed player/coach/guardian/manager removals", async () => {
@@ -1154,6 +1162,8 @@ describe("updatePersonAction", () => {
     );
     expect(result).toEqual({ success: "Person saved." });
     expect(redirectMock).not.toHaveBeenCalled();
+    // A renamed person must not linger on cached team rosters.
+    expect(updateTagMock).toHaveBeenCalledWith("rosters");
   });
 
   it("lets a guardian edit DOB and school but not position", async () => {

@@ -215,7 +215,7 @@ describe("§3.1 — fto_access cookie caching", () => {
     expect(response.headers.get("location")).toBeNull();
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
-    expect(FTO_ACCESS_MAX_AGE).toBe(90 * 60);
+    expect(FTO_ACCESS_MAX_AGE).toBe(15 * 60);
     expect(cookie?.maxAge).toBe(FTO_ACCESS_MAX_AGE);
     expect(cookie?.httpOnly).toBe(true);
   });
@@ -239,7 +239,7 @@ describe("§3.1 — fto_access cookie caching", () => {
 
     expect(response.headers.get("location")).toBeNull();
     // Confirm the RPC was NOT called
-    const client = createServerClientMock.mock.results[0].value;
+    const client = createServerClientMock.mock.results[0]?.value;
     expect(client.rpc).not.toHaveBeenCalled();
   });
 
@@ -253,7 +253,7 @@ describe("§3.1 — fto_access cookie caching", () => {
     );
     const cookie = response.cookies.get(FTO_ACCESS_COOKIE);
     expect(cookie?.value).toBe("1");
-    expect(cookie?.maxAge).toBe(90 * 60);
+    expect(cookie?.maxAge).toBe(15 * 60);
   });
 });
 
@@ -468,7 +468,7 @@ describe("§3.2 — parallel getUser() + has_app_access", () => {
 
     await updateSession(request("/dashboard")); // no fto_access cookie → cache miss
 
-    const client = createServerClientMock.mock.results[0].value;
+    const client = createServerClientMock.mock.results[0]?.value;
     // Both should have been called (verifying concurrent execution path).
     expect(client.rpc).toHaveBeenCalledWith("has_app_access");
   });
@@ -478,7 +478,7 @@ describe("§3.2 — parallel getUser() + has_app_access", () => {
 
     await updateSession(request("/dashboard", `${FTO_ACCESS_COOKIE}=1`));
 
-    const client = createServerClientMock.mock.results[0].value;
+    const client = createServerClientMock.mock.results[0]?.value;
     expect(client.rpc).not.toHaveBeenCalled();
   });
 

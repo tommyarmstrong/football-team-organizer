@@ -17,6 +17,7 @@ import {
 const sample: GoalsByPlayerPoint[] = [
   {
     playerId: "1",
+    personId: "person-1",
     name: "Ada Mid",
     goals: 6,
     position: "MID",
@@ -30,6 +31,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "2",
+    personId: "person-2",
     name: "Bea Fwd",
     goals: 4,
     position: "FWD",
@@ -43,6 +45,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "3",
+    personId: "person-3",
     name: "Cal Def",
     goals: 2,
     position: "DEF",
@@ -56,6 +59,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "4",
+    personId: "person-4",
     name: "Dee None",
     goals: 1,
     position: null,
@@ -160,16 +164,20 @@ describe("buildGoalsViewRows", () => {
     ]);
   });
 
-  it("always includes goals and goals-per-game table values", () => {
-    const rows = buildGoalsViewRows(sample, ["ALL"], "total");
-    expect(rows[0]).toMatchObject({
-      name: "Ada Mid",
-      goalsDisplay: "6",
-      goalsPerGameDisplay: "2.00",
+  it("keeps total goals and games on each row whatever the metric", () => {
+    const rows = buildGoalsViewRows(sample, ["ALL"], "per_game");
+    expect(rows.find((row) => row.name === "Ada Mid")).toMatchObject({
+      count: 6,
+      matchesPlayed: 3,
+      value: 2,
     });
+  });
+
+  it("includes players with goals but no games in the total view", () => {
+    const rows = buildGoalsViewRows(sample, ["ALL"], "total");
     expect(rows.find((row) => row.name === "Cal Def")).toMatchObject({
-      goalsDisplay: "2",
-      goalsPerGameDisplay: "—",
+      count: 2,
+      matchesPlayed: 0,
     });
   });
 });

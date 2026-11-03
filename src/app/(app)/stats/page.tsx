@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { getCurrentTeam } from "@/lib/data/team";
 import { listCompetitions } from "@/lib/data/competitions";
-import { getAllTeamStats } from "@/lib/data/stats";
+import { getAllTeamStats, getPeriodStartsByPlayer } from "@/lib/data/stats";
+import { canManageClub, getViewerContext } from "@/lib/authz/context";
 import { competitionDisplayName, teamDisplayName } from "@/lib/format";
 import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -37,9 +38,13 @@ export default async function StatsPage() {
 export async function StatsBody({ team }: { team: Team }) {
   // §5.1 + §6.4 — Single composite RPC replaces 5 separate stat functions
   // (which collectively made ~11 DB queries). Now: 1 RPC + 1 competitions query.
-  const [stats, competitions] = await Promise.all([
+  // Period starts are for club managers only, so other roles never fetch them.
+  const ctx = await getViewerContext();
+  const showPeriodStarts = ctx != null && canManageClub(ctx, team.club_id);
+  const [stats, competitions, periodStarts] = await Promise.all([
     getAllTeamStats(team.id),
     listCompetitions(team.id),
+    showPeriodStarts ? getPeriodStartsByPlayer(team.id) : null,
   ]);
 
   const competitionOptions = competitions.data.map((competition) => ({
@@ -48,7 +53,9 @@ export async function StatsBody({ team }: { team: Team }) {
     kind: competition.kind,
   }));
 
-  const errors = [stats.error, competitions.error].filter(Boolean);
+  const errors = [stats.error, competitions.error, periodStarts?.error].filter(
+    Boolean,
+  );
 
   return (
     <>
@@ -59,6 +66,7 @@ export async function StatsBody({ team }: { team: Team }) {
         potmByPlayer={stats.potmByPlayer}
         playerOfTheMonthByPlayer={stats.playerOfTheMonthByPlayer}
         matchesPlayed={stats.matchesPlayed}
+        periodStartsByPlayer={periodStarts?.data}
         results={stats.resultsOverTime}
         competitions={competitionOptions}
       />

@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { createPerson, updatePerson } from "@/lib/data/people";
 import {
@@ -38,7 +39,7 @@ function mapCoachTeamMembership(tc: {
     | { name: string; season_label: string }[]
     | null;
 }): CoachTeamMembership {
-  const team = Array.isArray(tc.team) ? tc.team[0] : tc.team;
+  const team = one(tc.team);
   return {
     team_coach_id: tc.id,
     team_id: tc.team_id,
@@ -282,14 +283,14 @@ export async function listTeamCoaches(
 
   const rows: TeamCoachEntry[] = (data ?? [])
     .map((tc) => {
-      const coachRaw = Array.isArray(tc.coach) ? tc.coach[0] : tc.coach;
+      const coachRaw = one(tc.coach);
       if (!coachRaw || !coachRaw.active_role) return null;
       const personRaw = coachRaw.person as
         | { first_name: string; last_name: string }
         | { first_name: string; last_name: string }[]
         | null
         | undefined;
-      const person = Array.isArray(personRaw) ? personRaw[0] : personRaw;
+      const person = one(personRaw);
       return {
         team_coach_id: tc.id,
         coach_id: tc.coach_id,

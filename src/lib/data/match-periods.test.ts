@@ -60,6 +60,7 @@ describe("match periods data", () => {
   it("creates periods and with starters", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
+        matches: okResult({ team_id: "team-1", team: { archived_at: null } }),
         match_periods: okResult({ id: "period-1", name: "Extra time 1" }),
       }),
     );
@@ -75,6 +76,7 @@ describe("match periods data", () => {
 
     createClientMock.mockResolvedValue(
       mockFromClient({
+        matches: okResult({ team_id: "team-1", team: { archived_at: null } }),
         match_periods: okResult([{ id: "p1" }, { id: "p2" }]),
         match_period_starters: okResult(null),
       }),

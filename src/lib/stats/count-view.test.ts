@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerCountPoint } from "@/lib/data/stats";
-import { buildCountViewRows, countMetricLabel } from "@/lib/stats/count-view";
+import {
+  buildCountViewRows,
+  countMetricLabel,
+  PERIOD_STARTS_METRIC_OPTIONS,
+} from "@/lib/stats/count-view";
 
 const sample: PlayerCountPoint[] = [
   {
     playerId: "1",
+    personId: "person-1",
     name: "Ada Wing",
     count: 4,
     position: "WNG",
@@ -13,6 +18,7 @@ const sample: PlayerCountPoint[] = [
   },
   {
     playerId: "2",
+    personId: "person-2",
     name: "Bea Fwd",
     count: 2,
     position: "FWD",
@@ -21,6 +27,7 @@ const sample: PlayerCountPoint[] = [
   },
   {
     playerId: "3",
+    personId: "person-3",
     name: "Cal None",
     count: 6,
     position: null,
@@ -71,6 +78,7 @@ describe("buildCountViewRows", () => {
       [
         {
           playerId: "4",
+          personId: "person-4",
           name: "Dee Apps",
           count: 5,
           position: "DEF",
@@ -81,5 +89,48 @@ describe("buildCountViewRows", () => {
       "per_game",
     );
     expect(rows[0]?.value).toBe(1);
+  });
+});
+
+describe("buildCountViewRows ordering", () => {
+  it("orders by the plotted value by default", () => {
+    const rows = buildCountViewRows(sample, ["ALL"], "per_game");
+    expect(rows.map((row) => row.name)).toEqual([
+      "Bea Fwd",
+      "Cal None",
+      "Ada Wing",
+    ]);
+  });
+
+  it("orders by the total when asked, even in a per-game view", () => {
+    const rows = buildCountViewRows(sample, ["ALL"], "per_game", "count");
+    expect(rows.map((row) => [row.name, row.count])).toEqual([
+      ["Cal None", 6],
+      ["Ada Wing", 4],
+      ["Bea Fwd", 2],
+    ]);
+    // The plotted value is still the rate.
+    expect(rows.map((row) => row.value)).toEqual([1, 0.5, 1]);
+  });
+
+  it("breaks ties by name", () => {
+    const tied = [
+      { ...sample[0]!, name: "Zed", count: 3, matchesPlayed: 3 },
+      { ...sample[1]!, name: "Amy", count: 3, matchesPlayed: 1 },
+    ];
+    expect(
+      buildCountViewRows(tied, ["ALL"], "per_game", "count").map(
+        (row) => row.name,
+      ),
+    ).toEqual(["Amy", "Zed"]);
+  });
+});
+
+describe("PERIOD_STARTS_METRIC_OPTIONS", () => {
+  it("offers Periods first, then Periods per game", () => {
+    expect(PERIOD_STARTS_METRIC_OPTIONS).toEqual([
+      { value: "total", label: "Periods" },
+      { value: "per_game", label: "Periods per game" },
+    ]);
   });
 });

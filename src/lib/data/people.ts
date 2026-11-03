@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Person,
@@ -170,12 +171,8 @@ export async function listPeople(options?: {
         (row) => row.emergency_contact,
       );
       if (!link) continue;
-      const guardian = Array.isArray(link.guardian)
-        ? link.guardian[0]
-        : link.guardian;
-      const contactPerson = Array.isArray(guardian?.person)
-        ? guardian?.person[0]
-        : guardian?.person;
+      const guardian = one(link.guardian);
+      const contactPerson = one(guardian?.person);
       if (!contactPerson) continue;
       emergency_contact = {
         first_name: contactPerson.first_name,

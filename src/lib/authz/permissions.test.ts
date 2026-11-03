@@ -13,6 +13,7 @@ import {
   isGuardianOfPlayer,
   isSelfPerson,
   canManageClub,
+  canReadClub,
   canReadTeam,
   canUpdateGuardianPlayerLink,
   canViewClubTeams,
@@ -113,6 +114,33 @@ describe("canReadTeam / canEditTeam / canManageClub", () => {
     expect(canEditTeam(ctx, "team-2")).toBe(false);
     expect(canManageClub(ctx, "club-1")).toBe(true);
     expect(canManageClub(ctx, "club-2")).toBe(false);
+  });
+});
+
+describe("canReadClub", () => {
+  it("allows a club the viewer manages or can read a team in, and no other", () => {
+    expect(
+      canReadClub(viewer({ managementClubIds: ["club-1"] }), "club-1"),
+    ).toBe(true);
+    expect(
+      canReadClub(
+        viewer({
+          managementClubIds: [],
+          visibleClubs: [],
+          visibleTeams: [team({ id: "team-1", club_id: "club-1" })],
+        }),
+        "club-1",
+      ),
+    ).toBe(true);
+    expect(
+      canReadClub(
+        viewer({
+          managementClubIds: ["club-1"],
+          visibleTeams: [team({ id: "team-1", club_id: "club-1" })],
+        }),
+        "club-2",
+      ),
+    ).toBe(false);
   });
 });
 

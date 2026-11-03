@@ -160,10 +160,11 @@ export function buildGoalsViewRows(
 ): Array<{
   playerId: string;
   name: string;
+  /** Total goals, whatever metric `value` shows. */
+  count: number;
+  matchesPlayed: number;
   value: number;
   displayValue: string;
-  goalsDisplay: string;
-  goalsPerGameDisplay: string;
 }> {
   return filterGoalsByPositions(
     filterGoalsByCompetition(
@@ -179,13 +180,10 @@ export function buildGoalsViewRows(
       return {
         playerId: row.playerId,
         name: row.name,
+        count: row.goals,
+        matchesPlayed: row.matchesPlayed,
         value,
         displayValue: formatGoalsMetricValue(value, metric),
-        goalsDisplay: formatGoalsMetricValue(row.goals, "total"),
-        goalsPerGameDisplay: formatGoalsMetricValue(
-          goalsMetricValue(row, "per_game"),
-          "per_game",
-        ),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row != null)

@@ -58,4 +58,48 @@ describe("StatsPageContent", () => {
     expect(tilesIndex).toBeGreaterThan(filtersIndex);
     expect(piesIndex).toBeGreaterThan(tilesIndex);
   });
+
+  it("shows Period starts beneath Appearances, only when the data is passed", () => {
+    const appearances = source.indexOf('title="Appearances"');
+    const periodStarts = source.indexOf('title="Period starts"');
+    expect(appearances).toBeGreaterThan(-1);
+    expect(periodStarts).toBeGreaterThan(appearances);
+    expect(source).toContain("{periodStartsByPlayer ? (");
+  });
+
+  it("gives Period starts position filters and a Periods / Periods per game view, ordered by periods", () => {
+    const section = source.slice(
+      source.indexOf('title="Period starts"'),
+      source.indexOf("</>", source.indexOf('title="Period starts"')),
+    );
+    expect(section).toContain('metricLabel="Periods"');
+    expect(section).toContain('perGameLabel="Periods per game"');
+    expect(section).toContain('metricNoun="Periods"');
+    expect(section).toContain("filtered={periodStartsForView}");
+    expect(section).toContain('metricAriaLabel="Period starts metric"');
+    expect(section).toContain("metricOptions={PERIOD_STARTS_METRIC_OPTIONS}");
+    expect(section).toContain('orderBy="count"');
+  });
+
+  it("starts every filtered section on the total view", () => {
+    expect(source).toContain('useState<GoalsMetric>("total")');
+  });
+
+  it("applies the page competition filters and appearance counts to period starts", () => {
+    expect(source).toMatch(
+      /filterPlayerCountPoints\(\s*periodStartsByPlayer \?\? \[\],\s*competitionId,\s*competitionKind,?\s*\)/,
+    );
+    expect(source).toContain(
+      "withPlayedAppearanceCounts(filteredPeriodStarts, filteredAppearances)",
+    );
+  });
+
+  it("names the goals section Goals", () => {
+    const goals = readFileSync(
+      path.join(import.meta.dirname, "goals-section.tsx"),
+      "utf8",
+    );
+    expect(goals).toContain('<Section title="Goals">');
+    expect(goals).not.toContain("Goal Scorers");
+  });
 });

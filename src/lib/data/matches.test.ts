@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mockFromClient, okResult, errResult } from "@/test/supabase-mock";
+import {
+  mockFromClient,
+  okResult,
+  errResult,
+  queryChain,
+} from "@/test/supabase-mock";
 import { teamFixture } from "@/test/fixtures";
 
 const {
@@ -431,20 +436,11 @@ describe("createMatch / updateMatch / deleteMatch", () => {
 
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ id: "m1", team_id: "team-1" }),
-        teams: errResult("team fail"),
-      }),
-    );
-    expect(await updateMatch("m1", { opponent_name: "X" })).toEqual({
-      data: null,
-      error: "team fail",
-    });
-    expect(await deleteMatch("m1")).toEqual({ error: "team fail" });
-
-    createClientMock.mockResolvedValue(
-      mockFromClient({
-        matches: okResult({ id: "m1", team_id: "team-1" }),
-        teams: okResult({ archived_at: "2026-05-01T00:00:00Z" }),
+        matches: okResult({
+          id: "m1",
+          team_id: "team-1",
+          team: { archived_at: "2026-05-01T00:00:00Z" },
+        }),
       }),
     );
     expect(await updateMatch("m1", { opponent_name: "X" })).toMatchObject({
@@ -457,10 +453,13 @@ describe("createMatch / updateMatch / deleteMatch", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         matches: [
-          okResult({ id: "m1", team_id: "team-1" }),
+          okResult({
+            id: "m1",
+            team_id: "team-1",
+            team: { archived_at: null },
+          }),
           errResult("write fail"),
         ],
-        teams: okResult({ archived_at: null }),
       }),
     );
     expect(await updateMatch("m1", { opponent_name: "X" })).toEqual({
@@ -474,14 +473,17 @@ describe("createMatch / updateMatch / deleteMatch", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         matches: [
-          okResult({ id: "m1", team_id: "team-1" }),
+          okResult({
+            id: "m1",
+            team_id: "team-1",
+            team: { archived_at: null },
+          }),
           okResult({
             id: "m1",
             team_id: "team-1",
             opponent_name: "Updated",
           }),
         ],
-        teams: okResult({ archived_at: null }),
       }),
     );
     expect(await updateMatch("m1", { opponent_name: "Updated" })).toEqual({
@@ -491,8 +493,11 @@ describe("createMatch / updateMatch / deleteMatch", () => {
 
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult({ id: "m1", team_id: "team-1" }),
-        teams: okResult({ archived_at: null }),
+        matches: okResult({
+          id: "m1",
+          team_id: "team-1",
+          team: { archived_at: null },
+        }),
       }),
     );
     expect(await deleteMatch("m1")).toEqual({ error: null });
@@ -501,8 +506,14 @@ describe("createMatch / updateMatch / deleteMatch", () => {
   it("surfaces a clear error when an update returns no row", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: [okResult({ id: "m1", team_id: "team-1" }), okResult(null)],
-        teams: okResult({ archived_at: null }),
+        matches: [
+          okResult({
+            id: "m1",
+            team_id: "team-1",
+            team: { archived_at: null },
+          }),
+          okResult(null),
+        ],
       }),
     );
     expect(await updateMatch("m1", { status: "played" })).toMatchObject({
@@ -594,35 +605,40 @@ describe("getNextFixture / getLastResult", () => {
   it("falls back to any scheduled fixture when none are upcoming", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult([
-          {
-            id: "m-past-scheduled",
-            team_id: "team-1",
-            opponent_name: "Past FC",
-            date: "2020-01-01",
-            kickoff_time: null,
-            meetup_time: null,
-            home_away: "home",
-            venue_id: null,
-            competition_id: "comp-league",
-            is_friendly: false,
-            player_of_the_match_id: null,
-            players_player_of_the_match_id: null,
-            status: "scheduled",
-            notes: null,
-            club_notes: null,
-            created_at: "2025-01-01T00:00:00Z",
-            updated_at: "2025-01-01T00:00:00Z",
-            competition: {
-              id: "comp-league",
-              name: "League",
-              display_name: null,
-              kind: "league",
+        matches: [
+          // First query: nothing on or after today.
+          okResult([]),
+          // Second query: the earliest scheduled fixture.
+          okResult([
+            {
+              id: "m-past-scheduled",
+              team_id: "team-1",
+              opponent_name: "Past FC",
+              date: "2020-01-01",
+              kickoff_time: null,
+              meetup_time: null,
+              home_away: "home",
+              venue_id: null,
+              competition_id: "comp-league",
+              is_friendly: false,
+              player_of_the_match_id: null,
+              players_player_of_the_match_id: null,
+              status: "scheduled",
+              notes: null,
+              club_notes: null,
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+              competition: {
+                id: "comp-league",
+                name: "League",
+                display_name: null,
+                kind: "league",
+              },
+              venue: null,
+              goals: [],
             },
-            venue: null,
-            goals: [],
-          },
-        ]),
+          ]),
+        ],
       }),
     );
 
@@ -631,70 +647,99 @@ describe("getNextFixture / getLastResult", () => {
     expect(result.data?.id).toBe("m-past-scheduled");
   });
 
-  it("prefers the soonest upcoming scheduled match over a past one (§6.5)", async () => {
+  it("returns the soonest upcoming match without a second query (§6.5)", async () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
-        matches: okResult([
-          {
-            id: "m-past",
-            team_id: "team-1",
-            opponent_name: "Past FC",
-            date: "2020-01-01",
-            kickoff_time: null,
-            meetup_time: null,
-            home_away: "home",
-            venue_id: null,
-            competition_id: "comp-league",
-            is_friendly: false,
-            player_of_the_match_id: null,
-            players_player_of_the_match_id: null,
-            status: "scheduled",
-            notes: null,
-            club_notes: null,
-            created_at: "2025-01-01T00:00:00Z",
-            updated_at: "2025-01-01T00:00:00Z",
-            competition: {
-              id: "comp-league",
-              name: "League",
-              display_name: null,
-              kind: "league",
+        matches: [
+          okResult([
+            {
+              id: "m-next",
+              team_id: "team-1",
+              opponent_name: "Rivals",
+              date: "2099-09-01",
+              kickoff_time: null,
+              meetup_time: null,
+              home_away: "home",
+              venue_id: null,
+              competition_id: "comp-cup",
+              is_friendly: false,
+              player_of_the_match_id: null,
+              players_player_of_the_match_id: null,
+              status: "scheduled",
+              notes: null,
+              club_notes: null,
+              created_at: "2025-01-01T00:00:00Z",
+              updated_at: "2025-01-01T00:00:00Z",
+              competition: [
+                {
+                  id: "comp-cup",
+                  name: "Cup",
+                  display_name: null,
+                  kind: "cup",
+                },
+              ],
+              venue: [],
+              goals: null,
             },
-            venue: null,
-            goals: [],
-          },
-          {
-            id: "m-next",
-            team_id: "team-1",
-            opponent_name: "Rivals",
-            date: "2099-09-01",
-            kickoff_time: null,
-            meetup_time: null,
-            home_away: "home",
-            venue_id: null,
-            competition_id: "comp-cup",
-            is_friendly: false,
-            player_of_the_match_id: null,
-            players_player_of_the_match_id: null,
-            status: "scheduled",
-            notes: null,
-            club_notes: null,
-            created_at: "2025-01-01T00:00:00Z",
-            updated_at: "2025-01-01T00:00:00Z",
-            competition: [
-              {
-                id: "comp-cup",
-                name: "Cup",
-                display_name: null,
-                kind: "cup",
-              },
-            ],
-            venue: [],
-            goals: null,
-          },
-        ]),
+          ]),
+          // Would fail the test if the past-fallback query ran.
+          errResult("fallback should not run"),
+        ],
       }),
     );
-    expect((await getNextFixture()).data?.id).toBe("m-next");
+    expect(await getNextFixture()).toMatchObject({
+      data: { id: "m-next" },
+      error: null,
+    });
+  });
+
+  it("asks for one upcoming row on or after today, then one earliest row", async () => {
+    const gte = vi.fn();
+    const limit = vi.fn();
+    const eq = vi.fn();
+    createClientMock.mockResolvedValue({
+      from() {
+        const chain = queryChain(okResult([]));
+        chain.eq = (...args: unknown[]) => {
+          eq(...args);
+          return chain;
+        };
+        chain.gte = (...args: unknown[]) => {
+          gte(...args);
+          return chain;
+        };
+        chain.limit = (...args: unknown[]) => {
+          limit(...args);
+          return chain;
+        };
+        return chain;
+      },
+    });
+
+    expect(await getNextFixture()).toEqual({ data: null, error: null });
+    expect(gte).toHaveBeenCalledTimes(1);
+    expect(gte).toHaveBeenCalledWith(
+      "date",
+      new Date().toISOString().slice(0, 10),
+    );
+    expect(limit.mock.calls).toEqual([[1], [1]]);
+    expect(eq).toHaveBeenCalledWith("status", "scheduled");
+  });
+
+  it("limits the last result to one played match", async () => {
+    const limit = vi.fn();
+    createClientMock.mockResolvedValue({
+      from() {
+        const chain = queryChain(okResult([]));
+        chain.limit = (...args: unknown[]) => {
+          limit(...args);
+          return chain;
+        };
+        return chain;
+      },
+    });
+    expect(await getLastResult()).toEqual({ data: null, error: null });
+    expect(limit).toHaveBeenCalledWith(1);
   });
 
   it("returns null when no scheduled fixtures exist", async () => {

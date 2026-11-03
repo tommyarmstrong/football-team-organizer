@@ -19,7 +19,7 @@ import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { AwardBadge, awardToneForRank } from "@/components/shared/award-badge";
-import { competitionRanks } from "@/lib/data/stats";
+import { competitionRanks } from "@/lib/stats/ranking";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -31,7 +31,7 @@ import { FormStrip } from "@/components/stats/form-strip";
 import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
 
 export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
-  const { stats } = await getDashboardData(teamId);
+  const stats = await getDashboardData(teamId).stats;
   if (stats.error) return null;
 
   return (
@@ -54,8 +54,14 @@ export async function DashboardFixtures({
   teamName: string;
   clubId: string;
 }) {
-  const [{ next, last, canEditMatch, competitions }, venues] =
-    await Promise.all([getDashboardData(teamId), listVenues(clubId)]);
+  const data = getDashboardData(teamId);
+  const [next, last, canEditMatch, competitions, venues] = await Promise.all([
+    data.next,
+    data.last,
+    data.canEditMatch,
+    data.competitions,
+    listVenues(clubId),
+  ]);
 
   const errors = [next.error, last.error].filter(Boolean);
 
@@ -92,7 +98,7 @@ export async function DashboardFixtures({
 }
 
 export async function DashboardForm({ teamId }: { teamId: string }) {
-  const { form: results } = await getDashboardData(teamId);
+  const results = await getDashboardData(teamId).form;
 
   return (
     <Section
@@ -114,8 +120,10 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
 }
 
 export async function DashboardCompetitions({ team }: { team: Team }) {
-  const [{ competitions, canEditTeam }, venues] = await Promise.all([
-    getDashboardData(team.id),
+  const data = getDashboardData(team.id);
+  const [competitions, canEditTeam, venues] = await Promise.all([
+    data.competitions,
+    data.canEditTeam,
     listVenues(team.club_id),
   ]);
 
@@ -139,7 +147,13 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
 }
 
 export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
-  const { scorers, assists, potm, potMonth } = await getDashboardData(teamId);
+  const data = getDashboardData(teamId);
+  const [scorers, assists, potm, potMonth] = await Promise.all([
+    data.scorers,
+    data.assists,
+    data.potm,
+    data.potMonth,
+  ]);
 
   const errors = [
     scorers.error,
@@ -168,9 +182,9 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         emptyDescription="Select the coach's player of the match on played fixtures."
         rows={rankedLeaderboardRows(
           potm.data.map((row) => ({
-            id: row.player.id,
-            personId: row.player.person_id,
-            name: playerDisplayName(row.player),
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
             valueLabel: formatCountLabel(row.count, "award", "awards"),
             metric: row.count,
           })),
@@ -182,11 +196,11 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         emptyDescription="Record goals on played matches to see the table."
         rows={rankedLeaderboardRows(
           scorers.data.map((row) => ({
-            id: row.player.id,
-            personId: row.player.person_id,
-            name: playerDisplayName(row.player),
-            valueLabel: formatCountLabel(row.goals, "goal", "goals"),
-            metric: row.goals,
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
+            valueLabel: formatCountLabel(row.count, "goal", "goals"),
+            metric: row.count,
           })),
         )}
       />
@@ -196,9 +210,9 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
         emptyDescription="Record assists on goals to see the table."
         rows={rankedLeaderboardRows(
           assists.data.map((row) => ({
-            id: row.player.id,
-            personId: row.player.person_id,
-            name: playerDisplayName(row.player),
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
             valueLabel: formatCountLabel(row.count, "assist", "assists"),
             metric: row.count,
           })),

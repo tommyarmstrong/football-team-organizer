@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { teamFixture, viewerFixture } from "@/test/fixtures";
+import { clubManagerViewer, teamFixture, viewerFixture } from "@/test/fixtures";
 
 const {
   redirectMock,
@@ -17,15 +17,12 @@ const {
   getNextFixtureMock,
   getLastResultMock,
   getTopScorersMock,
+  getRecentFormMock,
   getTopAssistsMock,
   getTopPlayersOfTheMatchMock,
   listPlayerOfTheMonthMock,
-  getResultsOverTimeMock,
-  getGoalsByPlayerStatsMock,
-  getAssistsByPlayerStatsMock,
-  getPlayerOfTheMatchByPlayerStatsMock,
-  getMatchesPlayedByPlayerStatsMock,
   getAllTeamStatsMock,
+  getPeriodStartsByPlayerMock,
   canAccessClubAndPeopleMock,
 } = vi.hoisted(() => ({
   redirectMock: vi.fn((path: string) => {
@@ -45,15 +42,12 @@ const {
   getNextFixtureMock: vi.fn(),
   getLastResultMock: vi.fn(),
   getTopScorersMock: vi.fn(),
+  getRecentFormMock: vi.fn(),
   getTopAssistsMock: vi.fn(),
   getTopPlayersOfTheMatchMock: vi.fn(),
   listPlayerOfTheMonthMock: vi.fn(),
-  getResultsOverTimeMock: vi.fn(),
-  getGoalsByPlayerStatsMock: vi.fn(),
-  getAssistsByPlayerStatsMock: vi.fn(),
-  getPlayerOfTheMatchByPlayerStatsMock: vi.fn(),
-  getMatchesPlayedByPlayerStatsMock: vi.fn(),
   getAllTeamStatsMock: vi.fn(),
+  getPeriodStartsByPlayerMock: vi.fn(),
   canAccessClubAndPeopleMock: vi.fn(),
 }));
 
@@ -85,15 +79,11 @@ vi.mock("@/lib/data/venues", () => ({
 }));
 vi.mock("@/lib/data/stats", () => ({
   getTopScorers: getTopScorersMock,
+  getRecentForm: getRecentFormMock,
   getTopAssists: getTopAssistsMock,
   getTopPlayersOfTheMatch: getTopPlayersOfTheMatchMock,
-  getResultsOverTime: getResultsOverTimeMock,
-  getRecentForm: getResultsOverTimeMock,
-  getGoalsByPlayerStats: getGoalsByPlayerStatsMock,
-  getAssistsByPlayerStats: getAssistsByPlayerStatsMock,
-  getPlayerOfTheMatchByPlayerStats: getPlayerOfTheMatchByPlayerStatsMock,
-  getMatchesPlayedByPlayerStats: getMatchesPlayedByPlayerStatsMock,
   getAllTeamStats: getAllTeamStatsMock,
+  getPeriodStartsByPlayer: getPeriodStartsByPlayerMock,
 }));
 vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
@@ -230,14 +220,10 @@ describe("app pages", () => {
     getNextFixtureMock.mockResolvedValue({ data: null, error: null });
     getLastResultMock.mockResolvedValue({ data: null, error: null });
     getTopScorersMock.mockResolvedValue(emptyStats());
+    getRecentFormMock.mockResolvedValue(emptyResults());
     getTopAssistsMock.mockResolvedValue(emptyStats());
     getTopPlayersOfTheMatchMock.mockResolvedValue(emptyStats());
     listPlayerOfTheMonthMock.mockResolvedValue({ data: [], error: null });
-    getResultsOverTimeMock.mockResolvedValue(emptyResults());
-    getGoalsByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getAssistsByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getPlayerOfTheMatchByPlayerStatsMock.mockResolvedValue(emptyStats());
-    getMatchesPlayedByPlayerStatsMock.mockResolvedValue(emptyStats());
     getAllTeamStatsMock.mockResolvedValue({
       goalsByPlayer: [],
       assistsByPlayer: [],
@@ -248,6 +234,7 @@ describe("app pages", () => {
       form: [],
       error: null,
     });
+    getPeriodStartsByPlayerMock.mockResolvedValue({ data: [], error: null });
     getViewerContextMock.mockResolvedValue(viewerFixture());
     canAccessClubAndPeopleMock.mockReturnValue(true);
     getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
@@ -299,6 +286,54 @@ describe("app pages", () => {
     expect(JSON.stringify(tree)).toContain('"name":"League"');
     expect(JSON.stringify(tree)).toContain("goalsByPlayer");
     expect(JSON.stringify(tree)).toContain("playerOfTheMonthByPlayer");
+  });
+
+  it("stats page passes period starts to club managers only", async () => {
+    const periodStarts = [{ playerId: "p1", name: "Sam", count: 3 }];
+    getPeriodStartsByPlayerMock.mockResolvedValue({
+      data: periodStarts,
+      error: null,
+    });
+
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    const asManager = await StatsBody({ team: teamFixture() });
+    expect(getPeriodStartsByPlayerMock).toHaveBeenCalledWith("team-1");
+    expect(JSON.stringify(asManager)).toContain('"periodStartsByPlayer"');
+    expect(JSON.stringify(asManager)).toContain('"count":3');
+
+    vi.clearAllMocks();
+    getViewerContextMock.mockResolvedValue(viewerFixture());
+    getAllTeamStatsMock.mockResolvedValue({
+      goalsByPlayer: [],
+      assistsByPlayer: [],
+      potmByPlayer: [],
+      playerOfTheMonthByPlayer: [],
+      matchesPlayed: [],
+      resultsOverTime: [],
+      form: [],
+      error: null,
+    });
+    listCompetitionsMock.mockResolvedValue({ data: [], error: null });
+    const asCoach = await StatsBody({ team: teamFixture() });
+    expect(getPeriodStartsByPlayerMock).not.toHaveBeenCalled();
+    expect(JSON.stringify(asCoach)).not.toContain('"count":3');
+    expect(JSON.stringify(asCoach)).not.toContain("periodStartsByPlayer");
+  });
+
+  it("stats page shows no period starts without a viewer", async () => {
+    getViewerContextMock.mockResolvedValue(null);
+    await StatsBody({ team: teamFixture() });
+    expect(getPeriodStartsByPlayerMock).not.toHaveBeenCalled();
+  });
+
+  it("stats page shows a period starts load error", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPeriodStartsByPlayerMock.mockResolvedValue({
+      data: [],
+      error: "period starts failed",
+    });
+    const tree = await StatsBody({ team: teamFixture() });
+    expect(JSON.stringify(tree)).toContain("period starts failed");
   });
 
   it("matches page renders empty state", async () => {

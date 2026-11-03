@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   GOALS_METRIC_OPTIONS,
@@ -29,53 +30,70 @@ function FilterButton({
   );
 }
 
+function FilterGroup({
+  heading,
+  groupLabel,
+  children,
+}: {
+  heading: string;
+  groupLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+        {heading}
+      </p>
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label={groupLabel}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Position filters, plus the Total / Per game / Per period view when
+ * `metric`, `onMetricChange` and `metricAriaLabel` are all given. Sections
+ * that only make sense as a total (e.g. period starts) leave those out.
+ */
 export function StatFilters({
   positions,
   onPositionsChange,
   metric,
   onMetricChange,
   metricAriaLabel,
+  metricOptions = GOALS_METRIC_OPTIONS,
 }: {
   positions: GoalsPositionFilter[];
   onPositionsChange: (next: GoalsPositionFilter[]) => void;
-  metric: GoalsMetric;
-  onMetricChange: (next: GoalsMetric) => void;
-  metricAriaLabel: string;
+  metric?: GoalsMetric;
+  onMetricChange?: (next: GoalsMetric) => void;
+  metricAriaLabel?: string;
+  /** The buttons in the View row. Defaults to Total / Per game / Per period. */
+  metricOptions?: ReadonlyArray<{ value: GoalsMetric; label: string }>;
 }) {
   return (
     <>
-      <div className="space-y-2">
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          Position
-        </p>
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label="Position filters"
-        >
-          {GOALS_POSITION_FILTERS.map((value) => (
-            <FilterButton
-              key={value}
-              label={value}
-              pressed={positions.includes(value)}
-              onClick={() =>
-                onPositionsChange(toggleGoalsPositionFilter(positions, value))
-              }
-            />
-          ))}
-        </div>
-      </div>
+      <FilterGroup heading="Position" groupLabel="Position filters">
+        {GOALS_POSITION_FILTERS.map((value) => (
+          <FilterButton
+            key={value}
+            label={value}
+            pressed={positions.includes(value)}
+            onClick={() =>
+              onPositionsChange(toggleGoalsPositionFilter(positions, value))
+            }
+          />
+        ))}
+      </FilterGroup>
 
-      <div className="space-y-2">
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          View
-        </p>
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label={metricAriaLabel}
-        >
-          {GOALS_METRIC_OPTIONS.map((option) => (
+      {metric && onMetricChange && metricAriaLabel ? (
+        <FilterGroup heading="View" groupLabel={metricAriaLabel}>
+          {metricOptions.map((option) => (
             <FilterButton
               key={option.value}
               label={option.label}
@@ -83,8 +101,8 @@ export function StatFilters({
               onClick={() => onMetricChange(option.value)}
             />
           ))}
-        </div>
-      </div>
+        </FilterGroup>
+      ) : null}
     </>
   );
 }

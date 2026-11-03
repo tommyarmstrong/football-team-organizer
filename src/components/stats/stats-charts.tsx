@@ -24,6 +24,12 @@ import {
 } from "@/lib/stats/results-view";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
+/** What the per-player bar chart and table need from each player. */
+export type PlayerChartRow = Pick<
+  PlayerCountPoint,
+  "playerId" | "name" | "count" | "matchesPlayed"
+> & { value?: number };
+
 export function PlayerCountChart({
   data,
   metricLabel,
@@ -33,7 +39,7 @@ export function PlayerCountChart({
   valueKey = "count",
   seriesLabel,
 }: {
-  data: Array<PlayerCountPoint & { value?: number }>;
+  data: PlayerChartRow[];
   metricLabel: string;
   ariaTitle: string;
   perGameLabel?: string;
@@ -43,7 +49,7 @@ export function PlayerCountChart({
   seriesLabel?: string;
 }) {
   const seriesName = seriesLabel ?? metricLabel;
-  const shownValue = (row: PlayerCountPoint & { value?: number }) =>
+  const shownValue = (row: PlayerChartRow) =>
     valueKey === "value" && row.value != null ? row.value : row.count;
   const formatShown = (value: number) =>
     allowDecimals ? value.toFixed(2) : String(value);

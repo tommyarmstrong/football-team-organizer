@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { CARD_TYPES } from "@/lib/constants";
 import { createCard, deleteCard, updateCard } from "@/lib/data/cards";
-import { str } from "@/lib/form-parse";
+import { isOneOf, str } from "@/lib/form-parse";
 import type { CardType, TablesInsert } from "@/lib/supabase/database.types";
 
 function revalidateCard(matchId: string, cardId?: string) {
@@ -26,8 +26,8 @@ function parsePlayerId(formData: FormData): string | { error: string } {
 }
 
 function parseCardType(formData: FormData): CardType | { error: string } {
-  const type = str(formData, "type") as CardType;
-  if (!CARD_TYPES.includes(type)) {
+  const type = str(formData, "type");
+  if (!isOneOf(CARD_TYPES, type)) {
     return { error: "Select a card type." };
   }
   return type;

@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import type { Person } from "@/lib/supabase/database.types";
 
 export type NamedPlayer = {
@@ -25,7 +26,7 @@ export function mapPlayerNameEmbed(
 ): NamedPlayer | null {
   if (!row) return null;
   const personRaw = row.person;
-  const person = Array.isArray(personRaw) ? personRaw[0] : personRaw;
+  const person = one(personRaw);
   return {
     id: row.id,
     person_id: row.person_id ?? "",

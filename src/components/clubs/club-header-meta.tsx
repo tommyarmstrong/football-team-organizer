@@ -25,7 +25,7 @@ export function clubAgeRangeLabel(teams: Team[]): string | null {
   const sorted = [...new Set(known)].sort(
     (a, b) => ageGroupIndex(a) - ageGroupIndex(b),
   );
-  if (sorted.length === 1) return sorted[0];
+  if (sorted.length === 1) return sorted[0] ?? null;
   return `${sorted[0]}–${sorted[sorted.length - 1]}`;
 }
 

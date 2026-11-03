@@ -45,16 +45,19 @@ import {
   setPlayerActiveRole,
   updatePlayer,
 } from "@/lib/data/players";
+import { invalidateAllRosters } from "@/lib/data/roster-cache";
 import { sendPersonInvitation } from "@/lib/people/invitations";
 import {
   parsePersonForm,
   parsePersonPlayerForm,
   parsePersonRolesForm,
 } from "@/lib/people/parse";
-import { str } from "@/lib/form-parse";
-import type { PersonRoleKind } from "@/lib/people/roles";
+import { isOneOf, str } from "@/lib/form-parse";
+import { PERSON_ROLE_ORDER, type PersonRoleKind } from "@/lib/people/roles";
 
 function revalidatePeople(personId?: string) {
+  // Person names and player roles show on cached team rosters.
+  invalidateAllRosters();
   revalidatePath("/people");
   revalidatePath("/club");
   if (personId) {
@@ -389,10 +392,11 @@ export async function addClubRoleToPersonAction(
     return { error: "Only club management can assign roles." };
   }
 
-  const role = str(formData, "role") as PersonRoleKind;
-  if (!["manager", "coach", "guardian", "player"].includes(role)) {
+  const roleRaw = str(formData, "role");
+  if (!isOneOf(PERSON_ROLE_ORDER, roleRaw)) {
     return { error: "Select a valid role type." };
   }
+  const role = roleRaw;
 
   const { data: person, error: loadError } = await getPerson(personId);
   if (loadError) return { error: loadError };
