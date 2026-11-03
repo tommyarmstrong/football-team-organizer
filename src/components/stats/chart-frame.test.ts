@@ -24,5 +24,8 @@ describe("stats charts use the card frame", () => {
     // Goals draws its chart and table with the shared player chart.
     expect(goals).toContain("<PlayerCountChart");
     expect(goals).not.toContain("<BarChart");
+    // One bar colour for every player chart, Goals included.
+    expect(goals).not.toContain("barFill");
+    expect(charts).toContain('fill="var(--color-chart-1)"');
   });
 });

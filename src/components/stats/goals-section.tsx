@@ -70,7 +70,6 @@ export function GoalsSection({
                 ariaTitle={`${metricLabel.toLowerCase()} by player`}
                 allowDecimals={metric !== "total"}
                 valueKey="value"
-                barFill="var(--color-foreground)"
               />
             )}
           </>

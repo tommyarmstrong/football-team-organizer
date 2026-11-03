@@ -38,7 +38,6 @@ export function PlayerCountChart({
   allowDecimals = false,
   valueKey = "count",
   seriesLabel,
-  barFill = "var(--color-chart-1)",
 }: {
   data: PlayerChartRow[];
   metricLabel: string;
@@ -48,7 +47,6 @@ export function PlayerCountChart({
   valueKey?: "count" | "value";
   /** Chart series name. The table keeps `metricLabel` for the total column. */
   seriesLabel?: string;
-  barFill?: string;
 }) {
   const seriesName = seriesLabel ?? metricLabel;
   const shownValue = (row: PlayerChartRow) =>
@@ -98,7 +96,7 @@ export function PlayerCountChart({
             <Bar
               dataKey={valueKey}
               name={seriesName}
-              fill={barFill}
+              fill="var(--color-chart-1)"
               radius={4}
             />
           </BarChart>
