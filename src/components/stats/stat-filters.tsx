@@ -66,12 +66,15 @@ export function StatFilters({
   metric,
   onMetricChange,
   metricAriaLabel,
+  metricOptions = GOALS_METRIC_OPTIONS,
 }: {
   positions: GoalsPositionFilter[];
   onPositionsChange: (next: GoalsPositionFilter[]) => void;
   metric?: GoalsMetric;
   onMetricChange?: (next: GoalsMetric) => void;
   metricAriaLabel?: string;
+  /** The buttons in the View row. Defaults to Total / Per game / Per period. */
+  metricOptions?: ReadonlyArray<{ value: GoalsMetric; label: string }>;
 }) {
   return (
     <>
@@ -90,7 +93,7 @@ export function StatFilters({
 
       {metric && onMetricChange && metricAriaLabel ? (
         <FilterGroup heading="View" groupLabel={metricAriaLabel}>
-          {GOALS_METRIC_OPTIONS.map((option) => (
+          {metricOptions.map((option) => (
             <FilterButton
               key={option.value}
               label={option.label}
