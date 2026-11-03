@@ -251,17 +251,55 @@ describe("buildPeriodStartsViewRows", () => {
   it("plots the percent of the periods in the player's games in the Periods per game view", () => {
     const rows = buildPeriodStartsViewRows(filtered, ["ALL"], "per_game");
     expect(rows.map((row) => [row.name, row.value.toFixed(1)])).toEqual([
-      ["Ada Wing", "45.5"],
       ["Bea Def", "100.0"],
       ["Cal Keeper", "50.0"],
+      ["Ada Wing", "45.5"],
     ]);
   });
 
-  it("keeps the rows ordered by periods started in both views", () => {
+  it("orders the rows by the plotted value, highest first, in both views", () => {
     for (const metric of ["total", "per_game"] as const) {
-      const rows = buildPeriodStartsViewRows(filtered, ["ALL"], metric);
-      expect(rows.map((row) => row.count)).toEqual([5, 2, 1]);
+      const values = buildPeriodStartsViewRows(filtered, ["ALL"], metric).map(
+        (row) => row.value,
+      );
+      expect(values).toEqual([...values].sort((a, b) => b - a));
     }
+    expect(
+      buildPeriodStartsViewRows(filtered, ["ALL"], "total").map((r) => r.name),
+    ).toEqual(["Ada Wing", "Bea Def", "Cal Keeper"]);
+    expect(
+      buildPeriodStartsViewRows(filtered, ["ALL"], "per_game").map(
+        (r) => r.name,
+      ),
+    ).toEqual(["Bea Def", "Cal Keeper", "Ada Wing"]);
+  });
+
+  it("re-sorts when the Type filter changes", () => {
+    const order = (type: "all" | "quarters" | "halves") =>
+      buildPeriodStartsViewRows(
+        filterPeriodStarts(data, ALL_COMPETITIONS, ALL_COMPETITION_KINDS, type),
+        ["ALL"],
+        "total",
+      ).map((row) => row.name);
+    expect(order("all")).toEqual(["Ada Wing", "Bea Def", "Cal Keeper"]);
+    expect(order("halves")).toEqual(["Bea Def", "Ada Wing"]);
+  });
+
+  it("re-sorts when the position filter changes", () => {
+    const rows = buildPeriodStartsViewRows(filtered, ["DEF", "GK"], "per_game");
+    expect(rows.map((row) => row.name)).toEqual(["Bea Def", "Cal Keeper"]);
+  });
+
+  it("puts the player with more periods started first when values tie", () => {
+    const rows = buildPeriodStartsViewRows(
+      [
+        { ...bea, name: "Few", count: 1, periodsAvailable: 2 },
+        { ...bea, name: "Many", count: 3, periodsAvailable: 6 },
+      ],
+      ["ALL"],
+      "per_game",
+    );
+    expect(rows.map((row) => row.name)).toEqual(["Many", "Few"]);
   });
 
   it("honors the Type filter in the percent", () => {
@@ -290,10 +328,10 @@ describe("buildPeriodStartsViewRows", () => {
     expect(buildPeriodStartsViewRows(filtered, ["FWD"], "total")).toEqual([]);
   });
 
-  it("breaks ties by name", () => {
+  it("breaks full ties by name", () => {
     const rows = buildPeriodStartsViewRows(
       [
-        { ...bea, name: "Zed", count: 2, periodsAvailable: 2 },
+        { ...bea, name: "Zed", count: 2, periodsAvailable: 4 },
         { ...bea, name: "Amy", count: 2, periodsAvailable: 4 },
       ],
       ["ALL"],

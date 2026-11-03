@@ -107,7 +107,9 @@ export type PeriodStartsRow = PlayerCountPoint & {
 };
 
 /**
- * Chart rows for the Period starts section, always ordered by periods started.
+ * Chart rows for the Period starts section, highest plotted value first (so
+ * re-sorted whenever the filters or view change); ties go to the player with
+ * more periods started, then by name.
  * In the "per_game" view the value is the percent of the periods in the
  * player's games that they started, and players with no periods to measure
  * against are left out.
@@ -127,5 +129,8 @@ export function buildPeriodStartsViewRows(
       if (value == null) return [];
       return [{ ...row, periodsAvailable, value }];
     })
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        b.value - a.value || b.count - a.count || a.name.localeCompare(b.name),
+    );
 }
