@@ -109,16 +109,22 @@ are forwarded to `/auth/invite` and recovery tokens to `/auth/reset-password`.
   expires, so a user stays signed in until their cookie is cleared (Safari also
   deletes script-written cookies after 7 days of use without interaction with
   the site). Nothing in the app signs users out after a fixed time. The
-  `fto_access` cookie (90 minutes) only caches the access check.
+  `fto_access` cookie (15 minutes) only caches the access check.
 - **JWT expiry** — 86400 s (24 h). With a 1 h token, an idle phone had to
   refresh on wake-up; concurrent requests could present the same single-use
   refresh token and revoke the session. A 24 h token means a phone normally
   refreshes at most once a day. Trade-off: a deleted user's token stays signed
   until it expires, but the app re-checks the user on every request
-  (`getUser()`) and row-level security finds no linked person, so it grants no
+  (`getUser()` in the proxy) and row-level security finds no linked person, so it grants no
   access. With a time-box enabled, a session can last up to the time-box plus
   this value, because the time-box is checked only at refresh. Must match
   `supabase/config.toml`.
+- **JWT signing keys** — use asymmetric keys (Authentication → JWT Keys). The
+  proxy validates every request with `getUser()`; the page render then reads the
+  verified claims with `getClaims()`, which checks the signature locally with
+  asymmetric keys and saves one Auth round-trip per page load. With the legacy
+  shared secret `getClaims()` falls back to a network check, which is correct but
+  not faster.
 - **Refresh token reuse interval** — 60 s (default 10 s). Gives slow mobile
   connections time to deliver a rotated token before a reuse revokes the
   session. Must match `supabase/config.toml`.

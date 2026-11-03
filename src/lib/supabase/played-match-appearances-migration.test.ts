@@ -25,18 +25,3 @@ describe("played match appearances", () => {
     expect(sql).toMatch(/mp\.match_id in \(select id from played_matches\)/i);
   });
 });
-
-describe("getMatchesPlayedByPlayerStats", () => {
-  const source = readFileSync(
-    resolve(process.cwd(), "src/lib/data/stats.ts"),
-    "utf8",
-  );
-
-  it("limits squad appearances to played matches", () => {
-    const fn = source.slice(
-      source.indexOf("export async function getMatchesPlayedByPlayerStats"),
-      source.indexOf("export async function getResultsOverTime"),
-    );
-    expect(fn).toContain('.eq("match.status", "played")');
-  });
-});

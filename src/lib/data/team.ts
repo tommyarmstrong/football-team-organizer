@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { canEditMatchDay, getViewerContext } from "@/lib/authz/context";
 import type { AgeGroup } from "@/lib/constants";
 import {
-  archivedTeamWriteError,
   isTeamArchived,
   isValidSeasonLabel,
   SEASON_FORMAT_HINT,
@@ -81,7 +80,7 @@ export const getActiveTeam = cache(async (): Promise<Team | null> => {
     if (match) return match;
   }
 
-  return teams.find((team) => !isTeamArchived(team)) ?? teams[0];
+  return teams.find((team) => !isTeamArchived(team)) ?? teams[0] ?? null;
 });
 
 /** Backwards-compatible alias used across the app for the current team. */
@@ -99,31 +98,6 @@ export async function getTeam(
 
   if (error) return { data: null, error: error.message };
   return { data, error: null };
-}
-
-/** Reject writes against an archived season's historical records. */
-export async function requireWritableTeam(
-  teamId: string,
-): Promise<{ error: string | null }> {
-  const { data, error } = await getTeam(teamId);
-  if (error) return { error };
-  if (!data) return { error: "Team not found." };
-  return { error: archivedTeamWriteError(data) };
-}
-
-/** Reject writes against historical records belonging to a match's team. */
-export async function requireWritableMatchTeam(
-  matchId: string,
-): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("matches")
-    .select("team_id")
-    .eq("id", matchId)
-    .maybeSingle();
-  if (error) return { error: error.message };
-  if (!data) return { error: "Match not found." };
-  return requireWritableTeam(data.team_id);
 }
 
 export async function updateTeam(

@@ -28,8 +28,9 @@ import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
 import {
   boolFromCheckbox,
+  isOneOf,
   parseOptionalInt,
-  str as formStr,
+  str,
 } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import { tournamentScheduleFromForm } from "@/lib/matches/tournament-defaults";
@@ -61,9 +62,8 @@ import type {
   TeamGender,
 } from "@/lib/supabase/database.types";
 
-function str(formData: FormData, key: string): string {
-  return String(formData.get(key) ?? "").trim();
-}
+/** Every team gender the database accepts, including legacy `mixed`. */
+const TEAM_GENDER_VALUES = Object.keys(TEAM_GENDER_LABELS) as TeamGender[];
 
 function parseTrainingDays(formData: FormData): TrainingDay[] {
   return formData
@@ -91,7 +91,7 @@ function parseTeamFields(formData: FormData):
   const name = str(formData, "name");
   const display_name = str(formData, "display_name") || null;
   const age_group = str(formData, "age_group");
-  const gender = str(formData, "gender") as TeamGender;
+  const genderRaw = str(formData, "gender");
   const home_venue_id = str(formData, "home_venue_id") || null;
   const training_venue_id = str(formData, "training_venue_id") || null;
   const training_days = parseTrainingDays(formData);
@@ -107,9 +107,10 @@ function parseTeamFields(formData: FormData):
   if (!(AGE_GROUPS as readonly string[]).includes(age_group)) {
     return { error: "Select a valid age group.", ok: false };
   }
-  if (!(gender in TEAM_GENDER_LABELS)) {
+  if (!isOneOf(TEAM_GENDER_VALUES, genderRaw)) {
     return { error: "Invalid gender.", ok: false };
   }
+  const gender = genderRaw;
 
   return {
     ok: true,
@@ -486,7 +487,7 @@ function parseCompetitionUpdate(
   }
 
   const playersPerTeam = parseOptionalInt(
-    formStr(formData, "players_per_team"),
+    str(formData, "players_per_team"),
     "Players per team",
   );
   if (typeof playersPerTeam === "object" && playersPerTeam !== null) {
@@ -500,7 +501,7 @@ function parseCompetitionUpdate(
       : DEFAULT_COMPETITION_PERIODS;
 
   const minutesPerPeriod = parseOptionalInt(
-    formStr(formData, "minutes_per_period"),
+    str(formData, "minutes_per_period"),
     "Minutes per period",
   );
   if (typeof minutesPerPeriod === "object" && minutesPerPeriod !== null) {

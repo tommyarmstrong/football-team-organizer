@@ -17,6 +17,7 @@ import {
 const sample: GoalsByPlayerPoint[] = [
   {
     playerId: "1",
+    personId: "person-1",
     name: "Ada Mid",
     goals: 6,
     position: "MID",
@@ -30,6 +31,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "2",
+    personId: "person-2",
     name: "Bea Fwd",
     goals: 4,
     position: "FWD",
@@ -43,6 +45,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "3",
+    personId: "person-3",
     name: "Cal Def",
     goals: 2,
     position: "DEF",
@@ -56,6 +59,7 @@ const sample: GoalsByPlayerPoint[] = [
   },
   {
     playerId: "4",
+    personId: "person-4",
     name: "Dee None",
     goals: 1,
     position: null,

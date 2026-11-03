@@ -66,6 +66,7 @@ describe("clubs data", () => {
   });
 
   it("gets a club by id and maps errors", async () => {
+    getViewerContextMock.mockResolvedValue(viewerFixture());
     createClientMock.mockReturnValue(
       mockFromClient({
         clubs: okResult({ id: "club-1", name: "Example FC" }),
@@ -74,10 +75,37 @@ describe("clubs data", () => {
     const { getClub } = await import("@/lib/data/clubs");
     expect((await getClub("club-1")).data?.id).toBe("club-1");
 
+    getViewerContextMock.mockResolvedValue(
+      viewerFixture({
+        visibleClubs: [clubFixture({ id: "club-x", name: "X FC" })],
+      }),
+    );
     createClientMock.mockReturnValue(
       mockFromClient({ clubs: errResult("missing") }),
     );
     expect(await getClub("club-x")).toEqual({ data: null, error: "missing" });
+  });
+
+  it("does not return a club the viewer cannot see", async () => {
+    createClientMock.mockReturnValue(
+      mockFromClient({
+        clubs: okResult({ id: "club-other", name: "Other FC" }),
+      }),
+    );
+    const { getClub } = await import("@/lib/data/clubs");
+
+    getViewerContextMock.mockResolvedValue(viewerFixture());
+    expect(await getClub("club-other")).toEqual({
+      data: null,
+      error: "Club not found.",
+    });
+
+    getViewerContextMock.mockResolvedValue(null);
+    expect(await getClub("club-1")).toEqual({
+      data: null,
+      error: "Club not found.",
+    });
+    expect(createClientMock).not.toHaveBeenCalled();
   });
 
   it("resolves primary club from preferred ids in ctx.visibleClubs", async () => {

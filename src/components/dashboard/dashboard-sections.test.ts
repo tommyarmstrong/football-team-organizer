@@ -27,48 +27,41 @@ import { SeasonTiles } from "@/components/stats/season-tiles";
 describe("DashboardLeaderboards", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getDashboardDataMock.mockResolvedValue({
-      next: { data: null, error: null },
-      last: { data: null, error: null },
-      canEditMatch: false,
-      form: { form: [], error: null },
-      competitions: { data: [], error: null },
-      canEditTeam: false,
-      scorers: { data: [], error: null },
-      assists: { data: [], error: null },
-      potm: { data: [], error: null },
-      potMonth: { data: [], error: null },
-      stats: { resultsOverTime: [], form: [], error: null },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        next: { data: null, error: null },
+        last: { data: null, error: null },
+        canEditMatch: false,
+        form: { form: [], error: null },
+        competitions: { data: [], error: null },
+        canEditTeam: false,
+        scorers: { data: [], error: null },
+        assists: { data: [], error: null },
+        potm: { data: [], error: null },
+        potMonth: { data: [], error: null },
+        stats: { resultsOverTime: [], form: [], error: null },
+      }),
+    );
   });
 
   it("lists player of the match names without shirt numbers", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      next: { data: null, error: null },
-      last: { data: null, error: null },
-      canEditMatch: false,
-      form: { form: [], error: null },
-      competitions: { data: [], error: null },
-      canEditTeam: false,
-      scorers: { data: [], error: null },
-      assists: { data: [], error: null },
-      potm: {
-        data: [
-          {
-            player: {
-              id: "player-1",
-              person_id: "person-1",
-              first_name: "Maya",
-              last_name: "Hall",
-              shirt_number: 7,
-            },
-            count: 3,
-          },
-        ],
-        error: null,
-      },
-      potMonth: { data: [], error: null },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        next: { data: null, error: null },
+        last: { data: null, error: null },
+        canEditMatch: false,
+        form: { form: [], error: null },
+        competitions: { data: [], error: null },
+        canEditTeam: false,
+        scorers: { data: [], error: null },
+        assists: { data: [], error: null },
+        potm: {
+          data: [countStat("player-1", "person-1", "Maya", "Hall", 3)],
+          error: null,
+        },
+        potMonth: { data: [], error: null },
+      }),
+    );
 
     const tree = await DashboardLeaderboards({ teamId: "team-1" });
     const html = JSON.stringify(tree);
@@ -78,54 +71,56 @@ describe("DashboardLeaderboards", () => {
   });
 
   it("colours ribbons gold, silver, bronze, then black, and monthly awards gold", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      next: { data: null, error: null },
-      last: { data: null, error: null },
-      canEditMatch: false,
-      form: { form: [], error: null },
-      competitions: { data: [], error: null },
-      canEditTeam: false,
-      scorers: {
-        data: [
-          playerStat("player-1", "person-1", "Ada", "Ace", 5),
-          playerStat("player-2", "person-2", "Bea", "Best", 5),
-          playerStat("player-3", "person-3", "Cleo", "Cross", 3),
-        ].map((player) => ({ player, goals: player.goals })),
-        error: null,
-      },
-      assists: {
-        data: [
-          countStat("player-1", "person-1", "Ada", "Ace", 4),
-          countStat("player-2", "person-2", "Bea", "Best", 2),
-          countStat("player-5", "person-5", "Eve", "East", 2),
-        ],
-        error: null,
-      },
-      potm: {
-        data: [
-          countStat("player-1", "person-1", "Ada", "Ace", 4),
-          countStat("player-2", "person-2", "Bea", "Best", 3),
-          countStat("player-3", "person-3", "Cleo", "Cross", 3),
-        ],
-        error: null,
-      },
-      potMonth: {
-        data: [
-          {
-            id: "award-1",
-            month: "2025-03",
-            player: {
-              id: "player-9",
-              person_id: "person-9",
-              first_name: "Nia",
-              last_name: "North",
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        next: { data: null, error: null },
+        last: { data: null, error: null },
+        canEditMatch: false,
+        form: { form: [], error: null },
+        competitions: { data: [], error: null },
+        canEditTeam: false,
+        scorers: {
+          data: [
+            playerStat("player-1", "person-1", "Ada", "Ace", 5),
+            playerStat("player-2", "person-2", "Bea", "Best", 5),
+            playerStat("player-3", "person-3", "Cleo", "Cross", 3),
+          ],
+          error: null,
+        },
+        assists: {
+          data: [
+            countStat("player-1", "person-1", "Ada", "Ace", 4),
+            countStat("player-2", "person-2", "Bea", "Best", 2),
+            countStat("player-5", "person-5", "Eve", "East", 2),
+          ],
+          error: null,
+        },
+        potm: {
+          data: [
+            countStat("player-1", "person-1", "Ada", "Ace", 4),
+            countStat("player-2", "person-2", "Bea", "Best", 3),
+            countStat("player-3", "person-3", "Cleo", "Cross", 3),
+          ],
+          error: null,
+        },
+        potMonth: {
+          data: [
+            {
+              id: "award-1",
+              month: "2025-03",
+              player: {
+                id: "player-9",
+                person_id: "person-9",
+                first_name: "Nia",
+                last_name: "North",
+              },
             },
-          },
-        ],
-        error: null,
-      },
-      stats: { resultsOverTime: [], form: [], error: null },
-    });
+          ],
+          error: null,
+        },
+        stats: { resultsOverTime: [], form: [], error: null },
+      }),
+    );
 
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
@@ -163,39 +158,41 @@ describe("DashboardLeaderboards", () => {
   });
 
   it("sorts players on the same rank alphabetically", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      next: { data: null, error: null },
-      last: { data: null, error: null },
-      canEditMatch: false,
-      form: { form: [], error: null },
-      competitions: { data: [], error: null },
-      canEditTeam: false,
-      scorers: {
-        data: [
-          playerStat("player-3", "person-3", "Cleo", "Cross", 3),
-          playerStat("player-2", "person-2", "Bea", "Best", 5),
-          playerStat("player-1", "person-1", "Ada", "Ace", 5),
-          playerStat("player-4", "person-4", "Dan", "Dale", 3),
-        ].map((player) => ({ player, goals: player.goals })),
-        error: null,
-      },
-      assists: {
-        data: [
-          countStat("player-2", "person-2", "Bea", "Best", 2),
-          countStat("player-1", "person-1", "Ada", "Ace", 2),
-        ],
-        error: null,
-      },
-      potm: {
-        data: [
-          countStat("player-3", "person-3", "Cleo", "Cross", 1),
-          countStat("player-1", "person-1", "Ada", "Ace", 4),
-          countStat("player-2", "person-2", "Bea", "Best", 1),
-        ],
-        error: null,
-      },
-      potMonth: { data: [], error: null },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        next: { data: null, error: null },
+        last: { data: null, error: null },
+        canEditMatch: false,
+        form: { form: [], error: null },
+        competitions: { data: [], error: null },
+        canEditTeam: false,
+        scorers: {
+          data: [
+            playerStat("player-3", "person-3", "Cleo", "Cross", 3),
+            playerStat("player-2", "person-2", "Bea", "Best", 5),
+            playerStat("player-1", "person-1", "Ada", "Ace", 5),
+            playerStat("player-4", "person-4", "Dan", "Dale", 3),
+          ],
+          error: null,
+        },
+        assists: {
+          data: [
+            countStat("player-2", "person-2", "Bea", "Best", 2),
+            countStat("player-1", "person-1", "Ada", "Ace", 2),
+          ],
+          error: null,
+        },
+        potm: {
+          data: [
+            countStat("player-3", "person-3", "Cleo", "Cross", 1),
+            countStat("player-1", "person-1", "Ada", "Ace", 4),
+            countStat("player-2", "person-2", "Bea", "Best", 1),
+          ],
+          error: null,
+        },
+        potMonth: { data: [], error: null },
+      }),
+    );
 
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
@@ -218,25 +215,27 @@ describe("DashboardLeaderboards", () => {
   });
 
   it("lists monthly awards in month order with a ribbon, not a rank", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      next: { data: null, error: null },
-      last: { data: null, error: null },
-      canEditMatch: false,
-      form: { form: [], error: null },
-      competitions: { data: [], error: null },
-      canEditTeam: false,
-      scorers: { data: [], error: null },
-      assists: { data: [], error: null },
-      potm: { data: [], error: null },
-      potMonth: {
-        data: [
-          monthlyAward("award-1", "2025-03", "person-1", "Nia", "North"),
-          monthlyAward("award-2", "2025-02", "person-2", "Bea", "Best"),
-          monthlyAward("award-3", "2025-01", "person-3", "Cleo", "Cross"),
-        ],
-        error: null,
-      },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        next: { data: null, error: null },
+        last: { data: null, error: null },
+        canEditMatch: false,
+        form: { form: [], error: null },
+        competitions: { data: [], error: null },
+        canEditTeam: false,
+        scorers: { data: [], error: null },
+        assists: { data: [], error: null },
+        potm: { data: [], error: null },
+        potMonth: {
+          data: [
+            monthlyAward("award-1", "2025-03", "person-1", "Nia", "North"),
+            monthlyAward("award-2", "2025-02", "person-2", "Bea", "Best"),
+            monthlyAward("award-3", "2025-01", "person-3", "Cleo", "Cross"),
+          ],
+          error: null,
+        },
+      }),
+    );
 
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
@@ -263,13 +262,9 @@ function countStat(
   count: number,
 ) {
   return {
-    player: {
-      id,
-      person_id: personId,
-      first_name: firstName,
-      last_name: lastName,
-      shirt_number: null,
-    },
+    playerId: id,
+    personId,
+    name: `${firstName} ${lastName}`,
     count,
   };
 }
@@ -279,16 +274,32 @@ function playerStat(
   personId: string,
   firstName: string,
   lastName: string,
-  goals: number,
+  count: number,
 ) {
-  return {
-    id,
-    person_id: personId,
-    first_name: firstName,
-    last_name: lastName,
-    shirt_number: null,
-    goals,
+  return countStat(id, personId, firstName, lastName, count);
+}
+
+/** The dashboard data as started promises, with defaults for everything. */
+function dashboardData(overrides: Record<string, unknown> = {}) {
+  const defaults: Record<string, unknown> = {
+    next: { data: null, error: null },
+    last: { data: null, error: null },
+    canEditMatch: false,
+    form: { form: [], error: null },
+    competitions: { data: [], error: null },
+    canEditTeam: false,
+    scorers: { data: [], error: null },
+    assists: { data: [], error: null },
+    potm: { data: [], error: null },
+    potMonth: { data: [], error: null },
+    stats: { resultsOverTime: [], form: [], error: null },
   };
+  return Object.fromEntries(
+    Object.entries({ ...defaults, ...overrides }).map(([key, value]) => [
+      key,
+      Promise.resolve(value),
+    ]),
+  );
 }
 
 function sectionTitles(html: string): string[] {
@@ -346,52 +357,56 @@ function namesInSection(html: string, title: string): string[] {
 
 describe("DashboardSeasonTiles", () => {
   it("omits tiles when getAllTeamStats errors", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      stats: {
-        resultsOverTime: [
-          {
-            matchId: "m1",
-            date: "2026-01-01",
-            label: "Rivals",
-            goalsFor: 2,
-            goalsAgainst: 1,
-            result: "W",
-            competitionId: "c1",
-            competitionKind: "league",
-            competitionName: "League",
-            isFriendly: false,
-          },
-        ],
-        form: ["W"],
-        error: "boom",
-      },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: {
+          resultsOverTime: [
+            {
+              matchId: "m1",
+              date: "2026-01-01",
+              label: "Rivals",
+              goalsFor: 2,
+              goalsAgainst: 1,
+              result: "W",
+              competitionId: "c1",
+              competitionKind: "league",
+              competitionName: "League",
+              isFriendly: false,
+            },
+          ],
+          form: ["W"],
+          error: "boom",
+        },
+      }),
+    );
 
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(tree).toBeNull();
   });
 
   it("renders tiles from played results", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      stats: {
-        resultsOverTime: [
-          {
-            matchId: "m1",
-            date: "2026-01-01",
-            label: "Rivals",
-            goalsFor: 2,
-            goalsAgainst: 1,
-            result: "W",
-            competitionId: "c1",
-            competitionKind: "league",
-            competitionName: "League",
-            isFriendly: false,
-          },
-        ],
-        form: ["W"],
-        error: null,
-      },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: {
+          resultsOverTime: [
+            {
+              matchId: "m1",
+              date: "2026-01-01",
+              label: "Rivals",
+              goalsFor: 2,
+              goalsAgainst: 1,
+              result: "W",
+              competitionId: "c1",
+              competitionKind: "league",
+              competitionName: "League",
+              isFriendly: false,
+            },
+          ],
+          form: ["W"],
+          error: null,
+        },
+      }),
+    );
 
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(tree?.type).toBe(SeasonTiles);
@@ -399,19 +414,21 @@ describe("DashboardSeasonTiles", () => {
   });
 
   it("counts league and cup matches and drops friendlies, tournaments, and other competitions", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      stats: {
-        resultsOverTime: [
-          result("league-win", "league", false),
-          result("cup-draw", "cup", false),
-          result("friendly", null, true),
-          result("tournament", "tournament", false),
-          result("other", "other", false),
-        ],
-        form: [],
-        error: null,
-      },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: {
+          resultsOverTime: [
+            result("league-win", "league", false),
+            result("cup-draw", "cup", false),
+            result("friendly", null, true),
+            result("tournament", "tournament", false),
+            result("other", "other", false),
+          ],
+          form: [],
+          error: null,
+        },
+      }),
+    );
 
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(
@@ -420,16 +437,18 @@ describe("DashboardSeasonTiles", () => {
   });
 
   it("passes no results when every played match is outside league and cup matches", async () => {
-    getDashboardDataMock.mockResolvedValue({
-      stats: {
-        resultsOverTime: [
-          result("friendly", null, true),
-          result("tournament", "tournament", false),
-        ],
-        form: ["W"],
-        error: null,
-      },
-    });
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: {
+          resultsOverTime: [
+            result("friendly", null, true),
+            result("tournament", "tournament", false),
+          ],
+          form: ["W"],
+          error: null,
+        },
+      }),
+    );
 
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
     expect(tree?.props.results).toEqual([]);

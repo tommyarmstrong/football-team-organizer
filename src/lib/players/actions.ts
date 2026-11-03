@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import {
@@ -20,6 +20,10 @@ import {
   updatePlayerObjective,
 } from "@/lib/data/player-objectives";
 import { resolveStaffClubId } from "@/lib/data/clubs";
+import {
+  invalidateAllRosters,
+  invalidateRoster,
+} from "@/lib/data/roster-cache";
 import { getActiveTeam } from "@/lib/data/team";
 import { parsePlayerObjectiveForm } from "@/lib/objectives/parse";
 import { parseShirtNumber, str } from "@/lib/form-parse";
@@ -27,6 +31,8 @@ import { parseShirtNumber, str } from "@/lib/form-parse";
 async function revalidatePersonForPlayer(playerId: string) {
   const player = await getPlayer(playerId);
   const personId = player.data?.person_id ?? null;
+  // Names, position and active role show on cached rosters.
+  invalidateAllRosters();
   revalidatePath("/people");
   revalidatePath("/club");
   if (personId) revalidatePath(`/people/${personId}`);
@@ -102,6 +108,8 @@ export async function deletePlayerAction(id: string): Promise<ActionState> {
   const { error } = await deletePlayer(id);
   if (error) return { error };
 
+  // The player is no longer active, so cached rosters must drop them.
+  invalidateAllRosters();
   revalidatePath("/club");
   revalidatePath("/people");
   if (personId) {
@@ -183,7 +191,7 @@ export async function addRosterPlayerAction(
   );
   if (error) return { error };
 
-  updateTag(`roster:${teamId}`);
+  invalidateRoster(teamId);
   revalidatePath("/team");
   revalidatePath("/club");
   await revalidatePersonForPlayer(playerId);
@@ -229,7 +237,7 @@ export async function createRosterPlayerAction(
   );
   if (rosterError) return { error: rosterError };
 
-  updateTag(`roster:${teamId}`);
+  invalidateRoster(teamId);
   revalidatePath("/team");
   revalidatePath("/club");
   revalidatePath("/people");
@@ -256,7 +264,7 @@ export async function updateRosterEntryAction(
   });
   if (error) return { error };
 
-  if (teamId) updateTag(`roster:${teamId}`);
+  if (teamId) invalidateRoster(teamId);
   await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "ok" };
@@ -270,7 +278,7 @@ export async function removePlayerFromTeamAction(
   const { error } = await removePlayerFromTeam(teamPlayerId);
   if (error) return { error };
 
-  if (teamId) updateTag(`roster:${teamId}`);
+  if (teamId) invalidateRoster(teamId);
   await revalidatePersonForPlayer(playerId);
   revalidatePath("/team");
   return { success: "Player removed from team." };

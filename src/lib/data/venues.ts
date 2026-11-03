@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canReadClub, getViewerContext } from "@/lib/authz/context";
 import type {
   TablesInsert,
   TablesUpdate,
@@ -14,13 +15,19 @@ export type { Venue };
  *
  * §5.6: when a `clubId` is provided the result is cross-request cached for up
  * to one hour and tagged `venues:<clubId>` so venue mutations can invalidate it
- * with `revalidateTag`. The unscoped (all-clubs) path remains uncached because
+ * with `revalidateTag`. The viewer must be able to read the club: the cached
+ * read uses the service role, so the check happens before it. The unscoped (all-clubs) path remains uncached because
  * it combines every club the user can see and is not safe to share across users.
  */
 export async function listVenues(
   clubId?: string,
 ): Promise<{ data: Venue[]; error: string | null }> {
   if (clubId) {
+    const ctx = await getViewerContext();
+    if (!ctx || !canReadClub(ctx, clubId)) {
+      return { data: [], error: "Club not found." };
+    }
+
     return unstable_cache(
       async (cId: string) => {
         const supabase = createAdminClient();

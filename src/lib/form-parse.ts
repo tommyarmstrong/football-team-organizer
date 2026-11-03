@@ -4,6 +4,17 @@ export function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
 }
 
+/**
+ * Type guard: is `value` one of the allowed string literals? Use this to
+ * validate form input before narrowing it, instead of casting first.
+ */
+export function isOneOf<T extends string>(
+  allowed: readonly T[],
+  value: string,
+): value is T {
+  return (allowed as readonly string[]).includes(value);
+}
+
 export function boolFromCheckbox(formData: FormData, key: string): boolean {
   return formData.get(key) === "on" || formData.get(key) === "true";
 }

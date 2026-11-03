@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTeam } from "@/lib/data/team";
 import { archivedTeamWriteError } from "@/lib/team/season";
@@ -38,7 +39,7 @@ function mapRow(
       | null;
   },
 ): PlayerOfTheMonthWithPlayer | null {
-  const playerRaw = Array.isArray(row.player) ? row.player[0] : row.player;
+  const playerRaw = one(row.player);
   const player = mapPlayerNameEmbed(playerRaw);
   if (!player) return null;
   return {

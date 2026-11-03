@@ -29,7 +29,7 @@ import { listRosterForTeam } from "@/lib/data/players";
 import { getActiveTeam } from "@/lib/data/team";
 import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
-import { str } from "@/lib/form-parse";
+import { isOneOf, str } from "@/lib/form-parse";
 import { resolveMatchStage } from "@/lib/matches/tournament-defaults";
 import type {
   Competition,
@@ -91,7 +91,7 @@ function parseMatchFields(
   const kickoff_time = str(formData, "kickoff_time") || null;
   const meetup_time = str(formData, "meetup_time") || null;
   const homeAwayRaw = str(formData, "home_away");
-  const status = (str(formData, "status") || "scheduled") as MatchStatus;
+  const statusRaw = str(formData, "status") || "scheduled";
   const competitionRaw = str(formData, "competition_id");
   const is_friendly = competitionRaw === FRIENDLY_COMPETITION_VALUE;
   const competition_id = !competitionRaw || is_friendly ? null : competitionRaw;
@@ -108,9 +108,10 @@ function parseMatchFields(
   if (homeAwayRaw && !MATCH_HOME_AWAYS.includes(homeAwayRaw as MatchHomeAway)) {
     return { error: "Invalid home/away value." };
   }
-  if (!MATCH_STATUSES.includes(status)) {
+  if (!isOneOf(MATCH_STATUSES, statusRaw)) {
     return { error: "Invalid status." };
   }
+  const status = statusRaw;
 
   return {
     opponent_name,

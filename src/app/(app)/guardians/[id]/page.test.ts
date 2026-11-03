@@ -162,7 +162,7 @@ describe("GuardianDetailPage", () => {
       canManageLinks: true,
       selfGuardianIds: [],
     });
-    expect(sections[0].availablePlayers).toEqual([
+    expect(sections[0]?.availablePlayers).toEqual([
       {
         id: "player-2",
         club_id: "club-1",

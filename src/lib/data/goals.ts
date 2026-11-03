@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { matchAllowsEvents } from "@/lib/constants";
 import { archivedTeamWriteError } from "@/lib/team/season";
@@ -36,8 +37,8 @@ export function mapGoalRow(row: {
   scorer: unknown;
   assist: unknown;
 }): GoalWithPlayers {
-  const scorerRaw = Array.isArray(row.scorer) ? row.scorer[0] : row.scorer;
-  const assistRaw = Array.isArray(row.assist) ? row.assist[0] : row.assist;
+  const scorerRaw = one(row.scorer);
+  const assistRaw = one(row.assist);
   return {
     id: row.id,
     match_id: row.match_id,

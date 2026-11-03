@@ -1,14 +1,19 @@
+import { one } from "@/lib/supabase/relations";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canReadTeam, getViewerContext } from "@/lib/authz/context";
 import { getActiveTeam } from "@/lib/data/team";
+import { rosterCacheTags } from "@/lib/data/roster-cache";
 import { archivedTeamWriteError } from "@/lib/team/season";
 import { createPerson, updatePerson } from "@/lib/data/people";
 import {
   PERSON_EMBED,
   unwrapPerson,
+  unwrapPersonName,
   withPersonFields,
   type PersonFields,
+  type PersonName,
 } from "@/lib/people/person";
 import type {
   Goal,
@@ -46,6 +51,14 @@ export type PlayerWithTeams = PlayerWithPerson & {
   teams: PlayerTeamMembership[];
 };
 
+/**
+ * Columns a roster needs. Kept narrow on purpose: the active-only roster is
+ * stored in a cache shared across requests, so it must not carry date of
+ * birth, school, email, or phone.
+ */
+const ROSTER_SELECT =
+  "id, shirt_number, active, player:players(id, person_id, position, active_role, person:people!person_id(id, first_name, last_name))";
+
 function mapPlayer(
   row: Player & { person: Person | Person[] | null },
 ): PlayerWithPerson {
@@ -79,7 +92,7 @@ export async function listPlayers(): Promise<{
       }>;
     };
     const teams: PlayerTeamMembership[] = (team_players ?? []).map((tp) => {
-      const team = Array.isArray(tp.team) ? tp.team[0] : tp.team;
+      const team = one(tp.team);
       return {
         team_player_id: tp.id,
         team_id: tp.team_id,
@@ -100,26 +113,29 @@ export async function listPlayers(): Promise<{
   return { data: rows, error: null };
 }
 
-function mapRosterRows(
-  data: Array<{
-    id: string;
-    shirt_number: number | null;
-    active: boolean;
-    player:
-      | (Player & { person: Person | Person[] | null })
-      | (Player & { person: Person | Person[] | null })[]
-      | null;
-  }> | null,
-): RosterPlayer[] {
+type RosterRowPlayer = {
+  id: string;
+  person_id: string;
+  position: string | null;
+  active_role: boolean;
+  person: PersonName | PersonName[] | null;
+};
+
+type RosterRow = {
+  id: string;
+  shirt_number: number | null;
+  active: boolean;
+  player: RosterRowPlayer | RosterRowPlayer[] | null;
+};
+
+function mapRosterRows(data: RosterRow[] | null): RosterPlayer[] {
   return (data ?? [])
     .map((row) => {
-      const playerRaw = (
-        Array.isArray(row.player) ? row.player[0] : row.player
-      ) as (Player & { person: Person | Person[] | null }) | undefined;
+      const playerRaw = one(row.player);
       if (!playerRaw || !playerRaw.active_role) return null;
       // Prefer soft mapping: people embeds can be null under RLS without
       // crashing team/match pages (names may be blank until policy allows).
-      const person = unwrapPerson(playerRaw.person);
+      const person = unwrapPersonName(playerRaw.person);
       return {
         id: playerRaw.id,
         person_id: playerRaw.person_id,
@@ -145,7 +161,8 @@ function mapRosterRows(
  * Active roster for a team, used for goal scorer pickers.
  *
  * §5.6: the active-only result is cross-request cached per team (tagged
- * `roster:<teamId>`) so roster mutations can invalidate with `revalidateTag`.
+ * `roster:<teamId>` and `rosters`, see `roster-cache.ts`) so roster mutations
+ * and person/player edits can invalidate it.
  * `includeInactive: true` bypasses the cache (admin path; changes frequently
  * during season setup).
  */
@@ -158,13 +175,20 @@ export async function listRosterForTeam(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("team_players")
-      .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
+      .select(ROSTER_SELECT)
       .eq("team_id", teamId);
     if (error) return { data: [], error: error.message };
     return {
-      data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]),
+      data: mapRosterRows(data as RosterRow[] | null),
       error: null,
     };
+  }
+
+  // The cached read below uses the service role (RLS is bypassed), so the
+  // viewer must be checked first.
+  const ctx = await getViewerContext();
+  if (!ctx || !canReadTeam(ctx, teamId)) {
+    return { data: [], error: "Team not found." };
   }
 
   return unstable_cache(
@@ -172,17 +196,17 @@ export async function listRosterForTeam(
       const supabase = createAdminClient();
       const { data, error } = await supabase
         .from("team_players")
-        .select(`id, shirt_number, active, player:players(*, ${PERSON_EMBED})`)
+        .select(ROSTER_SELECT)
         .eq("team_id", tId)
         .eq("active", true);
       if (error) return { data: [] as RosterPlayer[], error: error.message };
       return {
-        data: mapRosterRows(data as Parameters<typeof mapRosterRows>[0]),
+        data: mapRosterRows(data as RosterRow[] | null),
         error: null,
       };
     },
     ["roster", teamId],
-    { tags: [`roster:${teamId}`], revalidate: 3600 },
+    { tags: rosterCacheTags(teamId), revalidate: 3600 },
   )(teamId);
 }
 
@@ -220,7 +244,7 @@ function mapTeamPlayerRows(
   }> | null,
 ): PlayerTeamMembership[] {
   return (data ?? []).map((tp) => {
-    const team = Array.isArray(tp.team) ? tp.team[0] : tp.team;
+    const team = one(tp.team);
     return {
       team_player_id: tp.id,
       team_id: tp.team_id,
@@ -288,7 +312,7 @@ export async function getPlayerGoals(playerId: string): Promise<{
   if (error) return { data: [], error: error.message };
 
   const rows = (data ?? []).map((row) => {
-    const match = Array.isArray(row.match) ? row.match[0] : row.match;
+    const match = one(row.match);
     return {
       id: row.id,
       match_id: row.match_id,

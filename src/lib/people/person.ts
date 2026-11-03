@@ -1,3 +1,4 @@
+import { one } from "@/lib/supabase/relations";
 import { createHash, randomBytes } from "node:crypto";
 import type { Person } from "@/lib/supabase/database.types";
 
@@ -22,15 +23,13 @@ export type PersonName = {
 export function unwrapPerson(
   person: Person | Person[] | null | undefined,
 ): Person | null {
-  if (!person) return null;
-  return Array.isArray(person) ? (person[0] ?? null) : person;
+  return one(person);
 }
 
 export function unwrapPersonName(
   person: PersonName | PersonName[] | null | undefined,
 ): PersonName | null {
-  if (!person) return null;
-  return Array.isArray(person) ? (person[0] ?? null) : person;
+  return one(person);
 }
 
 /** Flatten an embedded people row onto a role record for UI compatibility. */

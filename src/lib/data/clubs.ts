@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  canReadClub,
   getViewerContext,
   isClubStaff,
   type ViewerContext,
@@ -33,6 +34,13 @@ export const listVisibleClubs = cache(
 export async function getClub(
   id: string,
 ): Promise<{ data: Club | null; error: string | null }> {
+  // The cached read below uses the service role (RLS is bypassed), so the
+  // viewer must be checked first.
+  const ctx = await getViewerContext();
+  if (!ctx || !canReadClub(ctx, id)) {
+    return { data: null, error: "Club not found." };
+  }
+
   return unstable_cache(
     async (clubId: string) => {
       const supabase = createAdminClient();

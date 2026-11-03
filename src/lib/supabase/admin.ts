@@ -14,6 +14,10 @@ import type { Database } from "@/lib/supabase/database.types";
  * server modules. CI fails the build if this module (or the key) appears
  * in `.next/static`.
  *
+ * Cached readers that use this client (`unstable_cache` shares results across
+ * users) MUST check the viewer first, with `getViewerContext()` and
+ * `canReadTeam` / `canReadClub`, before touching the cache.
+ *
  * Env: `SUPABASE_SERVICE_ROLE_KEY` (no `NEXT_PUBLIC_` prefix).
  */
 export function createAdminClient() {

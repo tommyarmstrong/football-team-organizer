@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canReadTeam, getViewerContext } from "@/lib/authz/context";
 import {
   ensureTournamentSquad,
   seedDefaultTournamentSquad,
@@ -27,6 +28,13 @@ export async function listCompetitions(
   const team = teamId ? { id: teamId } : await getCurrentTeam();
   if (!team) {
     return { data: [], error: "No team found for your account." };
+  }
+
+  // The cached read below uses the service role (RLS is bypassed), so the
+  // viewer must be checked first.
+  const ctx = await getViewerContext();
+  if (!ctx || !canReadTeam(ctx, team.id)) {
+    return { data: [], error: "Team not found." };
   }
 
   return unstable_cache(

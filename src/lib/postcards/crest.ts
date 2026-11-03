@@ -15,10 +15,9 @@ export async function imageDataUrl(absolute: string): Promise<string | null> {
   try {
     const response = await fetch(absolute);
     if (!response.ok) return null;
-    const mime = (response.headers.get("content-type") ?? "")
-      .split(";")[0]
-      .trim()
-      .toLowerCase();
+    const mime =
+      (response.headers.get("content-type") ?? "").split(";")[0]?.trim() ??
+      "".toLowerCase();
     if (!RASTER_TYPES.has(mime)) return null;
     const bytes = Buffer.from(await response.arrayBuffer());
     return `data:${mime};base64,${bytes.toString("base64")}`;
