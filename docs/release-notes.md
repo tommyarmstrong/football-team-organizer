@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 4 November 2026 — Coach cards
+
+- A coach's page now has a **Share coach card** button, next to the player card button. The card matches the player card: 4:5, sized for WhatsApp and Instagram, in the club colours.
+- It shows the coach's full name, their role on the team (for example Head Coach), and the team's competitive record for the season: played, wins, draws, losses, and goals for and against. Friendlies are left out.
+- Coaches, club managers, and the coaches and team managers of that team can generate it. Guardians and players cannot.
+- A coach on several teams gets a card for each team they can see.
+
+---
+
 ## 4 November 2026 — Season report
 
 - Managers get a **Season report** button on the Team page. It opens the team's season as a printable A4 book in the club colours: cover, coach's notes, season at a glance, results, charts, competitions, player gallery, awards, looking ahead, autographs, and a back cover. Use Print / Save as PDF, with A4, margins None, and Background graphics on.

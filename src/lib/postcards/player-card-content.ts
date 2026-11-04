@@ -116,12 +116,12 @@ export function playerCardFileName(input: {
 }
 
 /**
- * Chooses which of a player's teams the card is for. An explicit request wins
+ * Chooses which of a person's teams a card is for. An explicit request wins
  * (and yields null when it is not one of `teams`), then the viewer's active
- * team, then a team the player is currently active on, then the first team in
+ * team, then a preferred (currently active) team, then the first team in
  * display order (current seasons before archived ones).
  */
-export function pickPlayerCardTeam(
+export function pickCardTeam(
   teams: Team[],
   options: {
     requestedTeamId?: string | null;
@@ -141,3 +141,5 @@ export function pickPlayerCardTeam(
   const preferred = new Set(options.preferredTeamIds ?? []);
   return ordered.find((team) => preferred.has(team.id)) ?? ordered[0] ?? null;
 }
+
+export const pickPlayerCardTeam = pickCardTeam;
