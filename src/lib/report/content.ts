@@ -15,8 +15,10 @@ async function readSlot(
   const expectedPath = reportSlotPath(slug, slot);
   try {
     const markdown = await readFile(
+      // The content folder is shipped via `outputFileTracingIncludes` in
+      // next.config.ts, so keep Turbopack from tracing the whole project.
       path.join(
-        process.cwd(),
+        /*turbopackIgnore: true*/ process.cwd(),
         REPORT_CONTENT_ROOT,
         slug,
         REPORT_SLOT_FILES[slot],

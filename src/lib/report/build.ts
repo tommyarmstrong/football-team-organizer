@@ -7,6 +7,7 @@ import {
   teamDisplayName,
 } from "@/lib/format";
 import { clubIconSrc } from "@/lib/clubs/branding";
+import { playerCardPath } from "@/lib/report/card-path";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { PlayerOfTheMonthWithPlayer } from "@/lib/data/player-of-the-month";
@@ -24,6 +25,7 @@ import type {
 export type BuildReportInput = {
   club: { name: string; colour: string | null; icon_url: string | null } | null;
   team: {
+    id: string;
     name: string;
     display_name: string | null;
     season_label: string;
@@ -86,6 +88,7 @@ function countByPlayer(
  * so a player who left mid-season still appears in the book.
  */
 export function buildReportPlayers(input: {
+  teamId: string;
   roster: readonly RosterPlayer[];
   goalsByPlayer: readonly GoalsByPlayerPoint[];
   assistsByPlayer: readonly PlayerCountPoint[];
@@ -97,21 +100,29 @@ export function buildReportPlayers(input: {
   const potm = countByPlayer(input.potmByPlayer);
   const apps = countByPlayer(input.matchesPlayed);
 
-  return input.roster
-    .map((r): ReportPlayer => ({
-      id: r.id,
-      name: `${r.first_name} ${r.last_name}`.trim(),
-      shirtNumber: r.shirt_number,
-      position: r.position,
-      appearances: apps.get(r.id) ?? 0,
-      goals: goals.get(r.id) ?? 0,
-      assists: assists.get(r.id) ?? 0,
-      playerOfTheMatch: potm.get(r.id) ?? 0,
-    }))
-    .filter((p) => {
-      const rosterRow = input.roster.find((r) => r.id === p.id);
-      return rosterRow?.active || p.appearances > 0;
-    });
+  return input.roster.flatMap((r): ReportPlayer[] => {
+    const appearances = apps.get(r.id) ?? 0;
+    if (!r.active && appearances === 0) return [];
+    return [
+      {
+        id: r.id,
+        personId: r.person_id,
+        name: `${r.first_name} ${r.last_name}`.trim(),
+        firstName: r.first_name.trim() || "Player",
+        shirtNumber: r.shirt_number,
+        position: r.position,
+        appearances,
+        goals: goals.get(r.id) ?? 0,
+        assists: assists.get(r.id) ?? 0,
+        playerOfTheMatch: potm.get(r.id) ?? 0,
+        cardUrl: playerCardPath({
+          personId: r.person_id,
+          playerId: r.id,
+          teamId: input.teamId,
+        }),
+      },
+    ];
+  });
 }
 
 /**
@@ -176,7 +187,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
     headCoachName: headCoach?.name ?? null,
     matches,
     competitions: buildReportCompetitions(input.competitions, matches),
-    players: buildReportPlayers(input),
+    players: buildReportPlayers({ ...input, teamId: input.team.id }),
     monthAwards: input.monthAwards
       .map((a) => ({
         month: a.month,
