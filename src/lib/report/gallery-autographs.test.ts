@@ -6,10 +6,15 @@ import {
   PLAYER_CARD_ASPECT,
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne } from "@/lib/report/paginate";
-import { samplePlayers, sampleReportData } from "@/lib/report/sample";
+import {
+  samplePlayers,
+  sampleReportData,
+  sampleVenues,
+} from "@/lib/report/sample";
 import {
   REPORT_SECTION_ORDER,
   REPORT_SECTION_TITLES,
+  VENUES_PER_PAGE,
 } from "@/lib/report/sections";
 import { sortSquad } from "@/lib/report/summary";
 
@@ -17,6 +22,25 @@ describe("report section order", () => {
   it("puts Autographs straight after Looking ahead", () => {
     const order: readonly string[] = REPORT_SECTION_ORDER;
     expect(order.indexOf("autographs")).toBe(order.indexOf("lookingAhead") + 1);
+  });
+
+  it("puts the team info straight after the cover", () => {
+    const order: readonly string[] = REPORT_SECTION_ORDER;
+    expect(order.indexOf("teamInfo")).toBe(order.indexOf("cover") + 1);
+  });
+
+  it("puts venues after competitions and before the gallery", () => {
+    const order: readonly string[] = REPORT_SECTION_ORDER;
+    expect(order.indexOf("venues")).toBeGreaterThan(
+      order.indexOf("competitions"),
+    );
+    expect(order.indexOf("venues")).toBeLessThan(order.indexOf("gallery"));
+  });
+
+  it("renames Awards to Records", () => {
+    expect(REPORT_SECTION_TITLES.records).toBe("Records");
+    expect(Object.values(REPORT_SECTION_TITLES)).not.toContain("Awards");
+    expect(REPORT_SECTION_ORDER).not.toContain("awards");
   });
 
   it("lists every section once", () => {
@@ -28,7 +52,7 @@ describe("report section order", () => {
   it("starts with the cover and keeps the gallery before the awards", () => {
     const order: readonly string[] = REPORT_SECTION_ORDER;
     expect(order[0]).toBe("cover");
-    expect(order.indexOf("gallery")).toBeLessThan(order.indexOf("awards"));
+    expect(order.indexOf("gallery")).toBeLessThan(order.indexOf("records"));
   });
 
   it("names the squad section Player Gallery and adds Autographs", () => {
@@ -118,5 +142,24 @@ describe("sample gallery data", () => {
     expect(player.card.stats.goals).toBe(18);
     const { wins, draws, losses, appearances } = player.card.stats;
     expect(wins + draws + losses).toBe(appearances);
+  });
+});
+
+describe("venue paging", () => {
+  it("fits the sample venues on one page", () => {
+    expect(chunkAtLeastOne(sampleVenues(), VENUES_PER_PAGE)).toHaveLength(1);
+  });
+
+  it("runs many venues onto further pages without losing any", () => {
+    const venues = Array.from({ length: VENUES_PER_PAGE + 2 }, (_, i) => ({
+      ...sampleVenues()[0]!,
+      id: `v${i}`,
+    }));
+    const pages = chunkAtLeastOne(venues, VENUES_PER_PAGE);
+    expect(pages.map((page) => page.length)).toEqual([VENUES_PER_PAGE, 2]);
+  });
+
+  it("still yields a page when no venue was recorded", () => {
+    expect(chunkAtLeastOne([], VENUES_PER_PAGE)).toEqual([[]]);
   });
 });

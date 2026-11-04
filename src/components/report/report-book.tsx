@@ -8,17 +8,19 @@ import {
 import type { ReportData } from "@/lib/report/types";
 import {
   AutographsPage,
-  AwardsPage,
   BackCoverPage,
   CompetitionsPage,
   CoverPage,
   GlancePage,
   NotesPage,
   NumbersPage,
+  RecordsPage,
+  TeamInfoPage,
   coachNotesPages,
   galleryPages,
   lookingAheadPages,
   resultsPages,
+  venuesPages,
 } from "@/components/report/report-pages";
 
 /** How each section turns into one or more A4 pages. */
@@ -27,13 +29,15 @@ const SECTION_PAGES: Record<
   (data: ReportData) => ReactElement[]
 > = {
   cover: (data) => [<CoverPage key="cover" data={data} />],
+  teamInfo: (data) => [<TeamInfoPage key="teamInfo" data={data} />],
   coachNotes: (data) => coachNotesPages({ data }),
   glance: (data) => [<GlancePage key="glance" data={data} />],
   results: (data) => resultsPages({ data }),
   numbers: (data) => [<NumbersPage key="numbers" data={data} />],
   competitions: (data) => [<CompetitionsPage key="competitions" data={data} />],
+  venues: (data) => venuesPages({ data }),
   gallery: (data) => galleryPages({ data }),
-  awards: (data) => [<AwardsPage key="awards" data={data} />],
+  records: (data) => [<RecordsPage key="records" data={data} />],
   lookingAhead: (data) => lookingAheadPages({ data }),
   autographs: (data) => [<AutographsPage key="autographs" data={data} />],
 };

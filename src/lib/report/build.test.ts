@@ -4,10 +4,11 @@ import {
   buildReportData,
   buildReportMatches,
   buildReportPlayers,
+  buildReportVenues,
 } from "@/lib/report/build";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { RosterPlayer } from "@/lib/data/players";
-import type { Competition } from "@/lib/supabase/database.types";
+import type { Competition, Venue } from "@/lib/supabase/database.types";
 
 function dbMatch(
   id: string,
@@ -305,6 +306,124 @@ describe("buildReportCompetitions", () => {
   });
 });
 
+function dbVenue(id: string, extra: Partial<Venue> = {}): Venue {
+  return {
+    id,
+    club_id: "club",
+    name: `Venue ${id}`,
+    address_line1: null,
+    address_line2: null,
+    town_city: null,
+    postcode: null,
+    surface: [],
+    parking: "unknown",
+    food_and_drink: [],
+    created_at: "",
+    updated_at: "",
+    ...extra,
+  };
+}
+
+describe("buildReportVenues", () => {
+  it("lists only venues with a played match, most visited first", () => {
+    const venues = [dbVenue("a"), dbVenue("b"), dbVenue("never")];
+    const result = buildReportVenues(
+      [
+        dbMatch("1", { venue_id: "b" }),
+        dbMatch("2", { venue_id: "a" }),
+        dbMatch("3", { venue_id: "b" }),
+        dbMatch("4", { venue_id: "never", status: "scheduled" }),
+        dbMatch("5", { venue_id: null }),
+      ],
+      venues,
+      null,
+    );
+    expect(result.map((v) => v.id)).toEqual(["b", "a"]);
+    expect(result.map((v) => v.played)).toEqual([2, 1]);
+  });
+
+  it("breaks ties by name", () => {
+    const result = buildReportVenues(
+      [dbMatch("1", { venue_id: "z" }), dbMatch("2", { venue_id: "a" })],
+      [dbVenue("z", { name: "Zed Park" }), dbVenue("a", { name: "Alpha" })],
+      null,
+    );
+    expect(result.map((v) => v.name)).toEqual(["Alpha", "Zed Park"]);
+  });
+
+  it("records results, goals and the biggest win at each venue", () => {
+    const [venue] = buildReportVenues(
+      [
+        dbMatch("1", { venue_id: "a", goals_for: 3, goals_against: 0 }),
+        dbMatch("2", {
+          venue_id: "a",
+          goals_for: 5,
+          goals_against: 1,
+          opponent_name: "Rose",
+        }),
+        dbMatch("3", { venue_id: "a", goals_for: 1, goals_against: 1 }),
+        dbMatch("4", { venue_id: "a", goals_for: 0, goals_against: 2 }),
+      ],
+      [dbVenue("a")],
+      "a",
+    );
+    expect(venue).toMatchObject({
+      played: 4,
+      wins: 2,
+      draws: 1,
+      losses: 1,
+      goalsFor: 9,
+      goalsAgainst: 4,
+      biggestWin: "5–1 v Rose",
+      isHome: true,
+    });
+  });
+
+  it("has no biggest win when the team never won there", () => {
+    const [venue] = buildReportVenues(
+      [dbMatch("1", { venue_id: "a", goals_for: 0, goals_against: 1 })],
+      [dbVenue("a")],
+      null,
+    );
+    expect(venue!.biggestWin).toBeNull();
+    expect(venue!.isHome).toBe(false);
+  });
+
+  it("describes the ground, leaving out what is not recorded", () => {
+    const [full, bare] = buildReportVenues(
+      [
+        dbMatch("1", { venue_id: "full" }),
+        dbMatch("2", { venue_id: "full" }),
+        dbMatch("3", { venue_id: "bare" }),
+      ],
+      [
+        dbVenue("full", {
+          address_line1: "1 High St",
+          town_city: "Townsville",
+          postcode: "TS1 1AA",
+          surface: ["astro", "unknown", "grass"],
+          parking: "paid_parking",
+          food_and_drink: ["cafe", "tuck_shop"],
+        }),
+        dbVenue("bare", { surface: ["unknown"] }),
+      ],
+      null,
+    );
+    expect(full).toMatchObject({
+      address: "1 High St, Townsville, TS1 1AA",
+      surface: "Astro, Grass",
+      parking: "Paid parking",
+      foodAndDrink: "Cafe, Tuck shop",
+    });
+    expect(bare).toMatchObject({
+      address: null,
+      surface: null,
+      parking: null,
+      foodAndDrink: null,
+    });
+  });
+});
+
 describe("buildReportData", () => {
   it("assembles the report with the head coach and sorted awards", () => {
     const data = buildReportData({
@@ -317,7 +436,11 @@ describe("buildReportData", () => {
         age_group: "U10",
         gender: "boys",
         photo_url: null,
+        home_venue_id: null,
+        training_venue_id: null,
+        training_days: null,
       },
+      venues: [],
       matches: [dbMatch("m1")],
       roster: [roster("a")],
       goalsByPlayer: [],
@@ -381,6 +504,9 @@ describe("buildReportData", () => {
     });
 
     expect(data.team.name).toBe("Lions");
+    expect(data.team.summary).toBe("Club · Boys · U10 · 2025/26");
+    expect(data.team.homeVenue).toBeNull();
+    expect(data.team.trainingDays).toBe("—");
     expect(data.club.iconUrl).toBe("/football-icon.svg");
     expect(data.headCoachName).toBe("Hal Head");
     expect(data.staff).toHaveLength(2);
@@ -394,5 +520,71 @@ describe("buildReportData", () => {
       notes: "Great",
     });
     expect(data.monthAwards[1]!.notes).toBeNull();
+  });
+});
+
+describe("team info", () => {
+  const base = {
+    club: { name: "The FA", colour: null, icon_url: null },
+    team: {
+      id: "t1",
+      name: "England",
+      display_name: null,
+      season_label: "1995/96",
+      age_group: "Adults",
+      gender: "men" as const,
+      photo_url: "https://example.com/team.jpg",
+      home_venue_id: "v1",
+      training_venue_id: "v2",
+      training_days: ["mon", "wed", "fri"],
+    },
+    venues: [
+      dbVenue("v1", { name: "Wembley Stadium" }),
+      dbVenue("v2", { name: "Lilleshall" }),
+    ],
+    matches: [],
+    roster: [],
+    goalsByPlayer: [],
+    assistsByPlayer: [],
+    potmByPlayer: [],
+    matchesPlayed: [],
+    competitiveRecords: {},
+    coaches: [
+      {
+        team_coach_id: "1",
+        coach_id: "c1",
+        person_id: "p1",
+        name: "Terry Venables",
+        role: "Head Coach",
+      },
+    ],
+    competitions: [],
+    monthAwards: [],
+    content: {
+      coachNotes: { expectedPath: "x", markdown: null },
+      lookingAhead: { expectedPath: "y", markdown: null },
+    },
+  };
+
+  it("gives the basics shown on the team page", () => {
+    const data = buildReportData(base);
+    expect(data.team).toMatchObject({
+      name: "England",
+      summary: "The FA · Men · Adults · 1995/96",
+      homeVenue: "Wembley Stadium",
+      trainingVenue: "Lilleshall",
+      trainingDays: "Mon, Wed, Fri",
+      photoUrl: "https://example.com/team.jpg",
+    });
+    expect(data.headCoachName).toBe("Terry Venables");
+  });
+
+  it("leaves a venue blank when it is not set or no longer exists", () => {
+    const data = buildReportData({
+      ...base,
+      team: { ...base.team, home_venue_id: null, training_venue_id: "gone" },
+    });
+    expect(data.team.homeVenue).toBeNull();
+    expect(data.team.trainingVenue).toBeNull();
   });
 });

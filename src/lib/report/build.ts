@@ -1,5 +1,10 @@
 import {
   formatAwardMonth,
+  formatTeamHeaderSummary,
+  formatTrainingDays,
+  formatVenueAddress,
+  formatVenueFoodAndDrink,
+  formatVenueSurface,
   labelCompetitionKind,
   labelCompetitionResult,
   matchCompetitionLabel,
@@ -21,13 +26,19 @@ import type {
   GoalsByPlayerPoint,
   PlayerRecord,
 } from "@/lib/data/stats";
-import type { Competition, TeamGender } from "@/lib/supabase/database.types";
+import { VENUE_PARKING_LABELS } from "@/lib/constants";
+import type {
+  Competition,
+  TeamGender,
+  Venue,
+} from "@/lib/supabase/database.types";
 import type {
   ReportCompetition,
   ReportContent,
   ReportData,
   ReportMatch,
   ReportPlayer,
+  ReportVenue,
 } from "@/lib/report/types";
 
 export type BuildReportInput = {
@@ -40,7 +51,12 @@ export type BuildReportInput = {
     age_group: string;
     gender: TeamGender;
     photo_url: string | null;
+    home_venue_id: string | null;
+    training_venue_id: string | null;
+    training_days: string[] | null;
   };
+  /** The club's venues; only the ones with a played match are reported. */
+  venues: Venue[];
   /** Any status; only played matches with a score are kept. */
   matches: MatchWithRelations[];
   roster: RosterPlayer[];
@@ -224,6 +240,79 @@ export function buildReportCompetitions(
     .sort((a, b) => b.played - a.played || a.name.localeCompare(b.name));
 }
 
+/**
+ * Every venue with a played match, with the team's record there. The venue
+ * names come from the club's venue list, so a deleted venue simply drops out.
+ * Most visited first, then by name.
+ */
+export function buildReportVenues(
+  matches: readonly MatchWithRelations[],
+  venues: readonly Venue[],
+  homeVenueId: string | null,
+): ReportVenue[] {
+  const byId = new Map(venues.map((v) => [v.id, v]));
+  const played = matches.filter((m) => m.status === "played");
+
+  const result: ReportVenue[] = [];
+  for (const venue of venues) {
+    const own = played.filter((m) => m.venue_id === venue.id);
+    if (own.length === 0 || !byId.has(venue.id)) continue;
+
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+    let goalsFor = 0;
+    let goalsAgainst = 0;
+    let best: { margin: number; label: string } | null = null;
+    for (const m of own) {
+      const letter = resultLetter(m.goals_for, m.goals_against);
+      if (letter === "W") wins += 1;
+      else if (letter === "D") draws += 1;
+      else if (letter === "L") losses += 1;
+      goalsFor += m.goals_for;
+      goalsAgainst += m.goals_against;
+      const margin = m.goals_for - m.goals_against;
+      if (margin > 0 && (!best || margin > best.margin)) {
+        best = {
+          margin,
+          label: `${m.goals_for}–${m.goals_against} v ${m.opponent_name}`,
+        };
+      }
+    }
+
+    const surface = formatVenueSurface(
+      venue.surface.filter((kind) => kind !== "unknown"),
+    );
+    result.push({
+      id: venue.id,
+      name: venue.name,
+      address: formatVenueAddress(venue),
+      surface,
+      parking:
+        venue.parking === "unknown"
+          ? null
+          : VENUE_PARKING_LABELS[venue.parking],
+      foodAndDrink: formatVenueFoodAndDrink(venue.food_and_drink),
+      isHome: venue.id === homeVenueId,
+      played: own.length,
+      wins,
+      draws,
+      losses,
+      goalsFor,
+      goalsAgainst,
+      biggestWin: best?.label ?? null,
+    });
+  }
+
+  return result.sort(
+    (a, b) => b.played - a.played || a.name.localeCompare(b.name),
+  );
+}
+
+function venueName(venues: readonly Venue[], id: string | null): string | null {
+  return id ? (venues.find((v) => v.id === id)?.name ?? null) : null;
+}
+
 export function buildReportData(input: BuildReportInput): ReportData {
   const matches = buildReportMatches(input.matches);
   const headCoach = input.coaches.find((c) => c.role === HEAD_COACH_ROLE);
@@ -238,11 +327,25 @@ export function buildReportData(input: BuildReportInput): ReportData {
       name: teamDisplayName(input.team),
       seasonLabel: input.team.season_label,
       photoUrl: input.team.photo_url,
+      summary: formatTeamHeaderSummary({
+        clubName: input.club?.name ?? "",
+        gender: input.team.gender,
+        ageGroup: input.team.age_group,
+        seasonLabel: input.team.season_label,
+      }),
+      homeVenue: venueName(input.venues, input.team.home_venue_id),
+      trainingVenue: venueName(input.venues, input.team.training_venue_id),
+      trainingDays: formatTrainingDays(input.team.training_days),
     },
     staff: input.coaches.map((c) => ({ name: c.name, role: c.role })),
     headCoachName: headCoach?.name ?? null,
     matches,
     competitions: buildReportCompetitions(input.competitions, matches),
+    venues: buildReportVenues(
+      input.matches,
+      input.venues,
+      input.team.home_venue_id,
+    ),
     players: buildReportPlayers(input),
     monthAwards: input.monthAwards
       .map((a) => ({
