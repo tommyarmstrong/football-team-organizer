@@ -2,6 +2,7 @@ import type {
   ReportCompetition,
   ReportContent,
   ReportData,
+  ReportVenue,
   ReportMatch,
   ReportPlayer,
 } from "@/lib/report/types";
@@ -188,6 +189,75 @@ export function samplePlayers(
   );
 }
 
+export function sampleVenues(): ReportVenue[] {
+  return [
+    {
+      id: "sample-venue-1",
+      name: "Riverside Park",
+      address: "Mill Lane, Riverside, RS1 4AB",
+      surface: "Grass",
+      parking: "Usually fine",
+      foodAndDrink: "Cafe, Tuck shop",
+      isHome: true,
+      played: 12,
+      wins: 8,
+      draws: 2,
+      losses: 2,
+      goalsFor: 31,
+      goalsAgainst: 14,
+      biggestWin: "6–0 v Harbour Town",
+    },
+    {
+      id: "sample-venue-2",
+      name: "Kingsfield Astro",
+      address: "Kingsfield Road, Kingsfield, KF2 9XY",
+      surface: "Astro",
+      parking: "Paid parking",
+      foodAndDrink: "Ice cream van",
+      isHome: false,
+      played: 5,
+      wins: 2,
+      draws: 1,
+      losses: 2,
+      goalsFor: 9,
+      goalsAgainst: 8,
+      biggestWin: "3–1 v Kingsfield Colts",
+    },
+    {
+      id: "sample-venue-3",
+      name: "Oakwood Sports Ground",
+      address: "Oakwood Drive, Oakwood, OW7 3QP",
+      surface: "Grass, Astro",
+      parking: "Weekend parking",
+      foodAndDrink: null,
+      isHome: false,
+      played: 3,
+      wins: 1,
+      draws: 1,
+      losses: 1,
+      goalsFor: 5,
+      goalsAgainst: 5,
+      biggestWin: "2–0 v Oakwood Rovers",
+    },
+    {
+      id: "sample-venue-4",
+      name: "Town Leisure Centre",
+      address: null,
+      surface: "Indoor",
+      parking: null,
+      foodAndDrink: "Cafe",
+      isHome: false,
+      played: 1,
+      wins: 0,
+      draws: 0,
+      losses: 1,
+      goalsFor: 1,
+      goalsAgainst: 3,
+      biggestWin: null,
+    },
+  ];
+}
+
 function sampleCompetitions(matches: ReportMatch[]): ReportCompetition[] {
   return buildReportCompetitions(
     SAMPLE_COMPETITIONS.map((c) => ({
@@ -233,6 +303,10 @@ export function sampleReportData(
       name: "Rangers U10 Lions",
       seasonLabel: "2025/26",
       photoUrl: options.withPhoto ? "/player-card-photo.jpg" : null,
+      summary: "Riverside Rangers FC · Boys · U10 · 2025/26",
+      homeVenue: "Riverside Park",
+      trainingVenue: "St Mary's Sports Hall",
+      trainingDays: "Tue, Thu",
     },
     staff: [
       { name: "Sam Whitfield", role: "Head Coach" },
@@ -242,6 +316,7 @@ export function sampleReportData(
     headCoachName: "Sam Whitfield",
     matches,
     competitions: sampleCompetitions(matches),
+    venues: options.empty ? [] : sampleVenues(),
     players: samplePlayers({ colour: options.colour }),
     monthAwards: [
       {

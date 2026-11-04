@@ -5,7 +5,7 @@ import {
   GALLERY_COLUMNS,
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne, splitMarkdownPages } from "@/lib/report/paginate";
-import { REPORT_SECTION_TITLES } from "@/lib/report/sections";
+import { REPORT_SECTION_TITLES, VENUES_PER_PAGE } from "@/lib/report/sections";
 import {
   biggestWin,
   cleanSheets,
@@ -23,6 +23,7 @@ import type {
   ReportData,
   ReportMatch,
   ReportPlayer,
+  ReportVenue,
 } from "@/lib/report/types";
 import {
   FormStrip,
@@ -44,7 +45,7 @@ import {
 
 /** Rows that fit on one page of each table. Keep conservative. */
 export const RESULTS_PER_PAGE = 14;
-/** Coaching staff cards on the awards page. */
+/** Coaching staff cards on the records page. */
 export const MAX_STAFF = 8;
 
 export function footerLabel(data: ReportData): string {
@@ -129,18 +130,61 @@ export function CoverPage({ data }: { data: ReportData }) {
               {data.team.seasonLabel}
             </p>
           </div>
-
-          {data.team.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={data.team.photoUrl}
-              alt={`${data.team.name} team photo`}
-              className="mt-auto h-[84mm] w-full rounded-[3.5mm] border-[1.2mm] border-white object-cover"
-            />
-          ) : null}
         </div>
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Team info
+// ---------------------------------------------------------------------------
+
+function InfoRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex items-baseline gap-[4mm] border-b border-(--club-line) py-[3mm] last:border-b-0">
+      <dt className="w-[34mm] shrink-0 text-[8pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
+        {label}
+      </dt>
+      <dd className="text-[12pt] text-neutral-900">{value ?? "—"}</dd>
+    </div>
+  );
+}
+
+export function TeamInfoPage({ data }: { data: ReportData }) {
+  const { team } = data;
+
+  return (
+    <ReportPage
+      kicker={REPORT_SECTION_TITLES.teamInfo}
+      title={team.name}
+      label={footerLabel(data)}
+    >
+      {team.photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={team.photoUrl}
+          alt={`${team.name} team photo`}
+          className="h-[112mm] w-full rounded-[3.5mm] border-[1.2mm] border-white object-cover shadow-[0_0_0_0.25mm_var(--club-line)]"
+        />
+      ) : (
+        <div className="flex h-[112mm] w-full items-center justify-center rounded-[3.5mm] border-[0.4mm] border-dashed border-(--club) bg-(--club-soft) px-[10mm] text-center text-[10pt] text-neutral-700">
+          Team photo: add one on the Edit team page.
+        </div>
+      )}
+
+      <Panel className="mt-[8mm]">
+        <p className="font-display text-[15pt] leading-tight font-semibold tracking-[0.04em] text-(--club-ink) uppercase">
+          {team.summary}
+        </p>
+        <dl className="mt-[3mm]">
+          <InfoRow label="Head coach" value={data.headCoachName} />
+          <InfoRow label="Home venue" value={team.homeVenue} />
+          <InfoRow label="Training venue" value={team.trainingVenue} />
+          <InfoRow label="Training days" value={team.trainingDays} />
+        </dl>
+      </Panel>
+    </ReportPage>
   );
 }
 
@@ -566,6 +610,88 @@ export function CompetitionsPage({ data }: { data: ReportData }) {
 }
 
 // ---------------------------------------------------------------------------
+// Venues
+// ---------------------------------------------------------------------------
+
+function VenueFact({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <dt className="text-[7pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
+        {label}
+      </dt>
+      <dd className="mt-[0.5mm] text-[9.5pt] text-neutral-800">{value}</dd>
+    </div>
+  );
+}
+
+function VenueCard({ venue }: { venue: ReportVenue }) {
+  return (
+    <li className="flex flex-col rounded-[3mm] border border-(--club-line) bg-(--club-soft) p-[5mm]">
+      <div className="flex items-start justify-between gap-[3mm]">
+        <h3 className="font-display text-[17pt] leading-[1.02] font-semibold tracking-[0.01em] text-neutral-900 uppercase">
+          {venue.name}
+        </h3>
+        {venue.isHome ? (
+          <span className="shrink-0 rounded-full bg-(--club) px-[3mm] py-[1mm] text-[7pt] font-semibold tracking-[0.15em] text-(--club-fg) uppercase">
+            Home
+          </span>
+        ) : null}
+      </div>
+      {venue.address ? (
+        <p className="mt-[1.5mm] text-[8.5pt] text-neutral-600">
+          {venue.address}
+        </p>
+      ) : null}
+
+      <dl className="mt-[3.5mm] mb-[4mm] grid gap-[2.5mm]">
+        <VenueFact label="Surface" value={venue.surface} />
+        <VenueFact label="Parking" value={venue.parking} />
+        <VenueFact label="Food and drink" value={venue.foodAndDrink} />
+      </dl>
+
+      <div className="mt-auto border-t border-(--club-line) pt-[3mm]">
+        <p className="font-display text-[13pt] font-semibold text-(--club-ink) uppercase">
+          Played {venue.played} · W{venue.wins} D{venue.draws} L{venue.losses}
+        </p>
+        <p className="mt-[1mm] text-[8.5pt] text-neutral-600">
+          Goals {venue.goalsFor}–{venue.goalsAgainst}
+          {venue.biggestWin ? ` · Biggest win ${venue.biggestWin}` : ""}
+        </p>
+      </div>
+    </li>
+  );
+}
+
+export function venuesPages({ data }: { data: ReportData }): ReactElement[] {
+  const label = footerLabel(data);
+  const pages = chunkAtLeastOne(data.venues, VENUES_PER_PAGE);
+
+  return pages.map((venues, pageIndex) => (
+    <ReportPage
+      key={`venues-${pageIndex}`}
+      kicker={
+        pageIndex === 0 ? "Where we played" : "Where we played (continued)"
+      }
+      title={REPORT_SECTION_TITLES.venues}
+      label={label}
+    >
+      {venues.length === 0 ? (
+        <EmptyNote>
+          No venues were recorded for this season&apos;s matches.
+        </EmptyNote>
+      ) : (
+        <ul className="grid grid-cols-2 content-start gap-[4mm]">
+          {venues.map((venue) => (
+            <VenueCard key={venue.id} venue={venue} />
+          ))}
+        </ul>
+      )}
+    </ReportPage>
+  ));
+}
+
+// ---------------------------------------------------------------------------
 // Player Gallery
 // ---------------------------------------------------------------------------
 
@@ -631,7 +757,7 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
 }
 
 // ---------------------------------------------------------------------------
-// Awards
+// Records
 // ---------------------------------------------------------------------------
 
 function Honour({
@@ -662,7 +788,7 @@ function Honour({
   );
 }
 
-export function AwardsPage({ data }: { data: ReportData }) {
+export function RecordsPage({ data }: { data: ReportData }) {
   const label = footerLabel(data);
   const top = (metric: (p: ReportPlayer) => number) =>
     leaders(data.players, metric, 1);
@@ -674,7 +800,7 @@ export function AwardsPage({ data }: { data: ReportData }) {
   return (
     <ReportPage
       kicker="Recognition"
-      title={REPORT_SECTION_TITLES.awards}
+      title={REPORT_SECTION_TITLES.records}
       label={label}
     >
       <div className="grid grid-cols-3 gap-[3.5mm]">

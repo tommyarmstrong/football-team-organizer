@@ -4,6 +4,7 @@ import { listCompetitions } from "@/lib/data/competitions";
 import { listMatches } from "@/lib/data/matches";
 import { listPlayerOfTheMonth } from "@/lib/data/player-of-the-month";
 import { listRosterForTeam } from "@/lib/data/players";
+import { listVenues } from "@/lib/data/venues";
 import { getAllTeamStats, getTeamCompetitiveRecords } from "@/lib/data/stats";
 import type { Club, Team } from "@/lib/supabase/database.types";
 import { buildReportData } from "@/lib/report/build";
@@ -29,6 +30,7 @@ export async function loadReportData(
     coaches,
     competitions,
     monthAwards,
+    venues,
     content,
   ] = await Promise.all([
     getAllTeamStats(team.id),
@@ -38,6 +40,7 @@ export async function loadReportData(
     listTeamCoaches(team.id),
     listCompetitions(team.id),
     listPlayerOfTheMonth(team.id),
+    listVenues(team.club_id),
     readReportContent(reportSlug(team)),
   ]);
 
@@ -48,7 +51,8 @@ export async function loadReportData(
     roster.error ??
     coaches.error ??
     competitions.error ??
-    monthAwards.error;
+    monthAwards.error ??
+    venues.error;
   if (error) return { data: null, error };
 
   return {
@@ -65,6 +69,7 @@ export async function loadReportData(
       coaches: coaches.data,
       competitions: competitions.data,
       monthAwards: monthAwards.data,
+      venues: venues.data,
       content,
     }),
     error: null,

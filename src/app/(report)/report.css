@@ -20,7 +20,28 @@
   width: 210mm;
   height: 297mm;
   overflow: hidden;
-  background: #fff;
+  /*
+   * The same light green pitch the app paints behind every page: the pitch
+   * markings tile over a green wash that fades out down the page. The cover
+   * panels sit on top of it in the club colour. Colours are the light theme's
+   * values, written out so dark mode and club theming never change the paper.
+   */
+  --paper: oklch(0.975 0.018 145);
+  --paper-green: oklch(0.42 0.12 155);
+  --paper-lime: oklch(0.86 0.18 125);
+  background-color: var(--paper);
+  background-image:
+    url("/pitch-pattern.svg"),
+    radial-gradient(
+      ellipse 90% 50% at 50% -20%,
+      color-mix(in srgb, var(--paper-green) 16%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--paper-lime) 10%, var(--paper)),
+      var(--paper) 22rem
+    );
   /* Wider inner (binding) margin: right-hand pages are odd, left-hand even. */
   --pl: 20mm;
   --pr: 14mm;
