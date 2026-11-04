@@ -531,6 +531,17 @@ export async function getFormThroughMatch(
 
 export type PlayerRecord = { wins: number; draws: number; losses: number };
 
+function addCompetitiveResult(
+  record: PlayerRecord,
+  goals: Array<{ is_opposition: boolean }>,
+) {
+  const { goalsFor, goalsAgainst } = scoreFromGoals(goals);
+  const letter = resultLetter(goalsFor, goalsAgainst);
+  if (letter === "W") record.wins += 1;
+  else if (letter === "D") record.draws += 1;
+  else if (letter === "L") record.losses += 1;
+}
+
 /**
  * Wins / draws / losses in the played, non-friendly matches a player was in
  * the match-day squad for. Results come from the goals (`scoreFromGoals`), the
@@ -557,13 +568,54 @@ export async function getPlayerCompetitiveRecord(
   for (const row of data ?? []) {
     const match = one(row.match);
     if (!match) continue;
-    const { goalsFor, goalsAgainst } = scoreFromGoals(
-      Array.isArray(match.goals) ? match.goals : [],
-    );
-    const letter = resultLetter(goalsFor, goalsAgainst);
-    if (letter === "W") record.wins += 1;
-    else if (letter === "D") record.draws += 1;
-    else if (letter === "L") record.losses += 1;
+    addCompetitiveResult(record, Array.isArray(match.goals) ? match.goals : []);
   }
   return { data: record, error: null };
+}
+
+const COMPETITIVE_RECORD_PAGE = 1000;
+
+/**
+ * `getPlayerCompetitiveRecord` for every player on a team in one pass: the
+ * season report needs all cards at once. Keyed by player id; players with no
+ * competitive match are absent.
+ */
+export async function getTeamCompetitiveRecords(
+  teamId: string,
+): Promise<{ data: Record<string, PlayerRecord>; error: string | null }> {
+  const records: Record<string, PlayerRecord> = {};
+  const supabase = await createClient();
+
+  // PostgREST caps a response at 1000 rows; a squad can exceed that over a
+  // long season, so read it page by page.
+  for (let from = 0; ; from += COMPETITIVE_RECORD_PAGE) {
+    const { data, error } = await supabase
+      .from("match_players")
+      .select(
+        "player_id, match:matches!inner(team_id, status, is_friendly, goals(is_opposition))",
+      )
+      .eq("match.team_id", teamId)
+      .eq("match.status", "played")
+      .eq("match.is_friendly", false)
+      .order("id")
+      .range(from, from + COMPETITIVE_RECORD_PAGE - 1);
+
+    if (error) return { data: records, error: error.message };
+
+    for (const row of data ?? []) {
+      const match = one(row.match);
+      if (!match) continue;
+      const record = (records[row.player_id] ??= {
+        wins: 0,
+        draws: 0,
+        losses: 0,
+      });
+      addCompetitiveResult(
+        record,
+        Array.isArray(match.goals) ? match.goals : [],
+      );
+    }
+    if ((data?.length ?? 0) < COMPETITIVE_RECORD_PAGE) break;
+  }
+  return { data: records, error: null };
 }

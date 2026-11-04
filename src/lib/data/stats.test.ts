@@ -25,6 +25,7 @@ import {
   getPeriodStartsByPlayer,
   parseTeamStatsRpc,
   getPlayerCompetitiveRecord,
+  getTeamCompetitiveRecords,
 } from "@/lib/data/stats";
 
 const leagueMatch = {
@@ -265,6 +266,80 @@ describe("getPlayerCompetitiveRecord", () => {
     );
     expect(await getPlayerCompetitiveRecord("team-1", "player-1")).toEqual({
       data: { wins: 0, draws: 0, losses: 0 },
+      error: "boom",
+    });
+  });
+});
+
+describe("getTeamCompetitiveRecords", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const goal = (is_opposition: boolean) => ({ is_opposition });
+
+  it("tallies each player's record from the matches they were in", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        match_players: okResult([
+          { player_id: "a", match: { goals: [goal(false)] } },
+          { player_id: "a", match: [{ goals: [goal(true)] }] },
+          { player_id: "a", match: { goals: [] } },
+          { player_id: "b", match: { goals: [goal(false)] } },
+          { player_id: "b", match: null },
+        ]),
+      }),
+    );
+    expect(await getTeamCompetitiveRecords("team-1")).toEqual({
+      data: {
+        a: { wins: 1, draws: 1, losses: 1 },
+        b: { wins: 1, draws: 0, losses: 0 },
+      },
+      error: null,
+    });
+  });
+
+  it("reads every page when a team has more than 1000 rows", async () => {
+    const win = { goals: [goal(false)] };
+    const page = Array.from({ length: 1000 }, () => ({
+      player_id: "a",
+      match: win,
+    }));
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        match_players: [
+          okResult(page),
+          okResult([{ player_id: "a", match: win }]),
+        ],
+      }),
+    );
+    const result = await getTeamCompetitiveRecords("team-1");
+    expect(result.data.a).toEqual({ wins: 1001, draws: 0, losses: 0 });
+  });
+
+  it("filters to played, non-friendly matches for the team", async () => {
+    const builder = queryChain(okResult([])) as Record<string, unknown>;
+    const eq = vi.fn(() => builder);
+    builder.eq = eq;
+    const from = vi.fn(() => builder);
+    createClientMock.mockResolvedValue({ from });
+
+    await getTeamCompetitiveRecords("team-1");
+
+    expect(from).toHaveBeenCalledWith("match_players");
+    expect(eq.mock.calls).toEqual([
+      ["match.team_id", "team-1"],
+      ["match.status", "played"],
+      ["match.is_friendly", false],
+    ]);
+  });
+
+  it("returns the error when the query fails", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({ match_players: errResult("boom") }),
+    );
+    expect(await getTeamCompetitiveRecords("team-1")).toEqual({
+      data: {},
       error: "boom",
     });
   });

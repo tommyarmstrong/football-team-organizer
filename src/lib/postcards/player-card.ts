@@ -12,18 +12,12 @@ import {
   playerCardCaption,
   playerCardFileName,
   playerCardNames,
+  playerCardStats,
   playerPositionLabel,
 } from "@/lib/postcards/player-card-content";
 import type { PlayerCardPayload } from "@/lib/postcards/types";
 
 export type { PlayerCardPayload } from "@/lib/postcards/types";
-
-/** One entry per goal / assist / award; friendlies are left out of the card. */
-function countCompetitive(
-  events: ReadonlyArray<{ isFriendly: boolean }> | undefined,
-): number {
-  return (events ?? []).filter((event) => !event.isFriendly).length;
-}
 
 /**
  * Assembles a player card for the signed-in viewer.
@@ -77,7 +71,6 @@ export async function buildPlayerCardPayload(
   ]);
   if (stats.error) return { data: null, error: stats.error };
   if (recordResult.error) return { data: null, error: recordResult.error };
-  const { wins, draws, losses } = recordResult.data;
 
   const club = clubResult.data;
   const shirtNumber =
@@ -85,22 +78,15 @@ export async function buildPlayerCardPayload(
   const names = playerCardNames(player, team.gender);
   const teamName = teamDisplayName(team);
   const positionLabel = playerPositionLabel(player.position);
-  const cardStats = {
-    appearances: wins + draws + losses,
-    wins,
-    draws,
-    losses,
-    goals: countCompetitive(
-      stats.goalsByPlayer.find((row) => row.playerId === playerId)
-        ?.goalCompetitions,
-    ),
-    assists: countCompetitive(
-      stats.assistsByPlayer.find((row) => row.playerId === playerId)?.events,
-    ),
-    potm: countCompetitive(
-      stats.potmByPlayer.find((row) => row.playerId === playerId)?.events,
-    ),
-  };
+  const cardStats = playerCardStats({
+    record: recordResult.data,
+    goalEvents: stats.goalsByPlayer.find((row) => row.playerId === playerId)
+      ?.goalCompetitions,
+    assistEvents: stats.assistsByPlayer.find((row) => row.playerId === playerId)
+      ?.events,
+    potmEvents: stats.potmByPlayer.find((row) => row.playerId === playerId)
+      ?.events,
+  });
   const clubName = club?.name ?? "";
 
   return {

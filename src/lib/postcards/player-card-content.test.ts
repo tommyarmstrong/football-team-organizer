@@ -5,6 +5,7 @@ import {
   playerCardFileName,
   playerCardNames,
   playerPositionLabel,
+  playerCardStats,
 } from "@/lib/postcards/player-card-content";
 import { teamFixture } from "@/test/fixtures";
 
@@ -184,5 +185,42 @@ describe("pickPlayerCardTeam", () => {
   it("falls back to display order, current seasons before archived", () => {
     expect(pickPlayerCardTeam(teams)).toBe(current);
     expect(pickPlayerCardTeam([archived])).toBe(archived);
+  });
+});
+
+describe("playerCardStats", () => {
+  const event = (isFriendly: boolean) => ({ isFriendly });
+
+  it("sums the record into appearances and leaves friendlies out of the counts", () => {
+    expect(
+      playerCardStats({
+        record: { wins: 3, draws: 1, losses: 2 },
+        goalEvents: [event(false), event(true), event(false)],
+        assistEvents: [event(true)],
+        potmEvents: [event(false)],
+      }),
+    ).toEqual({
+      appearances: 6,
+      wins: 3,
+      draws: 1,
+      losses: 2,
+      goals: 2,
+      assists: 0,
+      potm: 1,
+    });
+  });
+
+  it("treats missing events as zero", () => {
+    expect(
+      playerCardStats({ record: { wins: 0, draws: 0, losses: 0 } }),
+    ).toEqual({
+      appearances: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goals: 0,
+      assists: 0,
+      potm: 0,
+    });
   });
 });

@@ -96,7 +96,19 @@ describe("buildReportMatches", () => {
 });
 
 describe("buildReportPlayers", () => {
+  const team = {
+    id: "t1",
+    name: "U10 Lions",
+    display_name: null,
+    season_label: "2025/26",
+    age_group: "U10",
+    gender: "boys" as const,
+  };
+  const club = { name: "Club", colour: "#112233", icon_url: null };
   const stats = {
+    team,
+    club,
+    competitiveRecords: {},
     goalsByPlayer: [
       {
         playerId: "a",
@@ -119,7 +131,6 @@ describe("buildReportPlayers", () => {
 
   it("merges the season lines onto the roster", () => {
     const players = buildReportPlayers({
-      teamId: "t1",
       roster: [roster("a", { shirt_number: 9 }), roster("b")],
       ...stats,
     });
@@ -135,22 +146,103 @@ describe("buildReportPlayers", () => {
     expect(players.find((p) => p.id === "b")!.playerOfTheMatch).toBe(1);
   });
 
-  it("links each player to their card on this team", () => {
+  it("builds each card from the team, club and competitive stats", () => {
     const [a] = buildReportPlayers({
-      teamId: "team 1",
-      roster: [roster("a", { first_name: " Al ", person_id: "person-a" })],
       ...stats,
+      roster: [
+        roster("a", {
+          first_name: " Al ",
+          shirt_number: 7,
+          position: "FWD",
+        }),
+      ],
+      goalsByPlayer: [
+        {
+          ...stats.goalsByPlayer[0]!,
+          goals: 3,
+          goalCompetitions: [
+            {
+              competitionId: "c",
+              competitionKind: "league",
+              isFriendly: false,
+            },
+            { competitionId: null, competitionKind: null, isFriendly: true },
+            { competitionId: "c", competitionKind: "cup", isFriendly: false },
+          ],
+        },
+      ],
+      assistsByPlayer: [
+        {
+          ...stats.assistsByPlayer[0]!,
+          events: [
+            {
+              competitionId: "c",
+              competitionKind: "league",
+              isFriendly: false,
+            },
+          ],
+        },
+      ],
+      competitiveRecords: { a: { wins: 4, draws: 1, losses: 2 } },
     });
     expect(a!.firstName).toBe("Al");
-    expect(a!.personId).toBe("person-a");
-    expect(a!.cardUrl).toBe(
-      "/people/person-a/player-card?player=a&team=team+1",
-    );
+    expect(a!.card).toEqual({
+      playerId: "a",
+      teamId: "t1",
+      clubName: "Club",
+      clubColour: "#112233",
+      clubIconUrl: null,
+      teamName: "U10 Lions",
+      ageGroup: "U10",
+      seasonLabel: "2025/26",
+      firstName: "Al",
+      lastName: null,
+      shirtNumber: 7,
+      positionLabel: "Forward",
+      stats: {
+        appearances: 7,
+        wins: 4,
+        draws: 1,
+        losses: 2,
+        // Friendlies are left out of the card, as on the shared card.
+        goals: 2,
+        assists: 1,
+        potm: 0,
+      },
+    });
+  });
+
+  it("shows the surname on adult teams only", () => {
+    const adult = buildReportPlayers({
+      ...stats,
+      team: { ...team, gender: "men" },
+      roster: [roster("a")],
+    });
+    expect(adult[0]!.card.lastName).toBe("Smith");
+    const child = buildReportPlayers({ ...stats, roster: [roster("a")] });
+    expect(child[0]!.card.lastName).toBeNull();
+  });
+
+  it("gives a player with no matches a zero record", () => {
+    const [b] = buildReportPlayers({ ...stats, roster: [roster("b")] });
+    expect(b!.card.stats).toMatchObject({
+      appearances: 0,
+      wins: 0,
+      goals: 0,
+    });
+  });
+
+  it("falls back to the default colour for an invalid club colour", () => {
+    const [a] = buildReportPlayers({
+      ...stats,
+      club: { ...club, colour: "green" },
+      roster: [roster("a")],
+    });
+    expect(a!.card.clubColour).toBeNull();
   });
 
   it("keeps inactive players only when they played", () => {
     const players = buildReportPlayers({
-      teamId: "t1",
       roster: [
         roster("a"),
         roster("b", { active: false }),
@@ -222,6 +314,8 @@ describe("buildReportData", () => {
         name: "U10 Lions",
         display_name: "Lions",
         season_label: "2025/26",
+        age_group: "U10",
+        gender: "boys",
         photo_url: null,
       },
       matches: [dbMatch("m1")],
@@ -230,6 +324,7 @@ describe("buildReportData", () => {
       assistsByPlayer: [],
       potmByPlayer: [],
       matchesPlayed: [],
+      competitiveRecords: {},
       coaches: [
         {
           team_coach_id: "1",

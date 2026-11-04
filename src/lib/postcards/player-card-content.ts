@@ -15,6 +15,36 @@ const POSITION_LABELS: Record<string, string> = {
   FWD: "Forward",
 };
 
+/** One entry per goal / assist / award; friendlies are left out of the card. */
+function countCompetitive(
+  events: ReadonlyArray<{ isFriendly: boolean }> | undefined,
+): number {
+  return (events ?? []).filter((event) => !event.isFriendly).length;
+}
+
+/**
+ * The numbers on a player card: the competitive record plus competitive
+ * goals, assists and player-of-the-match awards. Shared by the card route and
+ * the season report so the two always agree.
+ */
+export function playerCardStats(input: {
+  record: { wins: number; draws: number; losses: number };
+  goalEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+  assistEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+  potmEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+}): PlayerCardStats {
+  const { wins, draws, losses } = input.record;
+  return {
+    appearances: wins + draws + losses,
+    wins,
+    draws,
+    losses,
+    goals: countCompetitive(input.goalEvents),
+    assists: countCompetitive(input.assistEvents),
+    potm: countCompetitive(input.potmEvents),
+  };
+}
+
 /** "FWD" -> "Forward". Unknown free-text positions are shown as recorded. */
 export function playerPositionLabel(
   position: string | null | undefined,
