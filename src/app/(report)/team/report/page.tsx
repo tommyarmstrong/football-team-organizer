@@ -49,7 +49,10 @@ export default async function SeasonReportPage() {
 
   return (
     <>
-      <PrintToolbar backHref="/team" />
+      <PrintToolbar
+        backHref="/team"
+        cardCount={data.players.filter((p) => p.cardUrl).length}
+      />
       <div className="pt-[8mm] print:pt-0">
         <ReportBook data={data} />
       </div>

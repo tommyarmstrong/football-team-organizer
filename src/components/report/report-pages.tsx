@@ -1,6 +1,11 @@
 import type { ReactElement } from "react";
 import { formatShortDate } from "@/lib/format";
+import {
+  GALLERY_CARDS_PER_PAGE,
+  GALLERY_COLUMNS,
+} from "@/lib/report/card-path";
 import { chunkAtLeastOne, splitMarkdownPages } from "@/lib/report/paginate";
+import { REPORT_SECTION_TITLES } from "@/lib/report/sections";
 import {
   biggestWin,
   cleanSheets,
@@ -38,7 +43,6 @@ import {
 
 /** Rows that fit on one page of each table. Keep conservative. */
 export const RESULTS_PER_PAGE = 14;
-export const SQUAD_PER_PAGE = 17;
 /** Coaching staff cards on the awards page. */
 export const MAX_STAFF = 8;
 
@@ -183,7 +187,7 @@ export function coachNotesPages({
       <ReportPage
         key="coach-notes"
         kicker="From the dugout"
-        title="Coach's notes"
+        title={REPORT_SECTION_TITLES.coachNotes}
         label={label}
       >
         <SlotPlaceholder
@@ -198,7 +202,7 @@ export function coachNotesPages({
     <ReportPage
       key={`coach-notes-${index}`}
       kicker={index === 0 ? "From the dugout" : "From the dugout (continued)"}
-      title="Coach's notes"
+      title={REPORT_SECTION_TITLES.coachNotes}
       label={label}
     >
       <ReportMarkdown markdown={markdown} />
@@ -230,7 +234,7 @@ export function lookingAheadPages({
       <ReportPage
         key="looking-ahead"
         kicker="What's next"
-        title="Looking ahead"
+        title={REPORT_SECTION_TITLES.lookingAhead}
         label={label}
       >
         <SlotPlaceholder
@@ -245,7 +249,7 @@ export function lookingAheadPages({
     <ReportPage
       key={`looking-ahead-${index}`}
       kicker={index === 0 ? "What's next" : "What's next (continued)"}
-      title="Looking ahead"
+      title={REPORT_SECTION_TITLES.lookingAhead}
       label={label}
     >
       <ReportMarkdown markdown={markdown} />
@@ -311,7 +315,7 @@ export function GlancePage({ data }: { data: ReportData }) {
     return (
       <ReportPage
         kicker={`Season ${data.team.seasonLabel}`}
-        title="Season at a glance"
+        title={REPORT_SECTION_TITLES.glance}
         label={label}
       >
         <EmptyNote>No matches have been played yet.</EmptyNote>
@@ -322,7 +326,7 @@ export function GlancePage({ data }: { data: ReportData }) {
   return (
     <ReportPage
       kicker={`Season ${data.team.seasonLabel}`}
-      title="Season at a glance"
+      title={REPORT_SECTION_TITLES.glance}
       label={label}
     >
       <div className="grid grid-cols-4 gap-[3.5mm]">
@@ -407,7 +411,7 @@ export function resultsPages({ data }: { data: ReportData }): ReactElement[] {
     <ReportPage
       key={`results-${pageIndex}`}
       kicker={pageIndex === 0 ? "Every match" : "Every match (continued)"}
-      title="Results"
+      title={REPORT_SECTION_TITLES.results}
       label={label}
     >
       {rows.length === 0 ? (
@@ -466,7 +470,11 @@ export function NumbersPage({ data }: { data: ReportData }) {
   const assisters = leaders(data.players, (p) => p.assists, 8);
 
   return (
-    <ReportPage kicker="Charts" title="The season in numbers" label={label}>
+    <ReportPage
+      kicker="Charts"
+      title={REPORT_SECTION_TITLES.numbers}
+      label={label}
+    >
       <Panel>
         <PanelTitle>Goals in every match</PanelTitle>
         {data.matches.length === 0 ? (
@@ -540,7 +548,7 @@ export function CompetitionsPage({ data }: { data: ReportData }) {
   return (
     <ReportPage
       kicker="League, cups and tournaments"
-      title="Competitions"
+      title={REPORT_SECTION_TITLES.competitions}
       label={footerLabel(data)}
     >
       {data.competitions.length === 0 ? (
@@ -557,77 +565,95 @@ export function CompetitionsPage({ data }: { data: ReportData }) {
 }
 
 // ---------------------------------------------------------------------------
-// Squad
+// Player Gallery
 // ---------------------------------------------------------------------------
 
-const SQUAD_COLUMNS = "grid-cols-[11mm_1fr_13mm_15mm_15mm_15mm_17mm]";
+/**
+ * A placeholder card in the same 4:5 shape. It sits behind the real card
+ * image, so it only shows when the image is missing (sample data without a
+ * card route, or a card that failed to render). Always first name only.
+ */
+function CardPlaceholder({ player }: { player: ReportPlayer }) {
+  return (
+    <div className="absolute inset-0 flex flex-col bg-(--club) text-(--club-fg)">
+      <div className="flex items-start justify-between p-[3mm]">
+        <span
+          className="size-[7mm] rounded-full bg-white/90"
+          aria-hidden="true"
+        />
+        {player.shirtNumber !== null ? (
+          <span className="font-display flex size-[9mm] items-center justify-center rounded-full bg-(--club-deep) text-[13pt] font-semibold text-white">
+            {player.shirtNumber}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-auto bg-(--club-deep) px-[2mm] py-[3mm] text-center text-white">
+        <p className="font-display truncate text-[14pt] leading-none font-semibold uppercase">
+          {player.firstName}
+        </p>
+        {player.position ? (
+          <p className="mt-[1mm] text-[6pt] tracking-[0.2em] uppercase opacity-80">
+            {player.position}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
-function SquadRow({ player }: { player: ReportPlayer }) {
+function PlayerCardTile({ player }: { player: ReportPlayer }) {
   return (
     <li
-      className={`grid ${SQUAD_COLUMNS} items-center gap-[2mm] border-b border-(--club-line) py-[2.4mm] odd:bg-(--club-soft)`}
+      className="relative aspect-[4/5] overflow-hidden rounded-[2.2mm] bg-white shadow-[0_0_0_0.25mm_var(--club-line)]"
+      aria-label={player.name}
     >
-      <span className="font-display pl-[2mm] text-[14pt] font-semibold text-(--club-ink)">
-        {player.shirtNumber ?? "–"}
-      </span>
-      <span className="truncate text-[11pt] font-medium">{player.name}</span>
-      <span className="text-center text-[9pt] tracking-wider text-neutral-500 uppercase">
-        {player.position ?? ""}
-      </span>
-      <Stat value={player.appearances} />
-      <Stat value={player.goals} />
-      <Stat value={player.assists} />
-      <Stat value={player.playerOfTheMatch} />
+      <CardPlaceholder player={player} />
+      {player.cardUrl ? (
+        // The real card, from the same route as "Share player card". Plain
+        // <img> so the browser loads it eagerly before printing.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={player.cardUrl}
+          alt=""
+          data-report-card=""
+          decoding="sync"
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : null}
     </li>
   );
 }
 
-function Stat({ value }: { value: number }) {
-  return (
-    <span
-      className={`font-display text-center text-[13pt] ${value === 0 ? "text-neutral-300" : "font-semibold"}`}
-    >
-      {value}
-    </span>
-  );
-}
-
-export function squadPages({ data }: { data: ReportData }): ReactElement[] {
+export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
   const label = footerLabel(data);
-  const squad = sortSquad(data.players);
-  const pages = chunkAtLeastOne(squad, SQUAD_PER_PAGE);
+  const pages = chunkAtLeastOne(
+    sortSquad(data.players),
+    GALLERY_CARDS_PER_PAGE,
+  );
 
   return pages.map((rows, pageIndex) => (
     <ReportPage
-      key={`squad-${pageIndex}`}
-      kicker={pageIndex === 0 ? "The players" : "The players (continued)"}
-      title="The squad"
+      key={`gallery-${pageIndex}`}
+      kicker={
+        pageIndex === 0 ? "Collect the squad" : "Collect the squad (continued)"
+      }
+      title={REPORT_SECTION_TITLES.gallery}
       label={label}
     >
       {rows.length === 0 ? (
         <EmptyNote>No players are in the squad.</EmptyNote>
       ) : (
-        <>
-          <div
-            className={`grid ${SQUAD_COLUMNS} gap-[2mm] rounded-t-[2mm] bg-(--club) py-[2.4mm] text-[7.5pt] font-semibold tracking-[0.14em] text-(--club-fg) uppercase`}
-          >
-            <span className="pl-[2mm]">No.</span>
-            <span>Player</span>
-            <span className="text-center">Pos</span>
-            <span className="text-center">Apps</span>
-            <span className="text-center">Goals</span>
-            <span className="text-center">Assists</span>
-            <span className="text-center">POTM</span>
-          </div>
-          <ul>
-            {rows.map((p) => (
-              <SquadRow key={p.id} player={p} />
-            ))}
-          </ul>
-        </>
+        <ul
+          className="grid gap-[4mm]"
+          style={{ gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, 1fr)` }}
+        >
+          {rows.map((p) => (
+            <PlayerCardTile key={p.id} player={p} />
+          ))}
+        </ul>
       )}
       <p className="mt-auto pt-[4mm] text-[8pt] text-neutral-500">
-        Apps: matches in the match-day squad. POTM: player of the match awards.
+        Card stats count league and cup matches only.
       </p>
     </ReportPage>
   ));
@@ -675,7 +701,11 @@ export function AwardsPage({ data }: { data: ReportData }) {
   const potm = leaders(data.players, (p) => p.playerOfTheMatch, 5);
 
   return (
-    <ReportPage kicker="Recognition" title="Awards" label={label}>
+    <ReportPage
+      kicker="Recognition"
+      title={REPORT_SECTION_TITLES.awards}
+      label={label}
+    >
       <div className="grid grid-cols-3 gap-[3.5mm]">
         <Honour
           title="Golden boot"
@@ -770,6 +800,26 @@ export function AwardsPage({ data }: { data: ReportData }) {
 // ---------------------------------------------------------------------------
 // Notes and filler
 // ---------------------------------------------------------------------------
+
+export function AutographsPage({ data }: { data: ReportData }) {
+  return (
+    <ReportPage
+      kicker="Collect them all"
+      title={REPORT_SECTION_TITLES.autographs}
+      label={footerLabel(data)}
+    >
+      <p className="mb-[5mm] max-w-[120mm] text-[10.5pt] leading-relaxed text-neutral-600">
+        Pass the book around the team and get your team mates to sign.
+      </p>
+      {/* Deliberately blank: this is the space to sign. */}
+      <div
+        className="min-h-0 flex-1 rounded-[7mm] border-[0.5mm] border-(--club) bg-white"
+        role="img"
+        aria-label="Blank space for autographs"
+      />
+    </ReportPage>
+  );
+}
 
 export function NotesPage({ data }: { data: ReportData }) {
   return (

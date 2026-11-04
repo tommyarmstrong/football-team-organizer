@@ -58,7 +58,10 @@ function match(
 function player(name: string, extra: Partial<ReportPlayer> = {}): ReportPlayer {
   return {
     id: name,
+    personId: `person-${name}`,
     name,
+    firstName: name,
+    cardUrl: null,
     shirtNumber: null,
     position: null,
     appearances: 0,

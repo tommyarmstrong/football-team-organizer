@@ -1,3 +1,4 @@
+import type { PlayerCardPayload } from "@/lib/postcards/types";
 import type {
   ReportCompetition,
   ReportContent,
@@ -124,11 +125,26 @@ const PLAYER_SEEDS: PlayerSeed[] = [
   ["Theo Kowalski", null, "MID", 5, 0, 0, 0],
 ];
 
+/** Dev-only route that renders a real player card from fabricated data. */
+export const SAMPLE_CARD_PATH = "/team/report/sample/card";
+
+/** Carries the sample club colour through to the sample card route. */
+export function sampleCardUrl(
+  cardUrl: string | null,
+  colour: string | null | undefined,
+): string | null {
+  if (!cardUrl || !colour) return cardUrl;
+  return `${cardUrl}&colour=${colour.replace(/^#/, "")}`;
+}
+
 export function samplePlayers(): ReportPlayer[] {
   return PLAYER_SEEDS.map(
     ([name, shirtNumber, position, appearances, goals, assists, potm], i) => ({
       id: `sample-player-${i + 1}`,
+      personId: `sample-person-${i + 1}`,
       name,
+      firstName: name.split(" ")[0] ?? name,
+      cardUrl: `${SAMPLE_CARD_PATH}?player=sample-player-${i + 1}`,
       shirtNumber,
       position,
       appearances,
@@ -137,6 +153,56 @@ export function samplePlayers(): ReportPlayer[] {
       playerOfTheMatch: potm,
     }),
   );
+}
+
+const POSITION_NAMES: Record<string, string> = {
+  GK: "Goalkeeper",
+  DEF: "Defender",
+  MID: "Midfielder",
+  WNG: "Winger",
+  FWD: "Forward",
+};
+
+/**
+ * The payload the real player card renderer takes, for a fabricated player.
+ * Returns null for an unknown id. Records are split roughly 60/25/15.
+ */
+export function samplePlayerCardPayload(
+  playerId: string,
+  options: { colour?: string | null } = {},
+): PlayerCardPayload | null {
+  const player = samplePlayers().find((p) => p.id === playerId);
+  if (!player) return null;
+  const wins = Math.round(player.appearances * 0.6);
+  const draws = Math.round(player.appearances * 0.25);
+  const losses = Math.max(player.appearances - wins - draws, 0);
+  return {
+    playerId: player.id,
+    teamId: "sample-team",
+    clubName: "Riverside Rangers FC",
+    clubColour: options.colour === undefined ? "#1D3A8A" : options.colour,
+    clubIconUrl: null,
+    teamName: "Rangers U10 Lions",
+    ageGroup: "U10",
+    seasonLabel: "2025/26",
+    firstName: player.firstName,
+    lastName: null,
+    shirtNumber: player.shirtNumber,
+    positionLabel: player.position
+      ? (POSITION_NAMES[player.position] ?? player.position)
+      : null,
+    stats: {
+      appearances: wins + draws + losses,
+      wins,
+      draws,
+      losses,
+      goals: player.goals,
+      assists: player.assists,
+      potm: player.playerOfTheMatch,
+    },
+    caption: "",
+    fileName: `${player.firstName.toLowerCase()}-sample-player-card.png`,
+  };
 }
 
 function sampleCompetitions(matches: ReportMatch[]): ReportCompetition[] {
@@ -193,7 +259,10 @@ export function sampleReportData(
     headCoachName: "Sam Whitfield",
     matches,
     competitions: sampleCompetitions(matches),
-    players: samplePlayers(),
+    players: samplePlayers().map((p) => ({
+      ...p,
+      cardUrl: sampleCardUrl(p.cardUrl, options.colour),
+    })),
     monthAwards: [
       {
         month: "2025-09",

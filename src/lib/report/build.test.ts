@@ -119,6 +119,7 @@ describe("buildReportPlayers", () => {
 
   it("merges the season lines onto the roster", () => {
     const players = buildReportPlayers({
+      teamId: "t1",
       roster: [roster("a", { shirt_number: 9 }), roster("b")],
       ...stats,
     });
@@ -134,8 +135,22 @@ describe("buildReportPlayers", () => {
     expect(players.find((p) => p.id === "b")!.playerOfTheMatch).toBe(1);
   });
 
+  it("links each player to their card on this team", () => {
+    const [a] = buildReportPlayers({
+      teamId: "team 1",
+      roster: [roster("a", { first_name: " Al ", person_id: "person-a" })],
+      ...stats,
+    });
+    expect(a!.firstName).toBe("Al");
+    expect(a!.personId).toBe("person-a");
+    expect(a!.cardUrl).toBe(
+      "/people/person-a/player-card?player=a&team=team+1",
+    );
+  });
+
   it("keeps inactive players only when they played", () => {
     const players = buildReportPlayers({
+      teamId: "t1",
       roster: [
         roster("a"),
         roster("b", { active: false }),
@@ -203,6 +218,7 @@ describe("buildReportData", () => {
     const data = buildReportData({
       club: { name: "Club", colour: "#112233", icon_url: null },
       team: {
+        id: "t1",
         name: "U10 Lions",
         display_name: "Lions",
         season_label: "2025/26",

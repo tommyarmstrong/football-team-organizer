@@ -18,7 +18,11 @@ export type ReportMatch = {
 
 export type ReportPlayer = {
   id: string;
+  /** Links the player to /people/<personId>; needed for the card URL. */
+  personId: string;
   name: string;
+  /** Placeholder cards show first names only, like cards of children. */
+  firstName: string;
   shirtNumber: number | null;
   position: string | null;
   appearances: number;
@@ -26,6 +30,8 @@ export type ReportPlayer = {
   assists: number;
   /** Player of the match awards. */
   playerOfTheMatch: number;
+  /** Player card image URL, or null when no card can be rendered. */
+  cardUrl: string | null;
 };
 
 export type ReportCompetition = {
