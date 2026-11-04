@@ -5,6 +5,8 @@ import { readReportContent } from "@/lib/report/content";
 import { REPORT_SAMPLE_SLUG } from "@/lib/report/slug";
 import { sampleReportData } from "@/lib/report/sample";
 import { PrintToolbar } from "@/components/report/print-toolbar";
+import { ReportCardsProvider } from "@/components/report/report-cards";
+import { cardUrls } from "@/lib/report/card-path";
 import { ReportBook } from "@/components/report/report-book";
 
 export const metadata: Metadata = { title: "Season report (sample)" };
@@ -44,14 +46,11 @@ export default async function SampleSeasonReportPage({
   });
 
   return (
-    <>
-      <PrintToolbar
-        backHref="/team"
-        cardCount={data.players.filter((p) => p.cardUrl).length}
-      />
+    <ReportCardsProvider urls={cardUrls(data)}>
+      <PrintToolbar backHref="/team" />
       <div className="pt-[8mm] print:pt-0">
         <ReportBook data={data} />
       </div>
-    </>
+    </ReportCardsProvider>
   );
 }

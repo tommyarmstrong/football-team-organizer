@@ -6,6 +6,8 @@ import { getActiveTeam } from "@/lib/data/team";
 import { teamDisplayName } from "@/lib/format";
 import { loadReportData } from "@/lib/report/load";
 import { PrintToolbar } from "@/components/report/print-toolbar";
+import { ReportCardsProvider } from "@/components/report/report-cards";
+import { cardUrls } from "@/lib/report/card-path";
 import { ReportBook } from "@/components/report/report-book";
 
 // The browser uses the page title as the default PDF file name.
@@ -48,14 +50,11 @@ export default async function SeasonReportPage() {
   }
 
   return (
-    <>
-      <PrintToolbar
-        backHref="/team"
-        cardCount={data.players.filter((p) => p.cardUrl).length}
-      />
+    <ReportCardsProvider urls={cardUrls(data)}>
+      <PrintToolbar backHref="/team" />
       <div className="pt-[8mm] print:pt-0">
         <ReportBook data={data} />
       </div>
-    </>
+    </ReportCardsProvider>
   );
 }
