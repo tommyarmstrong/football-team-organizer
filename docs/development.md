@@ -98,14 +98,14 @@ npm test           # run once (CI uses this)
 npm run test:watch # watch mode while developing
 ```
 
-Tests use [Vitest](https://vitest.dev/) (`vitest.config.ts`). Suites live next to
+Tests use [Vitest](https://vitest.dev/) (`vitest.config.mts`). Suites live next to
 source as `src/**/*.test.ts`. The suite mocks Supabase — it does not need a live
 database.
 
 ### Coverage
 
 Coverage uses the Vitest **v8** provider (`@vitest/coverage-v8`). Config lives
-under `coverage` in `vitest.config.ts`: it includes `src/**/*.{ts,tsx}` and
+under `coverage` in `vitest.config.mts`: it includes `src/**/*.{ts,tsx}` and
 excludes Supabase generated/client helpers, shadcn UI primitives, test helpers,
 and `*.test.ts` files themselves.
 

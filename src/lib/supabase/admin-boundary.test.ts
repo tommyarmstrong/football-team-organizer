@@ -215,7 +215,7 @@ describe("service role admin client boundary", { timeout: 20_000 }, () => {
       path.join(repoRoot, ".env.example"),
       path.join(repoRoot, "package.json"),
       path.join(repoRoot, "eslint.config.mjs"),
-      path.join(repoRoot, "vitest.config.ts"),
+      path.join(repoRoot, "vitest.config.mts"),
     ];
     const leaks = files.filter((file) => {
       if (file.endsWith(".test.ts")) return false;
