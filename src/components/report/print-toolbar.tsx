@@ -1,55 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, PrinterIcon } from "lucide-react";
+import { ArrowLeftIcon, PrinterIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-/** Stop waiting for player cards after this long and allow printing anyway. */
-const CARD_WAIT_LIMIT_MS = 45_000;
+import { useCardSummary } from "@/components/report/report-cards";
 
 /**
  * Screen-only bar above the book (hidden when printing). The Print button
  * opens the browser print dialog; "Save as PDF" is a destination there.
  *
- * The Player Gallery cards are images rendered on request, so Print stays
- * disabled until every card (`img[data-report-card]`) has loaded; otherwise
- * the PDF could be saved with empty card slots.
+ * The Player Gallery cards are images rendered on request. Print stays
+ * disabled while they load. If some fail even after retries, printing is
+ * still allowed (those tiles show a placeholder) but the bar says how many
+ * failed and why, and offers a retry.
  */
-export function PrintToolbar({
-  backHref,
-  cardCount = 0,
-}: {
-  backHref: string;
-  /** Number of player card images in the book. */
-  cardCount?: number;
-}) {
-  const [loaded, setLoaded] = useState(0);
-  const [gaveUp, setGaveUp] = useState(false);
-
-  useEffect(() => {
-    if (cardCount === 0) return;
-    let cancelled = false;
-    const images = document.querySelectorAll<HTMLImageElement>(
-      "img[data-report-card]",
-    );
-    images.forEach((image) => {
-      // decode() settles once the image has loaded, or fails if it is broken.
-      image
-        .decode()
-        .catch(() => undefined)
-        .then(() => {
-          if (!cancelled) setLoaded((count) => count + 1);
-        });
-    });
-    const timer = setTimeout(() => setGaveUp(true), CARD_WAIT_LIMIT_MS);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [cardCount]);
-
-  const ready = cardCount === 0 || loaded >= cardCount || gaveUp;
+export function PrintToolbar({ backHref }: { backHref: string }) {
+  const cards = useCardSummary();
+  const loading = cards.inFlight > 0;
 
   return (
     <div className="sticky top-0 z-10 border-b border-neutral-300 bg-white/95 backdrop-blur print:hidden">
@@ -61,16 +28,33 @@ export function PrintToolbar({
           <ArrowLeftIcon className="size-4" aria-hidden="true" />
           Back to team
         </Link>
-        <p className="text-muted-foreground hidden flex-1 text-xs sm:block">
-          In the print dialog choose <strong>A4</strong>, margins{" "}
-          <strong>None</strong>, and tick <strong>Background graphics</strong>.
-          Destination <strong>Save as PDF</strong> makes the file.
-        </p>
-        <Button type="button" disabled={!ready} onClick={() => window.print()}>
+        <div className="text-muted-foreground hidden min-w-0 flex-1 text-xs sm:block">
+          {cards.failed > 0 && !loading ? (
+            <p role="alert" className="text-destructive">
+              {cards.failed} of {cards.total} player cards could not be loaded (
+              {cards.failureReasons.join(", ")}). Those slots will print as
+              plain placeholders.
+            </p>
+          ) : (
+            <p>
+              In the print dialog choose <strong>A4</strong>, margins{" "}
+              <strong>None</strong>, and tick{" "}
+              <strong>Background graphics</strong>. Destination{" "}
+              <strong>Save as PDF</strong> makes the file.
+            </p>
+          )}
+        </div>
+        {cards.failed > 0 && !loading ? (
+          <Button type="button" variant="outline" onClick={cards.retryFailed}>
+            <RefreshCwIcon aria-hidden="true" data-icon="inline-start" />
+            Retry {cards.failed}
+          </Button>
+        ) : null}
+        <Button type="button" disabled={loading} onClick={() => window.print()}>
           <PrinterIcon aria-hidden="true" data-icon="inline-start" />
-          {ready
-            ? "Print / Save as PDF"
-            : `Loading player cards ${Math.min(loaded, cardCount)}/${cardCount}`}
+          {loading
+            ? `Loading player cards ${cards.loaded}/${cards.total}`
+            : "Print / Save as PDF"}
         </Button>
       </div>
     </div>

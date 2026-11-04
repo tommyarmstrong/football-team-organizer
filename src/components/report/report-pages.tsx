@@ -33,6 +33,7 @@ import {
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
+import { ReportCardImage } from "@/components/report/report-cards";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import {
   Panel,
@@ -608,18 +609,8 @@ function PlayerCardTile({ player }: { player: ReportPlayer }) {
       aria-label={player.name}
     >
       <CardPlaceholder player={player} />
-      {player.cardUrl ? (
-        // The real card, from the same route as "Share player card". Plain
-        // <img> so the browser loads it eagerly before printing.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={player.cardUrl}
-          alt=""
-          data-report-card=""
-          decoding="sync"
-          className="absolute inset-0 size-full object-cover"
-        />
-      ) : null}
+      {/* The real card, from the same route as "Share player card". */}
+      {player.cardUrl ? <ReportCardImage url={player.cardUrl} /> : null}
     </li>
   );
 }

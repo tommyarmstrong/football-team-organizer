@@ -4,6 +4,7 @@ import {
   GALLERY_COLUMNS,
   GALLERY_ROWS_PER_PAGE,
   PLAYER_CARD_ASPECT,
+  cardUrls,
   playerCardPath,
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne } from "@/lib/report/paginate";
@@ -69,6 +70,18 @@ describe("playerCardPath", () => {
     const query = new URLSearchParams(path.split("?")[1]);
     expect(query.get("player")).toBe("x&team=other");
     expect(query.get("team")).toBe("t 1");
+  });
+});
+
+describe("cardUrls", () => {
+  it("lists each card once in gallery order, skipping players without one", () => {
+    const players = [
+      { ...samplePlayers()[8]!, cardUrl: "/nine" },
+      { ...samplePlayers()[0]!, cardUrl: "/one" },
+      { ...samplePlayers()[15]!, cardUrl: null },
+      { ...samplePlayers()[1]!, cardUrl: "/two" },
+    ];
+    expect(cardUrls({ players })).toEqual(["/one", "/two", "/nine"]);
   });
 });
 
