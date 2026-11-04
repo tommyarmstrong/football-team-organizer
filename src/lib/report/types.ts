@@ -58,6 +58,28 @@ export type ReportMonthAward = {
   notes: string | null;
 };
 
+/** A ground the team played at this season, with what a family needs to know. */
+export type ReportVenue = {
+  id: string;
+  name: string;
+  address: string | null;
+  /** "Astro, Grass"; null when not recorded. */
+  surface: string | null;
+  /** "Paid parking"; null when not recorded. */
+  parking: string | null;
+  /** "Cafe, Tuck shop"; null when none recorded. */
+  foodAndDrink: string | null;
+  isHome: boolean;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  /** Best win by goal difference, e.g. "5–1 v Rose"; null if never won there. */
+  biggestWin: string | null;
+};
+
 export type ReportStaffMember = {
   name: string;
   role: string | null;
@@ -86,12 +108,20 @@ export type ReportData = {
     name: string;
     seasonLabel: string;
     photoUrl: string | null;
+    /** "Club · Men · Adults · 1995/96". */
+    summary: string;
+    homeVenue: string | null;
+    trainingVenue: string | null;
+    /** "Mon, Wed, Fri", or "—" when none are set. */
+    trainingDays: string;
   };
   staff: ReportStaffMember[];
   headCoachName: string | null;
   /** Played matches, oldest first. */
   matches: ReportMatch[];
   competitions: ReportCompetition[];
+  /** Venues of played matches, most visited first. */
+  venues: ReportVenue[];
   players: ReportPlayer[];
   monthAwards: ReportMonthAward[];
   content: ReportContent;
