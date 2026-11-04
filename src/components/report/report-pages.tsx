@@ -33,7 +33,7 @@ import {
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
-import { ReportCardImage } from "@/components/report/report-cards";
+import { ReportPlayerCard } from "@/components/report/report-player-card";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import {
   Panel,
@@ -574,43 +574,19 @@ export function CompetitionsPage({ data }: { data: ReportData }) {
  * image, so it only shows when the image is missing (sample data without a
  * card route, or a card that failed to render). Always first name only.
  */
-function CardPlaceholder({ player }: { player: ReportPlayer }) {
-  return (
-    <div className="absolute inset-0 flex flex-col bg-(--club) text-(--club-fg)">
-      <div className="flex items-start justify-between p-[3mm]">
-        <span
-          className="size-[7mm] rounded-full bg-white/90"
-          aria-hidden="true"
-        />
-        {player.shirtNumber !== null ? (
-          <span className="font-display flex size-[9mm] items-center justify-center rounded-full bg-(--club-deep) text-[13pt] font-semibold text-white">
-            {player.shirtNumber}
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-auto bg-(--club-deep) px-[2mm] py-[3mm] text-center text-white">
-        <p className="font-display truncate text-[14pt] leading-none font-semibold uppercase">
-          {player.firstName}
-        </p>
-        {player.position ? (
-          <p className="mt-[1mm] text-[6pt] tracking-[0.2em] uppercase opacity-80">
-            {player.position}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function PlayerCardTile({ player }: { player: ReportPlayer }) {
+function PlayerCardTile({
+  player,
+  crestSrc,
+}: {
+  player: ReportPlayer;
+  crestSrc: string | null;
+}) {
   return (
     <li
       className="relative aspect-[4/5] overflow-hidden rounded-[2.2mm] bg-white shadow-[0_0_0_0.25mm_var(--club-line)]"
       aria-label={player.name}
     >
-      <CardPlaceholder player={player} />
-      {/* The real card, from the same route as "Share player card". */}
-      {player.cardUrl ? <ReportCardImage url={player.cardUrl} /> : null}
+      <ReportPlayerCard card={player.card} crestSrc={crestSrc} />
     </li>
   );
 }
@@ -639,7 +615,11 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
           style={{ gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, 1fr)` }}
         >
           {rows.map((p) => (
-            <PlayerCardTile key={p.id} player={p} />
+            <PlayerCardTile
+              key={p.id}
+              player={p}
+              crestSrc={data.club.iconUrl}
+            />
           ))}
         </ul>
       )}

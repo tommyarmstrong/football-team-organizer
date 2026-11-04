@@ -4,16 +4,9 @@ import {
   GALLERY_COLUMNS,
   GALLERY_ROWS_PER_PAGE,
   PLAYER_CARD_ASPECT,
-  cardUrls,
-  playerCardPath,
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne } from "@/lib/report/paginate";
-import {
-  sampleCardUrl,
-  samplePlayerCardPayload,
-  samplePlayers,
-  sampleReportData,
-} from "@/lib/report/sample";
+import { samplePlayers, sampleReportData } from "@/lib/report/sample";
 import {
   REPORT_SECTION_ORDER,
   REPORT_SECTION_TITLES,
@@ -50,38 +43,6 @@ describe("report section order", () => {
       if (id === "cover") continue;
       expect(REPORT_SECTION_TITLES).toHaveProperty(id);
     }
-  });
-});
-
-describe("playerCardPath", () => {
-  it("points at the player card route with the player and team", () => {
-    expect(
-      playerCardPath({ personId: "p1", playerId: "pl1", teamId: "t1" }),
-    ).toBe("/people/p1/player-card?player=pl1&team=t1");
-  });
-
-  it("encodes ids so they cannot alter the URL", () => {
-    const path = playerCardPath({
-      personId: "a/b",
-      playerId: "x&team=other",
-      teamId: "t 1",
-    });
-    expect(path.startsWith("/people/a%2Fb/player-card?")).toBe(true);
-    const query = new URLSearchParams(path.split("?")[1]);
-    expect(query.get("player")).toBe("x&team=other");
-    expect(query.get("team")).toBe("t 1");
-  });
-});
-
-describe("cardUrls", () => {
-  it("lists each card once in gallery order, skipping players without one", () => {
-    const players = [
-      { ...samplePlayers()[8]!, cardUrl: "/nine" },
-      { ...samplePlayers()[0]!, cardUrl: "/one" },
-      { ...samplePlayers()[15]!, cardUrl: null },
-      { ...samplePlayers()[1]!, cardUrl: "/two" },
-    ];
-    expect(cardUrls({ players })).toEqual(["/one", "/two", "/nine"]);
   });
 });
 
@@ -125,20 +86,15 @@ describe("gallery paging", () => {
 });
 
 describe("sample gallery data", () => {
-  it("gives every sample player a card URL and first name", () => {
+  it("gives every sample player a card and first name", () => {
     for (const player of samplePlayers()) {
-      expect(player.cardUrl).toContain(`player=${player.id}`);
-      expect(player.firstName).toBe(player.name.split(" ")[0]);
+      expect(player.card.playerId).toBe(player.id);
+      expect(player.card.firstName).toBe(player.name.split(" ")[0]);
+      expect(player.firstName).toBe(player.card.firstName);
     }
   });
 
-  it("carries the club colour through to the card route", () => {
-    expect(sampleCardUrl("/x?player=a", "#FFD400")).toBe(
-      "/x?player=a&colour=FFD400",
-    );
-    expect(sampleCardUrl("/x?player=a", null)).toBe("/x?player=a");
-    expect(sampleCardUrl(null, "#FFD400")).toBeNull();
-
+  it("carries the club colour onto every card", () => {
     const data = sampleReportData(
       {
         coachNotes: { expectedPath: "a", markdown: null },
@@ -146,27 +102,21 @@ describe("sample gallery data", () => {
       },
       { colour: "#FFD400" },
     );
-    expect(
-      data.players.every((p) => p.cardUrl?.endsWith("&colour=FFD400")),
-    ).toBe(true);
+    expect(data.players.every((p) => p.card.clubColour === "#FFD400")).toBe(
+      true,
+    );
   });
 
-  it("builds a card payload with a first name only", () => {
-    const payload = samplePlayerCardPayload("sample-player-9");
-    expect(payload).toMatchObject({
-      playerId: "sample-player-9",
+  it("builds a card with a first name only", () => {
+    const player = samplePlayers().find((p) => p.id === "sample-player-9")!;
+    expect(player.card).toMatchObject({
       firstName: "Isaac",
       lastName: null,
       shirtNumber: 9,
       positionLabel: "Forward",
     });
-    expect(payload!.stats.goals).toBe(18);
-    expect(
-      payload!.stats.wins + payload!.stats.draws + payload!.stats.losses,
-    ).toBe(payload!.stats.appearances);
-  });
-
-  it("returns null for an unknown sample player", () => {
-    expect(samplePlayerCardPayload("nobody")).toBeNull();
+    expect(player.card.stats.goals).toBe(18);
+    const { wins, draws, losses, appearances } = player.card.stats;
+    expect(wins + draws + losses).toBe(appearances);
   });
 });

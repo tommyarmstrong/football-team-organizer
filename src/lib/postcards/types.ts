@@ -100,3 +100,6 @@ export type PlayerCardPayload = {
   caption: string;
   fileName: string;
 };
+
+/** What the card artwork needs; the share caption and file name are not drawn. */
+export type PlayerCardView = Omit<PlayerCardPayload, "caption" | "fileName">;

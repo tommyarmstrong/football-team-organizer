@@ -1,3 +1,4 @@
+import type { PlayerCardView } from "@/lib/postcards/types";
 import type { CompetitionResult } from "@/lib/supabase/database.types";
 
 /** Everything the season report renders. Plain data, no Supabase types. */
@@ -18,8 +19,6 @@ export type ReportMatch = {
 
 export type ReportPlayer = {
   id: string;
-  /** Links the player to /people/<personId>; needed for the card URL. */
-  personId: string;
   name: string;
   /** Placeholder cards show first names only, like cards of children. */
   firstName: string;
@@ -30,8 +29,11 @@ export type ReportPlayer = {
   assists: number;
   /** Player of the match awards. */
   playerOfTheMatch: number;
-  /** Player card image URL, or null when no card can be rendered. */
-  cardUrl: string | null;
+  /**
+   * Everything the player card artwork needs, drawn straight into the page.
+   * Stats here are competitive only, like the shared card.
+   */
+  card: PlayerCardView;
 };
 
 export type ReportCompetition = {

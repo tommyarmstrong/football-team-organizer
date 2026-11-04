@@ -7,7 +7,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 ## 4 November 2026 — Season report
 
 - Managers get a **Season report** button on the Team page. It opens the team's season as a printable A4 book in the club colours: cover, coach's notes, season at a glance, results, charts, competitions, player gallery, awards, looking ahead, autographs, and a back cover. Use Print / Save as PDF, with A4, margins None, and Background graphics on.
-- The **Player Gallery** shows every player's collectable player card, four to a row, and carries on to a second page for a large squad. Cards follow the same rules as shared player cards: children appear by first name only.
+- The **Player Gallery** shows every player's collectable player card, four to a row, and carries on to a second page for a large squad. Cards use the same design and rules as shared player cards: children appear by first name only. They are drawn straight into the page, so every card shows, large squads load quickly, and the PDF stays small.
 - **Autographs** is a large blank rounded space after Looking ahead, for players to collect signatures.
 - The coach's notes and Looking ahead pages are written as markdown files in `content/reports/`. See the README there.
 

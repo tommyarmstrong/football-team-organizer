@@ -3,7 +3,7 @@ import {
   POSTCARD_HEIGHT,
   POSTCARD_WIDTH,
 } from "@/lib/postcards/postcard-image";
-import type { PlayerCardPayload } from "@/lib/postcards/types";
+import type { PlayerCardView } from "@/lib/postcards/types";
 
 /** Portrait 4:5: fits a WhatsApp chat and an Instagram feed post uncropped. */
 export const PLAYER_CARD_WIDTH = POSTCARD_WIDTH;
@@ -200,7 +200,7 @@ function Banner({
   payload,
   colour,
 }: {
-  payload: PlayerCardPayload;
+  payload: PlayerCardView;
   colour: string;
 }) {
   const mainName = payload.lastName ?? payload.firstName;
@@ -313,11 +313,14 @@ export function PlayerCardImage({
   payload,
   crestSrc,
   photoSrc = null,
+  fontFamily = "sans-serif",
 }: {
-  payload: PlayerCardPayload;
+  payload: PlayerCardView;
   crestSrc: string | null;
   /** Photo-area artwork; the plain silhouette is used when null. */
   photoSrc?: string | null;
+  /** Satori only has its built-in font; in a browser pass the page's font. */
+  fontFamily?: string;
 }) {
   const base = payload.clubColour ?? DEFAULT_CLUB_COLOUR;
   const deep = mixColour(base, "#000000", 0.45);
@@ -340,7 +343,7 @@ export function PlayerCardImage({
         flexDirection: "column",
         padding: FRAME_INSET,
         backgroundImage: `linear-gradient(150deg, ${base}, ${deep})`,
-        fontFamily: "sans-serif",
+        fontFamily,
       }}
     >
       <div

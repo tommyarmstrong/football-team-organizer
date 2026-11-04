@@ -6,14 +6,22 @@ import {
   resultLetter,
   teamDisplayName,
 } from "@/lib/format";
-import { clubIconSrc } from "@/lib/clubs/branding";
-import { playerCardPath } from "@/lib/report/card-path";
+import { clubIconSrc, isValidClubColour } from "@/lib/clubs/branding";
+import {
+  playerCardNames,
+  playerCardStats,
+  playerPositionLabel,
+} from "@/lib/postcards/player-card-content";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { PlayerOfTheMonthWithPlayer } from "@/lib/data/player-of-the-month";
 import type { RosterPlayer } from "@/lib/data/players";
-import type { PlayerCountPoint, GoalsByPlayerPoint } from "@/lib/data/stats";
-import type { Competition } from "@/lib/supabase/database.types";
+import type {
+  PlayerCountPoint,
+  GoalsByPlayerPoint,
+  PlayerRecord,
+} from "@/lib/data/stats";
+import type { Competition, TeamGender } from "@/lib/supabase/database.types";
 import type {
   ReportCompetition,
   ReportContent,
@@ -29,6 +37,8 @@ export type BuildReportInput = {
     name: string;
     display_name: string | null;
     season_label: string;
+    age_group: string;
+    gender: TeamGender;
     photo_url: string | null;
   };
   /** Any status; only played matches with a score are kept. */
@@ -38,6 +48,8 @@ export type BuildReportInput = {
   assistsByPlayer: PlayerCountPoint[];
   potmByPlayer: PlayerCountPoint[];
   matchesPlayed: PlayerCountPoint[];
+  /** Competitive win/draw/loss per player id (see `getTeamCompetitiveRecords`). */
+  competitiveRecords: Record<string, PlayerRecord>;
   coaches: TeamCoachEntry[];
   competitions: Competition[];
   monthAwards: PlayerOfTheMonthWithPlayer[];
@@ -88,25 +100,50 @@ function countByPlayer(
  * so a player who left mid-season still appears in the book.
  */
 export function buildReportPlayers(input: {
-  teamId: string;
+  team: {
+    id: string;
+    name: string;
+    display_name: string | null;
+    season_label: string;
+    age_group: string;
+    gender: TeamGender;
+  };
+  club: { name: string; colour: string | null; icon_url: string | null } | null;
   roster: readonly RosterPlayer[];
   goalsByPlayer: readonly GoalsByPlayerPoint[];
   assistsByPlayer: readonly PlayerCountPoint[];
   potmByPlayer: readonly PlayerCountPoint[];
   matchesPlayed: readonly PlayerCountPoint[];
+  competitiveRecords: Readonly<Record<string, PlayerRecord>>;
 }): ReportPlayer[] {
   const goals = new Map(input.goalsByPlayer.map((p) => [p.playerId, p.goals]));
   const assists = countByPlayer(input.assistsByPlayer);
   const potm = countByPlayer(input.potmByPlayer);
   const apps = countByPlayer(input.matchesPlayed);
+  const goalEvents = new Map(
+    input.goalsByPlayer.map((p) => [p.playerId, p.goalCompetitions]),
+  );
+  const assistEvents = new Map(
+    input.assistsByPlayer.map((p) => [p.playerId, p.events]),
+  );
+  const potmEvents = new Map(
+    input.potmByPlayer.map((p) => [p.playerId, p.events]),
+  );
+
+  const clubName = input.club?.name ?? "";
+  const clubColour =
+    input.club?.colour && isValidClubColour(input.club.colour)
+      ? input.club.colour
+      : null;
+  const teamName = teamDisplayName(input.team);
 
   return input.roster.flatMap((r): ReportPlayer[] => {
     const appearances = apps.get(r.id) ?? 0;
     if (!r.active && appearances === 0) return [];
+    const names = playerCardNames(r, input.team.gender);
     return [
       {
         id: r.id,
-        personId: r.person_id,
         name: `${r.first_name} ${r.last_name}`.trim(),
         firstName: r.first_name.trim() || "Player",
         shirtNumber: r.shirt_number,
@@ -115,11 +152,30 @@ export function buildReportPlayers(input: {
         goals: goals.get(r.id) ?? 0,
         assists: assists.get(r.id) ?? 0,
         playerOfTheMatch: potm.get(r.id) ?? 0,
-        cardUrl: playerCardPath({
-          personId: r.person_id,
+        card: {
           playerId: r.id,
-          teamId: input.teamId,
-        }),
+          teamId: input.team.id,
+          clubName,
+          clubColour,
+          clubIconUrl: input.club?.icon_url ?? null,
+          teamName,
+          ageGroup: input.team.age_group,
+          seasonLabel: input.team.season_label,
+          firstName: names.firstName,
+          lastName: names.lastName,
+          shirtNumber: r.shirt_number,
+          positionLabel: playerPositionLabel(r.position),
+          stats: playerCardStats({
+            record: input.competitiveRecords[r.id] ?? {
+              wins: 0,
+              draws: 0,
+              losses: 0,
+            },
+            goalEvents: goalEvents.get(r.id),
+            assistEvents: assistEvents.get(r.id),
+            potmEvents: potmEvents.get(r.id),
+          }),
+        },
       },
     ];
   });
@@ -187,7 +243,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
     headCoachName: headCoach?.name ?? null,
     matches,
     competitions: buildReportCompetitions(input.competitions, matches),
-    players: buildReportPlayers({ ...input, teamId: input.team.id }),
+    players: buildReportPlayers(input),
     monthAwards: input.monthAwards
       .map((a) => ({
         month: a.month,
