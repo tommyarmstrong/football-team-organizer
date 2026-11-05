@@ -265,6 +265,8 @@ export type TeamCoachEntry = {
   coach_id: string;
   person_id: string;
   name: string;
+  first_name: string;
+  last_name: string;
   role: string | null;
 };
 
@@ -296,6 +298,8 @@ export async function listTeamCoaches(
         coach_id: tc.coach_id,
         person_id: coachRaw.person_id,
         name: person ? `${person.first_name} ${person.last_name}` : "",
+        first_name: person?.first_name ?? "",
+        last_name: person?.last_name ?? "",
         role: tc.role,
       } satisfies TeamCoachEntry;
     })

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildReportCoaches,
   buildReportCompetitions,
   buildReportData,
   buildReportMatches,
   buildReportPlayers,
   buildReportVenues,
 } from "@/lib/report/build";
+import type { TeamCoachEntry } from "@/lib/data/coaches";
+import type { ResultOverTimePoint } from "@/lib/data/stats";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { RosterPlayer } from "@/lib/data/players";
 import type { Competition, Venue } from "@/lib/supabase/database.types";
@@ -110,6 +113,7 @@ describe("buildReportPlayers", () => {
     team,
     club,
     competitiveRecords: {},
+    resultsOverTime: [],
     goalsByPlayer: [
       {
         playerId: "a",
@@ -252,6 +256,132 @@ describe("buildReportPlayers", () => {
       ...stats,
     });
     expect(players.map((p) => p.id)).toEqual(["a", "c"]);
+  });
+});
+
+function coachEntry(
+  id: string,
+  first: string,
+  last: string,
+  role: string | null,
+): TeamCoachEntry {
+  return {
+    team_coach_id: `tc-${id}`,
+    coach_id: id,
+    person_id: `p-${id}`,
+    name: `${first} ${last}`,
+    first_name: first,
+    last_name: last,
+    role,
+  };
+}
+
+function resultPoint(
+  result: "W" | "D" | "L",
+  goalsFor: number,
+  goalsAgainst: number,
+  isFriendly = false,
+): ResultOverTimePoint {
+  return {
+    matchId: `m-${goalsFor}-${goalsAgainst}-${isFriendly}`,
+    date: "2025-09-01",
+    label: "",
+    goalsFor,
+    goalsAgainst,
+    result,
+    competitionId: null,
+    competitionKind: null,
+    competitionName: null,
+    isFriendly,
+  };
+}
+
+describe("buildReportCoaches", () => {
+  const team = {
+    id: "t1",
+    name: "U10 Lions",
+    display_name: null,
+    season_label: "2025/26",
+    age_group: "U10",
+  };
+  const club = { name: "Club", colour: "#112233", icon_url: null };
+
+  it("puts the head coach first, then the others by name", () => {
+    const result = buildReportCoaches({
+      team,
+      club,
+      resultsOverTime: [],
+      coaches: [
+        coachEntry("z", "Zoe", "Young", "Assistant Coach"),
+        coachEntry("h", "Hal", "Head", "Head Coach"),
+        coachEntry("a", "Abe", "Old", null),
+      ],
+    });
+    expect(result.map((c) => c.id)).toEqual(["h", "a", "z"]);
+    expect(result.map((c) => c.isHead)).toEqual([true, false, false]);
+  });
+
+  it("builds a card with the full name, role and the team's competitive record", () => {
+    const [coach] = buildReportCoaches({
+      team,
+      club,
+      coaches: [coachEntry("h", "Hal", "Head", "Head Coach")],
+      resultsOverTime: [
+        resultPoint("W", 3, 1),
+        resultPoint("D", 0, 0),
+        resultPoint("L", 1, 2),
+        // Friendlies are left out of the card.
+        resultPoint("W", 9, 0, true),
+      ],
+    });
+    expect(coach!.card).toEqual({
+      coachId: "h",
+      teamId: "t1",
+      clubName: "Club",
+      clubColour: "#112233",
+      clubIconUrl: null,
+      teamName: "U10 Lions",
+      ageGroup: "U10",
+      seasonLabel: "2025/26",
+      firstName: "Hal",
+      lastName: "Head",
+      roleLabel: "Head Coach",
+      stats: {
+        played: 3,
+        wins: 1,
+        draws: 1,
+        losses: 1,
+        goalsFor: 4,
+        goalsAgainst: 3,
+      },
+    });
+  });
+
+  it('labels a coach with no role "Coach"', () => {
+    const [coach] = buildReportCoaches({
+      team,
+      club,
+      resultsOverTime: [],
+      coaches: [coachEntry("a", "Abe", "Old", null)],
+    });
+    expect(coach!.card.roleLabel).toBe("Coach");
+    expect(coach!.role).toBeNull();
+  });
+
+  it("falls back to the default colour for an invalid club colour", () => {
+    const [coach] = buildReportCoaches({
+      team,
+      club: { ...club, colour: "green" },
+      resultsOverTime: [],
+      coaches: [coachEntry("a", "Abe", "Old", null)],
+    });
+    expect(coach!.card.clubColour).toBeNull();
+  });
+
+  it("returns nothing for a team with no coaches", () => {
+    expect(
+      buildReportCoaches({ team, club, coaches: [], resultsOverTime: [] }),
+    ).toEqual([]);
   });
 });
 
@@ -448,12 +578,15 @@ describe("buildReportData", () => {
       potmByPlayer: [],
       matchesPlayed: [],
       competitiveRecords: {},
+      resultsOverTime: [],
       coaches: [
         {
           team_coach_id: "1",
           coach_id: "c1",
           person_id: "p1",
           name: "Ann Assistant",
+          first_name: "Ann",
+          last_name: "Assistant",
           role: "Assistant Coach",
         },
         {
@@ -461,6 +594,8 @@ describe("buildReportData", () => {
           coach_id: "c2",
           person_id: "p2",
           name: "Hal Head",
+          first_name: "Hal",
+          last_name: "Head",
           role: "Head Coach",
         },
       ],
@@ -549,12 +684,15 @@ describe("team info", () => {
     potmByPlayer: [],
     matchesPlayed: [],
     competitiveRecords: {},
+    resultsOverTime: [],
     coaches: [
       {
         team_coach_id: "1",
         coach_id: "c1",
         person_id: "p1",
         name: "Terry Venables",
+        first_name: "Terry",
+        last_name: "Venables",
         role: "Head Coach",
       },
     ],

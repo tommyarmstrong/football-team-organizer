@@ -5,6 +5,7 @@ import {
   GALLERY_COLUMNS,
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne, splitMarkdownPages } from "@/lib/report/paginate";
+import { galleryEntries, type GalleryEntry } from "@/lib/report/gallery";
 import { REPORT_SECTION_TITLES, VENUES_PER_PAGE } from "@/lib/report/sections";
 import {
   biggestWin,
@@ -14,7 +15,6 @@ import {
   leaders,
   longestUnbeaten,
   perMatch,
-  sortSquad,
   tally,
   winPercentage,
 } from "@/lib/report/summary";
@@ -34,7 +34,7 @@ import {
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
-import { ReportPlayerCard } from "@/components/report/report-player-card";
+import { ReportGalleryCard } from "@/components/report/report-gallery-card";
 import { ReportMarkdown } from "@/components/report/report-markdown";
 import {
   Panel,
@@ -695,34 +695,27 @@ export function venuesPages({ data }: { data: ReportData }): ReactElement[] {
 // Player Gallery
 // ---------------------------------------------------------------------------
 
-/**
- * A placeholder card in the same 4:5 shape. It sits behind the real card
- * image, so it only shows when the image is missing (sample data without a
- * card route, or a card that failed to render). Always first name only.
- */
-function PlayerCardTile({
-  player,
+/** One card tile, drawn inline: nothing is fetched. */
+function GalleryTile({
+  entry,
   crestSrc,
 }: {
-  player: ReportPlayer;
+  entry: GalleryEntry;
   crestSrc: string | null;
 }) {
   return (
     <li
       className="relative aspect-[4/5] overflow-hidden rounded-[2.2mm] bg-white shadow-[0_0_0_0.25mm_var(--club-line)]"
-      aria-label={player.name}
+      aria-label={entry.label}
     >
-      <ReportPlayerCard card={player.card} crestSrc={crestSrc} />
+      <ReportGalleryCard entry={entry} crestSrc={crestSrc} />
     </li>
   );
 }
 
 export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
   const label = footerLabel(data);
-  const pages = chunkAtLeastOne(
-    sortSquad(data.players),
-    GALLERY_CARDS_PER_PAGE,
-  );
+  const pages = chunkAtLeastOne(galleryEntries(data), GALLERY_CARDS_PER_PAGE);
 
   return pages.map((rows, pageIndex) => (
     <ReportPage
@@ -734,16 +727,16 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
       label={label}
     >
       {rows.length === 0 ? (
-        <EmptyNote>No players are in the squad.</EmptyNote>
+        <EmptyNote>No players or coaches are in the squad.</EmptyNote>
       ) : (
         <ul
           className="grid gap-[4mm]"
           style={{ gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, 1fr)` }}
         >
-          {rows.map((p) => (
-            <PlayerCardTile
-              key={p.id}
-              player={p}
+          {rows.map((entry) => (
+            <GalleryTile
+              key={entry.id}
+              entry={entry}
               crestSrc={data.club.iconUrl}
             />
           ))}

@@ -13,6 +13,11 @@ import {
 } from "@/lib/format";
 import { clubIconSrc, isValidClubColour } from "@/lib/clubs/branding";
 import {
+  coachCardNames,
+  coachCardStats,
+  coachRoleLabel,
+} from "@/lib/postcards/coach-card-content";
+import {
   playerCardNames,
   playerCardStats,
   playerPositionLabel,
@@ -25,6 +30,7 @@ import type {
   PlayerCountPoint,
   GoalsByPlayerPoint,
   PlayerRecord,
+  ResultOverTimePoint,
 } from "@/lib/data/stats";
 import { VENUE_PARKING_LABELS } from "@/lib/constants";
 import type {
@@ -35,6 +41,7 @@ import type {
 import type {
   ReportCompetition,
   ReportContent,
+  ReportCoach,
   ReportData,
   ReportMatch,
   ReportPlayer,
@@ -66,6 +73,8 @@ export type BuildReportInput = {
   matchesPlayed: PlayerCountPoint[];
   /** Competitive win/draw/loss per player id (see `getTeamCompetitiveRecords`). */
   competitiveRecords: Record<string, PlayerRecord>;
+  /** Every played match, for the coach cards' team record. */
+  resultsOverTime: ResultOverTimePoint[];
   coaches: TeamCoachEntry[];
   competitions: Competition[];
   monthAwards: PlayerOfTheMonthWithPlayer[];
@@ -195,6 +204,61 @@ export function buildReportPlayers(input: {
       },
     ];
   });
+}
+
+/**
+ * The coaching staff with their cards, the head coach first and then the
+ * others by name. The card shows the team's competitive record, as the shared
+ * coach card does.
+ */
+export function buildReportCoaches(input: {
+  team: {
+    id: string;
+    name: string;
+    display_name: string | null;
+    season_label: string;
+    age_group: string;
+  };
+  club: { name: string; colour: string | null; icon_url: string | null } | null;
+  coaches: readonly TeamCoachEntry[];
+  resultsOverTime: readonly ResultOverTimePoint[];
+}): ReportCoach[] {
+  const clubName = input.club?.name ?? "";
+  const clubColour =
+    input.club?.colour && isValidClubColour(input.club.colour)
+      ? input.club.colour
+      : null;
+  const teamName = teamDisplayName(input.team);
+  const stats = coachCardStats(input.resultsOverTime);
+
+  return input.coaches
+    .map((c): ReportCoach => {
+      const names = coachCardNames(c);
+      return {
+        id: c.coach_id,
+        name: c.name.trim() || names.firstName,
+        role: c.role,
+        isHead: c.role === HEAD_COACH_ROLE,
+        card: {
+          coachId: c.coach_id,
+          teamId: input.team.id,
+          clubName,
+          clubColour,
+          clubIconUrl: input.club?.icon_url ?? null,
+          teamName,
+          ageGroup: input.team.age_group,
+          seasonLabel: input.team.season_label,
+          firstName: names.firstName,
+          lastName: names.lastName,
+          roleLabel: coachRoleLabel(c.role),
+          stats,
+        },
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.isHead) - Number(a.isHead) || a.name.localeCompare(b.name),
+    );
 }
 
 /**
@@ -339,6 +403,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
     },
     staff: input.coaches.map((c) => ({ name: c.name, role: c.role })),
     headCoachName: headCoach?.name ?? null,
+    coaches: buildReportCoaches(input),
     matches,
     competitions: buildReportCompetitions(input.competitions, matches),
     venues: buildReportVenues(
