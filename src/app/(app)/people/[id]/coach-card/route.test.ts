@@ -20,8 +20,8 @@ vi.mock("@/lib/postcards/crest", () => ({
   crestDataUrl: crestDataUrlMock,
 }));
 
-vi.mock("@/lib/postcards/player-photo", () => ({
-  playerPhotoPlaceholderDataUrl: photoDataUrlMock,
+vi.mock("@/lib/postcards/coach-photo", () => ({
+  coachPhotoPlaceholderDataUrl: photoDataUrlMock,
 }));
 
 vi.mock("@/lib/postcards/coach-card-image", () => ({

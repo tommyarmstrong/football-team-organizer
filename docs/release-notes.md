@@ -4,6 +4,12 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 5 November 2026 — Coach card artwork
+
+- Coach cards now have their own neon artwork showing an older coach with a whistle, instead of reusing the young player silhouette.
+
+---
+
 ## 4 November 2026 — Coach cards
 
 - A coach's page now has a **Share coach card** button, next to the player card button. The card matches the player card: 4:5, sized for WhatsApp and Instagram, in the club colours.
