@@ -1,4 +1,5 @@
 import { CoachCardImage } from "@/lib/postcards/coach-card-image";
+import { COACH_PHOTO_PLACEHOLDER_PATH } from "@/lib/postcards/coach-photo";
 import { PlayerCardImage } from "@/lib/postcards/player-card-image";
 import { PLAYER_PHOTO_PLACEHOLDER_PATH } from "@/lib/postcards/player-photo";
 import type { GalleryEntry } from "@/lib/report/gallery";
@@ -24,7 +25,7 @@ export function ReportGalleryCard({
           <CoachCardImage
             payload={entry.card}
             crestSrc={crestSrc}
-            photoSrc={PLAYER_PHOTO_PLACEHOLDER_PATH}
+            photoSrc={COACH_PHOTO_PLACEHOLDER_PATH}
             fontFamily="inherit"
           />
         ) : (
