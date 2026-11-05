@@ -7,7 +7,7 @@ import {
   COACH_CARD_WIDTH,
   CoachCardImage,
 } from "@/lib/postcards/coach-card-image";
-import { playerPhotoPlaceholderDataUrl } from "@/lib/postcards/player-photo";
+import { coachPhotoPlaceholderDataUrl } from "@/lib/postcards/coach-photo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export async function GET(
 
   const [crestSrc, photoSrc] = await Promise.all([
     crestDataUrl(data.clubIconUrl, url.origin),
-    playerPhotoPlaceholderDataUrl(),
+    coachPhotoPlaceholderDataUrl(),
   ]);
 
   try {
