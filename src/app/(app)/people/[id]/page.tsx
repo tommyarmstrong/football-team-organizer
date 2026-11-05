@@ -19,6 +19,7 @@ import {
   listGuardians,
 } from "@/lib/data/guardians";
 import { getPerson } from "@/lib/data/people";
+import { buildCoachCardPayload } from "@/lib/postcards/coach-card";
 import { buildPlayerCardPayload } from "@/lib/postcards/player-card";
 import { listPlayerObjectives } from "@/lib/data/player-objectives";
 import {
@@ -121,6 +122,7 @@ export default async function PersonDetailPage({
     allPlayersResult,
     allGuardiansResult,
     playerCardResult,
+    coachCardResult,
   ] = await Promise.all([
     player ? getPlayerTeams(player.id) : Promise.resolve({ data: [] }),
     player ? getPlayerGuardians(player.id) : Promise.resolve({ data: [] }),
@@ -146,6 +148,9 @@ export default async function PersonDetailPage({
     player
       ? buildPlayerCardPayload(player.id, { personId: person.id })
       : Promise.resolve({ data: null, error: null }),
+    coach
+      ? buildCoachCardPayload(coach.id, { personId: person.id })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const playerTeams = playerTeamsResult.data;
@@ -163,6 +168,9 @@ export default async function PersonDetailPage({
   // Null unless the viewer is a guardian, coach, or manager (see
   // canGeneratePlayerCard) and the player is on a team.
   const playerCard = playerCardResult.data;
+  // Null unless the viewer is this coach, a club manager, or a coach / team
+  // manager of the team (see canGenerateCoachCard).
+  const coachCard = coachCardResult.data;
 
   const emergencyGuardian =
     playerGuardians.find((link) => link.emergency_contact) ?? null;
@@ -297,7 +305,7 @@ export default async function PersonDetailPage({
           />
         }
         actions={
-          playerCard || canEditDetails ? (
+          playerCard || coachCard || canEditDetails ? (
             <>
               {playerCard ? (
                 <SharePostcardButton
@@ -310,6 +318,19 @@ export default async function PersonDetailPage({
                   description={`Share ${playerCard.firstName}’s ${playerCard.teamName} card. Youth players are shown by first name only.`}
                   previewAlt={`${playerCard.firstName}’s player card`}
                   buttonLabel="Share player card"
+                />
+              ) : null}
+              {coachCard ? (
+                <SharePostcardButton
+                  imageUrl={`/people/${person.id}/coach-card?${new URLSearchParams(
+                    { coach: coachCard.coachId, team: coachCard.teamId },
+                  ).toString()}`}
+                  caption={coachCard.caption}
+                  fileName={coachCard.fileName}
+                  title="Coach card"
+                  description={`Share ${coachCard.firstName}’s ${coachCard.teamName} coach card.`}
+                  previewAlt={`${coachCard.firstName}’s coach card`}
+                  buttonLabel="Share coach card"
                 />
               ) : null}
               {canEditDetails ? (

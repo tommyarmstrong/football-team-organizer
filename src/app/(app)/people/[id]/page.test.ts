@@ -24,6 +24,7 @@ const {
   getCoachTeamsMock,
   listCoachObjectivesMock,
   buildPlayerCardPayloadMock,
+  buildCoachCardPayloadMock,
 } = vi.hoisted(() => ({
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
@@ -44,6 +45,7 @@ const {
   getCoachTeamsMock: vi.fn(),
   listCoachObjectivesMock: vi.fn(),
   buildPlayerCardPayloadMock: vi.fn(),
+  buildCoachCardPayloadMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -78,6 +80,9 @@ vi.mock("@/lib/data/coach-objectives", () => ({
 }));
 vi.mock("@/lib/postcards/player-card", () => ({
   buildPlayerCardPayload: buildPlayerCardPayloadMock,
+}));
+vi.mock("@/lib/postcards/coach-card", () => ({
+  buildCoachCardPayload: buildCoachCardPayloadMock,
 }));
 vi.mock("@/components/players/player-guardians-section", () => ({
   PlayerGuardiansSection: (props: Record<string, unknown>) => ({
@@ -160,6 +165,19 @@ const playerPerson = personWithRolesFixture({
   ],
 });
 
+const coachPerson = personWithRolesFixture({
+  id: "person-c",
+  first_name: "Grace",
+  last_name: "Hopper",
+  coaches: [
+    {
+      id: "coach-1",
+      club_id: "club-1",
+      active_role: true,
+    },
+  ],
+});
+
 const guardianPerson = personWithRolesFixture({
   id: "person-g",
   first_name: "Pat",
@@ -205,6 +223,7 @@ describe("PersonDetailPage guardian relationships", () => {
     getCoachTeamsMock.mockResolvedValue({ data: [] });
     listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
     buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
+    buildCoachCardPayloadMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("shows an error when the person cannot be loaded", async () => {
@@ -336,6 +355,7 @@ describe("PersonDetailPage reactivated members", () => {
     getCoachTeamsMock.mockResolvedValue({ data: [] });
     listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
     buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
+    buildCoachCardPayloadMock.mockResolvedValue({ data: null, error: null });
   });
 
   it("lets a manager add roles after a player is reactivated", async () => {
@@ -485,6 +505,81 @@ describe("PersonDetailPage player card", () => {
     });
 
     expect(buildPlayerCardPayloadMock).not.toHaveBeenCalled();
+    expect(findNamed(tree, "SharePostcardButton")).toHaveLength(0);
+  });
+});
+
+describe("PersonDetailPage coach card", () => {
+  const cardPayload = {
+    coachId: "coach-1",
+    teamId: "team-1",
+    firstName: "Grace",
+    teamName: "U12 Blues",
+    caption: "Grace Hopper · Head Coach",
+    fileName: "grace-hopper-u12-blues-2025-26-coach-card.png",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Example FC" });
+    getPlayerTeamsMock.mockResolvedValue({ data: [] });
+    getPlayerGuardiansMock.mockResolvedValue({ data: [] });
+    getGuardianPlayersMock.mockResolvedValue({ data: [] });
+    listPlayerObjectivesMock.mockResolvedValue({ data: [], error: null });
+    listPlayersMock.mockResolvedValue({ data: [] });
+    listGuardiansMock.mockResolvedValue({ data: [] });
+    getCoachMock.mockResolvedValue({ data: null, error: null });
+    getCoachTeamsMock.mockResolvedValue({ data: [] });
+    listCoachObjectivesMock.mockResolvedValue({ data: [], error: null });
+    buildPlayerCardPayloadMock.mockResolvedValue({ data: null, error: null });
+    getPersonMock.mockResolvedValue({ data: coachPerson, error: null });
+  });
+
+  it("offers the coach card when the viewer may generate one", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    buildCoachCardPayloadMock.mockResolvedValue({
+      data: cardPayload,
+      error: null,
+    });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-c" }),
+    });
+
+    expect(buildCoachCardPayloadMock).toHaveBeenCalledWith("coach-1", {
+      personId: "person-c",
+    });
+    const buttons = findNamed(tree, "SharePostcardButton");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toMatchObject({
+      imageUrl: "/people/person-c/coach-card?coach=coach-1&team=team-1",
+      caption: "Grace Hopper · Head Coach",
+      fileName: cardPayload.fileName,
+      title: "Coach card",
+      buttonLabel: "Share coach card",
+    });
+  });
+
+  it("hides the coach card when the viewer may not generate one", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    buildCoachCardPayloadMock.mockResolvedValue({ data: null, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-c" }),
+    });
+
+    expect(findNamed(tree, "SharePostcardButton")).toHaveLength(0);
+  });
+
+  it("does not build a coach card for people who are not coaches", async () => {
+    getViewerContextMock.mockResolvedValue(clubManagerViewer());
+    getPersonMock.mockResolvedValue({ data: guardianPerson, error: null });
+
+    const tree = await PersonDetailPage({
+      params: Promise.resolve({ id: "person-g" }),
+    });
+
+    expect(buildCoachCardPayloadMock).not.toHaveBeenCalled();
     expect(findNamed(tree, "SharePostcardButton")).toHaveLength(0);
   });
 });

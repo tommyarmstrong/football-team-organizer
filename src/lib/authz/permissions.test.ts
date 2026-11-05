@@ -8,6 +8,7 @@ import {
   canEditPlayer,
   canEditTeam,
   canEditTeamHistory,
+  canGenerateCoachCard,
   canGeneratePlayerCard,
   canManageGuardianPlayerLinks,
   isGuardianOfPlayer,
@@ -574,6 +575,80 @@ describe("canGeneratePlayerCard", () => {
       canGeneratePlayerCard(
         viewer({ managementClubIds: ["club-2"] }),
         player,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("canGenerateCoachCard", () => {
+  const coach = { club_id: "club-1", person_id: "person-coach" };
+
+  it("allows the coach themselves", () => {
+    expect(
+      canGenerateCoachCard(
+        viewer({ personId: "person-coach", coachTeamIds: [] }),
+        coach,
+        "team-1",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows club managers for any team", () => {
+    expect(
+      canGenerateCoachCard(
+        viewer({ managementClubIds: ["club-1"] }),
+        coach,
+        "team-9",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows coaches and team managers of that team only", () => {
+    expect(
+      canGenerateCoachCard(
+        viewer({ coachTeamIds: ["team-1"] }),
+        coach,
+        "team-1",
+      ),
+    ).toBe(true);
+    expect(
+      canGenerateCoachCard(
+        viewer({ managementTeamIds: ["team-1"] }),
+        coach,
+        "team-1",
+      ),
+    ).toBe(true);
+    expect(
+      canGenerateCoachCard(
+        viewer({ coachTeamIds: ["team-2"] }),
+        coach,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects guardians, players, and guardian assistants", () => {
+    expect(
+      canGenerateCoachCard(
+        viewer({
+          guardianPlayerIds: ["player-1"],
+          selfPlayerIds: ["player-2"],
+          memberTeamRoles: {
+            "team-1": ["guardian", "player", "guardian_assistant"],
+          },
+        }),
+        coach,
+        "team-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a viewer with no linked person and managers of another club", () => {
+    expect(
+      canGenerateCoachCard(
+        viewer({ personId: null, managementClubIds: ["club-2"] }),
+        coach,
         "team-1",
       ),
     ).toBe(false);
