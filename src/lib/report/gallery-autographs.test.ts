@@ -5,9 +5,11 @@ import {
   GALLERY_ROWS_PER_PAGE,
   PLAYER_CARD_ASPECT,
 } from "@/lib/report/card-path";
+import { galleryEntries } from "@/lib/report/gallery";
 import { chunkAtLeastOne } from "@/lib/report/paginate";
 import {
   samplePlayers,
+  sampleCoaches,
   sampleReportData,
   sampleVenues,
 } from "@/lib/report/sample";
@@ -161,5 +163,62 @@ describe("venue paging", () => {
 
   it("still yields a page when no venue was recorded", () => {
     expect(chunkAtLeastOne([], VENUES_PER_PAGE)).toEqual([[]]);
+  });
+});
+
+describe("gallery entries", () => {
+  const data = { coaches: sampleCoaches(), players: samplePlayers() };
+
+  it("puts every coach before every player", () => {
+    const entries = galleryEntries(data);
+    const kinds = entries.map((e) => e.kind);
+    expect(kinds.slice(0, data.coaches.length)).toEqual(
+      data.coaches.map(() => "coach"),
+    );
+    expect(kinds.slice(data.coaches.length)).toEqual(
+      data.players.map(() => "player"),
+    );
+  });
+
+  it("starts with the head coach, then the other coaches", () => {
+    const [first, ...rest] = galleryEntries(data).filter(
+      (e) => e.kind === "coach",
+    );
+    expect(first!.label).toBe("Sam Whitfield, Head Coach");
+    expect(rest.map((e) => e.label)).toEqual([
+      "Dan Mercer, Goalkeeping Coach",
+      "Priya Raman, Assistant Coach",
+    ]);
+  });
+
+  it("orders the players by shirt number after the coaches", () => {
+    const players = galleryEntries(data).filter((e) => e.kind === "player");
+    expect(players[0]!.card).toMatchObject({ shirtNumber: 1 });
+    expect(players.at(-1)!.card).toMatchObject({ shirtNumber: null });
+  });
+
+  it("keeps every card once, with unique ids", () => {
+    const entries = galleryEntries(data);
+    expect(entries).toHaveLength(data.coaches.length + data.players.length);
+    expect(new Set(entries.map((e) => e.id)).size).toBe(entries.length);
+  });
+
+  it("works with no coaches, or no players", () => {
+    expect(
+      galleryEntries({ coaches: [], players: samplePlayers() }),
+    ).toHaveLength(samplePlayers().length);
+    expect(
+      galleryEntries({ coaches: sampleCoaches(), players: [] }),
+    ).toHaveLength(sampleCoaches().length);
+    expect(galleryEntries({ coaches: [], players: [] })).toEqual([]);
+  });
+
+  it("counts coaches towards the cards on a page", () => {
+    const pages = chunkAtLeastOne(galleryEntries(data), GALLERY_CARDS_PER_PAGE);
+    expect(pages.flat()).toHaveLength(
+      data.coaches.length + data.players.length,
+    );
+    // 3 coaches + 16 sample players run onto a second page.
+    expect(pages.map((page) => page.length)).toEqual([16, 3]);
   });
 });

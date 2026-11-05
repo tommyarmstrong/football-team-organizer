@@ -66,6 +66,7 @@ export async function loadReportData(
       potmByPlayer: stats.potmByPlayer,
       matchesPlayed: stats.matchesPlayed,
       competitiveRecords: records.data,
+      resultsOverTime: stats.resultsOverTime,
       coaches: coaches.data,
       competitions: competitions.data,
       monthAwards: monthAwards.data,

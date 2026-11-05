@@ -1,4 +1,4 @@
-import type { PlayerCardView } from "@/lib/postcards/types";
+import type { CoachCardView, PlayerCardView } from "@/lib/postcards/types";
 import type { CompetitionResult } from "@/lib/supabase/database.types";
 
 /** Everything the season report renders. Plain data, no Supabase types. */
@@ -80,6 +80,15 @@ export type ReportVenue = {
   biggestWin: string | null;
 };
 
+/** A member of the coaching staff, with the card shown in the gallery. */
+export type ReportCoach = {
+  id: string;
+  name: string;
+  role: string | null;
+  isHead: boolean;
+  card: CoachCardView;
+};
+
 export type ReportStaffMember = {
   name: string;
   role: string | null;
@@ -117,6 +126,8 @@ export type ReportData = {
   };
   staff: ReportStaffMember[];
   headCoachName: string | null;
+  /** Coaches with their cards, head coach(es) first. */
+  coaches: ReportCoach[];
   /** Played matches, oldest first. */
   matches: ReportMatch[];
   competitions: ReportCompetition[];

@@ -1,6 +1,7 @@
 import type {
   ReportCompetition,
   ReportContent,
+  ReportCoach,
   ReportData,
   ReportVenue,
   ReportMatch,
@@ -189,6 +190,53 @@ export function samplePlayers(
   );
 }
 
+const SAMPLE_COACHES: Array<[string, string, string | null]> = [
+  ["Priya", "Raman", "Assistant Coach"],
+  ["Sam", "Whitfield", "Head Coach"],
+  ["Dan", "Mercer", "Goalkeeping Coach"],
+];
+
+/** The sample staff, head coach first, as the real builder orders them. */
+export function sampleCoaches(
+  options: { colour?: string | null } = {},
+): ReportCoach[] {
+  const clubColour =
+    options.colour === undefined ? SAMPLE_CLUB_COLOUR : options.colour;
+  const matches = sampleMatches().filter((m) => !m.isFriendly);
+  const stats = {
+    played: matches.length,
+    wins: matches.filter((m) => m.result === "W").length,
+    draws: matches.filter((m) => m.result === "D").length,
+    losses: matches.filter((m) => m.result === "L").length,
+    goalsFor: matches.reduce((n, m) => n + m.goalsFor, 0),
+    goalsAgainst: matches.reduce((n, m) => n + m.goalsAgainst, 0),
+  };
+
+  return SAMPLE_COACHES.map(([firstName, lastName, role], i): ReportCoach => ({
+    id: `sample-coach-${i + 1}`,
+    name: `${firstName} ${lastName}`,
+    role,
+    isHead: role === "Head Coach",
+    card: {
+      coachId: `sample-coach-${i + 1}`,
+      teamId: "sample-team",
+      clubName: "Riverside Rangers FC",
+      clubColour,
+      clubIconUrl: null,
+      teamName: "Rangers U10 Lions",
+      ageGroup: "U10",
+      seasonLabel: "2025/26",
+      firstName,
+      lastName,
+      roleLabel: role ?? "Coach",
+      stats,
+    },
+  })).sort(
+    (a, b) =>
+      Number(b.isHead) - Number(a.isHead) || a.name.localeCompare(b.name),
+  );
+}
+
 export function sampleVenues(): ReportVenue[] {
   return [
     {
@@ -314,6 +362,7 @@ export function sampleReportData(
       { name: "Dan Mercer", role: "Goalkeeping Coach" },
     ],
     headCoachName: "Sam Whitfield",
+    coaches: options.empty ? [] : sampleCoaches(options),
     matches,
     competitions: sampleCompetitions(matches),
     venues: options.empty ? [] : sampleVenues(),
