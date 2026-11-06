@@ -137,6 +137,27 @@ export function CoverPage({ data }: { data: ReportData }) {
   );
 }
 
+/**
+ * A cover with nothing on it. The front and back covers are printed on a
+ * double-sided sheet, so each is followed (or preceded) by a plain page in
+ * the same club colour.
+ */
+export function BlankCoverPage({
+  label,
+  subtle = false,
+}: {
+  label: string;
+  subtle?: boolean;
+}) {
+  return (
+    <section className="report-sheet" aria-label={label}>
+      <div className="absolute inset-[10mm] overflow-hidden rounded-[6mm] bg-(--club) text-(--club-fg)">
+        <PitchMarkings subtle={subtle} />
+      </div>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Team info
 // ---------------------------------------------------------------------------
@@ -603,23 +624,11 @@ export function CompetitionsPage({ data }: { data: ReportData }) {
 // Venues
 // ---------------------------------------------------------------------------
 
-function VenueFact({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <dt className="text-[7pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
-        {label}
-      </dt>
-      <dd className="mt-[0.5mm] text-[9.5pt] text-neutral-800">{value}</dd>
-    </div>
-  );
-}
-
 function VenueCard({ venue }: { venue: ReportVenue }) {
   return (
-    <li className="flex flex-col rounded-[3mm] border border-(--club-line) bg-(--club-soft) p-[5mm]">
+    <li className="flex flex-col rounded-[3mm] border border-(--club-line) bg-(--club-soft) p-[4mm]">
       <div className="flex items-start justify-between gap-[3mm]">
-        <h3 className="font-display text-[17pt] leading-[1.02] font-semibold tracking-[0.01em] text-neutral-900 uppercase">
+        <h3 className="font-display line-clamp-2 text-[16pt] leading-[1.02] font-semibold tracking-[0.01em] text-neutral-900 uppercase">
           {venue.name}
         </h3>
         {venue.isHome ? (
@@ -628,26 +637,30 @@ function VenueCard({ venue }: { venue: ReportVenue }) {
           </span>
         ) : null}
       </div>
-      {venue.address ? (
-        <p className="mt-[1.5mm] text-[8.5pt] text-neutral-600">
-          {venue.address}
+      {venue.surface ? (
+        <p className="mt-[1mm] text-[7.5pt] font-semibold tracking-[0.18em] text-(--club-ink) uppercase">
+          {venue.surface}
         </p>
       ) : null}
+      {venue.photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={venue.photoUrl}
+          alt={`Photo of ${venue.name}`}
+          className="mt-[3mm] h-[32mm] w-full rounded-[2mm] border-[0.8mm] border-white object-cover shadow-[0_0_0_0.25mm_var(--club-line)]"
+        />
+      ) : null}
 
-      <dl className="mt-[3.5mm] mb-[4mm] grid gap-[2.5mm]">
-        <VenueFact label="Surface" value={venue.surface} />
-        <VenueFact label="Parking" value={venue.parking} />
-        <VenueFact label="Food and drink" value={venue.foodAndDrink} />
-      </dl>
-
-      <div className="mt-auto border-t border-(--club-line) pt-[3mm]">
-        <p className="font-display text-[13pt] font-semibold text-(--club-ink) uppercase">
-          Played {venue.played} · W{venue.wins} D{venue.draws} L{venue.losses}
-        </p>
-        <p className="mt-[1mm] text-[8.5pt] text-neutral-600">
-          Goals {venue.goalsFor}–{venue.goalsAgainst}
-          {venue.biggestWin ? ` · Biggest win ${venue.biggestWin}` : ""}
-        </p>
+      <div className="mt-auto pt-[3mm]">
+        <div className="border-t border-(--club-line) pt-[3mm]">
+          <p className="font-display text-[13pt] font-semibold text-(--club-ink) uppercase">
+            Played {venue.played} · W{venue.wins} D{venue.draws} L{venue.losses}
+          </p>
+          <p className="mt-[1mm] text-[8.5pt] text-neutral-600">
+            Goals {venue.goalsFor}–{venue.goalsAgainst}
+            {venue.biggestWin ? ` · Biggest win ${venue.biggestWin}` : ""}
+          </p>
+        </div>
       </div>
     </li>
   );
@@ -945,16 +958,25 @@ export function AutographsPage({ data }: { data: ReportData }) {
   );
 }
 
+/** Ruled lines on the Notes page: more than fit, the box clips the rest. */
+export const NOTES_LINE_COUNT = 30;
+
 export function NotesPage({ data }: { data: ReportData }) {
   return (
     <ReportPage kicker="Your space" title="Notes" label={footerLabel(data)}>
       <div
-        className="min-h-0 flex-1 rounded-[3mm] border border-(--club-line)"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, transparent 0, transparent 9.2mm, var(--club-line) 9.2mm, var(--club-line) 9.5mm)",
-        }}
-      />
+        className="min-h-0 flex-1 overflow-hidden rounded-[7mm] border-[0.5mm] border-(--club) bg-white px-[6mm] pt-[3mm]"
+        role="img"
+        aria-label="Lined pages for notes"
+      >
+        {Array.from({ length: NOTES_LINE_COUNT }, (_, i) => (
+          <div
+            key={i}
+            data-notes-line=""
+            className="h-[9.5mm] border-b-[0.3mm] border-(--club-line)"
+          />
+        ))}
+      </div>
     </ReportPage>
   );
 }

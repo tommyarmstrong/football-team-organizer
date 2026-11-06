@@ -543,29 +543,55 @@ describe("buildReportVenues", () => {
       ],
       [
         dbVenue("full", {
-          address_line1: "1 High St",
-          town_city: "Townsville",
-          postcode: "TS1 1AA",
           surface: ["astro", "unknown", "grass"],
-          parking: "paid_parking",
-          food_and_drink: ["cafe", "tuck_shop"],
         }),
         dbVenue("bare", { surface: ["unknown"] }),
       ],
       null,
     );
-    expect(full).toMatchObject({
-      address: "1 High St, Townsville, TS1 1AA",
-      surface: "Astro, Grass",
-      parking: "Paid parking",
-      foodAndDrink: "Cafe, Tuck shop",
-    });
-    expect(bare).toMatchObject({
-      address: null,
-      surface: null,
-      parking: null,
-      foodAndDrink: null,
-    });
+    expect(full).toMatchObject({ surface: "Astro, Grass" });
+    expect(bare).toMatchObject({ surface: null });
+  });
+
+  it("carries the venue photo, or null when there is none", () => {
+    const [withPhoto, without] = buildReportVenues(
+      [
+        dbMatch("1", { venue_id: "photo" }),
+        dbMatch("2", { venue_id: "photo" }),
+        dbMatch("3", { venue_id: "plain" }),
+      ],
+      [
+        dbVenue("photo", {
+          photo_url:
+            "https://example.supabase.co/storage/v1/object/public/venue-photos/c/v.jpg",
+        }),
+        dbVenue("plain"),
+      ],
+      null,
+    );
+    expect(withPhoto!.photoUrl).toBe(
+      "https://example.supabase.co/storage/v1/object/public/venue-photos/c/v.jpg",
+    );
+    expect(without!.photoUrl).toBeNull();
+  });
+
+  it("no longer reports the address, parking, or food and drink", () => {
+    const [venue] = buildReportVenues(
+      [dbMatch("1", { venue_id: "full" })],
+      [
+        dbVenue("full", {
+          address_line1: "1 High St",
+          town_city: "Townsville",
+          postcode: "TS1 1AA",
+          parking: "paid_parking",
+          food_and_drink: ["cafe", "tuck_shop"],
+        }),
+      ],
+      null,
+    );
+    expect(venue).not.toHaveProperty("address");
+    expect(venue).not.toHaveProperty("parking");
+    expect(venue).not.toHaveProperty("foodAndDrink");
   });
 });
 

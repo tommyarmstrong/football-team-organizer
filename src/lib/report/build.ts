@@ -2,8 +2,6 @@ import {
   formatAwardMonth,
   formatTeamHeaderSummary,
   formatTrainingDays,
-  formatVenueAddress,
-  formatVenueFoodAndDrink,
   formatVenueSurface,
   labelCompetitionKind,
   labelCompetitionResult,
@@ -31,7 +29,6 @@ import type {
   PlayerRecord,
   ResultOverTimePoint,
 } from "@/lib/data/stats";
-import { VENUE_PARKING_LABELS } from "@/lib/constants";
 import type {
   Competition,
   TeamGender,
@@ -351,13 +348,8 @@ export function buildReportVenues(
     result.push({
       id: venue.id,
       name: venue.name,
-      address: formatVenueAddress(venue),
       surface,
-      parking:
-        venue.parking === "unknown"
-          ? null
-          : VENUE_PARKING_LABELS[venue.parking],
-      foodAndDrink: formatVenueFoodAndDrink(venue.food_and_drink),
+      photoUrl: venue.photo_url,
       isHome: venue.id === homeVenueId,
       played: own.length,
       wins,

@@ -157,15 +157,16 @@ describe("pagination", () => {
   });
 
   it("always adds a Notes page, and keeps the whole book even", () => {
-    // body + notes + back cover must come to an even number of pages.
+    // body + notes + blank inside back cover + back cover must come to an
+    // even number of pages.
     for (let body = 1; body <= 40; body += 1) {
       const notes = notesPageCount(body);
       expect(notes).toBeGreaterThanOrEqual(1);
       expect(notes).toBeLessThanOrEqual(2);
-      expect((body + notes + 1) % 2).toBe(0);
+      expect((body + notes + 2) % 2).toBe(0);
     }
-    expect(notesPageCount(10)).toBe(1);
-    expect(notesPageCount(11)).toBe(2);
+    expect(notesPageCount(10)).toBe(2);
+    expect(notesPageCount(11)).toBe(1);
   });
 
   it("splits markdown on page markers and drops empty pages", () => {

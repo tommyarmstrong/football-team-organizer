@@ -330,7 +330,27 @@ export type CardArtboardProps = {
   clubName: string;
   teamLine: string;
   extraLine: string;
+  /**
+   * `share` is the WhatsApp/Instagram image. `report` is the card printed
+   * small in the season report: no club name, and bigger, bolder footer text
+   * so it still reads at a few centimetres wide.
+   */
+  variant?: CardVariant;
 };
+
+export type CardVariant = "share" | "report";
+
+/** Footer type sizes (px on the 1080-wide artboard) for the report card. */
+export const REPORT_TEAM_LINE_FONT_SIZE = 54;
+export const REPORT_EXTRA_LINE_FONT_SIZE = 46;
+
+/** Team line size that keeps "Team name · 2025/26" on one line. */
+export function reportTeamLineFontSize(teamLine: string): number {
+  const length = teamLine.length;
+  if (length <= 26) return REPORT_TEAM_LINE_FONT_SIZE;
+  if (length <= 32) return 46;
+  return 40;
+}
 
 /**
  * The shared collectable-card artboard behind player and coach cards. A plain
@@ -350,7 +370,9 @@ export function cardArtboard({
   clubName,
   teamLine,
   extraLine,
+  variant = "share",
 }: CardArtboardProps) {
+  const report = variant === "report";
   const base = clubColour ?? DEFAULT_CLUB_COLOUR;
   const deep = mixColour(base, "#000000", 0.45);
   const light = mixColour(base, "#FFFFFF", 0.38);
@@ -469,34 +491,39 @@ export function cardArtboard({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              ...(report ? { flex: 1, justifyContent: "center" } : {}),
             }}
           >
+            {report ? null : (
+              <div
+                style={ellipsisStyle({
+                  fontSize: 40,
+                  fontWeight: 700,
+                  color: INK,
+                  maxWidth: 920,
+                })}
+              >
+                {clubName}
+              </div>
+            )}
             <div
               style={ellipsisStyle({
-                fontSize: 40,
-                fontWeight: 700,
-                color: INK,
+                fontSize: report ? reportTeamLineFontSize(teamLine) : 30,
+                color: report ? INK : MUTED,
+                marginTop: report ? 0 : 6,
                 maxWidth: 920,
-              })}
-            >
-              {clubName}
-            </div>
-            <div
-              style={ellipsisStyle({
-                fontSize: 30,
-                color: MUTED,
-                marginTop: 6,
-                maxWidth: 920,
+                ...(report ? { fontWeight: 700, lineHeight: 1.1 } : {}),
               })}
             >
               {teamLine}
             </div>
             <div
               style={ellipsisStyle({
-                fontSize: 30,
+                fontSize: report ? REPORT_EXTRA_LINE_FONT_SIZE : 30,
                 color: MUTED,
-                marginTop: 6,
+                marginTop: report ? 8 : 6,
                 maxWidth: 920,
+                ...(report ? { lineHeight: 1.1 } : {}),
               })}
             >
               {extraLine}

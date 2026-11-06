@@ -27,6 +27,7 @@ export function ReportGalleryCard({
             crestSrc={crestSrc}
             photoSrc={COACH_PHOTO_PLACEHOLDER_PATH}
             fontFamily="inherit"
+            variant="report"
           />
         ) : (
           <PlayerCardImage
@@ -34,6 +35,7 @@ export function ReportGalleryCard({
             crestSrc={crestSrc}
             photoSrc={PLAYER_PHOTO_PLACEHOLDER_PATH}
             fontFamily="inherit"
+            variant="report"
           />
         )}
       </div>

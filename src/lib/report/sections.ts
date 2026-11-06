@@ -2,11 +2,14 @@
  * The sections of the season book, in printed order. The book renders them in
  * this order, so moving a section here moves it in the report.
  *
- * Blank "Notes" pages and the back cover always follow the last section; the
- * book adds them itself (see `notesPageCount`).
+ * Blank "Notes" pages, a blank inside back cover and the back cover always
+ * follow the last section; the book adds them itself (see `notesPageCount`).
+ * `coverInside` is the blank page behind the front cover, so the team info
+ * starts on page 3.
  */
 export const REPORT_SECTION_ORDER = [
   "cover",
+  "coverInside",
   "teamInfo",
   "coachNotes",
   "glance",

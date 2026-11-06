@@ -9,6 +9,7 @@ import type { ReportData } from "@/lib/report/types";
 import {
   AutographsPage,
   BackCoverPage,
+  BlankCoverPage,
   CompetitionsPage,
   CoverPage,
   GlancePage,
@@ -29,6 +30,9 @@ const SECTION_PAGES: Record<
   (data: ReportData) => ReactElement[]
 > = {
   cover: (data) => [<CoverPage key="cover" data={data} />],
+  coverInside: () => [
+    <BlankCoverPage key="cover-inside" label="Inside cover" />,
+  ],
   teamInfo: (data) => [<TeamInfoPage key="teamInfo" data={data} />],
   coachNotes: (data) => coachNotesPages({ data }),
   glance: (data) => [<GlancePage key="glance" data={data} />],
@@ -49,7 +53,8 @@ const SECTION_PAGES: Record<
  * Every page is a direct child of `.report-book` so the odd/even binding
  * margins in `report.css` line up with the printed page numbers. One or two
  * blank "Notes" pages go before the back cover so a double-sided print ends
- * cleanly.
+ * cleanly. Both covers are double pages: a blank page follows the front cover
+ * and another sits just before the back cover.
  */
 export function ReportBook({ data }: { data: ReportData }) {
   const body = REPORT_SECTION_ORDER.flatMap((id) => SECTION_PAGES[id](data));
@@ -65,6 +70,7 @@ export function ReportBook({ data }: { data: ReportData }) {
     >
       {body}
       {filler}
+      <BlankCoverPage key="back-inside" label="Inside back cover" subtle />
       <BackCoverPage key="back" data={data} />
     </div>
   );
