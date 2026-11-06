@@ -4,7 +4,11 @@ import { describe, expect, it } from "vitest";
 import { ReportBook } from "@/components/report/report-book";
 import { emptySeasonAwards } from "@/lib/report/season-awards";
 import { sampleReportData } from "@/lib/report/sample";
-import type { ReportContent } from "@/lib/report/types";
+import type {
+  ReportContent,
+  ReportData,
+  ReportMatch,
+} from "@/lib/report/types";
 
 const content: ReportContent = {
   coachNotes: { expectedPath: "a", markdown: null },
@@ -303,7 +307,7 @@ describe("season at a glance page", () => {
   );
 
   it("calls the form box Results", () => {
-    expect(page).toContain("Results · every match, in order");
+    expect(page).toContain("Results · every league and cup match, in order");
     expect(page).not.toContain("Form ·");
   });
 
@@ -333,6 +337,175 @@ describe("season in numbers page", () => {
   it("no longer carries the date order caption", () => {
     const html = render();
     expect(html).not.toContain("Numbered in date order");
+  });
+});
+
+describe("results page", () => {
+  const game = (
+    id: string,
+    homeAway: ReportMatch["homeAway"],
+    goalsFor: number,
+    goalsAgainst: number,
+  ): ReportMatch => ({
+    id,
+    date: "2025-09-06",
+    opponent: `Opp ${id}`,
+    homeAway,
+    competitionId: "sample-league",
+    competitionKind: "league",
+    competitionLabel: "Junior League",
+    isFriendly: false,
+    goalsFor,
+    goalsAgainst,
+    result: goalsFor > goalsAgainst ? "W" : goalsFor < goalsAgainst ? "L" : "D",
+  });
+
+  const base = sampleReportData(content);
+  const matches = [
+    game("home", "home", 2, 0),
+    game("away", "away", 3, 1),
+    game("neutral", "neutral", 4, 2),
+    game("awayLoss", "away", 0, 5),
+  ];
+  const html = renderToStaticMarkup(
+    createElement(ReportBook, {
+      data: { ...base, matches, leagueCupMatches: matches },
+    }),
+  );
+  const page = between(html, 'aria-label="Results"', 'aria-label="Awards"');
+  const scores = [...page.matchAll(/w-\[22mm\][^>]*>([^<]*)</g)].map(
+    (m) => m[1],
+  );
+
+  it("puts the home team's score first", () => {
+    expect(scores).toEqual(["2–0", "1–3", "4–2", "5–0"]);
+  });
+
+  it("no longer prints the home, away and neutral key", () => {
+    expect(page).not.toContain("H home");
+    expect(page).not.toContain("Score shown as ours first");
+  });
+
+  it("still marks each game H, A or N", () => {
+    expect(page).toContain(">H<");
+    expect(page).toContain(">A<");
+    expect(page).toContain(">N<");
+  });
+});
+
+describe("league and cup data", () => {
+  // The sample season plus a tournament game and a friendly that only the
+  // Results pages may show.
+  const tournament: ReportMatch = {
+    id: "extra-tournament",
+    date: "2026-05-02",
+    opponent: "Tournament Tigers",
+    homeAway: "neutral",
+    competitionId: "sample-tournament",
+    competitionKind: "tournament",
+    competitionLabel: "Summer Cup",
+    isFriendly: false,
+    goalsFor: 9,
+    goalsAgainst: 0,
+    result: "W",
+  };
+  const friendly: ReportMatch = {
+    ...tournament,
+    id: "extra-friendly",
+    opponent: "Friendly Foxes",
+    competitionId: null,
+    competitionKind: null,
+    competitionLabel: "Friendly",
+    isFriendly: true,
+  };
+
+  const base = sampleReportData(content);
+  const data: ReportData = {
+    ...base,
+    matches: [...base.matches, tournament, friendly],
+  };
+  const html = renderToStaticMarkup(createElement(ReportBook, { data }));
+
+  it("lists every game, including tournaments and friendlies, on Results", () => {
+    const results = between(
+      html,
+      'aria-label="Results"',
+      'aria-label="Awards"',
+    );
+    expect(results).toContain("Tournament Tigers");
+    expect(results).toContain("Friendly Foxes");
+  });
+
+  it("leaves players with no league or cup match out of the gallery", () => {
+    const noShow = {
+      ...base,
+      players: base.players.map((p, i) =>
+        i === 0 ? { ...p, name: "Zzyzx", appearances: 0 } : p,
+      ),
+    };
+    const out = renderToStaticMarkup(
+      createElement(ReportBook, { data: noShow }),
+    );
+    const page = between(
+      out,
+      'aria-label="Player Gallery"',
+      'aria-label="Competitions"',
+    );
+    expect(page).not.toContain('aria-label="Zzyzx"');
+    expect(page).toContain(`aria-label="${base.players[1]!.name}"`);
+  });
+
+  it("leaves tournaments and friendlies out of Season at a glance", () => {
+    const page = between(
+      html,
+      'aria-label="Season at a glance"',
+      'aria-label="The season in numbers"',
+    );
+    expect(page).not.toContain("Tournament Tigers");
+    expect(page).not.toContain("Friendly Foxes");
+    expect(page).toContain(
+      `<p class="font-display text-[22mm] leading-[0.9] font-semibold">${base.leagueCupMatches.length}</p>`,
+    );
+    expect(page).toContain("League and cup matches only");
+  });
+
+  it("leaves them out of the goals chart on The season in numbers", () => {
+    const page = between(
+      html,
+      'aria-label="The season in numbers"',
+      'aria-label="Player Gallery"',
+    );
+    expect(page).not.toContain("Tournament Tigers");
+    expect(page).not.toContain("Friendly Foxes");
+    expect(page).toContain("Goals in every league and cup match");
+  });
+
+  it("shows a league and cup message when only other games were played", () => {
+    const onlyOther = renderToStaticMarkup(
+      createElement(ReportBook, {
+        data: {
+          ...data,
+          matches: [tournament, friendly],
+          leagueCupMatches: [],
+        },
+      }),
+    );
+    const page = between(
+      onlyOther,
+      'aria-label="Season at a glance"',
+      'aria-label="The season in numbers"',
+    );
+    expect(page).toContain("No league or cup matches have been played yet.");
+  });
+
+  it("names the competitions page for league and cups", () => {
+    const page = between(
+      html,
+      'aria-label="Competitions"',
+      'aria-label="Venues"',
+    );
+    expect(page).toContain("League and cups");
+    expect(page).not.toContain("League, cups and tournaments");
   });
 });
 

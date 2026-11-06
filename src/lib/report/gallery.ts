@@ -9,7 +9,8 @@ export type GalleryEntry =
 
 /**
  * Every card in gallery order: the coaching staff first (head coach, then the
- * other coaches), then the players by shirt number.
+ * other coaches), then the players by shirt number. A player with no league
+ * or cup match has no card.
  */
 export function galleryEntries(
   data: Pick<ReportData, "coaches" | "players">,
@@ -21,11 +22,13 @@ export function galleryEntries(
       label: c.role ? `${c.name}, ${c.role}` : c.name,
       card: c.card,
     })),
-    ...sortSquad(data.players).map((p): GalleryEntry => ({
-      kind: "player",
-      id: `player-${p.id}`,
-      label: p.name,
-      card: p.card,
-    })),
+    ...sortSquad(data.players)
+      .filter((p) => p.appearances > 0)
+      .map((p): GalleryEntry => ({
+        kind: "player",
+        id: `player-${p.id}`,
+        label: p.name,
+        card: p.card,
+      })),
   ];
 }
