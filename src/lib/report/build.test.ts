@@ -7,6 +7,7 @@ import {
   buildReportPlayers,
   buildReportVenues,
 } from "@/lib/report/build";
+import { emptySeasonAwards } from "@/lib/report/season-awards";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import type { ResultOverTimePoint } from "@/lib/data/stats";
 import type { MatchWithRelations } from "@/lib/data/matches";
@@ -141,7 +142,8 @@ describe("buildReportPlayers", () => {
     });
     const a = players.find((p) => p.id === "a")!;
     expect(a).toMatchObject({
-      name: "a Smith",
+      name: "a",
+      firstName: "a",
       shirtNumber: 9,
       goals: 4,
       assists: 2,
@@ -217,15 +219,27 @@ describe("buildReportPlayers", () => {
     });
   });
 
-  it("shows the surname on adult teams only", () => {
-    const adult = buildReportPlayers({
+  it("never shows a surname, even on adult teams", () => {
+    for (const gender of ["men", "women", "boys", "girls"] as const) {
+      const [a] = buildReportPlayers({
+        ...stats,
+        team: { ...team, gender },
+        roster: [roster("a")],
+      });
+      expect(a!.name).toBe("a");
+      expect(a!.firstName).toBe("a");
+      expect(a!.card.firstName).toBe("a");
+      expect(a!.card.lastName).toBeNull();
+      expect(JSON.stringify(a)).not.toContain("Smith");
+    }
+  });
+
+  it('falls back to "Player" when there is no first name', () => {
+    const [a] = buildReportPlayers({
       ...stats,
-      team: { ...team, gender: "men" },
-      roster: [roster("a")],
+      roster: [roster("a", { first_name: "  " })],
     });
-    expect(adult[0]!.card.lastName).toBe("Smith");
-    const child = buildReportPlayers({ ...stats, roster: [roster("a")] });
-    expect(child[0]!.card.lastName).toBeNull();
+    expect(a!.name).toBe("Player");
   });
 
   it("gives a player with no matches a zero record", () => {
@@ -635,6 +649,7 @@ describe("buildReportData", () => {
       content: {
         coachNotes: { expectedPath: "x", markdown: null },
         lookingAhead: { expectedPath: "y", markdown: null },
+        seasonAwards: emptySeasonAwards("z"),
       },
     });
 
@@ -650,11 +665,13 @@ describe("buildReportData", () => {
       "2025-11",
     ]);
     expect(data.monthAwards[0]).toMatchObject({
-      playerName: "Al Lee",
+      playerName: "Al",
       monthLabel: "September 2025",
       notes: "Great",
     });
     expect(data.monthAwards[1]!.notes).toBeNull();
+    // First names only: the winner's surname ("Lee") is never carried through.
+    expect(JSON.stringify(data.monthAwards)).not.toContain("Lee");
   });
 });
 
@@ -701,6 +718,7 @@ describe("team info", () => {
     content: {
       coachNotes: { expectedPath: "x", markdown: null },
       lookingAhead: { expectedPath: "y", markdown: null },
+      seasonAwards: emptySeasonAwards("z"),
     },
   };
 

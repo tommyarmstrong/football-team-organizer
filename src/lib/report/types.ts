@@ -19,8 +19,9 @@ export type ReportMatch = {
 
 export type ReportPlayer = {
   id: string;
+  /** The player's first name, as printed everywhere in the report. */
   name: string;
-  /** Placeholder cards show first names only, like cards of children. */
+  /** First name only: the report never prints a player's surname. */
   firstName: string;
   shirtNumber: number | null;
   position: string | null;
@@ -101,9 +102,22 @@ export type ReportContentSlot = {
   markdown: string | null;
 };
 
+/**
+ * Winners of the whole-season awards, written by hand in `season-awards.json`
+ * (first names, like the rest of the book). `null` means no winner chosen.
+ */
+export type ReportSeasonAwards = {
+  /** Repo-relative path of the file that holds the winners. */
+  expectedPath: string;
+  playerOfTheSeason: string | null;
+  playersPlayer: string | null;
+  mostImproved: string | null;
+};
+
 export type ReportContent = {
   coachNotes: ReportContentSlot;
   lookingAhead: ReportContentSlot;
+  seasonAwards: ReportSeasonAwards;
 };
 
 export type ReportData = {

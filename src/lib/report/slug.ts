@@ -35,3 +35,10 @@ export function reportSlotPath(
 ): string {
   return `${REPORT_CONTENT_ROOT}/${slug}/${REPORT_SLOT_FILES[slot]}`;
 }
+
+/** Winners of the season awards (Player of the season and so on). */
+export const REPORT_AWARDS_FILE = "season-awards.json";
+
+export function reportAwardsPath(slug: string): string {
+  return `${REPORT_CONTENT_ROOT}/${slug}/${REPORT_AWARDS_FILE}`;
+}

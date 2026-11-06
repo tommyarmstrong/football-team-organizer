@@ -6,6 +6,7 @@ import {
 } from "@/lib/report/card-path";
 import { chunkAtLeastOne, splitMarkdownPages } from "@/lib/report/paginate";
 import { galleryEntries, type GalleryEntry } from "@/lib/report/gallery";
+import { SEASON_AWARD_BOXES } from "@/lib/report/season-awards";
 import { REPORT_SECTION_TITLES, VENUES_PER_PAGE } from "@/lib/report/sections";
 import {
   biggestWin,
@@ -45,7 +46,7 @@ import {
 
 /** Rows that fit on one page of each table. Keep conservative. */
 export const RESULTS_PER_PAGE = 14;
-/** Coaching staff cards on the records page. */
+/** Coaching staff cards on the awards page. */
 export const MAX_STAFF = 8;
 
 export function footerLabel(data: ReportData): string {
@@ -165,15 +166,11 @@ export function TeamInfoPage({ data }: { data: ReportData }) {
         <img
           src={team.photoUrl}
           alt={`${team.name} team photo`}
-          className="h-[112mm] w-full rounded-[3.5mm] border-[1.2mm] border-white object-cover shadow-[0_0_0_0.25mm_var(--club-line)]"
+          className="mb-[8mm] h-[112mm] w-full rounded-[3.5mm] border-[1.2mm] border-white object-cover shadow-[0_0_0_0.25mm_var(--club-line)]"
         />
-      ) : (
-        <div className="flex h-[112mm] w-full items-center justify-center rounded-[3.5mm] border-[0.4mm] border-dashed border-(--club) bg-(--club-soft) px-[10mm] text-center text-[10pt] text-neutral-700">
-          Team photo: add one on the Edit team page.
-        </div>
-      )}
+      ) : null}
 
-      <Panel className="mt-[8mm]">
+      <Panel>
         <p className="font-display text-[15pt] leading-tight font-semibold tracking-[0.04em] text-(--club-ink) uppercase">
           {team.summary}
         </p>
@@ -199,7 +196,7 @@ export function BackCoverPage({ data }: { data: ReportData }) {
             Thank you
           </p>
           <p className="mt-[5mm] max-w-[110mm] text-[12pt] leading-relaxed opacity-90">
-            To every player, parent, guardian and volunteer who made{" "}
+            To every player, coach, parent, guardian and volunteer who made{" "}
             {data.team.seasonLabel} possible.
           </p>
           <p className="font-display mt-[16mm] text-[15pt] tracking-[0.22em] uppercase">
@@ -377,7 +374,7 @@ export function GlancePage({ data }: { data: ReportData }) {
       <div className="grid grid-cols-4 gap-[3.5mm]">
         <StatTile value={matches.length} label="Played" accent />
         <StatTile value={t.wins} label="Won" />
-        <StatTile value={goals.goalsFor} label="Goals scored" />
+        <StatTile value={goals.goalsFor} label="Goals scored" accent />
         <StatTile value={goals.goalsAgainst} label="Goals conceded" />
       </div>
 
@@ -413,14 +410,12 @@ export function GlancePage({ data }: { data: ReportData }) {
       </div>
 
       <Panel className="mt-[5mm]">
-        <PanelTitle>Form · every match, in order</PanelTitle>
+        <PanelTitle>Results · every match, in order</PanelTitle>
         <FormStrip matches={matches} />
       </Panel>
 
       <Panel className="mt-[5mm]">
-        <PanelTitle>
-          Points through the season · 3 for a win, 1 for a draw
-        </PanelTitle>
+        <PanelTitle>Results through the season</PanelTitle>
         <PointsTrend matches={matches} />
       </Panel>
     </ReportPage>
@@ -525,12 +520,7 @@ export function NumbersPage({ data }: { data: ReportData }) {
         {data.matches.length === 0 ? (
           <p className="text-[10pt] text-neutral-500 italic">No matches yet.</p>
         ) : (
-          <>
-            <GoalsPerMatch matches={data.matches} />
-            <p className="mt-[2mm] text-[8pt] text-neutral-500">
-              Numbered in date order, matching the Results pages.
-            </p>
-          </>
+          <GoalsPerMatch matches={data.matches} />
         )}
       </Panel>
       <div className="mt-[5mm] grid grid-cols-2 gap-[5mm]">
@@ -730,7 +720,7 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
         <EmptyNote>No players or coaches are in the squad.</EmptyNote>
       ) : (
         <ul
-          className="grid gap-[4mm]"
+          className="grid content-start gap-[4mm]"
           style={{ gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, 1fr)` }}
         >
           {rows.map((entry) => (
@@ -750,7 +740,7 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
 }
 
 // ---------------------------------------------------------------------------
-// Records
+// Awards
 // ---------------------------------------------------------------------------
 
 function Honour({
@@ -777,6 +767,37 @@ function Honour({
           {value} {unit}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * One whole-season award. With no winner chosen the box prints a blank line to
+ * write the name on by hand.
+ */
+function SeasonAwardBox({
+  title,
+  winner,
+}: {
+  title: string;
+  winner: string | null;
+}) {
+  return (
+    <div className="flex flex-col rounded-[3mm] border-[0.5mm] border-(--club) bg-white p-[4.5mm]">
+      <p className="min-h-[9mm] text-[7.5pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
+        {title}
+      </p>
+      {winner ? (
+        <p className="font-display mt-[2mm] text-[19pt] leading-[1.05] font-semibold uppercase">
+          {winner}
+        </p>
+      ) : (
+        <div
+          className="mt-[2mm] h-[9mm] border-b-[0.4mm] border-dashed border-neutral-400"
+          role="img"
+          aria-label="Blank line to write the winner"
+        />
+      )}
     </div>
   );
 }
@@ -833,20 +854,21 @@ export function RecordsPage({ data }: { data: ReportData }) {
               No monthly awards this season.
             </p>
           ) : (
-            <ol className="space-y-[3.2mm]">
+            // Small type: a full season can have nine to twelve awards.
+            <ol className="grid grid-cols-2 gap-x-[4mm] gap-y-[2mm]">
               {data.monthAwards.map((a) => (
                 <li
                   key={a.month}
-                  className="border-l-[1mm] border-(--club) pl-[3.5mm]"
+                  className="min-w-0 border-l-[0.8mm] border-(--club) pl-[2.5mm]"
                 >
-                  <p className="text-[7.5pt] font-semibold tracking-[0.18em] text-neutral-500 uppercase">
+                  <p className="text-[6.5pt] font-semibold tracking-[0.14em] text-neutral-500 uppercase">
                     {a.monthLabel}
                   </p>
-                  <p className="font-display text-[15pt] leading-tight font-semibold uppercase">
+                  <p className="font-display truncate text-[10.5pt] leading-tight font-semibold uppercase">
                     {a.playerName}
                   </p>
                   {a.notes ? (
-                    <p className="mt-[0.5mm] text-[9pt] text-neutral-600">
+                    <p className="mt-[0.3mm] line-clamp-1 text-[7pt] leading-snug text-neutral-600">
                       {a.notes}
                     </p>
                   ) : null}
@@ -857,7 +879,19 @@ export function RecordsPage({ data }: { data: ReportData }) {
         </Panel>
       </div>
 
-      <section className="mt-[8mm]" aria-label="The coaching team">
+      <section className="mt-[5mm]" aria-label="Awards for the season">
+        <div className="grid grid-cols-3 gap-[3.5mm]">
+          {SEASON_AWARD_BOXES.map(({ key, title }) => (
+            <SeasonAwardBox
+              key={key}
+              title={title}
+              winner={data.content.seasonAwards[key]}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-[6mm]" aria-label="The coaching team">
         <h3 className="font-display mb-[3.5mm] text-[17pt] leading-none font-semibold text-neutral-900 uppercase">
           Thank you to the coaching team
         </h3>
@@ -866,16 +900,16 @@ export function RecordsPage({ data }: { data: ReportData }) {
             No coaching staff are assigned to this team.
           </p>
         ) : (
-          <ul className="grid grid-cols-2 gap-[3.5mm]">
+          <ul className="grid grid-cols-3 gap-[3.5mm]">
             {data.staff.slice(0, MAX_STAFF).map((s) => (
               <li
                 key={`${s.name}-${s.role}`}
-                className="rounded-[3mm] border border-(--club-line) px-[4.5mm] py-[3.5mm]"
+                className="rounded-[3mm] border border-(--club-line) px-[4.5mm] py-[2.5mm]"
               >
-                <p className="font-display text-[16pt] leading-none font-semibold uppercase">
+                <p className="font-display text-[14pt] leading-none font-semibold uppercase">
                   {s.name}
                 </p>
-                <p className="mt-[1.8mm] text-[8pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
+                <p className="mt-[1.4mm] text-[7.5pt] font-semibold tracking-[0.2em] text-(--club-ink) uppercase">
                   {s.role ?? "Coach"}
                 </p>
               </li>

@@ -83,7 +83,7 @@
  * The card artwork is laid out at 1080x1350 px and scaled to fit its tile.
  * `100cqw` is the tile width; tan(atan2(a, b)) turns the length ratio into a
  * plain number, which `scale()` needs. The fixed value is the fallback for
- * browsers without CSS trigonometry (41mm tile / 1080px).
+ * browsers without CSS trigonometry (56mm tile / 1080px).
  */
 .report-card-frame {
   position: absolute;
@@ -96,7 +96,7 @@
   width: 1080px;
   height: 1350px;
   transform-origin: 0 0;
-  transform: scale(0.1435);
+  transform: scale(0.196);
   transform: scale(tan(atan2(100cqw, 1080px)));
 }
 

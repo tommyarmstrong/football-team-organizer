@@ -22,6 +22,18 @@ export function fillerPagesForEven(count: number): number {
   return count % 2 === 0 ? 0 : 1;
 }
 
+/**
+ * How many blank "Notes" pages go between the last section and the back cover:
+ * always at least one, plus one more when needed so that the whole book,
+ * back cover included, has an even number of pages for double-sided printing.
+ *
+ * `bodyPages` is the number of pages before the Notes pages.
+ */
+export function notesPageCount(bodyPages: number): number {
+  // One Notes page, then the back cover.
+  return 1 + fillerPagesForEven(bodyPages + 2);
+}
+
 /** Marker line that starts a new page inside a markdown slot. */
 export const PAGE_BREAK_MARKER = "<!-- page -->";
 
