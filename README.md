@@ -106,3 +106,5 @@ This repository is the app. To stand up your own club instance:
 ## License
 
 [MIT](LICENSE) © Tommy Armstrong
+
+The default club icon (`public/football-icon.svg`, `src/app/icon.svg`) is the soccer ball from [Twemoji](https://github.com/jdecked/twemoji), © Twitter, Inc and other contributors, licensed [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
