@@ -4,6 +4,35 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 5 November 2026 — Coach card artwork
+
+- Coach cards now have their own neon artwork showing an older coach with a whistle, instead of reusing the young player silhouette.
+
+---
+
+## 4 November 2026 — Coach cards
+
+- A coach's page now has a **Share coach card** button, next to the player card button. The card matches the player card: 4:5, sized for WhatsApp and Instagram, in the club colours.
+- It shows the coach's full name, their role on the team (for example Head Coach), and the team's competitive record for the season: played, wins, draws, losses, and goals for and against. Friendlies are left out.
+- Coaches, club managers, and the coaches and team managers of that team can generate it. Guardians and players cannot.
+- A coach on several teams gets a card for each team they can see.
+
+---
+
+## 4 November 2026 — Season report
+
+- Managers get a **Season report** button on the Team page. It opens the team's season as a printable A4 book in the club colours: cover, coach's notes, season at a glance, results, charts, competitions, player gallery, awards, looking ahead, autographs, and a back cover. Use Print / Save as PDF, with A4, margins None, and Background graphics on.
+- The **Player Gallery** shows every player's collectable player card, four to a row, and carries on to a second page for a large squad. Cards use the same design and rules as shared player cards: children appear by first name only. They are drawn straight into the page, so every card shows, large squads load quickly, and the PDF stays small.
+- The **Player Gallery** now starts with the coaching staff's cards, with the head coach first and the other coaches after in name order, then the players. Coach cards show the team's league and cup record, with friendlies left out.
+- A **Team info** page follows the cover. It carries the team photo, which has moved off the cover, plus the club, gender, age group and season, head coach, home and training venues, and training days.
+- A **Venues** section lists every ground the team played at, with its address, surface, parking, food and drink, the team's record there, and the biggest win.
+- The **Awards** page is now called **Records**.
+- Every page is white with the app's pitch markings faintly drawn in the club colour.
+- **Autographs** is a large blank rounded space after Looking ahead, for players to collect signatures.
+- The coach's notes and Looking ahead pages are written as markdown files in `content/reports/`. See the README there.
+
+---
+
 ## 4 November 2026 — Period starts on Stats
 
 - Club managers see a new "Period starts" section on Stats. It shows how many periods each player started, and periods as a percentage of appearances. The chart and table follow the style of Goals and Assists.

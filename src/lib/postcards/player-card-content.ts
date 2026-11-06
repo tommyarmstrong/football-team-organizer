@@ -15,6 +15,36 @@ const POSITION_LABELS: Record<string, string> = {
   FWD: "Forward",
 };
 
+/** One entry per goal / assist / award; friendlies are left out of the card. */
+function countCompetitive(
+  events: ReadonlyArray<{ isFriendly: boolean }> | undefined,
+): number {
+  return (events ?? []).filter((event) => !event.isFriendly).length;
+}
+
+/**
+ * The numbers on a player card: the competitive record plus competitive
+ * goals, assists and player-of-the-match awards. Shared by the card route and
+ * the season report so the two always agree.
+ */
+export function playerCardStats(input: {
+  record: { wins: number; draws: number; losses: number };
+  goalEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+  assistEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+  potmEvents?: ReadonlyArray<{ isFriendly: boolean }>;
+}): PlayerCardStats {
+  const { wins, draws, losses } = input.record;
+  return {
+    appearances: wins + draws + losses,
+    wins,
+    draws,
+    losses,
+    goals: countCompetitive(input.goalEvents),
+    assists: countCompetitive(input.assistEvents),
+    potm: countCompetitive(input.potmEvents),
+  };
+}
+
 /** "FWD" -> "Forward". Unknown free-text positions are shown as recorded. */
 export function playerPositionLabel(
   position: string | null | undefined,
@@ -86,12 +116,12 @@ export function playerCardFileName(input: {
 }
 
 /**
- * Chooses which of a player's teams the card is for. An explicit request wins
+ * Chooses which of a person's teams a card is for. An explicit request wins
  * (and yields null when it is not one of `teams`), then the viewer's active
- * team, then a team the player is currently active on, then the first team in
+ * team, then a preferred (currently active) team, then the first team in
  * display order (current seasons before archived ones).
  */
-export function pickPlayerCardTeam(
+export function pickCardTeam(
   teams: Team[],
   options: {
     requestedTeamId?: string | null;
@@ -111,3 +141,5 @@ export function pickPlayerCardTeam(
   const preferred = new Set(options.preferredTeamIds ?? []);
   return ordered.find((team) => preferred.has(team.id)) ?? ordered[0] ?? null;
 }
+
+export const pickPlayerCardTeam = pickCardTeam;

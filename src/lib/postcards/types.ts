@@ -100,3 +100,41 @@ export type PlayerCardPayload = {
   caption: string;
   fileName: string;
 };
+
+/** What the card artwork needs; the share caption and file name are not drawn. */
+export type PlayerCardView = Omit<PlayerCardPayload, "caption" | "fileName">;
+
+export type CoachCardStats = {
+  /** Competitive (non-friendly) matches the team has played. */
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+};
+
+/**
+ * Everything the coach card image needs. Coaches are adults, so the card
+ * always carries the full name.
+ */
+export type CoachCardPayload = {
+  coachId: string;
+  teamId: string;
+  clubName: string;
+  clubColour: string | null;
+  clubIconUrl: string | null;
+  teamName: string;
+  ageGroup: string;
+  seasonLabel: string;
+  firstName: string;
+  lastName: string | null;
+  /** The coach's role on this team ("Head Coach"); "Coach" when none is set. */
+  roleLabel: string;
+  stats: CoachCardStats;
+  caption: string;
+  fileName: string;
+};
+
+/** What the card artwork needs; the share caption and file name are not drawn. */
+export type CoachCardView = Omit<CoachCardPayload, "caption" | "fileName">;

@@ -23,6 +23,7 @@ export function queryChain(result: QueryResult) {
     "lt",
     "order",
     "limit",
+    "range",
     "filter",
     "match",
     "not",

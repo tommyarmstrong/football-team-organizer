@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { FileTextIcon } from "lucide-react";
 import {
   getViewerContext,
   canEditTeam,
@@ -32,6 +33,7 @@ import { Section } from "@/components/shared/section";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
+import { buttonVariants } from "@/components/ui/button";
 import { CreateTeamForm } from "@/components/team/create-team-form";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { PlayerOfTheMonthSection } from "@/components/team/player-of-the-month-section";
@@ -160,7 +162,17 @@ export default async function TeamPage() {
         }
         actions={
           canEdit ? (
-            <EditIconLink href="/team/edit" label="Edit team" />
+            <>
+              <Link
+                href="/team/report"
+                prefetch={false}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <FileTextIcon aria-hidden="true" data-icon="inline-start" />
+                Season report
+              </Link>
+              <EditIconLink href="/team/edit" label="Edit team" />
+            </>
           ) : undefined
         }
       />

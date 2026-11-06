@@ -440,6 +440,23 @@ export function canGeneratePlayerCard(
   );
 }
 
+/**
+ * Coach cards carry an adult's name and team record out of the app, so they
+ * are limited to the coach themselves, the club's managers, and the coaches /
+ * team managers of the team the card is for.
+ */
+export function canGenerateCoachCard(
+  ctx: ViewerContext,
+  coach: { club_id: string; person_id: string },
+  teamId: string,
+): boolean {
+  if (ctx.personId != null && coach.person_id === ctx.personId) return true;
+  if (canManageClub(ctx, coach.club_id)) return true;
+  return (
+    ctx.coachTeamIds.includes(teamId) || ctx.managementTeamIds.includes(teamId)
+  );
+}
+
 /** A short label for the user's highest role, for display in the header. */
 export function viewerRoleLabel(ctx: ViewerContext): string {
   if (ctx.isManagement) return "Management";
