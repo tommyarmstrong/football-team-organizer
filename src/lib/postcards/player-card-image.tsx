@@ -1,5 +1,6 @@
 import {
   cardArtboard,
+  type CardVariant,
   CARD_HEIGHT,
   CARD_WIDTH,
 } from "@/lib/postcards/card-artboard";
@@ -21,6 +22,7 @@ export function PlayerCardImage({
   crestSrc,
   photoSrc = null,
   fontFamily = "sans-serif",
+  variant = "share",
 }: {
   payload: PlayerCardView;
   crestSrc: string | null;
@@ -28,12 +30,15 @@ export function PlayerCardImage({
   photoSrc?: string | null;
   /** Satori only has its built-in font; in a browser pass the page's font. */
   fontFamily?: string;
+  /** `report` is the larger-footer card printed in the season report. */
+  variant?: CardVariant;
 }) {
   return cardArtboard({
     clubColour: payload.clubColour,
     crestSrc,
     photoSrc,
     fontFamily,
+    variant,
     badgeNumber: payload.shirtNumber,
     pill: payload.ageGroup,
     topName: payload.lastName ? payload.firstName : null,

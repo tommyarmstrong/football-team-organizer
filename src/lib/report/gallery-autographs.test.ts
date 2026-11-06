@@ -27,14 +27,21 @@ describe("report section order", () => {
     expect(order.indexOf("autographs")).toBe(order.indexOf("lookingAhead") + 1);
   });
 
-  it("puts the team info straight after the cover", () => {
+  it("puts a blank inside cover straight after the cover", () => {
     const order: readonly string[] = REPORT_SECTION_ORDER;
-    expect(order.indexOf("teamInfo")).toBe(order.indexOf("cover") + 1);
+    expect(order.indexOf("coverInside")).toBe(order.indexOf("cover") + 1);
+  });
+
+  it("puts the team info on page 3, straight after the inside cover", () => {
+    const order: readonly string[] = REPORT_SECTION_ORDER;
+    expect(order.indexOf("teamInfo")).toBe(order.indexOf("coverInside") + 1);
+    expect(order.indexOf("teamInfo")).toBe(2);
   });
 
   it("puts the sections in the printed order", () => {
     expect(REPORT_SECTION_ORDER).toEqual([
       "cover",
+      "coverInside",
       "teamInfo",
       "coachNotes",
       "glance",
@@ -83,9 +90,9 @@ describe("report section order", () => {
     expect(Object.values(REPORT_SECTION_TITLES)).not.toContain("Squad");
   });
 
-  it("gives every section except the cover a title", () => {
+  it("gives every section except the cover pages a title", () => {
     for (const id of REPORT_SECTION_ORDER) {
-      if (id === "cover") continue;
+      if (id === "cover" || id === "coverInside") continue;
       expect(REPORT_SECTION_TITLES).toHaveProperty(id);
     }
   });
