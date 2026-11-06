@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Team photos are shrunk and cleaned
+
+- The **team photo** you upload on the team page now gets the same treatment as venue photos. Large phone photos are **scaled down and compressed**, so they upload reliably and load quickly on the team page and in the season report.
+- Location and camera details hidden inside the picture (such as where and when it was taken) are **removed** before the photo is stored.
+- Replacing or removing a team photo now also deletes the old file.
+- No database changes.
+
+---
+
 ## 6 November 2026 — Centred default club icon
 
 - The football shown for clubs **without a club badge** is now centred, in the app, on the cards and in the season report. It used to sit towards the left and top of its circle. It is now a glossy football picture (an Openclipart public domain image) rather than an emoji, so it looks the same on every device and browser.

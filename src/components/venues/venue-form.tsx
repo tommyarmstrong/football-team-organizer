@@ -17,7 +17,7 @@ import {
   updateVenueAction,
   updateVenueOnPageAction,
 } from "@/lib/venues/actions";
-import { shrinkPhotoForUpload } from "@/lib/venues/client-photo";
+import { shrinkPhotoForUpload } from "@/lib/photos/client-photo";
 import type { Venue } from "@/lib/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

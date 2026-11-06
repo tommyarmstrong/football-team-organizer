@@ -1,4 +1,5 @@
 import { VENUE_PHOTOS_BUCKET } from "@/lib/constants";
+import { publicStoragePath } from "@/lib/photos/storage-path";
 
 export const VENUE_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 
@@ -27,12 +28,5 @@ export function validateVenuePhoto(file: File): string | null {
 export function venuePhotoStoragePath(
   photoUrl: string | null | undefined,
 ): string | null {
-  if (!photoUrl) return null;
-  const marker = `/storage/v1/object/public/${VENUE_PHOTOS_BUCKET}/`;
-  const index = photoUrl.indexOf(marker);
-  if (index === -1) return null;
-  const path = decodeURIComponent(
-    photoUrl.slice(index + marker.length).split("?")[0] ?? "",
-  );
-  return path || null;
+  return publicStoragePath(photoUrl, VENUE_PHOTOS_BUCKET);
 }
