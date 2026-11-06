@@ -46,8 +46,8 @@ describe("report section order", () => {
       "coachNotes",
       "glance",
       "numbers",
-      "gallery",
       "competitions",
+      "gallery",
       "venues",
       "results",
       "records",
@@ -56,10 +56,10 @@ describe("report section order", () => {
     ]);
   });
 
-  it("puts the gallery after the numbers and before the competitions", () => {
+  it("puts the competitions after the numbers and before the gallery", () => {
     const order: readonly string[] = REPORT_SECTION_ORDER;
-    expect(order.indexOf("gallery")).toBe(order.indexOf("numbers") + 1);
-    expect(order.indexOf("competitions")).toBe(order.indexOf("gallery") + 1);
+    expect(order.indexOf("competitions")).toBe(order.indexOf("numbers") + 1);
+    expect(order.indexOf("gallery")).toBe(order.indexOf("competitions") + 1);
   });
 
   it("puts the results after the venues and before the awards", () => {
