@@ -1,17 +1,20 @@
 /**
  * The sections of the season book, in printed order. The book renders them in
  * this order, so moving a section here moves it in the report.
+ *
+ * Blank "Notes" pages and the back cover always follow the last section; the
+ * book adds them itself (see `notesPageCount`).
  */
 export const REPORT_SECTION_ORDER = [
   "cover",
   "teamInfo",
   "coachNotes",
   "glance",
-  "results",
   "numbers",
+  "gallery",
   "competitions",
   "venues",
-  "gallery",
+  "results",
   "records",
   "lookingAhead",
   "autographs",
@@ -29,7 +32,7 @@ export const REPORT_SECTION_TITLES = {
   competitions: "Competitions",
   venues: "Venues",
   gallery: "Player Gallery",
-  records: "Records",
+  records: "Awards",
   lookingAhead: "Looking ahead",
   autographs: "Autographs",
 } as const satisfies Partial<Record<ReportSectionId, string>>;

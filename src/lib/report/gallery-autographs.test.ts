@@ -18,6 +18,7 @@ import {
   REPORT_SECTION_TITLES,
   VENUES_PER_PAGE,
 } from "@/lib/report/sections";
+import { emptySeasonAwards } from "@/lib/report/season-awards";
 import { sortSquad } from "@/lib/report/summary";
 
 describe("report section order", () => {
@@ -31,18 +32,38 @@ describe("report section order", () => {
     expect(order.indexOf("teamInfo")).toBe(order.indexOf("cover") + 1);
   });
 
-  it("puts venues after competitions and before the gallery", () => {
-    const order: readonly string[] = REPORT_SECTION_ORDER;
-    expect(order.indexOf("venues")).toBeGreaterThan(
-      order.indexOf("competitions"),
-    );
-    expect(order.indexOf("venues")).toBeLessThan(order.indexOf("gallery"));
+  it("puts the sections in the printed order", () => {
+    expect(REPORT_SECTION_ORDER).toEqual([
+      "cover",
+      "teamInfo",
+      "coachNotes",
+      "glance",
+      "numbers",
+      "gallery",
+      "competitions",
+      "venues",
+      "results",
+      "records",
+      "lookingAhead",
+      "autographs",
+    ]);
   });
 
-  it("renames Awards to Records", () => {
-    expect(REPORT_SECTION_TITLES.records).toBe("Records");
-    expect(Object.values(REPORT_SECTION_TITLES)).not.toContain("Awards");
-    expect(REPORT_SECTION_ORDER).not.toContain("awards");
+  it("puts the gallery after the numbers and before the competitions", () => {
+    const order: readonly string[] = REPORT_SECTION_ORDER;
+    expect(order.indexOf("gallery")).toBe(order.indexOf("numbers") + 1);
+    expect(order.indexOf("competitions")).toBe(order.indexOf("gallery") + 1);
+  });
+
+  it("puts the results after the venues and before the awards", () => {
+    const order: readonly string[] = REPORT_SECTION_ORDER;
+    expect(order.indexOf("results")).toBe(order.indexOf("venues") + 1);
+    expect(order.indexOf("records")).toBe(order.indexOf("results") + 1);
+  });
+
+  it("calls the records page Awards", () => {
+    expect(REPORT_SECTION_TITLES.records).toBe("Awards");
+    expect(Object.values(REPORT_SECTION_TITLES)).not.toContain("Records");
   });
 
   it("lists every section once", () => {
@@ -51,10 +72,8 @@ describe("report section order", () => {
     );
   });
 
-  it("starts with the cover and keeps the gallery before the awards", () => {
-    const order: readonly string[] = REPORT_SECTION_ORDER;
-    expect(order[0]).toBe("cover");
-    expect(order.indexOf("gallery")).toBeLessThan(order.indexOf("records"));
+  it("starts with the cover", () => {
+    expect(REPORT_SECTION_ORDER[0]).toBe("cover");
   });
 
   it("names the squad section Player Gallery and adds Autographs", () => {
@@ -73,20 +92,21 @@ describe("report section order", () => {
 });
 
 describe("gallery paging", () => {
-  it("fits four columns by four rows on a page", () => {
-    expect(GALLERY_COLUMNS).toBe(4);
-    expect(GALLERY_ROWS_PER_PAGE).toBe(4);
-    expect(GALLERY_CARDS_PER_PAGE).toBe(16);
+  it("fits three columns by three rows on a page", () => {
+    expect(GALLERY_COLUMNS).toBe(3);
+    expect(GALLERY_ROWS_PER_PAGE).toBe(3);
+    expect(GALLERY_CARDS_PER_PAGE).toBe(9);
   });
 
   it("keeps the 4:5 card shape", () => {
     expect(PLAYER_CARD_ASPECT).toEqual({ width: 4, height: 5 });
   });
 
-  it("keeps a small squad on one page", () => {
-    const pages = chunkAtLeastOne(samplePlayers(), GALLERY_CARDS_PER_PAGE);
+  it("keeps a squad of nine on one page", () => {
+    const squad = samplePlayers().slice(0, 9);
+    const pages = chunkAtLeastOne(squad, GALLERY_CARDS_PER_PAGE);
     expect(pages).toHaveLength(1);
-    expect(pages[0]).toHaveLength(samplePlayers().length);
+    expect(pages[0]).toHaveLength(9);
   });
 
   it("runs a large squad onto the next page without losing anyone", () => {
@@ -96,7 +116,7 @@ describe("gallery paging", () => {
       shirtNumber: i + 1,
     }));
     const pages = chunkAtLeastOne(sortSquad(squad), GALLERY_CARDS_PER_PAGE);
-    expect(pages.map((page) => page.length)).toEqual([16, 5]);
+    expect(pages.map((page) => page.length)).toEqual([9, 9, 3]);
     expect(pages.flat().map((p) => p.id)).toHaveLength(21);
   });
 
@@ -125,6 +145,7 @@ describe("sample gallery data", () => {
       {
         coachNotes: { expectedPath: "a", markdown: null },
         lookingAhead: { expectedPath: "b", markdown: null },
+        seasonAwards: emptySeasonAwards("c"),
       },
       { colour: "#FFD400" },
     );
@@ -218,7 +239,7 @@ describe("gallery entries", () => {
     expect(pages.flat()).toHaveLength(
       data.coaches.length + data.players.length,
     );
-    // 3 coaches + 16 sample players run onto a second page.
-    expect(pages.map((page) => page.length)).toEqual([16, 3]);
+    // 3 coaches + 16 sample players = 19 cards: two full pages and one spare.
+    expect(pages.map((page) => page.length)).toEqual([9, 9, 1]);
   });
 });

@@ -18,7 +18,6 @@ import {
   coachRoleLabel,
 } from "@/lib/postcards/coach-card-content";
 import {
-  playerCardNames,
   playerCardStats,
   playerPositionLabel,
 } from "@/lib/postcards/player-card-content";
@@ -165,12 +164,14 @@ export function buildReportPlayers(input: {
   return input.roster.flatMap((r): ReportPlayer[] => {
     const appearances = apps.get(r.id) ?? 0;
     if (!r.active && appearances === 0) return [];
-    const names = playerCardNames(r, input.team.gender);
+    const firstName = r.first_name.trim() || "Player";
     return [
       {
         id: r.id,
-        name: `${r.first_name} ${r.last_name}`.trim(),
-        firstName: r.first_name.trim() || "Player",
+        // The report never prints a surname: cards, charts and awards all
+        // use the first name only.
+        name: firstName,
+        firstName,
         shirtNumber: r.shirt_number,
         position: r.position,
         appearances,
@@ -186,8 +187,8 @@ export function buildReportPlayers(input: {
           teamName,
           ageGroup: input.team.age_group,
           seasonLabel: input.team.season_label,
-          firstName: names.firstName,
-          lastName: names.lastName,
+          firstName,
+          lastName: null,
           shirtNumber: r.shirt_number,
           positionLabel: playerPositionLabel(r.position),
           stats: playerCardStats({
@@ -416,7 +417,7 @@ export function buildReportData(input: BuildReportInput): ReportData {
       .map((a) => ({
         month: a.month,
         monthLabel: formatAwardMonth(a.month),
-        playerName: `${a.player.first_name} ${a.player.last_name}`.trim(),
+        playerName: a.player.first_name.trim() || "Player",
         notes: a.notes?.trim() || null,
       }))
       .sort((a, b) => a.month.localeCompare(b.month)),

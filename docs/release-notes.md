@@ -4,6 +4,19 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Season report refresh
+
+- The report now runs in this order: cover, team info, coach's notes, season at a glance, the season in numbers, player gallery, competitions, venues, results, awards, looking ahead, autographs, notes, back cover. There is always at least one blank **Notes** page before the back cover.
+- **Team info** leaves the team photo out when the team has no photo, instead of showing a placeholder box.
+- The **Player Gallery** shows nine cards to a page, three across and three down, so the card text is easy to read. A large squad carries on to further pages.
+- **Season at a glance**: the strip of results is now headed "Results · every match, in order", the last chart is "Results through the season", and the Goals scored tile matches the Played tile.
+- **The season in numbers** no longer has the "Numbered in date order" caption.
+- Players appear by **first name only** throughout the report, including the cards, charts and awards. Coaches keep their full names.
+- The **Records** page is **Awards** again. It has new boxes for Player of the season, Player's player of the season and Most improved player of the season, above the thank you to the coaching team. The winners are written in a `season-awards.json` file next to the other hand-written sections (see `content/reports/README.md`); a box with no winner prints a blank line to write on. Player of the month is set in smaller type to fit a full season of awards.
+- The back cover now thanks every player, **coach**, parent, guardian and volunteer.
+
+---
+
 ## 5 November 2026 — Coach card artwork
 
 - Coach cards now have their own neon artwork showing an older coach with a whistle, instead of reusing the young player silhouette.
