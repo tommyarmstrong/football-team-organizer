@@ -241,6 +241,26 @@ describe("gallery entries", () => {
     expect(galleryEntries({ coaches: [], players: [] })).toEqual([]);
   });
 
+  it("leaves out players with no league or cup match, but keeps the coaches", () => {
+    const players = samplePlayers().map((p, i) =>
+      i === 0 ? { ...p, appearances: 0 } : p,
+    );
+    const entries = galleryEntries({ coaches: sampleCoaches(), players });
+    const ids = entries.map((e) => e.id);
+    expect(ids).not.toContain(`player-${players[0]!.id}`);
+    expect(entries.filter((e) => e.kind === "player")).toHaveLength(
+      players.length - 1,
+    );
+    expect(entries.filter((e) => e.kind === "coach")).toHaveLength(
+      sampleCoaches().length,
+    );
+  });
+
+  it("has no player cards when nobody has played a league or cup match", () => {
+    const players = samplePlayers().map((p) => ({ ...p, appearances: 0 }));
+    expect(galleryEntries({ coaches: [], players })).toEqual([]);
+  });
+
   it("counts coaches towards the cards on a page", () => {
     const pages = chunkAtLeastOne(galleryEntries(data), GALLERY_CARDS_PER_PAGE);
     expect(pages.flat()).toHaveLength(

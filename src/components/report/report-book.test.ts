@@ -340,6 +340,59 @@ describe("season in numbers page", () => {
   });
 });
 
+describe("results page", () => {
+  const game = (
+    id: string,
+    homeAway: ReportMatch["homeAway"],
+    goalsFor: number,
+    goalsAgainst: number,
+  ): ReportMatch => ({
+    id,
+    date: "2025-09-06",
+    opponent: `Opp ${id}`,
+    homeAway,
+    competitionId: "sample-league",
+    competitionKind: "league",
+    competitionLabel: "Junior League",
+    isFriendly: false,
+    goalsFor,
+    goalsAgainst,
+    result: goalsFor > goalsAgainst ? "W" : goalsFor < goalsAgainst ? "L" : "D",
+  });
+
+  const base = sampleReportData(content);
+  const matches = [
+    game("home", "home", 2, 0),
+    game("away", "away", 3, 1),
+    game("neutral", "neutral", 4, 2),
+    game("awayLoss", "away", 0, 5),
+  ];
+  const html = renderToStaticMarkup(
+    createElement(ReportBook, {
+      data: { ...base, matches, leagueCupMatches: matches },
+    }),
+  );
+  const page = between(html, 'aria-label="Results"', 'aria-label="Awards"');
+  const scores = [...page.matchAll(/w-\[22mm\][^>]*>([^<]*)</g)].map(
+    (m) => m[1],
+  );
+
+  it("puts the home team's score first", () => {
+    expect(scores).toEqual(["2–0", "1–3", "4–2", "5–0"]);
+  });
+
+  it("no longer prints the home, away and neutral key", () => {
+    expect(page).not.toContain("H home");
+    expect(page).not.toContain("Score shown as ours first");
+  });
+
+  it("still marks each game H, A or N", () => {
+    expect(page).toContain(">H<");
+    expect(page).toContain(">A<");
+    expect(page).toContain(">N<");
+  });
+});
+
 describe("league and cup data", () => {
   // The sample season plus a tournament game and a friendly that only the
   // Results pages may show.
@@ -381,6 +434,25 @@ describe("league and cup data", () => {
     );
     expect(results).toContain("Tournament Tigers");
     expect(results).toContain("Friendly Foxes");
+  });
+
+  it("leaves players with no league or cup match out of the gallery", () => {
+    const noShow = {
+      ...base,
+      players: base.players.map((p, i) =>
+        i === 0 ? { ...p, name: "Zzyzx", appearances: 0 } : p,
+      ),
+    };
+    const out = renderToStaticMarkup(
+      createElement(ReportBook, { data: noShow }),
+    );
+    const page = between(
+      out,
+      'aria-label="Player Gallery"',
+      'aria-label="Competitions"',
+    );
+    expect(page).not.toContain('aria-label="Zzyzx"');
+    expect(page).toContain(`aria-label="${base.players[1]!.name}"`);
   });
 
   it("leaves tournaments and friendlies out of Season at a glance", () => {

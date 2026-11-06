@@ -118,3 +118,15 @@ export function honourNames(names: readonly string[]): string {
   if (names.length <= 2) return names.join(", ");
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 }
+
+/**
+ * The score as printed on the Results page: the home side first. Away games
+ * flip our score; neutral games keep ours first.
+ */
+export function displayScore(
+  match: Pick<ReportMatch, "homeAway" | "goalsFor" | "goalsAgainst">,
+): { first: number; second: number } {
+  return match.homeAway === "away"
+    ? { first: match.goalsAgainst, second: match.goalsFor }
+    : { first: match.goalsFor, second: match.goalsAgainst };
+}

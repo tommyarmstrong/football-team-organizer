@@ -11,6 +11,7 @@ import { REPORT_SECTION_TITLES, VENUES_PER_PAGE } from "@/lib/report/sections";
 import {
   biggestWin,
   cleanSheets,
+  displayScore,
   honourNames,
   goalTotals,
   leaders,
@@ -452,6 +453,7 @@ export function GlancePage({ data }: { data: ReportData }) {
 // ---------------------------------------------------------------------------
 
 function ScoreChip({ match }: { match: ReportMatch }) {
+  const score = displayScore(match);
   return (
     <span
       className="font-display inline-flex h-[8.5mm] w-[22mm] items-center justify-center rounded-[2mm] text-[15pt] leading-none font-semibold"
@@ -460,7 +462,7 @@ function ScoreChip({ match }: { match: ReportMatch }) {
         color: match.result === "D" ? "#2b2205" : "#fff",
       }}
     >
-      {match.goalsFor}–{match.goalsAgainst}
+      {score.first}–{score.second}
     </span>
   );
 }
@@ -518,9 +520,6 @@ export function resultsPages({ data }: { data: ReportData }): ReactElement[] {
           })}
         </ol>
       )}
-      <p className="mt-auto pt-[4mm] text-[8pt] text-neutral-500">
-        H home · A away · N neutral. Score shown as ours first.
-      </p>
     </ReportPage>
   ));
 }

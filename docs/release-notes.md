@@ -8,7 +8,8 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 - The season report's numbers now count **league and cup matches only**. Friendlies, tournaments and other kinds of game no longer count towards Season at a glance, the season in numbers (the goals chart, top scorers and most assists), Competitions, Venues, Awards, or the stats on the Player Gallery cards.
 - The **Competitions** page now lists league and cup competitions only.
-- The **Results** page still lists **every match** that was played, whatever the type.
+- The **Results** page still lists **every match** that was played, whatever the type. Scores now read the way they do on a match sheet: the **home team's score first**, so an away game shows the opposition's goals first. At a neutral venue our score stays first. The "H home · A away · N neutral" key at the bottom of the page is gone.
+- The **Player Gallery** no longer has a card for a player who has not played a league or cup match. Coach cards are unchanged.
 - Pages that count league and cup matches only say so at the bottom of the page.
 - No database changes.
 
