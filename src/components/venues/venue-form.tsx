@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToastActionState } from "@/hooks/use-toast-action-state";
 import { INITIAL_ACTION_STATE } from "@/lib/action-state";
 import {
@@ -55,6 +55,9 @@ export function VenueForm({
     if (state.success) onSuccess?.();
   }, [state.success, onSuccess]);
 
+  const [previewSrc, setPreviewSrc] = useState(venue?.photo_url ?? "");
+  const [clearPhoto, setClearPhoto] = useState(false);
+
   const selectedSurfaces = new Set(
     Array.isArray(venue?.surface) ? venue.surface : [],
   );
@@ -65,6 +68,11 @@ export function VenueForm({
 
   return (
     <form action={formAction} className="space-y-4">
+      <input
+        type="hidden"
+        name="clear_photo"
+        value={clearPhoto ? "true" : ""}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">
@@ -78,6 +86,53 @@ export function VenueForm({
             defaultValue={venue?.name}
             disabled={pending}
           />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="venue-photo">
+            Photo <OptionalHint />
+          </Label>
+          <div className="space-y-3">
+            {previewSrc && !clearPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewSrc}
+                alt=""
+                className="aspect-video w-full rounded-xl object-cover"
+              />
+            ) : (
+              <div className="bg-muted text-muted-foreground flex aspect-video w-full items-center justify-center rounded-xl text-sm">
+                No venue photo
+              </div>
+            )}
+            <Input
+              id="venue-photo"
+              name="photo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              disabled={pending}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                setClearPhoto(false);
+                setPreviewSrc(URL.createObjectURL(file));
+              }}
+            />
+            <p className="text-muted-foreground text-xs">
+              PNG, JPEG, WebP, or GIF. Max 5 MB. Shown above the location map,
+              cropped to 16:9 (landscape works best).
+            </p>
+            {venue?.photo_url ? (
+              <label className="text-muted-foreground flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={clearPhoto}
+                  disabled={pending}
+                  onChange={(event) => setClearPhoto(event.target.checked)}
+                />
+                Remove uploaded photo
+              </label>
+            ) : null}
+          </div>
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="address_line1">

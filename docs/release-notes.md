@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Venue photos
+
+- Coaches and club management can now add a **photo** to a venue when adding or editing it. It shows at the top of the venue page, above the Location map, and can be replaced or removed at any time.
+- Photos are cropped to a 16:9 landscape shape to match the map, so landscape pictures work best. PNG, JPEG, WebP or GIF, up to 5 MB.
+- Uploads of up to 5 MB now work for team photos too; the app previously limited uploads to 1 MB.
+
+---
+
 ## 6 November 2026 — Season report refresh
 
 - The report now runs in this order: cover, team info, coach's notes, season at a glance, the season in numbers, player gallery, competitions, venues, results, awards, looking ahead, autographs, notes, back cover. There is always at least one blank **Notes** page before the back cover.

@@ -11,7 +11,15 @@ import {
   updateVenue,
 } from "@/lib/data/venues";
 import { getPrimaryClub } from "@/lib/data/clubs";
+import { VENUE_PHOTOS_BUCKET } from "@/lib/constants";
+import { str } from "@/lib/form-parse";
+import { createClient } from "@/lib/supabase/server";
 import { parseVenueForm } from "@/lib/venues/parse";
+import {
+  validateVenuePhoto,
+  venuePhotoExtension,
+  venuePhotoStoragePath,
+} from "@/lib/venues/photo";
 
 function canEditVenues(
   ctx: NonNullable<Awaited<ReturnType<typeof getViewerContext>>>,
@@ -37,6 +45,64 @@ function revalidateVenue(venueId?: string, clubId?: string) {
   revalidatePath("/teams/new");
 }
 
+async function uploadVenuePhoto(
+  clubId: string,
+  file: File,
+): Promise<{ url: string } | { error: string }> {
+  const invalid = validateVenuePhoto(file);
+  if (invalid) return { error: invalid };
+
+  const ext = venuePhotoExtension(file.type);
+  if (!ext) return { error: "Unsupported photo file type." };
+
+  const supabase = await createClient();
+  const path = `${clubId}/${crypto.randomUUID()}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from(VENUE_PHOTOS_BUCKET)
+    .upload(path, bytes, { contentType: file.type, upsert: false });
+  if (uploadError) return { error: uploadError.message };
+
+  const { data } = supabase.storage
+    .from(VENUE_PHOTOS_BUCKET)
+    .getPublicUrl(path);
+  return { url: data.publicUrl };
+}
+
+/** Best-effort removal of a replaced or cleared photo; never fails the save. */
+async function removeVenuePhoto(photoUrl: string | null | undefined) {
+  const path = venuePhotoStoragePath(photoUrl);
+  if (!path) return;
+  try {
+    const supabase = await createClient();
+    await supabase.storage.from(VENUE_PHOTOS_BUCKET).remove([path]);
+  } catch {
+    // An orphaned file is harmless; the venue save already succeeded.
+  }
+}
+
+/**
+ * Work out the `photo_url` to store from the form: a new upload replaces the
+ * current photo, and `clear_photo=true` removes it.
+ */
+async function resolveVenuePhoto(
+  clubId: string,
+  currentUrl: string | null,
+  formData: FormData,
+): Promise<{ photoUrl: string | null } | { error: string }> {
+  let photoUrl = currentUrl;
+  if (str(formData, "clear_photo") === "true") photoUrl = null;
+
+  const entry = formData.get("photo");
+  if (entry instanceof File && entry.size > 0) {
+    const uploaded = await uploadVenuePhoto(clubId, entry);
+    if ("error" in uploaded) return { error: uploaded.error };
+    photoUrl = uploaded.url;
+  }
+  return { photoUrl };
+}
+
 async function createVenueRecord(
   formData: FormData,
 ): Promise<{ error: string } | { id: string }> {
@@ -51,12 +117,22 @@ async function createVenueRecord(
   const parsed = parseVenueForm(formData);
   if ("error" in parsed) return { error: parsed.error };
 
+  const photo = await resolveVenuePhoto(club.id, null, formData);
+  if ("error" in photo) return { error: photo.error };
+
   const { data, error } = await createVenue({
     club_id: club.id,
     ...parsed,
+    photo_url: photo.photoUrl,
   });
-  if (error) return { error };
-  if (!data) return { error: "Could not create venue." };
+  if (error) {
+    await removeVenuePhoto(photo.photoUrl);
+    return { error };
+  }
+  if (!data) {
+    await removeVenuePhoto(photo.photoUrl);
+    return { error: "Could not create venue." };
+  }
 
   revalidateVenue(data.id, club.id);
   return { id: data.id };
@@ -98,8 +174,26 @@ export async function updateVenueOnPageAction(
   const parsed = parseVenueForm(formData);
   if ("error" in parsed) return { error: parsed.error };
 
-  const { error } = await updateVenue(id, parsed);
-  if (error) return { error };
+  const photo = await resolveVenuePhoto(
+    existing.club_id,
+    existing.photo_url,
+    formData,
+  );
+  if ("error" in photo) return { error: photo.error };
+
+  const { error } = await updateVenue(id, {
+    ...parsed,
+    photo_url: photo.photoUrl,
+  });
+  if (error) {
+    if (photo.photoUrl !== existing.photo_url) {
+      await removeVenuePhoto(photo.photoUrl);
+    }
+    return { error };
+  }
+  if (photo.photoUrl !== existing.photo_url) {
+    await removeVenuePhoto(existing.photo_url);
+  }
 
   revalidateVenue(id, existing.club_id);
   return { success: "Venue saved." };
@@ -128,6 +222,7 @@ export async function deleteVenueAction(id: string): Promise<ActionState> {
 
   const { error } = await deleteVenue(id);
   if (error) return { error };
+  await removeVenuePhoto(existing.photo_url);
 
   revalidateVenue(undefined, existing.club_id);
   redirect("/venues");

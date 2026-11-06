@@ -218,6 +218,7 @@ export type Database = {
           surface: Database["public"]["Enums"]["venue_surface"][];
           parking: Database["public"]["Enums"]["venue_parking"];
           food_and_drink: Database["public"]["Enums"]["venue_food_and_drink"][];
+          photo_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -232,6 +233,7 @@ export type Database = {
           surface?: Database["public"]["Enums"]["venue_surface"][];
           parking?: Database["public"]["Enums"]["venue_parking"];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
+          photo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -246,6 +248,7 @@ export type Database = {
           surface?: Database["public"]["Enums"]["venue_surface"][];
           parking?: Database["public"]["Enums"]["venue_parking"];
           food_and_drink?: Database["public"]["Enums"]["venue_food_and_drink"][];
+          photo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
