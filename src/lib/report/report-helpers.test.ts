@@ -16,10 +16,25 @@ import {
   chunk,
   chunkAtLeastOne,
   fillerPagesForEven,
+  notesPageCount,
   splitMarkdownPages,
 } from "@/lib/report/paginate";
-import { sampleMatches, samplePlayers } from "@/lib/report/sample";
-import { reportSlotPath, reportSlug, slugify } from "@/lib/report/slug";
+import {
+  sampleCoaches,
+  sampleMatches,
+  samplePlayers,
+} from "@/lib/report/sample";
+import {
+  emptySeasonAwards,
+  parseSeasonAwards,
+  SEASON_AWARD_BOXES,
+} from "@/lib/report/season-awards";
+import {
+  reportAwardsPath,
+  reportSlotPath,
+  reportSlug,
+  slugify,
+} from "@/lib/report/slug";
 import {
   biggestWin,
   cleanSheets,
@@ -141,6 +156,18 @@ describe("pagination", () => {
     expect(fillerPagesForEven(12)).toBe(0);
   });
 
+  it("always adds a Notes page, and keeps the whole book even", () => {
+    // body + notes + back cover must come to an even number of pages.
+    for (let body = 1; body <= 40; body += 1) {
+      const notes = notesPageCount(body);
+      expect(notes).toBeGreaterThanOrEqual(1);
+      expect(notes).toBeLessThanOrEqual(2);
+      expect((body + notes + 1) % 2).toBe(0);
+    }
+    expect(notesPageCount(10)).toBe(1);
+    expect(notesPageCount(11)).toBe(2);
+  });
+
   it("splits markdown on page markers and drops empty pages", () => {
     const md =
       "One\n\n<!-- page -->\n\nTwo\n\n  <!--page-->  \n\n<!-- page -->\n\nThree\n";
@@ -169,6 +196,63 @@ describe("report slug", () => {
     expect(reportSlotPath("u10-lions-2025-26", "coachNotes")).toBe(
       "content/reports/u10-lions-2025-26/coach-notes.md",
     );
+  });
+});
+
+describe("season awards", () => {
+  const path = "content/reports/x/season-awards.json";
+
+  it("builds the path shown for the awards file", () => {
+    expect(reportAwardsPath("u10-lions-2025-26")).toBe(
+      "content/reports/u10-lions-2025-26/season-awards.json",
+    );
+  });
+
+  it("lists the three awards in print order", () => {
+    expect(SEASON_AWARD_BOXES.map((b) => b.title)).toEqual([
+      "Player of the season",
+      "Player's player of the season",
+      "Most improved player of the season",
+    ]);
+  });
+
+  it("reads the winners", () => {
+    expect(
+      parseSeasonAwards(
+        JSON.stringify({
+          playerOfTheSeason: " Isaac ",
+          playersPlayer: "Finn",
+          mostImproved: "George",
+        }),
+        path,
+      ),
+    ).toEqual({
+      expectedPath: path,
+      playerOfTheSeason: "Isaac",
+      playersPlayer: "Finn",
+      mostImproved: "George",
+    });
+  });
+
+  it("leaves awards with no winner blank", () => {
+    expect(
+      parseSeasonAwards(
+        JSON.stringify({ playerOfTheSeason: "Isaac", playersPlayer: "  " }),
+        path,
+      ),
+    ).toEqual({
+      ...emptySeasonAwards(path),
+      playerOfTheSeason: "Isaac",
+    });
+  });
+
+  it("ignores bad JSON and wrong types instead of failing", () => {
+    expect(parseSeasonAwards("{ nope", path)).toEqual(emptySeasonAwards(path));
+    expect(parseSeasonAwards("[1, 2]", path)).toEqual(emptySeasonAwards(path));
+    expect(parseSeasonAwards("null", path)).toEqual(emptySeasonAwards(path));
+    expect(
+      parseSeasonAwards(JSON.stringify({ playerOfTheSeason: 7 }), path),
+    ).toEqual(emptySeasonAwards(path));
   });
 });
 
@@ -313,5 +397,17 @@ describe("sample data", () => {
       expect(m.result).toBe(expected);
     }
     expect(samplePlayers().some((p) => p.shirtNumber === null)).toBe(true);
+  });
+
+  it("uses first names only for players and card names", () => {
+    for (const p of samplePlayers()) {
+      expect(p.name).toBe(p.firstName);
+      expect(p.name).not.toContain(" ");
+      expect(p.card.lastName).toBeNull();
+    }
+  });
+
+  it("keeps coaches' full names", () => {
+    expect(sampleCoaches().map((c) => c.name)).toContain("Sam Whitfield");
   });
 });

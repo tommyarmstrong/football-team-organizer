@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactElement } from "react";
-import { fillerPagesForEven } from "@/lib/report/paginate";
+import { notesPageCount } from "@/lib/report/paginate";
 import { reportThemeVars } from "@/lib/report/colour";
 import {
   REPORT_SECTION_ORDER,
@@ -32,11 +32,11 @@ const SECTION_PAGES: Record<
   teamInfo: (data) => [<TeamInfoPage key="teamInfo" data={data} />],
   coachNotes: (data) => coachNotesPages({ data }),
   glance: (data) => [<GlancePage key="glance" data={data} />],
-  results: (data) => resultsPages({ data }),
   numbers: (data) => [<NumbersPage key="numbers" data={data} />],
+  gallery: (data) => galleryPages({ data }),
   competitions: (data) => [<CompetitionsPage key="competitions" data={data} />],
   venues: (data) => venuesPages({ data }),
-  gallery: (data) => galleryPages({ data }),
+  results: (data) => resultsPages({ data }),
   records: (data) => [<RecordsPage key="records" data={data} />],
   lookingAhead: (data) => lookingAheadPages({ data }),
   autographs: (data) => [<AutographsPage key="autographs" data={data} />],
@@ -47,15 +47,14 @@ const SECTION_PAGES: Record<
  * `REPORT_SECTION_ORDER`.
  *
  * Every page is a direct child of `.report-book` so the odd/even binding
- * margins in `report.css` line up with the printed page numbers. Blank "Notes"
- * pages are added before the back cover so a double-sided print ends cleanly.
+ * margins in `report.css` line up with the printed page numbers. One or two
+ * blank "Notes" pages go before the back cover so a double-sided print ends
+ * cleanly.
  */
 export function ReportBook({ data }: { data: ReportData }) {
   const body = REPORT_SECTION_ORDER.flatMap((id) => SECTION_PAGES[id](data));
 
-  // +1 for the back cover.
-  const fillers = fillerPagesForEven(body.length + 1);
-  const filler = Array.from({ length: fillers }, (_, i) => (
+  const filler = Array.from({ length: notesPageCount(body.length) }, (_, i) => (
     <NotesPage key={`notes-${i}`} data={data} />
   ));
 

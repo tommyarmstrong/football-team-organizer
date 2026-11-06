@@ -147,6 +147,7 @@ export function samplePlayers(
       [name, shirtNumber, position, appearances, goals, assists, potm],
       i,
     ): ReportPlayer => {
+      // First names only, as in the real report.
       const firstName = name.split(" ")[0] ?? name;
       // Records are split roughly 60/25/15.
       const wins = Math.round(appearances * 0.6);
@@ -154,7 +155,7 @@ export function samplePlayers(
       const losses = Math.max(appearances - wins - draws, 0);
       return {
         id: `sample-player-${i + 1}`,
-        name,
+        name: firstName,
         firstName,
         shirtNumber,
         position,
@@ -371,25 +372,25 @@ export function sampleReportData(
       {
         month: "2025-09",
         monthLabel: "September 2025",
-        playerName: "Finn Gallagher",
+        playerName: "Finn",
         notes: "Ran the midfield from day one and never stopped talking.",
       },
       {
         month: "2025-10",
         monthLabel: "October 2025",
-        playerName: "Isaac Moreau",
+        playerName: "Isaac",
         notes: "Nine goals in five games.",
       },
       {
         month: "2025-11",
         monthLabel: "November 2025",
-        playerName: "Alfie Harper",
+        playerName: "Alfie",
         notes: null,
       },
       {
         month: "2026-02",
         monthLabel: "February 2026",
-        playerName: "George Nwosu",
+        playerName: "George",
         notes: "Two-footed, fearless, and hugely improved on the left.",
       },
     ],
