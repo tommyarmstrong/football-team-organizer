@@ -18,7 +18,7 @@ Vercel (Next.js App Router — SSR + edge middleware)
    │
    ├── Supabase Auth   (email/password + Google OAuth, invite-only)
    ├── PostgreSQL       (all application data, RLS-protected)
-   └── Supabase Storage (club crest / team photo uploads)
+   └── Supabase Storage (club crest / team photo / venue photo uploads)
 
 External
    ├── Email relay (SMTP)     — invite / Auth emails (tested with Resend)

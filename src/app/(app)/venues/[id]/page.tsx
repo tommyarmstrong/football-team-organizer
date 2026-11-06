@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import { EditVenueDialog } from "@/components/venues/edit-venue-dialog";
 import { VenueMap } from "@/components/venues/venue-map";
+import { VenuePhoto } from "@/components/venues/venue-photo";
 import { DeleteVenueButton } from "@/components/venues/delete-venue-button";
 import {
   VenueAmenityChips,
@@ -66,6 +67,8 @@ export default async function VenueDetailPage({
           ) : undefined
         }
       />
+
+      <VenuePhoto venue={venue} />
 
       <VenueMap venue={venue} />
     </div>
