@@ -39,6 +39,7 @@ import {
   biggestWin,
   cleanSheets,
   cumulativePoints,
+  displayScore,
   goalTotals,
   honourNames,
   leaders,
@@ -61,6 +62,7 @@ function match(
     opponent: "Rivals",
     homeAway: "home",
     competitionId: null,
+    competitionKind: null,
     competitionLabel: null,
     isFriendly: false,
     goalsFor,
@@ -288,6 +290,26 @@ describe("season summary", () => {
     expect(result?.goalsFor).toBe(5);
     expect(biggestWin([match(2, 0), match(3, 1)])?.goalsFor).toBe(3);
     expect(biggestWin([match(0, 1)])).toBeNull();
+  });
+
+  it("prints the home side's score first, and ours first at a neutral ground", () => {
+    expect(displayScore(match(3, 1, { homeAway: "home" }))).toEqual({
+      first: 3,
+      second: 1,
+    });
+    // Away: the opposition are at home, so their goals come first.
+    expect(displayScore(match(3, 1, { homeAway: "away" }))).toEqual({
+      first: 1,
+      second: 3,
+    });
+    expect(displayScore(match(0, 2, { homeAway: "away" }))).toEqual({
+      first: 2,
+      second: 0,
+    });
+    expect(displayScore(match(3, 1, { homeAway: "neutral" }))).toEqual({
+      first: 3,
+      second: 1,
+    });
   });
 
   it("formats goals per match", () => {

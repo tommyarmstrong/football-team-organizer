@@ -282,10 +282,10 @@ describe("getTeamCompetitiveRecords", () => {
     createClientMock.mockResolvedValue(
       mockFromClient({
         match_players: okResult([
-          { player_id: "a", match: { goals: [goal(false)] } },
-          { player_id: "a", match: [{ goals: [goal(true)] }] },
-          { player_id: "a", match: { goals: [] } },
-          { player_id: "b", match: { goals: [goal(false)] } },
+          { player_id: "a", match: { ...leagueMatch, goals: [goal(false)] } },
+          { player_id: "a", match: [{ ...cupMatch, goals: [goal(true)] }] },
+          { player_id: "a", match: { ...leagueMatch, goals: [] } },
+          { player_id: "b", match: { ...leagueMatch, goals: [goal(false)] } },
           { player_id: "b", match: null },
         ]),
       }),
@@ -300,7 +300,7 @@ describe("getTeamCompetitiveRecords", () => {
   });
 
   it("reads every page when a team has more than 1000 rows", async () => {
-    const win = { goals: [goal(false)] };
+    const win = { ...leagueMatch, goals: [goal(false)] };
     const page = Array.from({ length: 1000 }, () => ({
       player_id: "a",
       match: win,
@@ -315,6 +315,66 @@ describe("getTeamCompetitiveRecords", () => {
     );
     const result = await getTeamCompetitiveRecords("team-1");
     expect(result.data.a).toEqual({ wins: 1001, draws: 0, losses: 0 });
+  });
+
+  it("counts league and cup matches only", async () => {
+    createClientMock.mockResolvedValue(
+      mockFromClient({
+        match_players: okResult([
+          { player_id: "a", match: { ...leagueMatch, goals: [goal(false)] } },
+          {
+            player_id: "a",
+            match: {
+              is_friendly: false,
+              competition_id: "comp-tour",
+              competition: { id: "comp-tour", kind: "tournament" },
+              goals: [goal(false)],
+            },
+          },
+          {
+            player_id: "a",
+            match: {
+              is_friendly: false,
+              competition_id: "comp-other",
+              competition: { id: "comp-other", kind: "other" },
+              goals: [goal(false)],
+            },
+          },
+          {
+            player_id: "a",
+            match: {
+              is_friendly: false,
+              competition_id: null,
+              competition: null,
+              goals: [goal(false)],
+            },
+          },
+          {
+            player_id: "a",
+            match: {
+              is_friendly: true,
+              competition_id: null,
+              competition: null,
+              goals: [goal(false)],
+            },
+          },
+          // Only played a tournament: absent from the records.
+          {
+            player_id: "t",
+            match: {
+              is_friendly: false,
+              competition_id: "comp-tour",
+              competition: { id: "comp-tour", kind: "tournament" },
+              goals: [goal(false)],
+            },
+          },
+        ]),
+      }),
+    );
+    expect(await getTeamCompetitiveRecords("team-1")).toEqual({
+      data: { a: { wins: 1, draws: 0, losses: 0 } },
+      error: null,
+    });
   });
 
   it("filters to played, non-friendly matches for the team", async () => {

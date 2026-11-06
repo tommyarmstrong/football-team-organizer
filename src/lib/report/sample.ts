@@ -7,7 +7,10 @@ import type {
   ReportMatch,
   ReportPlayer,
 } from "@/lib/report/types";
-import { buildReportCompetitions } from "@/lib/report/build";
+import {
+  buildReportCompetitions,
+  isLeagueOrCupReportMatch,
+} from "@/lib/report/build";
 
 /**
  * A fabricated season for designing the report without a database. None of
@@ -82,6 +85,12 @@ export function sampleMatches(): ReportMatch[] {
           ? "sample-league"
           : competition === "cup"
             ? "sample-cup"
+            : null,
+      competitionKind:
+        competition === "league"
+          ? "league"
+          : competition === "cup"
+            ? "cup"
             : null,
       competitionLabel:
         competition === "league"
@@ -334,6 +343,7 @@ export function sampleReportData(
   } = {},
 ): ReportData {
   const matches = options.empty ? [] : sampleMatches();
+  const leagueCupMatches = matches.filter(isLeagueOrCupReportMatch);
   const data: ReportData = {
     club: {
       name: "Riverside Rangers FC",
@@ -357,7 +367,8 @@ export function sampleReportData(
     headCoachName: "Sam Whitfield",
     coaches: options.empty ? [] : sampleCoaches(options),
     matches,
-    competitions: sampleCompetitions(matches),
+    leagueCupMatches,
+    competitions: sampleCompetitions(leagueCupMatches),
     venues: options.empty ? [] : sampleVenues(),
     players: samplePlayers({ colour: options.colour }),
     monthAwards: [

@@ -576,9 +576,10 @@ export async function getPlayerCompetitiveRecord(
 const COMPETITIVE_RECORD_PAGE = 1000;
 
 /**
- * `getPlayerCompetitiveRecord` for every player on a team in one pass: the
- * season report needs all cards at once. Keyed by player id; players with no
- * competitive match are absent.
+ * Wins / draws / losses for every player on a team in one pass: the season
+ * report needs all cards at once. Only league and cup matches count (not
+ * friendlies, tournaments or other competitions). Keyed by player id; players
+ * with no league or cup match are absent.
  */
 export async function getTeamCompetitiveRecords(
   teamId: string,
@@ -592,7 +593,7 @@ export async function getTeamCompetitiveRecords(
     const { data, error } = await supabase
       .from("match_players")
       .select(
-        "player_id, match:matches!inner(team_id, status, is_friendly, goals(is_opposition))",
+        "player_id, match:matches!inner(team_id, status, is_friendly, competition_id, competition:competitions(id, kind), goals(is_opposition))",
       )
       .eq("match.team_id", teamId)
       .eq("match.status", "played")
@@ -605,6 +606,7 @@ export async function getTeamCompetitiveRecords(
     for (const row of data ?? []) {
       const match = one(row.match);
       if (!match) continue;
+      if (!isLeagueAndCupMatch(competitionFromMatch(match))) continue;
       const record = (records[row.player_id] ??= {
         wins: 0,
         draws: 0,
