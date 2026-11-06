@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Centred default club icon
+
+- The football shown for clubs **without a club badge** is now centred, in the app, on the cards and in the season report. It used to sit towards the left and top of its circle. It is now a glossy football picture (an Openclipart public domain image) rather than an emoji, so it looks the same on every device and browser.
+- The browser tab icon uses the same football.
+- No database changes.
+
+---
+
 ## 6 November 2026 — Season report: Competitions moved, Safari cards fixed
 
 - The **Competitions** page now comes straight after **The season in numbers** and before the **Player Gallery**.
