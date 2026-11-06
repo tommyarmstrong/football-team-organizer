@@ -43,6 +43,7 @@ describe("report book page order", () => {
     const first = (label: string) => labels.indexOf(label);
     const order = [
       "Cover",
+      "Inside cover",
       // The team info page is labelled with the team name.
       "Rangers U10 Lions",
       "Coach&#x27;s notes",
@@ -56,6 +57,7 @@ describe("report book page order", () => {
       "Looking ahead",
       "Autographs",
       "Notes",
+      "Inside back cover",
       "Back cover",
     ];
     const positions = order.map(first);
@@ -63,16 +65,68 @@ describe("report book page order", () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
-  it("ends with Notes then the back cover, on an even page count", () => {
+  it("ends with Notes, a blank inside back cover, then the back cover", () => {
     const labels = pageLabels(render());
     expect(labels.at(-1)).toBe("Back cover");
-    expect(labels.at(-2)).toBe("Notes");
+    expect(labels.at(-2)).toBe("Inside back cover");
+    expect(labels.at(-3)).toBe("Notes");
     expect(labels.length % 2).toBe(0);
   });
 
-  it("still ends with a Notes page for a brand-new team", () => {
+  it("still ends with the same pages for a brand-new team", () => {
     const labels = pageLabels(render({ empty: true }));
-    expect(labels.at(-2)).toBe("Notes");
+    expect(labels.slice(-3)).toEqual([
+      "Notes",
+      "Inside back cover",
+      "Back cover",
+    ]);
+    expect(labels.length % 2).toBe(0);
+  });
+});
+
+describe("cover pages", () => {
+  it("puts a blank cover page as page 2 and the team info on page 3", () => {
+    const labels = pageLabels(render());
+    expect(labels.slice(0, 3)).toEqual([
+      "Cover",
+      "Inside cover",
+      "Rangers U10 Lions",
+    ]);
+  });
+
+  it("keeps the inside covers blank: no text, heading or footer", () => {
+    const html = render();
+    for (const label of ["Inside cover", "Inside back cover"]) {
+      const start = html.indexOf(`aria-label="${label}"`);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const page = html.slice(start, html.indexOf("</section>", start));
+      expect(page).not.toMatch(/<h[1-6]/);
+      expect(page).not.toContain("<footer");
+      expect(page).not.toMatch(/<p[\s>]/);
+      expect(
+        page
+          .replace(/<[^>]*>/g, "")
+          .replace(/^[^>]*>/, "")
+          .trim(),
+      ).toBe("");
+      expect(page).toContain("bg-(--club)");
+    }
+  });
+
+  it("puts the blank page straight before the back cover with the thank you", () => {
+    const html = render();
+    const blank = html.indexOf('aria-label="Inside back cover"');
+    const back = html.indexOf('aria-label="Back cover"');
+    expect(blank).toBeGreaterThan(0);
+    expect(back).toBeGreaterThan(blank);
+    expect(html.slice(blank, back)).not.toContain("Thank you");
+    expect(html.slice(back)).toContain("Thank you");
+  });
+
+  it("keeps the front and back covers on odd and even sheets", () => {
+    const labels = pageLabels(render());
+    // The cover is page 1 (right-hand); the back cover is the last, even page.
+    expect(labels.indexOf("Cover") + 1).toBe(1);
     expect(labels.length % 2).toBe(0);
   });
 });
@@ -120,6 +174,123 @@ describe("player gallery page", () => {
       const cards = body.match(/data-report-card=/g) ?? [];
       expect(cards.length).toBeLessThanOrEqual(9);
     }
+  });
+});
+
+describe("player gallery card text", () => {
+  const html = render();
+  const gallery = between(
+    html,
+    'aria-label="Player Gallery"',
+    'aria-label="Competitions"',
+  );
+
+  it("leaves the club name off every card", () => {
+    // The page footer still carries the club name; only the cards must not.
+    const cards = gallery.split("<footer")[0]!;
+    const data = sampleReportData(content);
+    expect(cards).toContain("data-report-card=");
+    expect(cards).not.toContain(data.club.name);
+  });
+
+  it("prints the team name and year in bold, larger than before", () => {
+    const data = sampleReportData(content);
+    const teamLine = `${data.players[0]!.card.teamName} · ${data.team.seasonLabel}`;
+    const at = gallery.indexOf(teamLine);
+    expect(at).toBeGreaterThan(0);
+    const open = gallery.lastIndexOf("<div", at);
+    const style = gallery.slice(open, at);
+    expect(style).toContain("font-weight:700");
+    const size = Number(/font-size:(\d+)px/.exec(style)![1]);
+    expect(size).toBeGreaterThan(30);
+  });
+
+  it("sets the goals, assists and POTM line larger than before", () => {
+    const at = gallery.indexOf("Goals ");
+    expect(at).toBeGreaterThan(0);
+    const open = gallery.lastIndexOf("<div", at);
+    const size = Number(/font-size:(\d+)px/.exec(gallery.slice(open, at))![1]);
+    expect(size).toBeGreaterThan(30);
+    expect(gallery).toContain("POTM");
+  });
+
+  it("applies to every card, coaches included", () => {
+    const cards = gallery.match(/data-report-card=/g) ?? [];
+    expect(cards.length).toBeGreaterThan(0);
+    const bold = gallery.match(/font-weight:700;[^"]*"[^>]*>[^<]* · 2025\/26/g);
+    expect(bold?.length ?? 0).toBeGreaterThanOrEqual(cards.length);
+  });
+});
+
+describe("venues page", () => {
+  const html = render();
+  const page = between(html, 'aria-label="Venues"', 'aria-label="Results"');
+
+  it("no longer shows addresses, parking or food and drink", () => {
+    for (const text of [
+      "Mill Lane",
+      "Kingsfield Road",
+      "Parking",
+      "Food and drink",
+      "Cafe",
+      "Ice cream",
+    ]) {
+      expect(page).not.toContain(text);
+    }
+  });
+
+  it("shows the venue photo under the name and above the results", () => {
+    const card = between(page, "Riverside Park", "Kingsfield Astro");
+    const photo = card.indexOf("<img");
+    expect(photo).toBeGreaterThan(0);
+    expect(card).toContain("Photo of Riverside Park");
+    expect(card).toContain("/player-card-photo.jpg");
+    expect(photo).toBeGreaterThan(card.indexOf("Riverside Park"));
+    expect(photo).toBeLessThan(card.indexOf("Played 12"));
+  });
+
+  it("leaves the photo out when the venue has none", () => {
+    const card = between(page, "Kingsfield Astro", "Oakwood Sports Ground");
+    expect(card).not.toContain("<img");
+    expect(card).toContain("Played 5");
+  });
+
+  it("keeps the results section for every venue", () => {
+    expect(page).toContain("Played 12");
+    expect(page).toContain("W8 D2 L2");
+    expect(page).toContain("Goals 31");
+    expect(page).toContain("Biggest win 6–0 v Harbour Town");
+    expect(page.match(/Played \d+/g)).toHaveLength(4);
+  });
+});
+
+describe("notes page", () => {
+  const html = render();
+  const page = between(
+    html,
+    'aria-label="Notes"',
+    'aria-label="Inside back cover"',
+  );
+
+  it("is a solid white box with a club colour border, like Autographs", () => {
+    expect(page).toContain("bg-white");
+    expect(page).toContain("border-(--club)");
+    expect(page).toContain("rounded-[7mm]");
+    const autographs = between(
+      html,
+      'aria-label="Autographs"',
+      'aria-label="Notes"',
+    );
+    expect(autographs).toContain("bg-white");
+    expect(autographs).toContain("border-(--club)");
+  });
+
+  it("keeps the ruled lines inside the box", () => {
+    expect(page).toContain("overflow-hidden");
+    expect(page.match(/data-notes-line=""/g)!.length).toBeGreaterThanOrEqual(
+      24,
+    );
+    expect(page).toContain("border-(--club-line)");
   });
 });
 

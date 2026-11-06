@@ -4,6 +4,16 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Season report layout updates
+
+- **Player Gallery** cards are easier to read when printed. The club name is gone from the bottom of each card, the team name and year are **bold**, and the team name, year, goals, assists and player of the match text are all larger. This applies to the cards in the report only; the cards you share from the app are unchanged.
+- **Venues** page is tidier. Each venue shows its name, surface and results at that ground, with the venue **photo** underneath the name when one has been added. The address, parking and food and drink details are no longer printed.
+- **Notes** page is now a solid white box with a club colour outline, like the Autographs page, with ruled lines inside, so the page background no longer shows through the writing area.
+- **Double-page covers** for printing. A blank cover page is now page 2, so the team info starts on page 3, and another blank cover page sits just before the back cover with the thank you message. The book still always has an even number of pages.
+- No database changes. Venue photos use the setup from the previous release.
+
+---
+
 ## 6 November 2026 — Venue photos
 
 - Coaches and club management can now add a **photo** to a venue when adding or editing it. It shows at the top of the venue page, above the Location map, and can be replaced or removed at any time.

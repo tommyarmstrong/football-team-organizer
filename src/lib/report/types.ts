@@ -63,13 +63,10 @@ export type ReportMonthAward = {
 export type ReportVenue = {
   id: string;
   name: string;
-  address: string | null;
   /** "Astro, Grass"; null when not recorded. */
   surface: string | null;
-  /** "Paid parking"; null when not recorded. */
-  parking: string | null;
-  /** "Cafe, Tuck shop"; null when none recorded. */
-  foodAndDrink: string | null;
+  /** Public URL of the venue photo; null when none was uploaded. */
+  photoUrl: string | null;
   isHome: boolean;
   played: number;
   wins: number;
