@@ -11,4 +11,15 @@ describe("venue detail page", () => {
     expect(source).toContain("EditVenueDialog");
     expect(source).not.toContain("href={`/venues/${venue.id}/edit`}");
   });
+
+  it("shows the venue photo above the location section", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "page.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("<VenuePhoto");
+    expect(source.indexOf("<VenuePhoto")).toBeLessThan(
+      source.indexOf("<VenueMap"),
+    );
+  });
 });

@@ -462,6 +462,7 @@ function dbVenue(id: string, extra: Partial<Venue> = {}): Venue {
     surface: [],
     parking: "unknown",
     food_and_drink: [],
+    photo_url: null,
     created_at: "",
     updated_at: "",
     ...extra,

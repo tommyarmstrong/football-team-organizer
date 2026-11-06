@@ -32,6 +32,8 @@ export const CLUB_ICONS_BUCKET = "club-icons";
 
 export const TEAM_PHOTOS_BUCKET = "team-photos";
 
+export const VENUE_PHOTOS_BUCKET = "venue-photos";
+
 export const TEAM_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 
 export const TEAM_PHOTO_MIME_TYPES = new Set([

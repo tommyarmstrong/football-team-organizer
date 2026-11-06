@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   logging: {
     serverFunctions: false,
   },
+  // Team and venue photos (up to 5 MB) are uploaded through Server Actions,
+  // whose default 1 MB body limit would reject typical phone photos.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   // The season report reads hand-written markdown from content/reports/ at
   // request time. Those files are not imported, so tell the tracer to ship
   // them with the serverless bundle.
