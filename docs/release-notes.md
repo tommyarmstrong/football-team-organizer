@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Season report: Competitions moved, Safari cards fixed
+
+- The **Competitions** page now comes straight after **The season in numbers** and before the **Player Gallery**.
+- The Player Gallery cards now show correctly in **Safari**. They used to appear as empty white boxes, because Safari mis-sized the card artwork. Chrome was never affected.
+- No database changes.
+
+---
+
 ## 6 November 2026 — Season report counts league and cup matches
 
 - The season report's numbers now count **league and cup matches only**. Friendlies, tournaments and other kinds of game no longer count towards Season at a glance, the season in numbers (the goals chart, top scorers and most assists), Competitions, Awards, or the stats on the Player Gallery cards.

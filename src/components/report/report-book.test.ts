@@ -53,8 +53,8 @@ describe("report book page order", () => {
       "Coach&#x27;s notes",
       "Season at a glance",
       "The season in numbers",
-      "Player Gallery",
       "Competitions",
+      "Player Gallery",
       "Venues",
       "Results",
       "Awards",
@@ -165,9 +165,11 @@ describe("player gallery page", () => {
     const gallery = between(
       html,
       'aria-label="Player Gallery"',
-      'aria-label="Competitions"',
+      'aria-label="Venues"',
     );
-    expect(gallery).toContain("grid-template-columns:repeat(3, 1fr)");
+    expect(gallery).toContain(
+      "grid-template-columns:repeat(3, var(--report-card-width))",
+    );
   });
 
   it("puts at most nine cards on a page", () => {
@@ -186,7 +188,7 @@ describe("player gallery card text", () => {
   const gallery = between(
     html,
     'aria-label="Player Gallery"',
-    'aria-label="Competitions"',
+    'aria-label="Venues"',
   );
 
   it("leaves the club name off every card", () => {
@@ -449,7 +451,7 @@ describe("league and cup data", () => {
     const page = between(
       out,
       'aria-label="Player Gallery"',
-      'aria-label="Competitions"',
+      'aria-label="Venues"',
     );
     expect(page).not.toContain('aria-label="Zzyzx"');
     expect(page).toContain(`aria-label="${base.players[1]!.name}"`);
@@ -473,7 +475,7 @@ describe("league and cup data", () => {
     const page = between(
       html,
       'aria-label="The season in numbers"',
-      'aria-label="Player Gallery"',
+      'aria-label="Competitions"',
     );
     expect(page).not.toContain("Tournament Tigers");
     expect(page).not.toContain("Friendly Foxes");
@@ -502,7 +504,7 @@ describe("league and cup data", () => {
     const page = between(
       html,
       'aria-label="Competitions"',
-      'aria-label="Venues"',
+      'aria-label="Player Gallery"',
     );
     expect(page).toContain("League and cups");
     expect(page).not.toContain("League, cups and tournaments");
