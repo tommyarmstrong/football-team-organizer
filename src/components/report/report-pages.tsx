@@ -741,8 +741,10 @@ export function galleryPages({ data }: { data: ReportData }): ReactElement[] {
         <EmptyNote>No players or coaches are in the squad.</EmptyNote>
       ) : (
         <ul
-          className="grid content-start gap-[4mm]"
-          style={{ gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, 1fr)` }}
+          className="grid content-start justify-between gap-[4mm]"
+          style={{
+            gridTemplateColumns: `repeat(${GALLERY_COLUMNS}, var(--report-card-width))`,
+          }}
         >
           {rows.map((entry) => (
             <GalleryTile

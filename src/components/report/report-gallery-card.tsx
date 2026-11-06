@@ -8,8 +8,9 @@ import type { GalleryEntry } from "@/lib/report/gallery";
  * A player or coach card drawn straight into the page, with no image request.
  *
  * It is the same component the share routes render to a PNG, laid out at its
- * native 1080x1350 and scaled down to whatever width the parent gives it (see
- * `.report-card-*` in report.css). Fill a `relative` parent of ratio 4:5.
+ * native 1080x1350 and scaled down to `--report-card-width` (see
+ * `.report-card-*` in report.css). Fill a `relative` parent of ratio 4:5 and
+ * that width.
  */
 export function ReportGalleryCard({
   entry,

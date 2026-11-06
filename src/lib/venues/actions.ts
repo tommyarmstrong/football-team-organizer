@@ -16,7 +16,7 @@ import { str } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import { parseVenueForm } from "@/lib/venues/parse";
 import { validateVenuePhoto, venuePhotoStoragePath } from "@/lib/venues/photo";
-import { processVenuePhoto } from "@/lib/venues/process-photo";
+import { processPhoto } from "@/lib/photos/process-photo";
 
 function canEditVenues(
   ctx: NonNullable<Awaited<ReturnType<typeof getViewerContext>>>,
@@ -50,11 +50,9 @@ async function uploadVenuePhoto(
   if (invalid) return { error: invalid };
 
   // Resize, compress and strip all metadata (EXIF/GPS etc.) before storing.
-  let processed: Awaited<ReturnType<typeof processVenuePhoto>>;
+  let processed: Awaited<ReturnType<typeof processPhoto>>;
   try {
-    processed = await processVenuePhoto(
-      new Uint8Array(await file.arrayBuffer()),
-    );
+    processed = await processPhoto(new Uint8Array(await file.arrayBuffer()));
   } catch {
     return { error: "That file could not be read as an image." };
   }

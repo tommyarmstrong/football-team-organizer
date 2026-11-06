@@ -11,6 +11,12 @@
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   color: #14201a;
+  /*
+   * Width of one gallery card tile. Three tiles and two 4mm gaps fill the
+   * 176mm between the binding margins of an A4 page (the margins always add
+   * up to 34mm, whichever side the binding is on).
+   */
+  --report-card-width: 56mm;
 }
 
 /* One printed page. Exactly A4; content never grows the page. */
@@ -81,15 +87,19 @@
 
 /*
  * The card artwork is laid out at 1080x1350 px and scaled to fit its tile.
- * `100cqw` is the tile width; tan(atan2(a, b)) turns the length ratio into a
- * plain number, which `scale()` needs. The fixed value is the fallback for
- * browsers without CSS trigonometry (56mm tile / 1080px).
+ * The tile width is a fixed length (`--report-card-width`), and
+ * tan(atan2(a, b)) turns the length ratio into a plain number, which
+ * `scale()` needs. The fixed value is the fallback for browsers without CSS
+ * trigonometry (56mm tile / 1080px).
+ *
+ * Do not use container units (`cqw`) inside the trig functions: Safari
+ * resolves them wrongly there (to a tiny scale, or to 0, which leaves the
+ * tiles empty and white).
  */
 .report-card-frame {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  container-type: inline-size;
 }
 
 .report-card-art {
@@ -97,7 +107,7 @@
   height: 1350px;
   transform-origin: 0 0;
   transform: scale(0.196);
-  transform: scale(tan(atan2(100cqw, 1080px)));
+  transform: scale(tan(atan2(var(--report-card-width), 1080px)));
 }
 
 /* ------------------------------------------------------------------ */

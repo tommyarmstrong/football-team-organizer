@@ -9,6 +9,7 @@ import {
   TRAINING_DAYS,
   TRAINING_DAY_LABELS,
 } from "@/lib/constants";
+import { shrinkPhotoForUpload } from "@/lib/photos/client-photo";
 import { updateTeamAction } from "@/lib/team/actions";
 import type { CoachWithPerson } from "@/lib/data/coaches";
 import type { Team, Venue } from "@/lib/supabase/database.types";
@@ -71,15 +72,26 @@ export function TeamProfileForm({
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
             disabled={pending}
-            onChange={(event) => {
-              const file = event.target.files?.[0];
+            onChange={async (event) => {
+              const input = event.target;
+              const file = input.files?.[0];
               if (!file) return;
               setClearPhoto(false);
               setPreviewSrc(URL.createObjectURL(file));
+
+              // Swap in a smaller copy so large phone photos can upload.
+              const smaller = await shrinkPhotoForUpload(file);
+              if (smaller !== file) {
+                const transfer = new DataTransfer();
+                transfer.items.add(smaller);
+                input.files = transfer.files;
+              }
             }}
           />
           <p className="text-muted-foreground text-xs">
-            PNG, JPEG, WebP, or GIF. Max 5 MB. Shown above the team profile.
+            PNG, JPEG, WebP, or GIF. Large photos are shrunk automatically and
+            location and camera details are removed. Shown above the team
+            profile.
           </p>
           {team.photo_url ? (
             <label className="text-muted-foreground flex items-center gap-2 text-xs">
