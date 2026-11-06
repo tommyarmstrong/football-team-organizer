@@ -653,7 +653,7 @@ describe("buildReportVenues", () => {
     expect(result.map((v) => v.played)).toEqual([2, 1]);
   });
 
-  it("counts league and cup matches only", () => {
+  it("counts every played match, whatever its type", () => {
     const comp = (
       id: string,
       kind: "league" | "cup" | "tournament" | "other",
@@ -661,32 +661,29 @@ describe("buildReportVenues", () => {
       competition_id: id,
       competition: { id, name: id, display_name: null, kind },
     });
+    const friendly = {
+      is_friendly: true,
+      competition_id: null,
+      competition: null,
+    };
     const result = buildReportVenues(
       [
         dbMatch("1", { venue_id: "a", ...comp("c-league", "league") }),
         dbMatch("2", { venue_id: "a", ...comp("c-cup", "cup") }),
         dbMatch("3", { venue_id: "a", ...comp("c-tour", "tournament") }),
         dbMatch("4", { venue_id: "a", ...comp("c-other", "other") }),
-        dbMatch("5", {
-          venue_id: "a",
-          is_friendly: true,
-          competition_id: null,
-          competition: null,
-        }),
-        // Only played friendlies or tournaments there: the venue drops out.
-        dbMatch("6", {
-          venue_id: "b",
-          is_friendly: true,
-          competition_id: null,
-          competition: null,
-        }),
-        dbMatch("7", { venue_id: "b", ...comp("c-tour", "tournament") }),
+        dbMatch("5", { venue_id: "a", ...friendly }),
+        // Only friendlies and tournaments were played at these grounds, but
+        // they are still listed.
+        dbMatch("6", { venue_id: "b", ...friendly }),
+        dbMatch("7", { venue_id: "c", ...comp("c-tour", "tournament") }),
+        dbMatch("8", { venue_id: "d", status: "scheduled", ...friendly }),
       ],
-      [dbVenue("a"), dbVenue("b")],
+      [dbVenue("a"), dbVenue("b"), dbVenue("c"), dbVenue("d")],
       null,
     );
-    expect(result.map((v) => v.id)).toEqual(["a"]);
-    expect(result[0]!.played).toBe(2);
+    expect(result.map((v) => v.id)).toEqual(["a", "b", "c"]);
+    expect(result.map((v) => v.played)).toEqual([5, 1, 1]);
   });
 
   it("breaks ties by name", () => {
@@ -995,8 +992,9 @@ describe("league and cup data", () => {
     ]);
     // Everything else counts league and cup only.
     expect(data.leagueCupMatches.map((m) => m.id)).toEqual(["league"]);
+    // Venues are the exception: every game played there counts.
     expect(data.venues).toHaveLength(1);
-    expect(data.venues[0]!.played).toBe(1);
+    expect(data.venues[0]!.played).toBe(4);
     expect(data.competitions.map((c) => c.id)).toEqual(["c-league"]);
     expect(data.competitions[0]!.played).toBe(1);
   });
@@ -1006,6 +1004,7 @@ describe("league and cup data", () => {
       ...input,
       matches: [
         dbMatch("friendly", {
+          venue_id: "v1",
           is_friendly: true,
           competition_id: null,
           competition: null,
@@ -1014,7 +1013,8 @@ describe("league and cup data", () => {
     });
     expect(data.matches).toHaveLength(1);
     expect(data.leagueCupMatches).toEqual([]);
-    expect(data.venues).toEqual([]);
+    // The venue of a friendly is still listed.
+    expect(data.venues.map((v) => v.id)).toEqual(["v1"]);
   });
 });
 
