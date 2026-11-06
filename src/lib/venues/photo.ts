@@ -9,21 +9,6 @@ export const VENUE_PHOTO_MIME_TYPES = new Set([
   "image/gif",
 ]);
 
-export function venuePhotoExtension(mime: string): string | null {
-  switch (mime) {
-    case "image/png":
-      return "png";
-    case "image/jpeg":
-      return "jpg";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    default:
-      return null;
-  }
-}
-
 /** Returns an error message when the file cannot be used as a venue photo. */
 export function validateVenuePhoto(file: File): string | null {
   if (!VENUE_PHOTO_MIME_TYPES.has(file.type)) {

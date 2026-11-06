@@ -15,11 +15,8 @@ import { VENUE_PHOTOS_BUCKET } from "@/lib/constants";
 import { str } from "@/lib/form-parse";
 import { createClient } from "@/lib/supabase/server";
 import { parseVenueForm } from "@/lib/venues/parse";
-import {
-  validateVenuePhoto,
-  venuePhotoExtension,
-  venuePhotoStoragePath,
-} from "@/lib/venues/photo";
+import { validateVenuePhoto, venuePhotoStoragePath } from "@/lib/venues/photo";
+import { processVenuePhoto } from "@/lib/venues/process-photo";
 
 function canEditVenues(
   ctx: NonNullable<Awaited<ReturnType<typeof getViewerContext>>>,
@@ -52,16 +49,25 @@ async function uploadVenuePhoto(
   const invalid = validateVenuePhoto(file);
   if (invalid) return { error: invalid };
 
-  const ext = venuePhotoExtension(file.type);
-  if (!ext) return { error: "Unsupported photo file type." };
+  // Resize, compress and strip all metadata (EXIF/GPS etc.) before storing.
+  let processed: Awaited<ReturnType<typeof processVenuePhoto>>;
+  try {
+    processed = await processVenuePhoto(
+      new Uint8Array(await file.arrayBuffer()),
+    );
+  } catch {
+    return { error: "That file could not be read as an image." };
+  }
 
   const supabase = await createClient();
-  const path = `${clubId}/${crypto.randomUUID()}.${ext}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const path = `${clubId}/${crypto.randomUUID()}.${processed.extension}`;
 
   const { error: uploadError } = await supabase.storage
     .from(VENUE_PHOTOS_BUCKET)
-    .upload(path, bytes, { contentType: file.type, upsert: false });
+    .upload(path, processed.bytes, {
+      contentType: processed.contentType,
+      upsert: false,
+    });
   if (uploadError) return { error: uploadError.message };
 
   const { data } = supabase.storage

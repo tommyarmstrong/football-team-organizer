@@ -1,19 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  validateVenuePhoto,
-  venuePhotoExtension,
-  venuePhotoStoragePath,
-} from "@/lib/venues/photo";
+import { validateVenuePhoto, venuePhotoStoragePath } from "@/lib/venues/photo";
 
 describe("venue photo helpers", () => {
-  it("maps mime types to extensions", () => {
-    expect(venuePhotoExtension("image/jpeg")).toBe("jpg");
-    expect(venuePhotoExtension("image/png")).toBe("png");
-    expect(venuePhotoExtension("image/webp")).toBe("webp");
-    expect(venuePhotoExtension("image/gif")).toBe("gif");
-    expect(venuePhotoExtension("image/svg+xml")).toBeNull();
-  });
-
   it("validates type and size", () => {
     expect(
       validateVenuePhoto(new File(["x"], "a.png", { type: "image/png" })),

@@ -17,6 +17,7 @@ const {
   getVenueMock,
   createClientMock,
   removeMock,
+  processVenuePhotoMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -30,6 +31,7 @@ const {
   getVenueMock: vi.fn(),
   createClientMock: vi.fn(),
   removeMock: vi.fn(),
+  processVenuePhotoMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -42,6 +44,9 @@ vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
   return { ...actual, getViewerContext: getViewerContextMock };
 });
+vi.mock("@/lib/venues/process-photo", () => ({
+  processVenuePhoto: processVenuePhotoMock,
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
 vi.mock("@/lib/data/venues", () => ({
@@ -89,6 +94,11 @@ describe("venue actions", () => {
     vi.clearAllMocks();
     removeMock.mockResolvedValue({ error: null });
     mockStorageClient();
+    processVenuePhotoMock.mockResolvedValue({
+      bytes: new Uint8Array([1, 2, 3]),
+      contentType: "image/webp",
+      extension: "webp",
+    });
     getViewerContextMock.mockResolvedValue(clubManagerViewer());
     getPrimaryClubMock.mockResolvedValue({ id: "club-1", name: "Club" });
     createVenueMock.mockResolvedValue({
@@ -178,10 +188,11 @@ describe("venue actions", () => {
       const form = formDataFrom({ name: "Pitch 1", photo: pngFile() });
       await createVenueOnPageAction({}, form);
       expect(upload).toHaveBeenCalledWith(
-        expect.stringMatching(/^club-1\/.+\.png$/),
-        expect.any(Uint8Array),
-        expect.objectContaining({ contentType: "image/png" }),
+        expect.stringMatching(/^club-1\/.+\.webp$/),
+        new Uint8Array([1, 2, 3]),
+        expect.objectContaining({ contentType: "image/webp" }),
       );
+      expect(processVenuePhotoMock).toHaveBeenCalledOnce();
       expect(createVenueMock).toHaveBeenCalledWith(
         expect.objectContaining({ photo_url: NEW_PHOTO_URL }),
       );
@@ -209,6 +220,18 @@ describe("venue actions", () => {
       });
       expect(await createVenueOnPageAction({}, tooBig)).toMatchObject({
         error: expect.stringMatching(/5 mb/i),
+      });
+      expect(createVenueMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects files that cannot be decoded as images", async () => {
+      processVenuePhotoMock.mockRejectedValue(new Error("bad image"));
+      const result = await createVenueOnPageAction(
+        {},
+        formDataFrom({ name: "Pitch 1", photo: pngFile() }),
+      );
+      expect(result).toEqual({
+        error: "That file could not be read as an image.",
       });
       expect(createVenueMock).not.toHaveBeenCalled();
     });
