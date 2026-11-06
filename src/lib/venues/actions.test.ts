@@ -17,7 +17,7 @@ const {
   getVenueMock,
   createClientMock,
   removeMock,
-  processVenuePhotoMock,
+  processPhotoMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -31,7 +31,7 @@ const {
   getVenueMock: vi.fn(),
   createClientMock: vi.fn(),
   removeMock: vi.fn(),
-  processVenuePhotoMock: vi.fn(),
+  processPhotoMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -44,8 +44,8 @@ vi.mock("@/lib/authz/context", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authz/context")>();
   return { ...actual, getViewerContext: getViewerContextMock };
 });
-vi.mock("@/lib/venues/process-photo", () => ({
-  processVenuePhoto: processVenuePhotoMock,
+vi.mock("@/lib/photos/process-photo", () => ({
+  processPhoto: processPhotoMock,
 }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 vi.mock("@/lib/data/clubs", () => ({ getPrimaryClub: getPrimaryClubMock }));
@@ -94,7 +94,7 @@ describe("venue actions", () => {
     vi.clearAllMocks();
     removeMock.mockResolvedValue({ error: null });
     mockStorageClient();
-    processVenuePhotoMock.mockResolvedValue({
+    processPhotoMock.mockResolvedValue({
       bytes: new Uint8Array([1, 2, 3]),
       contentType: "image/webp",
       extension: "webp",
@@ -192,7 +192,7 @@ describe("venue actions", () => {
         new Uint8Array([1, 2, 3]),
         expect.objectContaining({ contentType: "image/webp" }),
       );
-      expect(processVenuePhotoMock).toHaveBeenCalledOnce();
+      expect(processPhotoMock).toHaveBeenCalledOnce();
       expect(createVenueMock).toHaveBeenCalledWith(
         expect.objectContaining({ photo_url: NEW_PHOTO_URL }),
       );
@@ -225,7 +225,7 @@ describe("venue actions", () => {
     });
 
     it("rejects files that cannot be decoded as images", async () => {
-      processVenuePhotoMock.mockRejectedValue(new Error("bad image"));
+      processPhotoMock.mockRejectedValue(new Error("bad image"));
       const result = await createVenueOnPageAction(
         {},
         formDataFrom({ name: "Pitch 1", photo: pngFile() }),

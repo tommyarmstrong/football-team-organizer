@@ -1,9 +1,6 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import {
-  VENUE_PHOTO_MAX_EDGE,
-  processVenuePhoto,
-} from "@/lib/venues/process-photo";
+import { PHOTO_MAX_EDGE, processPhoto } from "@/lib/photos/process-photo";
 
 async function jpegWithMetadata(width: number, height: number) {
   return sharp({
@@ -24,14 +21,14 @@ async function jpegWithMetadata(width: number, height: number) {
     .toBuffer();
 }
 
-describe("processVenuePhoto", () => {
+describe("processPhoto", () => {
   it("strips EXIF, XMP and ICC metadata", async () => {
     const input = await jpegWithMetadata(800, 450);
     const before = await sharp(input).metadata();
     expect(before.exif).toBeDefined();
     expect(before.xmp).toBeDefined();
 
-    const result = await processVenuePhoto(input);
+    const result = await processPhoto(input);
     const after = await sharp(result.bytes).metadata();
     expect(after.format).toBe("webp");
     expect(after.exif).toBeUndefined();
@@ -44,15 +41,15 @@ describe("processVenuePhoto", () => {
 
   it("shrinks large images to the maximum edge, keeping the ratio", async () => {
     const input = await jpegWithMetadata(4000, 2250);
-    const result = await processVenuePhoto(input);
+    const result = await processPhoto(input);
     const meta = await sharp(result.bytes).metadata();
-    expect(meta.width).toBe(VENUE_PHOTO_MAX_EDGE);
+    expect(meta.width).toBe(PHOTO_MAX_EDGE);
     expect(meta.height).toBe(900);
     expect(result.bytes.byteLength).toBeLessThan(input.byteLength);
   });
 
   it("does not enlarge small images", async () => {
-    const result = await processVenuePhoto(await jpegWithMetadata(640, 360));
+    const result = await processPhoto(await jpegWithMetadata(640, 360));
     const meta = await sharp(result.bytes).metadata();
     expect([meta.width, meta.height]).toEqual([640, 360]);
   });
@@ -65,7 +62,7 @@ describe("processVenuePhoto", () => {
       .withMetadata({ orientation: 6 })
       .toBuffer();
     expect((await sharp(input).metadata()).orientation).toBe(6);
-    const result = await processVenuePhoto(input);
+    const result = await processPhoto(input);
     const meta = await sharp(result.bytes).metadata();
     expect([meta.width, meta.height]).toEqual([200, 400]);
     expect(meta.orientation).toBeUndefined();
@@ -73,7 +70,7 @@ describe("processVenuePhoto", () => {
 
   it("rejects bytes that are not an image", async () => {
     await expect(
-      processVenuePhoto(new TextEncoder().encode("not an image")),
+      processPhoto(new TextEncoder().encode("not an image")),
     ).rejects.toThrow();
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Browser-side venue photo shrinking. Phone photos are often 5-12 MB, which
+ * Browser-side photo shrinking. Phone photos are often 5-12 MB, which
  * is more than a Server Action request can carry on the host, so we scale the
  * picture down and re-encode it before upload. Re-encoding through a canvas
  * also drops EXIF metadata. The server repeats the resize and strips metadata

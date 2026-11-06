@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitWithin } from "@/lib/venues/client-photo";
+import { fitWithin } from "@/lib/photos/client-photo";
 
 describe("fitWithin", () => {
   it("scales the longest edge down to the maximum", () => {

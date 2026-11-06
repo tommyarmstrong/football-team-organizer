@@ -26,6 +26,8 @@ import {
 } from "@/lib/data/team";
 import { getPrimaryClub } from "@/lib/data/clubs";
 import { setTeamHeadCoach } from "@/lib/data/coaches";
+import { processPhoto } from "@/lib/photos/process-photo";
+import { teamPhotoStoragePath, validateTeamPhoto } from "@/lib/team/photo";
 import {
   boolFromCheckbox,
   isOneOf,
@@ -45,8 +47,6 @@ import {
   DEFAULT_COMPETITION_PERIODS,
   DEFAULT_COMPETITION_RESULT,
   TEAM_GENDER_LABELS,
-  TEAM_PHOTO_MAX_BYTES,
-  TEAM_PHOTO_MIME_TYPES,
   TEAM_PHOTOS_BUCKET,
   TRAINING_DAYS,
   type AgeGroup,
@@ -170,7 +170,11 @@ export async function updateTeamAction(
     season_label: parsed.season_label,
     photo_url: photoUrl,
   });
-  if (error) return { error };
+  if (error) {
+    if (photoUrl !== team.photo_url) await removeTeamPhoto(photoUrl);
+    return { error };
+  }
+  if (photoUrl !== team.photo_url) await removeTeamPhoto(team.photo_url);
 
   const headError = await setTeamHeadCoach(team.id, parsed.head_coach_id);
   if (headError.error) return { error: headError.error };
@@ -187,40 +191,42 @@ async function uploadTeamPhoto(
   teamId: string,
   file: File,
 ): Promise<{ url: string } | { error: string }> {
-  if (!TEAM_PHOTO_MIME_TYPES.has(file.type)) {
-    return { error: "Photo must be a PNG, JPEG, WebP, or GIF image." };
-  }
-  if (file.size > TEAM_PHOTO_MAX_BYTES) {
-    return { error: "Photo must be 5 MB or smaller." };
-  }
+  const invalid = validateTeamPhoto(file);
+  if (invalid) return { error: invalid };
 
-  const ext =
-    file.type === "image/png"
-      ? "png"
-      : file.type === "image/jpeg"
-        ? "jpg"
-        : file.type === "image/webp"
-          ? "webp"
-          : file.type === "image/gif"
-            ? "gif"
-            : null;
-  if (!ext) return { error: "Unsupported photo file type." };
+  // Resize, compress and strip all metadata (EXIF/GPS etc.) before storing.
+  let processed: Awaited<ReturnType<typeof processPhoto>>;
+  try {
+    processed = await processPhoto(new Uint8Array(await file.arrayBuffer()));
+  } catch {
+    return { error: "That file could not be read as an image." };
+  }
 
   const supabase = await createClient();
-  const path = `${teamId}/${crypto.randomUUID()}.${ext}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const path = `${teamId}/${crypto.randomUUID()}.${processed.extension}`;
 
   const { error: uploadError } = await supabase.storage
     .from(TEAM_PHOTOS_BUCKET)
-    .upload(path, bytes, {
-      contentType: file.type,
+    .upload(path, processed.bytes, {
+      contentType: processed.contentType,
       upsert: false,
     });
-
   if (uploadError) return { error: uploadError.message };
 
   const { data } = supabase.storage.from(TEAM_PHOTOS_BUCKET).getPublicUrl(path);
   return { url: data.publicUrl };
+}
+
+/** Best-effort removal of a replaced or cleared photo; never fails the save. */
+async function removeTeamPhoto(photoUrl: string | null | undefined) {
+  const path = teamPhotoStoragePath(photoUrl);
+  if (!path) return;
+  try {
+    const supabase = await createClient();
+    await supabase.storage.from(TEAM_PHOTOS_BUCKET).remove([path]);
+  } catch {
+    // An orphaned file is harmless; the team save already succeeded.
+  }
 }
 
 export async function createTeamOnPageAction(

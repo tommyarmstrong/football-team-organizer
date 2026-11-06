@@ -20,6 +20,7 @@ const {
   deleteCompetitionMock,
   isTeamArchivedMock,
   createClientMock,
+  processPhotoMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -40,6 +41,7 @@ const {
   deleteCompetitionMock: vi.fn(),
   isTeamArchivedMock: vi.fn(),
   createClientMock: vi.fn(),
+  processPhotoMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -57,6 +59,9 @@ vi.mock("@/lib/authz/context", async (importOriginal) => {
 });
 vi.mock("@/lib/supabase/server", () => ({
   createClient: createClientMock,
+}));
+vi.mock("@/lib/photos/process-photo", () => ({
+  processPhoto: processPhotoMock,
 }));
 vi.mock("@/lib/data/team", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/data/team")>();
@@ -109,10 +114,11 @@ function validTeamForm(overrides: Record<string, string> = {}): FormData {
 function mockStorageClient(options?: {
   uploadError?: string | null;
   publicUrl?: string;
+  remove?: ReturnType<typeof vi.fn>;
 }) {
   const uploadError = options?.uploadError ?? null;
   const publicUrl =
-    options?.publicUrl ?? "https://cdn.example/team-photos/photo.png";
+    options?.publicUrl ?? "https://cdn.example/team-photos/photo.webp";
   return {
     storage: {
       from() {
@@ -120,6 +126,7 @@ function mockStorageClient(options?: {
           upload: async () =>
             uploadError ? { error: { message: uploadError } } : { error: null },
           getPublicUrl: () => ({ data: { publicUrl } }),
+          remove: options?.remove ?? (async () => ({ error: null })),
         };
       },
     },
@@ -208,18 +215,64 @@ describe("updateTeamAction", () => {
     });
   });
 
-  it("uploads a team photo then updates", async () => {
-    createClientMock.mockResolvedValue(mockStorageClient());
+  it("processes the photo, uploads it as WebP, then updates", async () => {
+    const upload = vi.fn(async () => ({ error: null }));
+    createClientMock.mockResolvedValue({
+      storage: {
+        from: () => ({
+          upload,
+          getPublicUrl: () => ({
+            data: { publicUrl: "https://cdn.example/team-photos/photo.webp" },
+          }),
+          remove: vi.fn(),
+        }),
+      },
+    });
+    const processed = new Uint8Array([1, 2, 3]);
+    processPhotoMock.mockResolvedValue({
+      bytes: processed,
+      contentType: "image/webp",
+      extension: "webp",
+    });
 
     const form = validTeamForm();
     form.set("photo", new File(["png"], "crest.png", { type: "image/png" }));
     await expect(updateTeamAction({}, form)).rejects.toThrow("redirect:/team");
+    expect(processPhotoMock).toHaveBeenCalledOnce();
+    expect(upload).toHaveBeenCalledWith(
+      expect.stringMatching(/^team-1\/.+\.webp$/),
+      processed,
+      { contentType: "image/webp", upsert: false },
+    );
     expect(updateTeamMock).toHaveBeenCalledWith(
       "team-1",
       expect.objectContaining({
-        photo_url: "https://cdn.example/team-photos/photo.png",
+        photo_url: "https://cdn.example/team-photos/photo.webp",
       }),
     );
+  });
+
+  it("rejects files that cannot be decoded as an image", async () => {
+    processPhotoMock.mockRejectedValue(new Error("bad image"));
+    const form = validTeamForm();
+    form.set("photo", new File(["x"], "fake.png", { type: "image/png" }));
+    expect(await updateTeamAction({}, form)).toEqual({
+      error: "That file could not be read as an image.",
+    });
+    expect(updateTeamMock).not.toHaveBeenCalled();
+  });
+
+  it("removes the old stored photo when it is replaced or cleared", async () => {
+    const oldUrl =
+      "https://x.supabase.co/storage/v1/object/public/team-photos/team-1/old.webp";
+    getActiveTeamMock.mockResolvedValue(teamFixture({ photo_url: oldUrl }));
+    const remove = vi.fn(async () => ({ error: null }));
+    createClientMock.mockResolvedValue(mockStorageClient({ remove }));
+
+    await expect(
+      updateTeamAction({}, validTeamForm({ clear_photo: "true" })),
+    ).rejects.toThrow("redirect:/team");
+    expect(remove).toHaveBeenCalledWith(["team-1/old.webp"]);
   });
 
   it("updates and redirects", async () => {
