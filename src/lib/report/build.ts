@@ -328,10 +328,11 @@ export function buildReportCompetitions(
 }
 
 /**
- * Every venue with a played league or cup match, with the team's record
- * there. Friendlies, tournaments and other matches do not count. The venue
- * names come from the club's venue list, so a deleted venue simply drops out.
- * Most visited first, then by name.
+ * Every venue with a played match of any type (league, cup, tournament,
+ * friendly or other), with the team's record there. Unlike the other data
+ * pages, venues are not limited to league and cup. The venue names come from
+ * the club's venue list, so a deleted venue simply drops out. Most visited
+ * first, then by name.
  */
 export function buildReportVenues(
   matches: readonly MatchWithRelations[],
@@ -339,15 +340,7 @@ export function buildReportVenues(
   homeVenueId: string | null,
 ): ReportVenue[] {
   const byId = new Map(venues.map((v) => [v.id, v]));
-  const played = matches.filter(
-    (m) =>
-      m.status === "played" &&
-      isLeagueAndCupMatch({
-        competitionId: m.competition_id,
-        competitionKind: m.competition?.kind ?? null,
-        isFriendly: m.is_friendly,
-      }),
-  );
+  const played = matches.filter((m) => m.status === "played");
 
   const result: ReportVenue[] = [];
   for (const venue of venues) {
