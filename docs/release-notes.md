@@ -4,6 +4,16 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 6 November 2026 — Season report counts league and cup matches
+
+- The season report's numbers now count **league and cup matches only**. Friendlies, tournaments and other kinds of game no longer count towards Season at a glance, the season in numbers (the goals chart, top scorers and most assists), Competitions, Venues, Awards, or the stats on the Player Gallery cards.
+- The **Competitions** page now lists league and cup competitions only.
+- The **Results** page still lists **every match** that was played, whatever the type.
+- Pages that count league and cup matches only say so at the bottom of the page.
+- No database changes.
+
+---
+
 ## 6 November 2026 — Season report layout updates
 
 - **Player Gallery** cards are easier to read when printed. The club name is gone from the bottom of each card, the team name and year are **bold**, and the team name, year, goals, assists and player of the match text are all larger. This applies to the cards in the report only; the cards you share from the app are unchanged.

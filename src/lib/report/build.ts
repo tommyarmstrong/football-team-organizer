@@ -19,6 +19,7 @@ import {
   playerCardStats,
   playerPositionLabel,
 } from "@/lib/postcards/player-card-content";
+import { isLeagueAndCupMatch } from "@/lib/stats/competition-filters";
 import type { TeamCoachEntry } from "@/lib/data/coaches";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { PlayerOfTheMonthWithPlayer } from "@/lib/data/player-of-the-month";
@@ -100,6 +101,7 @@ export function buildReportMatches(
           opponent: m.opponent_name,
           homeAway: m.home_away,
           competitionId: m.competition_id,
+          competitionKind: m.competition?.kind ?? null,
           competitionLabel: matchCompetitionLabel(m),
           isFriendly: m.is_friendly,
           goalsFor: m.goals_for,
@@ -110,10 +112,28 @@ export function buildReportMatches(
     });
 }
 
-function countByPlayer(
+/** League and cup matches only: friendlies, tournaments and others are out. */
+export function isLeagueOrCupReportMatch(match: ReportMatch): boolean {
+  return isLeagueAndCupMatch({
+    competitionId: match.competitionId,
+    competitionKind: match.competitionKind,
+    isFriendly: match.isFriendly,
+  });
+}
+
+type CompetitionEvent = NonNullable<PlayerCountPoint["events"]>[number];
+
+/** The events (one per goal, assist, award or appearance) in league or cup. */
+function leagueAndCupEvents(
+  events: readonly CompetitionEvent[] | undefined,
+): CompetitionEvent[] {
+  return (events ?? []).filter((event) => isLeagueAndCupMatch(event));
+}
+
+function countLeagueAndCup(
   points: readonly PlayerCountPoint[],
-): Map<string, number> {
-  return new Map(points.map((p) => [p.playerId, p.count]));
+): Map<string, CompetitionEvent[]> {
+  return new Map(points.map((p) => [p.playerId, leagueAndCupEvents(p.events)]));
 }
 
 /**
@@ -137,19 +157,18 @@ export function buildReportPlayers(input: {
   matchesPlayed: readonly PlayerCountPoint[];
   competitiveRecords: Readonly<Record<string, PlayerRecord>>;
 }): ReportPlayer[] {
-  const goals = new Map(input.goalsByPlayer.map((p) => [p.playerId, p.goals]));
-  const assists = countByPlayer(input.assistsByPlayer);
-  const potm = countByPlayer(input.potmByPlayer);
-  const apps = countByPlayer(input.matchesPlayed);
+  // Every number in the book counts league and cup matches only, so each
+  // series is cut down to its league and cup events (one per goal, assist,
+  // award or appearance) before it is counted.
   const goalEvents = new Map(
-    input.goalsByPlayer.map((p) => [p.playerId, p.goalCompetitions]),
+    input.goalsByPlayer.map((p) => [
+      p.playerId,
+      leagueAndCupEvents(p.goalCompetitions),
+    ]),
   );
-  const assistEvents = new Map(
-    input.assistsByPlayer.map((p) => [p.playerId, p.events]),
-  );
-  const potmEvents = new Map(
-    input.potmByPlayer.map((p) => [p.playerId, p.events]),
-  );
+  const assistEvents = countLeagueAndCup(input.assistsByPlayer);
+  const potmEvents = countLeagueAndCup(input.potmByPlayer);
+  const appEvents = countLeagueAndCup(input.matchesPlayed);
 
   const clubName = input.club?.name ?? "";
   const clubColour =
@@ -159,7 +178,7 @@ export function buildReportPlayers(input: {
   const teamName = teamDisplayName(input.team);
 
   return input.roster.flatMap((r): ReportPlayer[] => {
-    const appearances = apps.get(r.id) ?? 0;
+    const appearances = appEvents.get(r.id)?.length ?? 0;
     if (!r.active && appearances === 0) return [];
     const firstName = r.first_name.trim() || "Player";
     return [
@@ -172,9 +191,9 @@ export function buildReportPlayers(input: {
         shirtNumber: r.shirt_number,
         position: r.position,
         appearances,
-        goals: goals.get(r.id) ?? 0,
-        assists: assists.get(r.id) ?? 0,
-        playerOfTheMatch: potm.get(r.id) ?? 0,
+        goals: goalEvents.get(r.id)?.length ?? 0,
+        assists: assistEvents.get(r.id)?.length ?? 0,
+        playerOfTheMatch: potmEvents.get(r.id)?.length ?? 0,
         card: {
           playerId: r.id,
           teamId: input.team.id,
@@ -227,7 +246,10 @@ export function buildReportCoaches(input: {
       ? input.club.colour
       : null;
   const teamName = teamDisplayName(input.team);
-  const stats = coachCardStats(input.resultsOverTime);
+  // League and cup only, like the player cards.
+  const stats = coachCardStats(
+    input.resultsOverTime.filter((r) => isLeagueAndCupMatch(r)),
+  );
 
   return input.coaches
     .map((c): ReportCoach => {
@@ -260,14 +282,17 @@ export function buildReportCoaches(input: {
 }
 
 /**
- * Competitions that had a played match or a recorded outcome, with the team's
- * record in each. Friendlies are not competitions and are left out.
+ * League and cup competitions that had a played match or a recorded outcome,
+ * with the team's record in each. Friendlies are not competitions, and
+ * tournaments and other competitions are left out of the book. `matches`
+ * should already be the league and cup matches.
  */
 export function buildReportCompetitions(
   competitions: readonly Competition[],
   matches: readonly ReportMatch[],
 ): ReportCompetition[] {
   return competitions
+    .filter((c) => c.kind === "league" || c.kind === "cup")
     .map((c): ReportCompetition => {
       const own = matches.filter((m) => m.competitionId === c.id);
       let wins = 0;
@@ -303,7 +328,8 @@ export function buildReportCompetitions(
 }
 
 /**
- * Every venue with a played match, with the team's record there. The venue
+ * Every venue with a played league or cup match, with the team's record
+ * there. Friendlies, tournaments and other matches do not count. The venue
  * names come from the club's venue list, so a deleted venue simply drops out.
  * Most visited first, then by name.
  */
@@ -313,7 +339,15 @@ export function buildReportVenues(
   homeVenueId: string | null,
 ): ReportVenue[] {
   const byId = new Map(venues.map((v) => [v.id, v]));
-  const played = matches.filter((m) => m.status === "played");
+  const played = matches.filter(
+    (m) =>
+      m.status === "played" &&
+      isLeagueAndCupMatch({
+        competitionId: m.competition_id,
+        competitionKind: m.competition?.kind ?? null,
+        isFriendly: m.is_friendly,
+      }),
+  );
 
   const result: ReportVenue[] = [];
   for (const venue of venues) {
@@ -372,6 +406,7 @@ function venueName(venues: readonly Venue[], id: string | null): string | null {
 
 export function buildReportData(input: BuildReportInput): ReportData {
   const matches = buildReportMatches(input.matches);
+  const leagueCupMatches = matches.filter(isLeagueOrCupReportMatch);
   const headCoach = input.coaches.find((c) => c.role === HEAD_COACH_ROLE);
 
   return {
@@ -398,7 +433,8 @@ export function buildReportData(input: BuildReportInput): ReportData {
     headCoachName: headCoach?.name ?? null,
     coaches: buildReportCoaches(input),
     matches,
-    competitions: buildReportCompetitions(input.competitions, matches),
+    leagueCupMatches,
+    competitions: buildReportCompetitions(input.competitions, leagueCupMatches),
     venues: buildReportVenues(
       input.matches,
       input.venues,

@@ -61,6 +61,7 @@ function match(
     opponent: "Rivals",
     homeAway: "home",
     competitionId: null,
+    competitionKind: null,
     competitionLabel: null,
     isFriendly: false,
     goalsFor,

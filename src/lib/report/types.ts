@@ -1,5 +1,8 @@
 import type { CoachCardView, PlayerCardView } from "@/lib/postcards/types";
-import type { CompetitionResult } from "@/lib/supabase/database.types";
+import type {
+  CompetitionKind,
+  CompetitionResult,
+} from "@/lib/supabase/database.types";
 
 /** Everything the season report renders. Plain data, no Supabase types. */
 export type ReportMatch = {
@@ -9,6 +12,8 @@ export type ReportMatch = {
   opponent: string;
   homeAway: "home" | "away" | "neutral";
   competitionId: string | null;
+  /** League, cup, tournament or other; null for a friendly or no competition. */
+  competitionKind: CompetitionKind | null;
   /** "Friendly", the competition name, or null when there is none. */
   competitionLabel: string | null;
   isFriendly: boolean;
@@ -139,8 +144,14 @@ export type ReportData = {
   headCoachName: string | null;
   /** Coaches with their cards, head coach(es) first. */
   coaches: ReportCoach[];
-  /** Played matches, oldest first. */
+  /** Every played match, oldest first. Only the Results pages list all of them. */
   matches: ReportMatch[];
+  /**
+   * The league and cup matches among `matches`, oldest first. Every other page
+   * of the book (at a glance, numbers, competitions, venues, awards) counts
+   * these only, so friendlies and tournaments never reach its totals.
+   */
+  leagueCupMatches: ReportMatch[];
   competitions: ReportCompetition[];
   /** Venues of played matches, most visited first. */
   venues: ReportVenue[];

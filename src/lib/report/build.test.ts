@@ -20,7 +20,9 @@ function dbMatch(
 ): MatchWithRelations {
   return {
     id,
-    competition_id: null,
+    // A league match unless a test says otherwise: the report only counts
+    // league and cup matches outside the Results pages.
+    competition_id: "c-league",
     created_at: "2025-09-01T10:00:00Z",
     date: "2025-09-06",
     is_friendly: false,
@@ -37,7 +39,12 @@ function dbMatch(
     updated_at: "2025-09-01T10:00:00Z",
     home_away: "home",
     venue_id: null,
-    competition: null,
+    competition: {
+      id: "c-league",
+      name: "League",
+      display_name: null,
+      kind: "league",
+    },
     venue: null,
     goals_for: 1,
     goals_against: 0,
@@ -98,7 +105,41 @@ describe("buildReportMatches", () => {
     expect(league!.competitionLabel).toBe("Junior League");
     expect(league!.competitionId).toBe("c1");
   });
+
+  it("carries the competition kind, or null when there is none", () => {
+    const [friendly, cup] = buildReportMatches([
+      dbMatch("f", {
+        is_friendly: true,
+        competition_id: null,
+        competition: null,
+        date: "2025-09-01",
+      }),
+      dbMatch("c", {
+        date: "2025-09-02",
+        competition_id: "c2",
+        competition: {
+          id: "c2",
+          name: "Cup",
+          display_name: null,
+          kind: "cup",
+        },
+      }),
+    ]);
+    expect(friendly!.competitionKind).toBeNull();
+    expect(cup!.competitionKind).toBe("cup");
+  });
 });
+
+/** One goal / assist / award / appearance in a competition of this kind. */
+function event(kind: "league" | "cup" | "tournament" | "other" | "friendly") {
+  return kind === "friendly"
+    ? { competitionId: null, competitionKind: null, isFriendly: true }
+    : { competitionId: `c-${kind}`, competitionKind: kind, isFriendly: false };
+}
+
+function leagueEvents(count: number) {
+  return Array.from({ length: count }, () => event("league"));
+}
 
 describe("buildReportPlayers", () => {
   const team = {
@@ -124,14 +165,42 @@ describe("buildReportPlayers", () => {
         position: null,
         matchesPlayed: 3,
         periodsPlayed: 6,
-        goalCompetitions: [],
+        goalCompetitions: leagueEvents(4),
       },
     ],
-    assistsByPlayer: [{ playerId: "a", personId: "pa", name: "a", count: 2 }],
-    potmByPlayer: [{ playerId: "b", personId: "pb", name: "b", count: 1 }],
+    assistsByPlayer: [
+      {
+        playerId: "a",
+        personId: "pa",
+        name: "a",
+        count: 2,
+        events: leagueEvents(2),
+      },
+    ],
+    potmByPlayer: [
+      {
+        playerId: "b",
+        personId: "pb",
+        name: "b",
+        count: 1,
+        events: leagueEvents(1),
+      },
+    ],
     matchesPlayed: [
-      { playerId: "a", personId: "pa", name: "a", count: 3 },
-      { playerId: "c", personId: "pc", name: "c", count: 2 },
+      {
+        playerId: "a",
+        personId: "pa",
+        name: "a",
+        count: 3,
+        events: leagueEvents(3),
+      },
+      {
+        playerId: "c",
+        personId: "pc",
+        name: "c",
+        count: 2,
+        events: leagueEvents(2),
+      },
     ],
   };
 
@@ -219,6 +288,86 @@ describe("buildReportPlayers", () => {
     });
   });
 
+  it("counts goals, assists, awards and appearances in league and cup only", () => {
+    const [a] = buildReportPlayers({
+      ...stats,
+      roster: [roster("a")],
+      goalsByPlayer: [
+        {
+          ...stats.goalsByPlayer[0]!,
+          goals: 6,
+          goalCompetitions: [
+            event("league"),
+            event("cup"),
+            event("friendly"),
+            event("tournament"),
+            event("other"),
+            { competitionId: null, competitionKind: null, isFriendly: false },
+          ],
+        },
+      ],
+      assistsByPlayer: [
+        {
+          ...stats.assistsByPlayer[0]!,
+          count: 4,
+          events: [
+            event("cup"),
+            event("tournament"),
+            event("friendly"),
+            event("other"),
+          ],
+        },
+      ],
+      potmByPlayer: [
+        {
+          playerId: "a",
+          personId: "pa",
+          name: "a",
+          count: 3,
+          events: [event("league"), event("league"), event("tournament")],
+        },
+      ],
+      matchesPlayed: [
+        {
+          playerId: "a",
+          personId: "pa",
+          name: "a",
+          count: 5,
+          events: [
+            event("league"),
+            event("cup"),
+            event("tournament"),
+            event("friendly"),
+            event("other"),
+          ],
+        },
+      ],
+    });
+    expect(a).toMatchObject({
+      goals: 2,
+      assists: 1,
+      playerOfTheMatch: 2,
+      appearances: 2,
+    });
+  });
+
+  it("keeps a player who only played tournaments off the squad if inactive", () => {
+    const players = buildReportPlayers({
+      ...stats,
+      roster: [roster("t", { active: false })],
+      matchesPlayed: [
+        {
+          playerId: "t",
+          personId: "pt",
+          name: "t",
+          count: 2,
+          events: [event("tournament"), event("friendly")],
+        },
+      ],
+    });
+    expect(players).toEqual([]);
+  });
+
   it("never shows a surname, even on adult teams", () => {
     for (const gender of ["men", "women", "boys", "girls"] as const) {
       const [a] = buildReportPlayers({
@@ -295,16 +444,17 @@ function resultPoint(
   goalsFor: number,
   goalsAgainst: number,
   isFriendly = false,
+  kind: ResultOverTimePoint["competitionKind"] = "league",
 ): ResultOverTimePoint {
   return {
-    matchId: `m-${goalsFor}-${goalsAgainst}-${isFriendly}`,
+    matchId: `m-${goalsFor}-${goalsAgainst}-${isFriendly}-${kind}`,
     date: "2025-09-01",
     label: "",
     goalsFor,
     goalsAgainst,
     result,
     competitionId: null,
-    competitionKind: null,
+    competitionKind: isFriendly ? null : kind,
     competitionName: null,
     isFriendly,
   };
@@ -343,9 +493,11 @@ describe("buildReportCoaches", () => {
       resultsOverTime: [
         resultPoint("W", 3, 1),
         resultPoint("D", 0, 0),
-        resultPoint("L", 1, 2),
-        // Friendlies are left out of the card.
+        resultPoint("L", 1, 2, false, "cup"),
+        // Friendlies, tournaments and other matches are left out of the card.
         resultPoint("W", 9, 0, true),
+        resultPoint("W", 8, 0, false, "tournament"),
+        resultPoint("W", 7, 0, false, "other"),
       ],
     });
     expect(coach!.card).toEqual({
@@ -433,6 +585,20 @@ describe("buildReportCompetitions", () => {
     expect(result[1]).toMatchObject({ id: "c2", played: 1, losses: 1 });
   });
 
+  it("leaves out tournaments and other competitions", () => {
+    const result = buildReportCompetitions(
+      [
+        competition("league", { kind: "league", result: "completed" }),
+        competition("cup", { kind: "cup", result: "completed" }),
+        competition("tournament", { kind: "tournament", result: "completed" }),
+        competition("other", { kind: "other", result: "completed" }),
+        competition("none", { kind: null, result: "completed" }),
+      ],
+      [],
+    );
+    expect(result.map((c) => c.id).sort()).toEqual(["cup", "league"]);
+  });
+
   it("drops competitions with no matches and no outcome", () => {
     const result = buildReportCompetitions(
       [competition("empty"), competition("done", { result: "completed" })],
@@ -485,6 +651,42 @@ describe("buildReportVenues", () => {
     );
     expect(result.map((v) => v.id)).toEqual(["b", "a"]);
     expect(result.map((v) => v.played)).toEqual([2, 1]);
+  });
+
+  it("counts league and cup matches only", () => {
+    const comp = (
+      id: string,
+      kind: "league" | "cup" | "tournament" | "other",
+    ) => ({
+      competition_id: id,
+      competition: { id, name: id, display_name: null, kind },
+    });
+    const result = buildReportVenues(
+      [
+        dbMatch("1", { venue_id: "a", ...comp("c-league", "league") }),
+        dbMatch("2", { venue_id: "a", ...comp("c-cup", "cup") }),
+        dbMatch("3", { venue_id: "a", ...comp("c-tour", "tournament") }),
+        dbMatch("4", { venue_id: "a", ...comp("c-other", "other") }),
+        dbMatch("5", {
+          venue_id: "a",
+          is_friendly: true,
+          competition_id: null,
+          competition: null,
+        }),
+        // Only played friendlies or tournaments there: the venue drops out.
+        dbMatch("6", {
+          venue_id: "b",
+          is_friendly: true,
+          competition_id: null,
+          competition: null,
+        }),
+        dbMatch("7", { venue_id: "b", ...comp("c-tour", "tournament") }),
+      ],
+      [dbVenue("a"), dbVenue("b")],
+      null,
+    );
+    expect(result.map((v) => v.id)).toEqual(["a"]);
+    expect(result[0]!.played).toBe(2);
   });
 
   it("breaks ties by name", () => {
@@ -680,6 +882,8 @@ describe("buildReportData", () => {
       },
     });
 
+    expect(data.matches).toHaveLength(1);
+    expect(data.leagueCupMatches).toHaveLength(1);
     expect(data.team.name).toBe("Lions");
     expect(data.team.summary).toBe("Club · Boys · U10 · 2025/26");
     expect(data.team.homeVenue).toBeNull();
@@ -699,6 +903,118 @@ describe("buildReportData", () => {
     expect(data.monthAwards[1]!.notes).toBeNull();
     // First names only: the winner's surname ("Lee") is never carried through.
     expect(JSON.stringify(data.monthAwards)).not.toContain("Lee");
+  });
+});
+
+describe("league and cup data", () => {
+  const input = {
+    club: { name: "Club", colour: null, icon_url: null },
+    team: {
+      id: "t1",
+      name: "U10 Lions",
+      display_name: null,
+      season_label: "2025/26",
+      age_group: "U10",
+      gender: "boys" as const,
+      photo_url: null,
+      home_venue_id: null,
+      training_venue_id: null,
+      training_days: null,
+    },
+    venues: [dbVenue("v1")],
+    roster: [roster("a")],
+    goalsByPlayer: [],
+    assistsByPlayer: [],
+    potmByPlayer: [],
+    matchesPlayed: [],
+    competitiveRecords: {},
+    resultsOverTime: [],
+    coaches: [],
+    competitions: [
+      {
+        id: "c-league",
+        name: "League",
+        display_name: null,
+        kind: "league",
+        result: "none",
+      },
+      {
+        id: "c-tour",
+        name: "Tournament",
+        display_name: null,
+        kind: "tournament",
+        result: "none",
+      },
+    ] as Competition[],
+    monthAwards: [],
+    content: {
+      coachNotes: { expectedPath: "x", markdown: null },
+      lookingAhead: { expectedPath: "y", markdown: null },
+      seasonAwards: emptySeasonAwards("z"),
+    },
+  };
+
+  const tournament = {
+    competition_id: "c-tour",
+    competition: {
+      id: "c-tour",
+      name: "Tournament",
+      display_name: null,
+      kind: "tournament" as const,
+    },
+  };
+
+  it("keeps every match for Results but only league and cup elsewhere", () => {
+    const data = buildReportData({
+      ...input,
+      matches: [
+        dbMatch("league", { date: "2025-09-01", venue_id: "v1" }),
+        dbMatch("tour", { date: "2025-09-02", venue_id: "v1", ...tournament }),
+        dbMatch("friendly", {
+          date: "2025-09-03",
+          venue_id: "v1",
+          is_friendly: true,
+          competition_id: null,
+          competition: null,
+        }),
+        dbMatch("other-none", {
+          date: "2025-09-04",
+          venue_id: "v1",
+          competition_id: null,
+          competition: null,
+        }),
+      ],
+    });
+
+    // Results lists everything that was played.
+    expect(data.matches.map((m) => m.id)).toEqual([
+      "league",
+      "tour",
+      "friendly",
+      "other-none",
+    ]);
+    // Everything else counts league and cup only.
+    expect(data.leagueCupMatches.map((m) => m.id)).toEqual(["league"]);
+    expect(data.venues).toHaveLength(1);
+    expect(data.venues[0]!.played).toBe(1);
+    expect(data.competitions.map((c) => c.id)).toEqual(["c-league"]);
+    expect(data.competitions[0]!.played).toBe(1);
+  });
+
+  it("has no league or cup matches when only friendlies were played", () => {
+    const data = buildReportData({
+      ...input,
+      matches: [
+        dbMatch("friendly", {
+          is_friendly: true,
+          competition_id: null,
+          competition: null,
+        }),
+      ],
+    });
+    expect(data.matches).toHaveLength(1);
+    expect(data.leagueCupMatches).toEqual([]);
+    expect(data.venues).toEqual([]);
   });
 });
 

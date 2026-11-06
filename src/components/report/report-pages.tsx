@@ -370,7 +370,8 @@ function formatBiggestWin(match: ReportMatch | null): string {
 
 export function GlancePage({ data }: { data: ReportData }) {
   const label = footerLabel(data);
-  const { matches } = data;
+  // League and cup only; the Results pages list every match.
+  const matches = data.leagueCupMatches;
   const t = tally(matches);
   const goals = goalTotals(matches);
 
@@ -381,7 +382,7 @@ export function GlancePage({ data }: { data: ReportData }) {
         title={REPORT_SECTION_TITLES.glance}
         label={label}
       >
-        <EmptyNote>No matches have been played yet.</EmptyNote>
+        <EmptyNote>No league or cup matches have been played yet.</EmptyNote>
       </ReportPage>
     );
   }
@@ -431,7 +432,7 @@ export function GlancePage({ data }: { data: ReportData }) {
       </div>
 
       <Panel className="mt-[5mm]">
-        <PanelTitle>Results · every match, in order</PanelTitle>
+        <PanelTitle>Results · every league and cup match, in order</PanelTitle>
         <FormStrip matches={matches} />
       </Panel>
 
@@ -439,6 +440,9 @@ export function GlancePage({ data }: { data: ReportData }) {
         <PanelTitle>Results through the season</PanelTitle>
         <PointsTrend matches={matches} />
       </Panel>
+      <p className="mt-auto pt-[4mm] text-[8pt] text-neutral-500">
+        League and cup matches only. Friendlies and tournaments are not counted.
+      </p>
     </ReportPage>
   );
 }
@@ -537,11 +541,13 @@ export function NumbersPage({ data }: { data: ReportData }) {
       label={label}
     >
       <Panel>
-        <PanelTitle>Goals in every match</PanelTitle>
-        {data.matches.length === 0 ? (
-          <p className="text-[10pt] text-neutral-500 italic">No matches yet.</p>
+        <PanelTitle>Goals in every league and cup match</PanelTitle>
+        {data.leagueCupMatches.length === 0 ? (
+          <p className="text-[10pt] text-neutral-500 italic">
+            No league or cup matches yet.
+          </p>
         ) : (
-          <GoalsPerMatch matches={data.matches} />
+          <GoalsPerMatch matches={data.leagueCupMatches} />
         )}
       </Panel>
       <div className="mt-[5mm] grid grid-cols-2 gap-[5mm]">
@@ -562,6 +568,9 @@ export function NumbersPage({ data }: { data: ReportData }) {
           />
         </Panel>
       </div>
+      <p className="mt-auto pt-[4mm] text-[8pt] text-neutral-500">
+        League and cup matches only. Friendlies and tournaments are not counted.
+      </p>
     </ReportPage>
   );
 }
@@ -603,7 +612,7 @@ function CompetitionCard({ c }: { c: ReportCompetition }) {
 export function CompetitionsPage({ data }: { data: ReportData }) {
   return (
     <ReportPage
-      kicker="League, cups and tournaments"
+      kicker="League and cups"
       title={REPORT_SECTION_TITLES.competitions}
       label={footerLabel(data)}
     >
