@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ResultOverTimePoint } from "@/lib/data/stats";
 import {
-  cumulativeResults,
   filterResults,
   tallyGoals,
   tallyResults,
@@ -75,21 +74,5 @@ describe("tallyResults / tallyGoals", () => {
   it("counts outcomes and goals", () => {
     expect(tallyResults(results)).toEqual({ wins: 1, draws: 1, losses: 1 });
     expect(tallyGoals(results)).toEqual({ goalsFor: 3, goalsAgainst: 5 });
-  });
-});
-
-describe("cumulativeResults", () => {
-  it("accumulates wins, draws, and losses in match order", () => {
-    expect(
-      cumulativeResults(results).map((row) => [
-        row.wins,
-        row.draws,
-        row.losses,
-      ]),
-    ).toEqual([
-      [1, 0, 0],
-      [1, 1, 0],
-      [1, 1, 1],
-    ]);
   });
 });

@@ -5,6 +5,7 @@ import {
   GoalDifferenceChart,
   GoalsRingChart,
   PlayerLeaderChart,
+  ResultsOverTimeChart,
   ResultsRingChart,
 } from "@/components/stats/stats-charts";
 import type { ResultOverTimePoint } from "@/lib/data/stats";
@@ -104,6 +105,56 @@ describe("GoalDifferenceChart", () => {
     expect(html).toContain(">CONCEDED</text>");
     expect(html).toContain("2026-09-06 vs Rovers: 3-1");
     expect(html).not.toContain("recharts");
+  });
+});
+
+describe("ResultsOverTimeChart", () => {
+  it("draws the report's cumulative points chart", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).toContain("Cumulative points through the season");
+    expect(html).toContain("<polyline");
+    expect(html).not.toContain("recharts");
+    // One coloured point per match: win, draw, loss.
+    expect(html).toContain("#1c8a4e");
+    expect(html).toContain("#e0a526");
+    expect(html).toContain("#cf4437");
+  });
+
+  it("keeps a hover tooltip on every point, with the match and points so far", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    const titles = [...html.matchAll(/<title>([^<]*)<\/title>/g)].map(
+      (m) => m[1],
+    );
+    expect(titles).toHaveLength(3);
+    expect(titles[0]).toContain("vs Rovers: W 3–1 · 3 pts");
+    expect(titles[1]).toContain("vs United: D 1–1 · 4 pts");
+    expect(titles[2]).toContain("vs City: L 0–2 · 4 pts");
+  });
+
+  it("gives each point a larger invisible hover target", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html.match(/data-hit="true"/g)).toHaveLength(3);
+  });
+
+  it("describes the points for screen readers", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).toContain("Cumulative points through the season:");
+    expect(html).toContain("vs Rovers: W 3–1 · 3 pts; ");
+  });
+
+  it("renders no chart without matches", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: [] }),
+    );
+    expect(html).not.toContain("<svg");
   });
 });
 

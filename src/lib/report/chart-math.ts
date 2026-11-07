@@ -62,7 +62,7 @@ const MONTHS = [
 
 /** Indices where the month changes, with its short name, for x-axis ticks. */
 export function monthTicks(
-  matches: readonly ReportMatch[],
+  matches: ReadonlyArray<Pick<ReportMatch, "date">>,
 ): Array<{ index: number; label: string }> {
   const ticks: Array<{ index: number; label: string }> = [];
   let previous = "";

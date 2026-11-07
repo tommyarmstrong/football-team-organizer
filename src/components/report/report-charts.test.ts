@@ -7,6 +7,7 @@ import {
   GoalsLegend,
   GoalsPerMatch,
   LeaderBars,
+  PointsTrend,
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
@@ -123,5 +124,44 @@ describe("ChartTheme", () => {
     expect(html).toContain("--club:var(--primary)");
     expect(html).toContain("--chart-grid:var(--border)");
     expect(html).toContain("--chart-ink:var(--foreground)");
+  });
+});
+
+describe("PointsTrend", () => {
+  const trend = [
+    {
+      id: "a",
+      date: "2026-09-06",
+      opponent: "Rovers",
+      goalsFor: 2,
+      goalsAgainst: 0,
+      result: "W" as const,
+    },
+    {
+      id: "b",
+      date: "2026-10-04",
+      opponent: "United",
+      goalsFor: 1,
+      goalsAgainst: 1,
+      result: "D" as const,
+    },
+  ];
+
+  it("plots the running points and a tooltip for each match", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend }),
+    );
+    expect(html).toContain("<title>");
+    expect(html).toContain("vs Rovers: W 2–0 · 3 pts");
+    expect(html).toContain("vs United: D 1–1 · 4 pts");
+    // Month ticks come from the match dates.
+    expect(html).toContain(">SEP</text>");
+    expect(html).toContain(">OCT</text>");
+  });
+
+  it("renders nothing without matches", () => {
+    expect(
+      renderToStaticMarkup(createElement(PointsTrend, { matches: [] })),
+    ).toBe("");
   });
 });

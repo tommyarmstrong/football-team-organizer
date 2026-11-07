@@ -1,21 +1,8 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import type { PlayerCountPoint, ResultOverTimePoint } from "@/lib/data/stats";
-import {
-  cumulativeResults,
-  tallyGoals,
-  tallyResults,
-} from "@/lib/stats/results-view";
+import { tallyGoals, tallyResults } from "@/lib/stats/results-view";
+import { cumulativePoints, pointsTooltip } from "@/lib/report/summary";
 import { buildLeaderRows } from "@/lib/stats/leader-rows";
 import {
   ChartTheme,
@@ -23,6 +10,7 @@ import {
   GoalsLegend,
   GoalsPerMatch,
   LeaderBars,
+  PointsTrend,
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
@@ -64,108 +52,36 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
   );
 }
 
+/**
+ * Results through the season, using the report's cumulative points chart.
+ * Hover a point to see the match.
+ */
 export function ResultsOverTimeChart({
   data,
 }: {
   data: ResultOverTimePoint[];
 }) {
-  const chartData = cumulativeResults(data).map((point) => ({
-    ...point,
-    shortLabel:
-      point.label.length > 12 ? `${point.label.slice(0, 12)}…` : point.label,
+  const matches = data.map((point) => ({
+    id: point.matchId,
+    date: point.date,
+    opponent: point.label,
+    goalsFor: point.goalsFor,
+    goalsAgainst: point.goalsAgainst,
+    result: point.result,
   }));
-
-  const summary = chartData
-    .map(
-      (row) =>
-        `${row.date} vs ${row.label}: ${row.wins}W ${row.draws}D ${row.losses}L`,
-    )
+  const totals = cumulativePoints(matches);
+  const summary = matches
+    .map((m, i) => pointsTooltip(m, totals[i]!))
     .join("; ");
 
   return (
     <figure className={statsChartFrameClassName()}>
-      <div
-        className="h-72 w-full"
-        role="img"
-        aria-label={`Line chart of cumulative wins, draws, and losses. ${summary}`}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="shortLabel" tick={{ fontSize: 11 }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={32} />
-            <Tooltip
-              labelFormatter={(_, payload) => {
-                const row = payload?.[0]?.payload as
-                  (typeof chartData)[number] | undefined;
-                return row ? `${row.date} vs ${row.label}` : "";
-              }}
-            />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="wins"
-              name="Wins"
-              stroke="var(--color-win)"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="draws"
-              name="Draws"
-              stroke="var(--color-draw)"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="losses"
-              name="Losses"
-              stroke="var(--color-loss)"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      <figcaption className="sr-only">Results: {summary}</figcaption>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[20rem] text-left text-sm">
-          <caption className="sr-only">Cumulative results</caption>
-          <thead>
-            <tr className="border-border text-muted-foreground border-b">
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Match
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
-                Wins
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium tabular-nums">
-                Draws
-              </th>
-              <th scope="col" className="py-2 font-medium tabular-nums">
-                Losses
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {chartData.map((row) => (
-              <tr key={row.matchId} className="border-border/60 border-b">
-                <td className="py-2 pr-3">
-                  {row.date} vs {row.label}
-                </td>
-                <td className="py-2 pr-3 tabular-nums">{row.wins}</td>
-                <td className="py-2 pr-3 tabular-nums">{row.draws}</td>
-                <td className="py-2 tabular-nums">{row.losses}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ChartTheme>
+        <PointsTrend matches={matches} />
+      </ChartTheme>
+      <figcaption className="sr-only">
+        Cumulative points through the season: {summary}
+      </figcaption>
     </figure>
   );
 }
