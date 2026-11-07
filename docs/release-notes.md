@@ -4,6 +4,14 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Season report leans towards white text
+
+- On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and deeper orange, red-orange, red, green and teal club colours now get white text, where they sometimes got black.
+- Very light and bright colours such as yellow and light orange still get black text so they stay readable.
+- No database changes.
+
+---
+
 ## 6 November 2026 — Team photos are shrunk and cleaned
 
 - The **team photo** you upload on the team page now gets the same treatment as venue photos. Large phone photos are **scaled down and compressed**, so they upload reliably and load quickly on the team page and in the season report.
