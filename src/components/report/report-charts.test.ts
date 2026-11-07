@@ -167,6 +167,18 @@ describe("PointsTrend", () => {
     expect(html).toContain('data-point="1"');
   });
 
+  it("draws the report's point size by default and bigger points when asked", () => {
+    const small = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend }),
+    );
+    expect(small).toContain('r="4.2"');
+    const big = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend, pointRadius: 8 }),
+    );
+    expect(big).toContain('r="8"');
+    expect(big).not.toContain('r="4.2"');
+  });
+
   it("can leave out the native tooltips", () => {
     const html = renderToStaticMarkup(
       createElement(PointsTrend, { matches: trend, nativeTooltips: false }),

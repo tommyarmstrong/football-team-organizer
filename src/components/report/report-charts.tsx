@@ -4,6 +4,8 @@ import {
   DONUT_RADIUS,
   monthTicks,
   niceStep,
+  pointSizes,
+  REPORT_POINT_RADIUS,
   ringSegments,
 } from "@/lib/report/chart-math";
 import {
@@ -277,9 +279,12 @@ export function FormStrip({ matches }: { matches: readonly ReportMatch[] }) {
 export function PointsTrend({
   matches,
   nativeTooltips = true,
+  pointRadius = REPORT_POINT_RADIUS,
 }: {
   matches: readonly TrendMatch[];
   nativeTooltips?: boolean;
+  /** Size of each match's point, in SVG units. The Stats page uses bigger ones. */
+  pointRadius?: number;
 }) {
   const W = 688;
   const H = 230;
@@ -296,6 +301,7 @@ export function PointsTrend({
     (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
   const y = (value: number) => pad.t + innerH - (value / yMax) * innerH;
 
+  const size = pointSizes(points.length, innerW, pointRadius);
   const line = points.map((p, i) => `${x(i)},${y(p)}`).join(" ");
   const area = `${x(0)},${y(0)} ${line} ${x(points.length - 1)},${y(0)}`;
   const gridValues: number[] = [];
@@ -346,16 +352,16 @@ export function PointsTrend({
           <circle
             cx={x(i)}
             cy={y(points[i]!)}
-            r="4.2"
+            r={size.radius}
             fill={RESULT_COLOURS[m.result]}
             stroke="#fff"
-            strokeWidth="1.6"
+            strokeWidth={size.radius > REPORT_POINT_RADIUS ? 2.4 : 1.6}
           />
           {/* A larger invisible target, so the tooltip is easy to hit. */}
           <circle
             cx={x(i)}
             cy={y(points[i]!)}
-            r="9"
+            r={size.hit}
             fill="transparent"
             className="cursor-pointer"
             data-hit="true"

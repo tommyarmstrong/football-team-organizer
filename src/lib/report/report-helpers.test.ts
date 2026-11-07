@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   DONUT_CIRCUMFERENCE,
   donutSegments,
+  pointSizes,
+  REPORT_POINT_RADIUS,
   ringSegments,
   monthTicks,
   niceStep,
@@ -406,6 +408,31 @@ describe("chart maths", () => {
     expect(segments[0]!.length).toBeCloseTo(DONUT_CIRCUMFERENCE * 0.75, 5);
     expect(segments[1]!.offset).toBeCloseTo(DONUT_CIRCUMFERENCE * 0.75, 5);
     expect(ringSegments([{ key: "for", count: 0 }])).toEqual([]);
+  });
+
+  it("keeps the report's point size unless asked for bigger", () => {
+    expect(pointSizes(20, 648).radius).toBe(REPORT_POINT_RADIUS);
+    expect(pointSizes(20, 648, 8).radius).toBe(8);
+  });
+
+  it("shrinks big points only when neighbours would touch, never below the report size", () => {
+    // 40 matches: 16.6 units apart, so 8 would crowd; 0.42 of the gap is kept.
+    const crowded = pointSizes(40, 648, 8);
+    expect(crowded.radius).toBeGreaterThan(REPORT_POINT_RADIUS);
+    expect(crowded.radius).toBeLessThan(8);
+    expect(crowded.radius * 2).toBeLessThanOrEqual(648 / 39);
+    // 200 matches: far too many, so fall back to the report size.
+    expect(pointSizes(200, 648, 8).radius).toBe(REPORT_POINT_RADIUS);
+  });
+
+  it("makes the hover target bigger than the point but not overlapping the next", () => {
+    const roomy = pointSizes(12, 648, 8);
+    expect(roomy.hit).toBeGreaterThan(roomy.radius);
+    const gap = 648 / 11;
+    expect(roomy.hit).toBeLessThanOrEqual(gap / 2);
+    const single = pointSizes(1, 648, 8);
+    expect(single.radius).toBe(8);
+    expect(single.hit).toBeGreaterThan(8);
   });
 
   it("marks where each month starts", () => {

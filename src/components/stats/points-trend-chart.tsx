@@ -9,6 +9,11 @@ import {
   nextTooltipIndex,
 } from "@/lib/stats/chart-tooltip";
 
+/**
+ * Bigger than the printed report's points: on a phone the chart is drawn at
+ * under half its design width, so the report's size is hard to see and tap.
+ */
+const STATS_POINT_RADIUS = 8;
 /** Fixed width, so the tooltip can be kept inside the chart without measuring. */
 const TOOLTIP_WIDTH = 224;
 /** Below this many px from the top there is no room above a point. */
@@ -102,7 +107,11 @@ export function PointsTrendWithTooltip({
       }}
       onPointerUp={onPointerUp}
     >
-      <PointsTrend matches={matches} nativeTooltips={false} />
+      <PointsTrend
+        matches={matches}
+        nativeTooltips={false}
+        pointRadius={STATS_POINT_RADIUS}
+      />
       {open && match ? (
         <div
           aria-hidden="true"

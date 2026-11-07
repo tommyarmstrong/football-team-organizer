@@ -4,6 +4,13 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Bigger points on the Stats Results chart
+
+- The coloured points on the **Stats** page **Results** chart are bigger, so they are easier to see and to tap on a phone. The season report is unchanged.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Stats Results chart matches the season report
 
 - On the **Stats** page, the **Results** chart now shows **cumulative points through the season**, like "Results through the season" in the season report, instead of three lines for wins, draws and losses.
