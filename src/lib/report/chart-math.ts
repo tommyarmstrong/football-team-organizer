@@ -85,3 +85,25 @@ export function niceStep(max: number): number {
   if (max <= 60) return 10;
   return 20;
 }
+
+/** Point size the report prints (SVG units). */
+export const REPORT_POINT_RADIUS = 4.2;
+
+/**
+ * Radius of a point on the points trend, and of its invisible hover target.
+ *
+ * `wanted` is how big the point should be; it shrinks only when there are so
+ * many matches that neighbouring points would touch, and never below the
+ * report's size. The hover target is about twice the point but never wider
+ * than half the gap to the next point, so neighbouring targets do not overlap.
+ */
+export function pointSizes(
+  count: number,
+  innerWidth: number,
+  wanted: number = REPORT_POINT_RADIUS,
+): { radius: number; hit: number } {
+  const gap = count > 1 ? innerWidth / (count - 1) : Number.POSITIVE_INFINITY;
+  const radius = Math.max(REPORT_POINT_RADIUS, Math.min(wanted, gap * 0.42));
+  const hit = Math.max(radius + 2, Math.min(radius * 2, 9 + radius, gap / 2));
+  return { radius, hit };
+}

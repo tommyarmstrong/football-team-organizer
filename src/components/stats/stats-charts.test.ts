@@ -137,6 +137,14 @@ describe("ResultsOverTimeChart", () => {
     expect(html).not.toContain("<title>");
   });
 
+  it("draws bigger points than the printed report", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).toContain('r="8"');
+    expect(html).not.toContain('r="4.2"');
+  });
+
   it("shows no tooltip until a point is hovered or tapped", () => {
     const html = renderToStaticMarkup(
       createElement(ResultsOverTimeChart, { data: results }),
