@@ -120,6 +120,12 @@ describe("report colour", () => {
   it("picks white on dark colours and near-black on light ones", () => {
     expect(readableForeground("#1D3A8A")).toBe("#FFFFFF");
     expect(readableForeground("#FFD400")).toBe("#111814");
+    // Favours white: mid-tones get white, bright/light colours stay black.
+    expect(readableForeground("#F97316")).toBe("#FFFFFF");
+    expect(readableForeground("#E85D04")).toBe("#FFFFFF");
+    expect(readableForeground("#16A34A")).toBe("#FFFFFF");
+    expect(readableForeground("#FF8C00")).toBe("#111814");
+    expect(readableForeground("#FFA500")).toBe("#111814");
   });
 
   it("flags light colours so text on white paper is darkened", () => {

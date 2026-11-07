@@ -41,11 +41,20 @@ export function resolveReportColour(colour: string | null | undefined): string {
   return value && isValidClubColour(value) ? value : DEFAULT_REPORT_COLOUR;
 }
 
-/** Black or white, whichever reads best on top of `colour`. */
+/**
+ * White text looks cleaner on a club panel than black, so it wins unless black
+ * is clearly better: white is used while its contrast ratio, multiplied by
+ * this, is at least black's. Mid-tone colours such as orange or red therefore
+ * get white; light colours such as yellow still get black.
+ */
+export const WHITE_TEXT_BIAS = 2.5;
+
+/** White or near-black, whichever reads best on `colour` (leaning to white). */
 export function readableForeground(colour: string): "#FFFFFF" | "#111814" {
   const rgb =
     hexToRgb(resolveReportColour(colour)) ?? hexToRgb(DEFAULT_REPORT_COLOUR)!;
-  return contrastRatio(rgb, WHITE) >= contrastRatio(rgb, NEAR_BLACK)
+  return contrastRatio(rgb, WHITE) * WHITE_TEXT_BIAS >=
+    contrastRatio(rgb, NEAR_BLACK)
     ? "#FFFFFF"
     : "#111814";
 }
