@@ -21,11 +21,14 @@ describe("stats charts use the card frame", () => {
       "utf8",
     );
     expect(charts).toContain("statsChartFrameClassName()");
-    // Goals draws its chart and table with the shared player chart.
-    expect(goals).toContain("<PlayerCountChart");
+    // Goals draws its bars with the shared leader chart, inside the card frame.
+    expect(goals).toContain("<PlayerLeaderChart");
+    expect(charts).toMatch(
+      /export function PlayerLeaderChart[\s\S]*?statsChartFrameClassName\(\)/,
+    );
     expect(goals).not.toContain("<BarChart");
-    // One bar colour for every player chart, Goals included.
+    // No hard-coded bar colour: the leader bars use the club colour.
     expect(goals).not.toContain("barFill");
-    expect(charts).toContain('fill="var(--color-chart-1)"');
+    expect(charts).not.toContain("--color-chart-1");
   });
 });

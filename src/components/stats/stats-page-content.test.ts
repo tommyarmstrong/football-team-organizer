@@ -19,9 +19,10 @@ describe("StatsPageContent", () => {
     expect(source).toContain('metricAriaLabel="Assists metric"');
     expect(source).toContain('metricNoun="Matches"');
     const appearances = source.slice(
-      source.indexOf('title="Appearances"'),
-      source.indexOf("{periodStartsByPlayer ? ("),
+      source.indexOf("const appearancesSection"),
+      source.indexOf("return (\n    <>"),
     );
+    expect(appearances).toContain('title="Appearances"');
     expect(appearances).toContain("filtered={filteredAppearances}");
     expect(appearances).not.toContain("metricAriaLabel");
     expect(appearances).not.toContain("perGameLabel");
@@ -42,7 +43,6 @@ describe("StatsPageContent", () => {
 
     const section = source.slice(monthly, coach);
     expect(section).toContain('metricLabel="Awards"');
-    expect(section).toContain('ariaTitle="player of the month"');
     expect(section).toContain("filtered={playerOfTheMonthByPlayer}");
     expect(section).not.toContain("metricNoun");
   });
@@ -59,18 +59,30 @@ describe("StatsPageContent", () => {
     const tilesIndex = source.indexOf(
       "<SeasonTiles results={filteredResults} />",
     );
-    const piesIndex = source.indexOf("<ResultPieCharts");
+    const piesIndex = source.indexOf("<ResultRingCharts");
     expect(filtersIndex).toBeGreaterThan(-1);
     expect(tilesIndex).toBeGreaterThan(filtersIndex);
     expect(piesIndex).toBeGreaterThan(tilesIndex);
   });
 
-  it("shows Period starts beneath Appearances, only when the data is passed", () => {
-    const appearances = source.indexOf('title="Appearances"');
-    const periodStarts = source.indexOf('title="Period starts"');
+  it("shows Period starts beside Appearances, only when the data is passed", () => {
+    const appearances = source.indexOf("{appearancesSection}");
+    const periodStarts = source.indexOf("<PeriodStartsSection");
     expect(appearances).toBeGreaterThan(-1);
     expect(periodStarts).toBeGreaterThan(appearances);
     expect(source).toContain("{periodStartsByPlayer ? (");
+  });
+
+  it("shows Appearances full width when there are no period starts", () => {
+    const block = source.slice(source.indexOf("{periodStartsByPlayer ? ("));
+    const side = block.slice(0, block.indexOf(") : ("));
+    expect(side).toContain("<SideBySide>");
+    const fallback = block.slice(
+      block.indexOf(") : ("),
+      block.indexOf("    </>"),
+    );
+    expect(fallback).toContain("appearancesSection");
+    expect(fallback).not.toContain("<SideBySide>");
   });
 
   it("gives Period starts position, Type and View filters, in that order", () => {
@@ -99,7 +111,7 @@ describe("StatsPageContent", () => {
     );
     expect(section).toContain("buildPeriodStartsViewRows(");
     expect(section).toContain("PERIODS_PER_GAME_PERCENT_LABEL");
-    expect(section).toContain('perGameBasis="periods"');
+    expect(section).toContain("<PlayerLeaderChart");
     expect(section).toContain('percent={metric === "per_game"}');
   });
 
@@ -121,5 +133,118 @@ describe("StatsPageContent", () => {
     );
     expect(goals).toContain('<Section title="Goals">');
     expect(goals).not.toContain("Goal Scorers");
+  });
+
+  it("draws results and goals as rings, not pies", () => {
+    expect(source).toContain("<ResultsRingChart data={filteredResults} />");
+    expect(source).toContain("<GoalsRingChart data={filteredResults} />");
+    expect(source).not.toContain("PieChart");
+  });
+
+  it("draws goal difference with the report's goals-per-match chart", () => {
+    const stats = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
+    );
+    const chart = stats.slice(
+      stats.indexOf("export function GoalDifferenceChart"),
+      stats.indexOf("export function ResultsOverTimeChart"),
+    );
+    expect(chart).toContain("<GoalsPerMatch");
+    expect(chart).not.toContain("LineChart");
+  });
+
+  it("draws goals, assists and both awards as leader bars", () => {
+    const goals = readFileSync(
+      path.join(import.meta.dirname, "goals-section.tsx"),
+      "utf8",
+    );
+    expect(goals).toContain("<PlayerLeaderChart");
+    expect(goals).not.toContain("<PlayerCountChart");
+
+    // Every player chart is a leader chart: the old bar chart is gone.
+    expect(source).not.toContain("<PlayerCountChart");
+    const charts = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
+    );
+    expect(charts).not.toContain("PlayerCountChart");
+    expect(charts).not.toContain("<BarChart");
+  });
+
+  it("draws appearances and period starts as leader bars", () => {
+    const appearances = source.slice(
+      source.indexOf("function FilteredPlayerCountSection"),
+    );
+    expect(appearances).toContain("<PlayerLeaderChart");
+    const periods = source.slice(
+      source.indexOf("function PeriodStartsSection"),
+      source.indexOf("function PlayerCountSection"),
+    );
+    expect(periods).toContain("<PlayerLeaderChart");
+  });
+
+  it("puts the two awards, and goals and assists, side by side on desktop", () => {
+    expect(source).toContain("function SideBySide");
+    expect(source).toContain("lg:grid-cols-2");
+
+    const pair = (from: string, to: string) =>
+      source.slice(source.indexOf(from), source.indexOf(to));
+
+    const awards = pair("<SideBySide>", "</SideBySide>");
+    expect(awards).toContain('title="Player of the month"');
+    expect(awards).toContain('title="Coach\'s player of the match"');
+    expect(awards).not.toContain("<GoalsSection");
+
+    const second = source.indexOf(
+      "<SideBySide>",
+      source.indexOf("</SideBySide>"),
+    );
+    const goalsAndAssists = source.slice(
+      second,
+      source.indexOf("</SideBySide>", second),
+    );
+    expect(goalsAndAssists).toContain("<GoalsSection");
+    expect(goalsAndAssists).toContain('title="Assists"');
+    expect(goalsAndAssists).not.toContain('title="Appearances"');
+
+    // Appearances beside Period starts (managers), stacked on phones.
+    const start = source.indexOf("{periodStartsByPlayer ? (");
+    const periodPair = source.slice(start, source.indexOf(") : (", start));
+    expect(periodPair).toContain("<SideBySide>");
+    expect(periodPair).toContain("{appearancesSection}");
+    expect(periodPair).toContain("<PeriodStartsSection");
+  });
+
+  it("stacks the side-by-side sections on mobile and lets them shrink", () => {
+    const grid = source.slice(source.indexOf("function SideBySide"));
+    const classes = grid.slice(grid.indexOf('className="'), grid.indexOf('">'));
+    // No columns below the lg breakpoint, so phones get one stacked column.
+    expect(classes).not.toMatch(/(^|[ "])grid-cols-2/);
+    expect(classes).toContain("lg:grid-cols-2");
+    expect(classes).toContain("*:min-w-0");
+  });
+
+  it("gives the Results chart a tooltip that works on touch", () => {
+    const stats = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
+    );
+    const chart = stats.slice(
+      stats.indexOf("export function ResultsOverTimeChart"),
+      stats.indexOf("export function ResultsRingChart"),
+    );
+    expect(chart).toContain("<PointsTrendWithTooltip");
+
+    const tooltip = readFileSync(
+      path.join(import.meta.dirname, "points-trend-chart.tsx"),
+      "utf8",
+    );
+    expect(tooltip).toContain('"use client"');
+    expect(tooltip).toContain("nativeTooltips={false}");
+    // Mouse hover, touch tap, and a tap outside to close.
+    expect(tooltip).toContain("onPointerMove");
+    expect(tooltip).toContain("onPointerUp");
+    expect(tooltip).toContain('addEventListener("pointerdown"');
   });
 });

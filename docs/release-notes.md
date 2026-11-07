@@ -4,6 +4,49 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Bigger points on the Stats Results chart
+
+- The coloured points on the **Stats** page **Results** chart are bigger, so they are easier to see and to tap on a phone. The season report is unchanged.
+- No database changes.
+
+---
+
+## 7 November 2026 — Stats Results chart matches the season report
+
+- On the **Stats** page, the **Results** chart now shows **cumulative points through the season**, like "Results through the season" in the season report, instead of three lines for wins, draws and losses.
+- Each match is a coloured point (green win, amber draw, red loss). **Hover a point, or tap it on a phone,** to see the match: date, opponent, score and points so far. Tap it again, or tap elsewhere, to close it.
+- It follows the competition filters at the top of the page.
+- No database changes.
+
+---
+
+## 7 November 2026 — Appearances and Period starts match the other stats charts
+
+- On the **Stats** page, **Appearances** and **Period starts** (club managers only) are now ranked bars, like Goals, Assists and the awards. The position, Type and Total / Per game filters still work.
+- On larger screens they sit **side by side**; on phones they stay stacked. If you can't see Period starts, Appearances uses the full width.
+- The tables under these two charts are gone. Period starts shows **Periods per game (%)** directly when you pick that view.
+- No database changes.
+
+---
+
+## 7 November 2026 — Stats charts side by side on desktop
+
+- On the **Stats** page, on larger screens, **Player of the month** now sits next to **Coach's player of the match**, and **Goals** sits next to **Assists**. On phones they stay stacked one above the other.
+- No database changes.
+
+---
+
+## 7 November 2026 — Stats page matches the season report
+
+- On the **Stats** page, the **Results** and **Goals** charts are now rings with a legend, like the Results ring on the report's Season at a glance page.
+- **Goal difference** now shows goals scored above, and goals conceded below, the line for every match, like the report's "Goals in every league and cup match" chart.
+- **Goals**, **Assists**, **Player of the month** and **Coach's player of the match** are now ranked bars, like the report's Top scorers and Most assists. Players on zero are left out. The competition, position and Total / Per game / Per period filters still work.
+- The Goals and Assists charts no longer have a table underneath. Switch the view to **Per game** to see rates.
+- The charts follow your club colour, and dark mode.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Season report leans towards white text
 
 - On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and deeper orange, red-orange, red, green and teal club colours now get white text, where they sometimes got black.

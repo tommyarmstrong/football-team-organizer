@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
   GoalsByPlayerPoint,
   PlayerCountPoint,
@@ -49,16 +49,6 @@ const GoalsSection = dynamic(
   },
 );
 
-const PlayerCountChart = dynamic(
-  () =>
-    import("@/components/stats/stats-charts").then(
-      (mod) => mod.PlayerCountChart,
-    ),
-  {
-    loading: () => <Skeleton className="h-72 w-full" />,
-  },
-);
-
 const GoalDifferenceChart = dynamic(
   () =>
     import("@/components/stats/stats-charts").then(
@@ -79,25 +69,47 @@ const ResultsOverTimeChart = dynamic(
   },
 );
 
-const ResultsPieChart = dynamic(
+const ResultsRingChart = dynamic(
   () =>
     import("@/components/stats/stats-charts").then(
-      (mod) => mod.ResultsPieChart,
+      (mod) => mod.ResultsRingChart,
     ),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
 );
 
-const GoalsPieChart = dynamic(
+const GoalsRingChart = dynamic(
   () =>
-    import("@/components/stats/stats-charts").then((mod) => mod.GoalsPieChart),
+    import("@/components/stats/stats-charts").then((mod) => mod.GoalsRingChart),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
 );
 
-function ResultPieCharts({
+const PlayerLeaderChart = dynamic(
+  () =>
+    import("@/components/stats/stats-charts").then(
+      (mod) => mod.PlayerLeaderChart,
+    ),
+  {
+    loading: () => <Skeleton className="h-72 w-full" />,
+  },
+);
+
+/**
+ * Two sections in a row on desktop, stacked on phones. `min-w-0` lets the
+ * charts and filters shrink to the half-width column instead of overflowing.
+ */
+function SideBySide({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid items-start gap-8 *:min-w-0 lg:grid-cols-2">
+      {children}
+    </div>
+  );
+}
+
+function ResultRingCharts({
   results,
   filteredResults,
   hasResultOutcomes,
@@ -124,7 +136,7 @@ function ResultPieCharts({
             description={emptyFilterDescription}
           />
         ) : (
-          <ResultsPieChart data={filteredResults} />
+          <ResultsRingChart data={filteredResults} />
         )}
       </Section>
 
@@ -140,7 +152,7 @@ function ResultPieCharts({
             description={emptyFilterDescription}
           />
         ) : (
-          <GoalsPieChart data={filteredResults} />
+          <GoalsRingChart data={filteredResults} />
         )}
       </Section>
     </div>
@@ -205,6 +217,21 @@ export function StatsPageContent({
   const hasGoals = goalsTally.goalsFor + goalsTally.goalsAgainst > 0;
   const emptyFilterDescription = "Try another competition or competition type.";
 
+  const appearancesSection = (
+    <PlayerCountSection
+      title="Appearances"
+      emptyTitle="No squad appearances yet"
+      emptyDescription="Add match-day squads to populate this chart."
+      emptyFilterTitle="No appearances for this filter"
+      data={matchesPlayed}
+      filtered={filteredAppearances}
+      metricLabel="Matches"
+      emptyFilterDescription={emptyFilterDescription}
+      metricNoun="Matches"
+      emptyViewTitle="No appearances for this view"
+    />
+  );
+
   return (
     <>
       {results.length > 0 ||
@@ -224,7 +251,7 @@ export function StatsPageContent({
 
       <SeasonTiles results={filteredResults} />
 
-      <ResultPieCharts
+      <ResultRingCharts
         results={results}
         filteredResults={filteredResults}
         hasResultOutcomes={hasResultOutcomes}
@@ -265,73 +292,64 @@ export function StatsPageContent({
       </Section>
 
       {/* Awards are recorded per team, so competition filters do not change this chart. */}
-      <PlayerCountSection
-        title="Player of the month"
-        emptyTitle="No awards yet"
-        emptyDescription="Add player of the month awards from the Team page to populate this chart."
-        emptyFilterTitle="No awards for this filter"
-        data={playerOfTheMonthByPlayer}
-        filtered={playerOfTheMonthByPlayer}
-        metricLabel="Awards"
-        ariaTitle="player of the month"
-        emptyFilterDescription={emptyFilterDescription}
-      />
+      <SideBySide>
+        <PlayerCountSection
+          title="Player of the month"
+          emptyTitle="No awards yet"
+          emptyDescription="Add player of the month awards from the Team page to populate this chart."
+          emptyFilterTitle="No awards for this filter"
+          data={playerOfTheMonthByPlayer}
+          filtered={playerOfTheMonthByPlayer}
+          metricLabel="Awards"
+          emptyFilterDescription={emptyFilterDescription}
+        />
 
-      <PlayerCountSection
-        title="Coach's player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
-        emptyFilterTitle="No awards for this filter"
-        data={potmByPlayer}
-        filtered={filteredPotm}
-        metricLabel="Awards"
-        ariaTitle="coach's player of the match"
-        emptyFilterDescription={emptyFilterDescription}
-      />
+        <PlayerCountSection
+          title="Coach's player of the match"
+          emptyTitle="No awards yet"
+          emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
+          emptyFilterTitle="No awards for this filter"
+          data={potmByPlayer}
+          filtered={filteredPotm}
+          metricLabel="Awards"
+          emptyFilterDescription={emptyFilterDescription}
+        />
+      </SideBySide>
 
-      <GoalsSection
-        data={goalsForView}
-        competitionId={competitionId}
-        competitionKind={competitionKind}
-      />
-
-      <PlayerCountSection
-        title="Assists"
-        emptyTitle="No assists yet"
-        emptyDescription="Add assists on match detail pages to populate this chart."
-        emptyFilterTitle="No assists for this filter"
-        data={assistsByPlayer}
-        filtered={assistsForView}
-        metricLabel="Assists"
-        perGameLabel="Assists per game"
-        ariaTitle="assists"
-        emptyFilterDescription={emptyFilterDescription}
-        metricNoun="Assists"
-        metricAriaLabel="Assists metric"
-        emptyViewTitle="No assists for this view"
-      />
-
-      <PlayerCountSection
-        title="Appearances"
-        emptyTitle="No squad appearances yet"
-        emptyDescription="Add match-day squads to populate this chart."
-        emptyFilterTitle="No appearances for this filter"
-        data={matchesPlayed}
-        filtered={filteredAppearances}
-        metricLabel="Matches"
-        ariaTitle="appearances"
-        emptyFilterDescription={emptyFilterDescription}
-        metricNoun="Matches"
-        emptyViewTitle="No appearances for this view"
-      />
-
-      {periodStartsByPlayer ? (
-        <PeriodStartsSection
-          data={periodStartsByPlayer}
+      <SideBySide>
+        <GoalsSection
+          data={goalsForView}
           competitionId={competitionId}
           competitionKind={competitionKind}
         />
-      ) : null}
+
+        <PlayerCountSection
+          title="Assists"
+          emptyTitle="No assists yet"
+          emptyDescription="Add assists on match detail pages to populate this chart."
+          emptyFilterTitle="No assists for this filter"
+          data={assistsByPlayer}
+          filtered={assistsForView}
+          metricLabel="Assists"
+          emptyFilterDescription={emptyFilterDescription}
+          metricNoun="Assists"
+          metricAriaLabel="Assists metric"
+          emptyViewTitle="No assists for this view"
+        />
+      </SideBySide>
+
+      {periodStartsByPlayer ? (
+        <SideBySide>
+          {appearancesSection}
+          <PeriodStartsSection
+            data={periodStartsByPlayer}
+            competitionId={competitionId}
+            competitionKind={competitionKind}
+          />
+        </SideBySide>
+      ) : (
+        appearancesSection
+      )}
     </>
   );
 }
@@ -390,20 +408,16 @@ function PeriodStartsSection({
               description="Try another competition, position filter, type, or view."
             />
           ) : (
-            <PlayerCountChart
+            <PlayerLeaderChart
               data={rows}
-              metricLabel="Periods"
-              seriesLabel={
+              unit={
                 metric === "per_game"
-                  ? PERIODS_PER_GAME_PERCENT_LABEL
-                  : "Periods"
+                  ? PERIODS_PER_GAME_PERCENT_LABEL.toLowerCase()
+                  : "periods"
               }
-              perGameLabel={PERIODS_PER_GAME_PERCENT_LABEL}
-              perGameBasis="periods"
               percent={metric === "per_game"}
               allowDecimals={metric === "per_game"}
               valueKey="value"
-              ariaTitle="period starts"
             />
           )}
         </div>
@@ -421,8 +435,6 @@ function PlayerCountSection({
   data,
   filtered,
   metricLabel,
-  perGameLabel,
-  ariaTitle,
   metricNoun,
   metricAriaLabel,
   emptyViewTitle,
@@ -435,8 +447,6 @@ function PlayerCountSection({
   data: PlayerCountPoint[];
   filtered: PlayerCountPoint[];
   metricLabel: string;
-  perGameLabel?: string;
-  ariaTitle: string;
   /** With `emptyViewTitle`, adds the position filters, using this as the unit. */
   metricNoun?: string;
   /** Also adds the Total / Per game / Per period "View" filter. */
@@ -451,8 +461,6 @@ function PlayerCountSection({
         emptyDescription={emptyDescription}
         data={data}
         filtered={filtered}
-        perGameLabel={perGameLabel}
-        ariaTitle={ariaTitle}
         metricNoun={metricNoun}
         metricAriaLabel={metricAriaLabel}
         emptyViewTitle={emptyViewTitle}
@@ -470,12 +478,7 @@ function PlayerCountSection({
           description={emptyFilterDescription}
         />
       ) : (
-        <PlayerCountChart
-          data={filtered}
-          metricLabel={metricLabel}
-          perGameLabel={perGameLabel}
-          ariaTitle={ariaTitle}
-        />
+        <PlayerLeaderChart data={filtered} unit={metricLabel.toLowerCase()} />
       )}
     </Section>
   );
@@ -487,8 +490,6 @@ function FilteredPlayerCountSection({
   emptyDescription,
   data,
   filtered,
-  perGameLabel,
-  ariaTitle,
   metricNoun,
   metricAriaLabel,
   emptyViewTitle,
@@ -498,8 +499,6 @@ function FilteredPlayerCountSection({
   emptyDescription: string;
   data: PlayerCountPoint[];
   filtered: PlayerCountPoint[];
-  perGameLabel?: string;
-  ariaTitle: string;
   metricNoun: string;
   metricAriaLabel?: string;
   emptyViewTitle: string;
@@ -530,12 +529,9 @@ function FilteredPlayerCountSection({
               description="Try another competition, position filter, or metric."
             />
           ) : (
-            <PlayerCountChart
+            <PlayerLeaderChart
               data={rows}
-              metricLabel={metricNoun}
-              seriesLabel={countMetricLabel(metric, metricNoun)}
-              perGameLabel={perGameLabel}
-              ariaTitle={ariaTitle}
+              unit={countMetricLabel(metric, metricNoun).toLowerCase()}
               allowDecimals={metric !== "total"}
               valueKey="value"
             />
