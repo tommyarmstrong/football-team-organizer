@@ -19,9 +19,10 @@ describe("StatsPageContent", () => {
     expect(source).toContain('metricAriaLabel="Assists metric"');
     expect(source).toContain('metricNoun="Matches"');
     const appearances = source.slice(
-      source.indexOf('title="Appearances"'),
-      source.indexOf("{periodStartsByPlayer ? ("),
+      source.indexOf("const appearancesSection"),
+      source.indexOf("return (\n    <>"),
     );
+    expect(appearances).toContain('title="Appearances"');
     expect(appearances).toContain("filtered={filteredAppearances}");
     expect(appearances).not.toContain("metricAriaLabel");
     expect(appearances).not.toContain("perGameLabel");
@@ -42,7 +43,6 @@ describe("StatsPageContent", () => {
 
     const section = source.slice(monthly, coach);
     expect(section).toContain('metricLabel="Awards"');
-    expect(section).toContain('ariaTitle="player of the month"');
     expect(section).toContain("filtered={playerOfTheMonthByPlayer}");
     expect(section).not.toContain("metricNoun");
   });
@@ -65,12 +65,24 @@ describe("StatsPageContent", () => {
     expect(piesIndex).toBeGreaterThan(tilesIndex);
   });
 
-  it("shows Period starts beneath Appearances, only when the data is passed", () => {
-    const appearances = source.indexOf('title="Appearances"');
-    const periodStarts = source.indexOf('title="Period starts"');
+  it("shows Period starts beside Appearances, only when the data is passed", () => {
+    const appearances = source.indexOf("{appearancesSection}");
+    const periodStarts = source.indexOf("<PeriodStartsSection");
     expect(appearances).toBeGreaterThan(-1);
     expect(periodStarts).toBeGreaterThan(appearances);
     expect(source).toContain("{periodStartsByPlayer ? (");
+  });
+
+  it("shows Appearances full width when there are no period starts", () => {
+    const block = source.slice(source.indexOf("{periodStartsByPlayer ? ("));
+    const side = block.slice(0, block.indexOf(") : ("));
+    expect(side).toContain("<SideBySide>");
+    const fallback = block.slice(
+      block.indexOf(") : ("),
+      block.indexOf("    </>"),
+    );
+    expect(fallback).toContain("appearancesSection");
+    expect(fallback).not.toContain("<SideBySide>");
   });
 
   it("gives Period starts position, Type and View filters, in that order", () => {
@@ -99,7 +111,7 @@ describe("StatsPageContent", () => {
     );
     expect(section).toContain("buildPeriodStartsViewRows(");
     expect(section).toContain("PERIODS_PER_GAME_PERCENT_LABEL");
-    expect(section).toContain('perGameBasis="periods"');
+    expect(section).toContain("<PlayerLeaderChart");
     expect(section).toContain('percent={metric === "per_game"}');
   });
 
@@ -150,29 +162,26 @@ describe("StatsPageContent", () => {
     expect(goals).toContain("<PlayerLeaderChart");
     expect(goals).not.toContain("<PlayerCountChart");
 
-    const awards = source.slice(
-      source.indexOf('title="Player of the month"'),
-      source.indexOf("<GoalsSection"),
+    // Every player chart is a leader chart: the old bar chart is gone.
+    expect(source).not.toContain("<PlayerCountChart");
+    const charts = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
     );
-    expect(awards.match(/leaderboard/g)).toHaveLength(2);
-
-    const assists = source.slice(
-      source.indexOf('title="Assists"'),
-      source.indexOf('title="Appearances"'),
-    );
-    expect(assists).toContain("leaderboard");
+    expect(charts).not.toContain("PlayerCountChart");
+    expect(charts).not.toContain("<BarChart");
   });
 
-  it("keeps the bar chart and table for appearances and period starts", () => {
+  it("draws appearances and period starts as leader bars", () => {
     const appearances = source.slice(
-      source.indexOf('title="Appearances"'),
-      source.indexOf("{periodStartsByPlayer ? ("),
+      source.indexOf("function FilteredPlayerCountSection"),
     );
-    expect(appearances).not.toContain("leaderboard");
+    expect(appearances).toContain("<PlayerLeaderChart");
     const periods = source.slice(
       source.indexOf("function PeriodStartsSection"),
+      source.indexOf("function PlayerCountSection"),
     );
-    expect(periods).toContain("<PlayerCountChart");
+    expect(periods).toContain("<PlayerLeaderChart");
   });
 
   it("puts the two awards, and goals and assists, side by side on desktop", () => {
@@ -198,6 +207,13 @@ describe("StatsPageContent", () => {
     expect(goalsAndAssists).toContain("<GoalsSection");
     expect(goalsAndAssists).toContain('title="Assists"');
     expect(goalsAndAssists).not.toContain('title="Appearances"');
+
+    // Appearances beside Period starts (managers), stacked on phones.
+    const start = source.indexOf("{periodStartsByPlayer ? (");
+    const periodPair = source.slice(start, source.indexOf(") : (", start));
+    expect(periodPair).toContain("<SideBySide>");
+    expect(periodPair).toContain("{appearancesSection}");
+    expect(periodPair).toContain("<PeriodStartsSection");
   });
 
   it("stacks the side-by-side sections on mobile and lets them shrink", () => {

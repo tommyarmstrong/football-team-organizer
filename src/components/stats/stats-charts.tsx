@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -28,168 +26,14 @@ import {
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
-import {
-  formatPeriodsPerGamePercent,
-  periodsPerGamePercent,
-} from "@/lib/stats/period-starts-view";
+import { formatPeriodsPerGamePercent } from "@/lib/stats/period-starts-view";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
-/** What the per-player bar chart and table need from each player. */
+/** What the leader bars need from each player. */
 export type PlayerChartRow = Pick<
   PlayerCountPoint,
-  "playerId" | "name" | "count" | "matchesPlayed" | "periodsAvailable"
+  "playerId" | "name" | "count"
 > & { value?: number };
-
-export function PlayerCountChart({
-  data,
-  metricLabel,
-  ariaTitle,
-  perGameLabel,
-  allowDecimals = false,
-  valueKey = "count",
-  seriesLabel,
-  perGameBasis = "matches",
-  percent = false,
-}: {
-  data: PlayerChartRow[];
-  metricLabel: string;
-  ariaTitle: string;
-  perGameLabel?: string;
-  allowDecimals?: boolean;
-  valueKey?: "count" | "value";
-  /** Chart series name. The table keeps `metricLabel` for the total column. */
-  seriesLabel?: string;
-  /**
-   * What the per-game column divides by: the player's matches (default), or
-   * the periods in their games, shown as a percent.
-   */
-  perGameBasis?: "matches" | "periods";
-  /** The plotted values are percents (0-100), e.g. periods per game (%). */
-  percent?: boolean;
-}) {
-  const seriesName = seriesLabel ?? metricLabel;
-  const shownValue = (row: PlayerChartRow) =>
-    valueKey === "value" && row.value != null ? row.value : row.count;
-  const plotsPercent = percent && valueKey === "value";
-  const formatShown = (value: number) =>
-    plotsPercent
-      ? formatPeriodsPerGamePercent(value)
-      : allowDecimals
-        ? value.toFixed(2)
-        : String(value);
-  const summary = data
-    .map((row) => `${row.name}: ${formatShown(shownValue(row))}`)
-    .join("; ");
-
-  return (
-    <figure className={statsChartFrameClassName()}>
-      <div
-        className="h-72 w-full"
-        role="img"
-        aria-label={`Bar chart of ${ariaTitle}. ${summary}`}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 8, right: 8, left: 0, bottom: 48 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              interval={0}
-              angle={-35}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis
-              allowDecimals={allowDecimals}
-              tick={{ fontSize: 12 }}
-              width={plotsPercent ? 48 : allowDecimals ? 40 : 32}
-              tickFormatter={plotsPercent ? (value) => `${value}%` : undefined}
-            />
-            {allowDecimals ? (
-              <Tooltip
-                formatter={(value) => [
-                  typeof value === "number" ? formatShown(value) : value,
-                  seriesName,
-                ]}
-              />
-            ) : (
-              <Tooltip />
-            )}
-            <Bar
-              dataKey={valueKey}
-              name={seriesName}
-              fill="var(--color-chart-1)"
-              radius={4}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <figcaption className="sr-only">
-        {seriesName} by player: {summary}
-      </figcaption>
-      <div className="overflow-x-auto">
-        <table
-          className={`w-full text-left text-sm ${perGameLabel ? "min-w-[20rem]" : "min-w-[16rem]"}`}
-        >
-          <caption className="sr-only">
-            {perGameLabel
-              ? `${metricLabel} and ${perGameLabel.toLowerCase()} by player`
-              : `${metricLabel} by player`}
-          </caption>
-          <thead>
-            <tr className="border-border text-muted-foreground border-b">
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Player
-              </th>
-              <th
-                scope="col"
-                className={`py-2 font-medium tabular-nums ${perGameLabel ? "pr-3" : ""}`}
-              >
-                {metricLabel}
-              </th>
-              {perGameLabel ? (
-                <th scope="col" className="py-2 font-medium tabular-nums">
-                  {perGameLabel}
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row) => {
-              const perGame =
-                perGameBasis === "periods"
-                  ? formatPeriodsPerGamePercent(
-                      periodsPerGamePercent(
-                        row.count,
-                        row.periodsAvailable ?? 0,
-                      ),
-                    )
-                  : row.matchesPlayed != null && row.matchesPlayed > 0
-                    ? (row.count / row.matchesPlayed).toFixed(2)
-                    : "—";
-              return (
-                <tr key={row.playerId} className="border-border/60 border-b">
-                  <td className="py-2 pr-3">{row.name}</td>
-                  <td
-                    className={`py-2 tabular-nums ${perGameLabel ? "pr-3" : ""}`}
-                  >
-                    {row.count}
-                  </td>
-                  {perGameLabel ? (
-                    <td className="py-2 tabular-nums">{perGame}</td>
-                  ) : null}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </figure>
-  );
-}
 
 /**
  * Goals scored and conceded in every match, using the season report's
@@ -377,12 +221,15 @@ export function PlayerLeaderChart({
   unit,
   allowDecimals = false,
   valueKey = "count",
+  percent = false,
 }: {
   data: PlayerChartRow[];
   /** What the numbers are, read out by screen readers ("goals"). */
   unit: string;
   allowDecimals?: boolean;
   valueKey?: "count" | "value";
+  /** The plotted values are percents (0-100), e.g. periods per game (%). */
+  percent?: boolean;
 }) {
   const rows = buildLeaderRows(
     data.map((row) => ({
@@ -390,7 +237,7 @@ export function PlayerLeaderChart({
       name: row.name,
       value: valueKey === "value" && row.value != null ? row.value : row.count,
     })),
-    allowDecimals,
+    percent ? formatPeriodsPerGamePercent : allowDecimals,
   );
 
   return (
@@ -401,7 +248,7 @@ export function PlayerLeaderChart({
           unit={unit}
           emptyText={`No ${unit} recorded.`}
           nameWidth="min(40mm, 38%)"
-          valueWidth={allowDecimals ? "13mm" : "9mm"}
+          valueWidth={percent ? "16mm" : allowDecimals ? "13mm" : "9mm"}
         />
       </ChartTheme>
     </figure>
