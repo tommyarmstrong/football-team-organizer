@@ -6,7 +6,12 @@ import {
   niceStep,
   ringSegments,
 } from "@/lib/report/chart-math";
-import { cumulativePoints, type Tally } from "@/lib/report/summary";
+import {
+  cumulativePoints,
+  pointsTooltip,
+  type Tally,
+  type TrendMatch,
+} from "@/lib/report/summary";
 import type { ReportMatch } from "@/lib/report/types";
 
 /**
@@ -264,7 +269,18 @@ export function FormStrip({ matches }: { matches: readonly ReportMatch[] }) {
 // Points trend
 // ---------------------------------------------------------------------------
 
-export function PointsTrend({ matches }: { matches: readonly ReportMatch[] }) {
+/**
+ * Cumulative points after each match. Each point is tagged `data-point` (its
+ * index) and, by default, carries a native hover tooltip. The Stats page turns
+ * the native tooltip off and draws its own, which also works on touch.
+ */
+export function PointsTrend({
+  matches,
+  nativeTooltips = true,
+}: {
+  matches: readonly TrendMatch[];
+  nativeTooltips?: boolean;
+}) {
   const W = 688;
   const H = 230;
   const pad = { l: 30, r: 10, t: 12, b: 26 };
@@ -289,7 +305,7 @@ export function PointsTrend({ matches }: { matches: readonly ReportMatch[] }) {
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label="Cumulative league points through the season"
+      aria-label="Cumulative points through the season"
       className="w-full"
     >
       {gridValues.map((v) => (
@@ -323,15 +339,28 @@ export function PointsTrend({ matches }: { matches: readonly ReportMatch[] }) {
         strokeLinecap="round"
       />
       {matches.map((m, i) => (
-        <circle
-          key={m.id}
-          cx={x(i)}
-          cy={y(points[i]!)}
-          r="4.2"
-          fill={RESULT_COLOURS[m.result]}
-          stroke="#fff"
-          strokeWidth="1.6"
-        />
+        <g key={m.id} data-point={i}>
+          {nativeTooltips ? (
+            <title>{pointsTooltip(m, points[i]!)}</title>
+          ) : null}
+          <circle
+            cx={x(i)}
+            cy={y(points[i]!)}
+            r="4.2"
+            fill={RESULT_COLOURS[m.result]}
+            stroke="#fff"
+            strokeWidth="1.6"
+          />
+          {/* A larger invisible target, so the tooltip is easy to hit. */}
+          <circle
+            cx={x(i)}
+            cy={y(points[i]!)}
+            r="9"
+            fill="transparent"
+            className="cursor-pointer"
+            data-hit="true"
+          />
+        </g>
       ))}
       {monthTicks(matches).map((t) => (
         <text

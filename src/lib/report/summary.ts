@@ -1,3 +1,4 @@
+import { formatShortDate } from "@/lib/format";
 import type { ReportMatch, ReportPlayer } from "@/lib/report/types";
 
 export type Tally = { wins: number; draws: number; losses: number };
@@ -25,13 +26,26 @@ export function goalTotals(matches: readonly ReportMatch[]): {
   return { goalsFor, goalsAgainst };
 }
 
+/** What the points trend needs from each match (the report and Stats page share it). */
+export type TrendMatch = Pick<
+  ReportMatch,
+  "id" | "date" | "opponent" | "goalsFor" | "goalsAgainst" | "result"
+>;
+
+/** Hover text for one point: "6 Sep vs Rovers: W 3–1 · 7 pts". */
+export function pointsTooltip(match: TrendMatch, totalPoints: number): string {
+  return `${formatShortDate(match.date)} vs ${match.opponent}: ${match.result} ${match.goalsFor}–${match.goalsAgainst} · ${totalPoints} pts`;
+}
+
 /** Three points for a win, one for a draw. */
 export function pointsFor(result: ReportMatch["result"]): number {
   return result === "W" ? 3 : result === "D" ? 1 : 0;
 }
 
 /** Running points after each match (index 0 = after the first match). */
-export function cumulativePoints(matches: readonly ReportMatch[]): number[] {
+export function cumulativePoints(
+  matches: ReadonlyArray<Pick<ReportMatch, "result">>,
+): number[] {
   let total = 0;
   return matches.map((m) => (total += pointsFor(m.result)));
 }

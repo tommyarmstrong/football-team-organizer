@@ -224,4 +224,27 @@ describe("StatsPageContent", () => {
     expect(classes).toContain("lg:grid-cols-2");
     expect(classes).toContain("*:min-w-0");
   });
+
+  it("gives the Results chart a tooltip that works on touch", () => {
+    const stats = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
+    );
+    const chart = stats.slice(
+      stats.indexOf("export function ResultsOverTimeChart"),
+      stats.indexOf("export function ResultsRingChart"),
+    );
+    expect(chart).toContain("<PointsTrendWithTooltip");
+
+    const tooltip = readFileSync(
+      path.join(import.meta.dirname, "points-trend-chart.tsx"),
+      "utf8",
+    );
+    expect(tooltip).toContain('"use client"');
+    expect(tooltip).toContain("nativeTooltips={false}");
+    // Mouse hover, touch tap, and a tap outside to close.
+    expect(tooltip).toContain("onPointerMove");
+    expect(tooltip).toContain("onPointerUp");
+    expect(tooltip).toContain('addEventListener("pointerdown"');
+  });
 });

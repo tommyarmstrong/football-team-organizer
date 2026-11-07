@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Stats Results chart matches the season report
+
+- On the **Stats** page, the **Results** chart now shows **cumulative points through the season**, like "Results through the season" in the season report, instead of three lines for wins, draws and losses.
+- Each match is a coloured point (green win, amber draw, red loss). **Hover a point, or tap it on a phone,** to see the match: date, opponent, score and points so far. Tap it again, or tap elsewhere, to close it.
+- It follows the competition filters at the top of the page.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Appearances and Period starts match the other stats charts
 
 - On the **Stats** page, **Appearances** and **Period starts** (club managers only) are now ranked bars, like Goals, Assists and the awards. The position, Type and Total / Per game filters still work.

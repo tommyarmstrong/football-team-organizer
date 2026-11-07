@@ -5,6 +5,7 @@ import {
   GoalDifferenceChart,
   GoalsRingChart,
   PlayerLeaderChart,
+  ResultsOverTimeChart,
   ResultsRingChart,
 } from "@/components/stats/stats-charts";
 import type { ResultOverTimePoint } from "@/lib/data/stats";
@@ -104,6 +105,58 @@ describe("GoalDifferenceChart", () => {
     expect(html).toContain(">CONCEDED</text>");
     expect(html).toContain("2026-09-06 vs Rovers: 3-1");
     expect(html).not.toContain("recharts");
+  });
+});
+
+describe("ResultsOverTimeChart", () => {
+  it("draws the report's cumulative points chart", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).toContain("Cumulative points through the season");
+    expect(html).toContain("<polyline");
+    expect(html).not.toContain("recharts");
+    // One coloured point per match: win, draw, loss.
+    expect(html).toContain("#1c8a4e");
+    expect(html).toContain("#e0a526");
+    expect(html).toContain("#cf4437");
+  });
+
+  it("makes every point hoverable and tappable, with its own tooltip rather than the native one", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    // One tagged point per match, each with the larger invisible target.
+    expect(html.match(/data-point="\d+"/g)).toEqual([
+      'data-point="0"',
+      'data-point="1"',
+      'data-point="2"',
+    ]);
+    expect(html.match(/data-hit="true"/g)).toHaveLength(3);
+    // The custom tooltip replaces the native one, so it does not show twice.
+    expect(html).not.toContain("<title>");
+  });
+
+  it("shows no tooltip until a point is hovered or tapped", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).not.toContain("points-tooltip");
+  });
+
+  it("describes the points for screen readers", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: results }),
+    );
+    expect(html).toContain("Cumulative points through the season:");
+    expect(html).toContain("vs Rovers: W 3–1 · 3 pts; ");
+  });
+
+  it("renders no chart without matches", () => {
+    const html = renderToStaticMarkup(
+      createElement(ResultsOverTimeChart, { data: [] }),
+    );
+    expect(html).not.toContain("<svg");
   });
 });
 

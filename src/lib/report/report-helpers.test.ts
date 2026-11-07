@@ -40,6 +40,7 @@ import {
   biggestWin,
   cleanSheets,
   cumulativePoints,
+  pointsTooltip,
   displayScore,
   goalTotals,
   honourNames,
@@ -454,5 +455,23 @@ describe("sample data", () => {
 
   it("keeps coaches' full names", () => {
     expect(sampleCoaches().map((c) => c.name)).toContain("Sam Whitfield");
+  });
+});
+
+describe("pointsTooltip", () => {
+  it("names the match, the score and the points so far", () => {
+    expect(
+      pointsTooltip(
+        {
+          id: "m",
+          date: "2026-09-06",
+          opponent: "Rovers",
+          goalsFor: 3,
+          goalsAgainst: 1,
+          result: "W",
+        },
+        7,
+      ),
+    ).toMatch(/vs Rovers: W 3–1 · 7 pts$/);
   });
 });
