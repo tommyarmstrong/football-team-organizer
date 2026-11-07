@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DONUT_CIRCUMFERENCE,
   donutSegments,
+  ringSegments,
   monthTicks,
   niceStep,
 } from "@/lib/report/chart-math";
@@ -390,6 +391,20 @@ describe("chart maths", () => {
     expect(only).toHaveLength(1);
     expect(only[0]!.length).toBeCloseTo(DONUT_CIRCUMFERENCE, 5);
     expect(donutSegments({ wins: 0, draws: 0, losses: 0 })).toEqual([]);
+  });
+
+  it("lays any number of ring segments end to end, in order", () => {
+    const segments = ringSegments(
+      [
+        { key: "for", count: 3 },
+        { key: "against", count: 1 },
+      ],
+      0,
+    );
+    expect(segments.map((s) => s.key)).toEqual(["for", "against"]);
+    expect(segments[0]!.length).toBeCloseTo(DONUT_CIRCUMFERENCE * 0.75, 5);
+    expect(segments[1]!.offset).toBeCloseTo(DONUT_CIRCUMFERENCE * 0.75, 5);
+    expect(ringSegments([{ key: "for", count: 0 }])).toEqual([]);
   });
 
   it("marks where each month starts", () => {

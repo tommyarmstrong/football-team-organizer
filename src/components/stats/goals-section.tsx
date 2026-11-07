@@ -14,7 +14,7 @@ import {
 } from "@/lib/stats/competition-filters";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Section } from "@/components/shared/section";
-import { PlayerCountChart } from "@/components/stats/stats-charts";
+import { PlayerLeaderChart } from "@/components/stats/stats-charts";
 import { StatFilters } from "@/components/stats/stat-filters";
 
 export function GoalsSection({
@@ -62,12 +62,9 @@ export function GoalsSection({
                 description="Try another competition, position filter, or metric."
               />
             ) : (
-              <PlayerCountChart
+              <PlayerLeaderChart
                 data={rows}
-                metricLabel="Goals"
-                seriesLabel={metricLabel}
-                perGameLabel="Goals per game"
-                ariaTitle={`${metricLabel.toLowerCase()} by player`}
+                unit={metricLabel.toLowerCase()}
                 allowDecimals={metric !== "total"}
                 valueKey="value"
               />

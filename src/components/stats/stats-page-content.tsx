@@ -79,25 +79,35 @@ const ResultsOverTimeChart = dynamic(
   },
 );
 
-const ResultsPieChart = dynamic(
+const ResultsRingChart = dynamic(
   () =>
     import("@/components/stats/stats-charts").then(
-      (mod) => mod.ResultsPieChart,
+      (mod) => mod.ResultsRingChart,
     ),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
 );
 
-const GoalsPieChart = dynamic(
+const GoalsRingChart = dynamic(
   () =>
-    import("@/components/stats/stats-charts").then((mod) => mod.GoalsPieChart),
+    import("@/components/stats/stats-charts").then((mod) => mod.GoalsRingChart),
   {
     loading: () => <Skeleton className="h-72 w-full" />,
   },
 );
 
-function ResultPieCharts({
+const PlayerLeaderChart = dynamic(
+  () =>
+    import("@/components/stats/stats-charts").then(
+      (mod) => mod.PlayerLeaderChart,
+    ),
+  {
+    loading: () => <Skeleton className="h-72 w-full" />,
+  },
+);
+
+function ResultRingCharts({
   results,
   filteredResults,
   hasResultOutcomes,
@@ -124,7 +134,7 @@ function ResultPieCharts({
             description={emptyFilterDescription}
           />
         ) : (
-          <ResultsPieChart data={filteredResults} />
+          <ResultsRingChart data={filteredResults} />
         )}
       </Section>
 
@@ -140,7 +150,7 @@ function ResultPieCharts({
             description={emptyFilterDescription}
           />
         ) : (
-          <GoalsPieChart data={filteredResults} />
+          <GoalsRingChart data={filteredResults} />
         )}
       </Section>
     </div>
@@ -224,7 +234,7 @@ export function StatsPageContent({
 
       <SeasonTiles results={filteredResults} />
 
-      <ResultPieCharts
+      <ResultRingCharts
         results={results}
         filteredResults={filteredResults}
         hasResultOutcomes={hasResultOutcomes}
@@ -273,6 +283,7 @@ export function StatsPageContent({
         data={playerOfTheMonthByPlayer}
         filtered={playerOfTheMonthByPlayer}
         metricLabel="Awards"
+        leaderboard
         ariaTitle="player of the month"
         emptyFilterDescription={emptyFilterDescription}
       />
@@ -285,6 +296,7 @@ export function StatsPageContent({
         data={potmByPlayer}
         filtered={filteredPotm}
         metricLabel="Awards"
+        leaderboard
         ariaTitle="coach's player of the match"
         emptyFilterDescription={emptyFilterDescription}
       />
@@ -304,6 +316,7 @@ export function StatsPageContent({
         filtered={assistsForView}
         metricLabel="Assists"
         perGameLabel="Assists per game"
+        leaderboard
         ariaTitle="assists"
         emptyFilterDescription={emptyFilterDescription}
         metricNoun="Assists"
@@ -426,6 +439,7 @@ function PlayerCountSection({
   metricNoun,
   metricAriaLabel,
   emptyViewTitle,
+  leaderboard = false,
 }: {
   title: string;
   emptyTitle: string;
@@ -436,6 +450,8 @@ function PlayerCountSection({
   filtered: PlayerCountPoint[];
   metricLabel: string;
   perGameLabel?: string;
+  /** Draw the report's leader bars instead of the bar chart and table. */
+  leaderboard?: boolean;
   ariaTitle: string;
   /** With `emptyViewTitle`, adds the position filters, using this as the unit. */
   metricNoun?: string;
@@ -456,6 +472,7 @@ function PlayerCountSection({
         metricNoun={metricNoun}
         metricAriaLabel={metricAriaLabel}
         emptyViewTitle={emptyViewTitle}
+        leaderboard={leaderboard}
       />
     );
   }
@@ -469,6 +486,8 @@ function PlayerCountSection({
           title={emptyFilterTitle}
           description={emptyFilterDescription}
         />
+      ) : leaderboard ? (
+        <PlayerLeaderChart data={filtered} unit={metricLabel.toLowerCase()} />
       ) : (
         <PlayerCountChart
           data={filtered}
@@ -492,6 +511,7 @@ function FilteredPlayerCountSection({
   metricNoun,
   metricAriaLabel,
   emptyViewTitle,
+  leaderboard,
 }: {
   title: string;
   emptyTitle: string;
@@ -503,6 +523,7 @@ function FilteredPlayerCountSection({
   metricNoun: string;
   metricAriaLabel?: string;
   emptyViewTitle: string;
+  leaderboard: boolean;
 }) {
   const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
   const [metric, setMetric] = useState<GoalsMetric>("total");
@@ -528,6 +549,13 @@ function FilteredPlayerCountSection({
             <EmptyState
               title={emptyViewTitle}
               description="Try another competition, position filter, or metric."
+            />
+          ) : leaderboard ? (
+            <PlayerLeaderChart
+              data={rows}
+              unit={countMetricLabel(metric, metricNoun).toLowerCase()}
+              allowDecimals={metric !== "total"}
+              valueKey="value"
             />
           ) : (
             <PlayerCountChart

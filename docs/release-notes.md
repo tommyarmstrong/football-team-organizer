@@ -4,6 +4,17 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Stats page matches the season report
+
+- On the **Stats** page, the **Results** and **Goals** charts are now rings with a legend, like the Results ring on the report's Season at a glance page.
+- **Goal difference** now shows goals scored above, and goals conceded below, the line for every match, like the report's "Goals in every league and cup match" chart.
+- **Goals**, **Assists**, **Player of the month** and **Coach's player of the match** are now ranked bars, like the report's Top scorers and Most assists. Players on zero are left out. The competition, position and Total / Per game / Per period filters still work.
+- The Goals and Assists charts no longer have a table underneath. Switch the view to **Per game** to see rates.
+- The charts follow your club colour, and dark mode.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Season report leans towards white text
 
 - On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and deeper orange, red-orange, red, green and teal club colours now get white text, where they sometimes got black.
