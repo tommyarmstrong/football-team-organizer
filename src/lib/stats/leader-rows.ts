@@ -17,10 +17,11 @@ export function formatLeaderValue(value: number, decimals: boolean): string {
 /**
  * Rows for the report-style leader bars: highest value first (ties by name),
  * and players on zero are left out, like the report's "Top scorers".
+ * `format` is a function, or `true` for two decimals (rates).
  */
 export function buildLeaderRows(
   rows: readonly LeaderRowInput[],
-  decimals = false,
+  format: boolean | ((value: number) => string) = false,
 ): LeaderRow[] {
   return rows
     .filter((row) => row.value > 0)
@@ -28,7 +29,10 @@ export function buildLeaderRows(
       playerId: row.playerId,
       name: row.name,
       value: row.value,
-      display: formatLeaderValue(row.value, decimals),
+      display:
+        typeof format === "function"
+          ? format(row.value)
+          : formatLeaderValue(row.value, format),
     }))
     .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
 }

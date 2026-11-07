@@ -36,4 +36,9 @@ describe("buildLeaderRows", () => {
     buildLeaderRows(input);
     expect(input.map((r) => r.name)).toEqual(["Cal", "Bea"]);
   });
+
+  it("formats with a custom function, e.g. percents", () => {
+    const rows = buildLeaderRows([row("1", "Ada", 37.5)], (v) => `${v}%`);
+    expect(rows[0]!.display).toBe("37.5%");
+  });
 });

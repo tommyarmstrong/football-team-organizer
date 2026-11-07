@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   GoalDifferenceChart,
   GoalsRingChart,
-  PlayerCountChart,
   PlayerLeaderChart,
   ResultsRingChart,
 } from "@/components/stats/stats-charts";
@@ -15,70 +14,15 @@ const rows = [
     playerId: "1",
     name: "Ada Wing",
     count: 3,
-    matchesPlayed: 2,
-    periodsAvailable: 8,
     value: 37.5,
   },
   {
     playerId: "2",
     name: "Bea Def",
     count: 2,
-    matchesPlayed: 2,
-    periodsAvailable: 0,
     value: 0,
   },
 ];
-
-function render(props: Partial<Parameters<typeof PlayerCountChart>[0]> = {}) {
-  return renderToStaticMarkup(
-    createElement(PlayerCountChart, {
-      data: rows,
-      metricLabel: "Periods",
-      ariaTitle: "period starts",
-      ...props,
-    }),
-  );
-}
-
-describe("PlayerCountChart per game column", () => {
-  it("divides by matches by default, to two decimals", () => {
-    const html = render({ perGameLabel: "Periods per game" });
-    expect(html).toContain(">Periods per game</th>");
-    expect(html).toContain(">1.50</td>");
-  });
-
-  it("shows the percent of the periods in the player's games for the periods basis", () => {
-    const html = render({
-      perGameLabel: "Periods per game (%)",
-      perGameBasis: "periods",
-    });
-    expect(html).toContain(">Periods per game (%)</th>");
-    expect(html).toContain(">37.5%</td>");
-    // No periods in their games: no percent.
-    expect(html).toContain(">—</td>");
-    expect(html).not.toContain(">1.50<");
-  });
-
-  it("describes plotted percents with a % sign", () => {
-    const html = render({
-      perGameLabel: "Periods per game (%)",
-      perGameBasis: "periods",
-      valueKey: "value",
-      allowDecimals: true,
-      percent: true,
-      seriesLabel: "Periods per game (%)",
-    });
-    expect(html).toContain("Ada Wing: 37.5%");
-  });
-
-  it("describes plotted counts as plain numbers", () => {
-    const html = render({
-      perGameLabel: "Periods per game (%)",
-      perGameBasis: "periods",
-    });
-    expect(html).toContain("Ada Wing: 3;");
-  });
-});
 
 const results: ResultOverTimePoint[] = [
   {
@@ -190,6 +134,29 @@ describe("PlayerLeaderChart", () => {
     );
     expect(html).toContain(">1.50<");
     expect(html).toContain(">1.00<");
+  });
+
+  it("shows percents with one decimal and a % sign", () => {
+    const html = renderToStaticMarkup(
+      createElement(PlayerLeaderChart, {
+        data: [rows[0]!, { ...rows[1]!, value: 12.5 }],
+        unit: "periods per game (%)",
+        valueKey: "value",
+        allowDecimals: true,
+        percent: true,
+      }),
+    );
+    expect(html).toContain(">37.5%<");
+    expect(html).toContain(">12.5%<");
+    expect(html).not.toContain(">37.50<");
+  });
+
+  it("shows period starts as whole numbers for totals", () => {
+    const html = renderToStaticMarkup(
+      createElement(PlayerLeaderChart, { data: rows, unit: "periods" }),
+    );
+    expect(html).toContain(">3<");
+    expect(html).not.toMatch(/\d%</);
   });
 
   it("leaves out players on zero", () => {

@@ -27,8 +27,8 @@ describe("stats charts use the card frame", () => {
       /export function PlayerLeaderChart[\s\S]*?statsChartFrameClassName\(\)/,
     );
     expect(goals).not.toContain("<BarChart");
-    // One bar colour for every player chart, Goals included.
+    // No hard-coded bar colour: the leader bars use the club colour.
     expect(goals).not.toContain("barFill");
-    expect(charts).toContain('fill="var(--color-chart-1)"');
+    expect(charts).not.toContain("--color-chart-1");
   });
 });

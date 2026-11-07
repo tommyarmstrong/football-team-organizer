@@ -4,6 +4,15 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Appearances and Period starts match the other stats charts
+
+- On the **Stats** page, **Appearances** and **Period starts** (club managers only) are now ranked bars, like Goals, Assists and the awards. The position, Type and Total / Per game filters still work.
+- On larger screens they sit **side by side**; on phones they stay stacked. If you can't see Period starts, Appearances uses the full width.
+- The tables under these two charts are gone. Period starts shows **Periods per game (%)** directly when you pick that view.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Stats charts side by side on desktop
 
 - On the **Stats** page, on larger screens, **Player of the month** now sits next to **Coach's player of the match**, and **Goals** sits next to **Assists**. On phones they stay stacked one above the other.
