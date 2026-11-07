@@ -174,4 +174,38 @@ describe("StatsPageContent", () => {
     );
     expect(periods).toContain("<PlayerCountChart");
   });
+
+  it("puts the two awards, and goals and assists, side by side on desktop", () => {
+    expect(source).toContain("function SideBySide");
+    expect(source).toContain("lg:grid-cols-2");
+
+    const pair = (from: string, to: string) =>
+      source.slice(source.indexOf(from), source.indexOf(to));
+
+    const awards = pair("<SideBySide>", "</SideBySide>");
+    expect(awards).toContain('title="Player of the month"');
+    expect(awards).toContain('title="Coach\'s player of the match"');
+    expect(awards).not.toContain("<GoalsSection");
+
+    const second = source.indexOf(
+      "<SideBySide>",
+      source.indexOf("</SideBySide>"),
+    );
+    const goalsAndAssists = source.slice(
+      second,
+      source.indexOf("</SideBySide>", second),
+    );
+    expect(goalsAndAssists).toContain("<GoalsSection");
+    expect(goalsAndAssists).toContain('title="Assists"');
+    expect(goalsAndAssists).not.toContain('title="Appearances"');
+  });
+
+  it("stacks the side-by-side sections on mobile and lets them shrink", () => {
+    const grid = source.slice(source.indexOf("function SideBySide"));
+    const classes = grid.slice(grid.indexOf('className="'), grid.indexOf('">'));
+    // No columns below the lg breakpoint, so phones get one stacked column.
+    expect(classes).not.toMatch(/(^|[ "])grid-cols-2/);
+    expect(classes).toContain("lg:grid-cols-2");
+    expect(classes).toContain("*:min-w-0");
+  });
 });

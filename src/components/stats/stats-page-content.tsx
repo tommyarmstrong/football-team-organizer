@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
   GoalsByPlayerPoint,
   PlayerCountPoint,
@@ -106,6 +106,18 @@ const PlayerLeaderChart = dynamic(
     loading: () => <Skeleton className="h-72 w-full" />,
   },
 );
+
+/**
+ * Two sections in a row on desktop, stacked on phones. `min-w-0` lets the
+ * charts and filters shrink to the half-width column instead of overflowing.
+ */
+function SideBySide({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid items-start gap-8 *:min-w-0 lg:grid-cols-2">
+      {children}
+    </div>
+  );
+}
 
 function ResultRingCharts({
   results,
@@ -275,54 +287,58 @@ export function StatsPageContent({
       </Section>
 
       {/* Awards are recorded per team, so competition filters do not change this chart. */}
-      <PlayerCountSection
-        title="Player of the month"
-        emptyTitle="No awards yet"
-        emptyDescription="Add player of the month awards from the Team page to populate this chart."
-        emptyFilterTitle="No awards for this filter"
-        data={playerOfTheMonthByPlayer}
-        filtered={playerOfTheMonthByPlayer}
-        metricLabel="Awards"
-        leaderboard
-        ariaTitle="player of the month"
-        emptyFilterDescription={emptyFilterDescription}
-      />
+      <SideBySide>
+        <PlayerCountSection
+          title="Player of the month"
+          emptyTitle="No awards yet"
+          emptyDescription="Add player of the month awards from the Team page to populate this chart."
+          emptyFilterTitle="No awards for this filter"
+          data={playerOfTheMonthByPlayer}
+          filtered={playerOfTheMonthByPlayer}
+          metricLabel="Awards"
+          leaderboard
+          ariaTitle="player of the month"
+          emptyFilterDescription={emptyFilterDescription}
+        />
 
-      <PlayerCountSection
-        title="Coach's player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
-        emptyFilterTitle="No awards for this filter"
-        data={potmByPlayer}
-        filtered={filteredPotm}
-        metricLabel="Awards"
-        leaderboard
-        ariaTitle="coach's player of the match"
-        emptyFilterDescription={emptyFilterDescription}
-      />
+        <PlayerCountSection
+          title="Coach's player of the match"
+          emptyTitle="No awards yet"
+          emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
+          emptyFilterTitle="No awards for this filter"
+          data={potmByPlayer}
+          filtered={filteredPotm}
+          metricLabel="Awards"
+          leaderboard
+          ariaTitle="coach's player of the match"
+          emptyFilterDescription={emptyFilterDescription}
+        />
+      </SideBySide>
 
-      <GoalsSection
-        data={goalsForView}
-        competitionId={competitionId}
-        competitionKind={competitionKind}
-      />
+      <SideBySide>
+        <GoalsSection
+          data={goalsForView}
+          competitionId={competitionId}
+          competitionKind={competitionKind}
+        />
 
-      <PlayerCountSection
-        title="Assists"
-        emptyTitle="No assists yet"
-        emptyDescription="Add assists on match detail pages to populate this chart."
-        emptyFilterTitle="No assists for this filter"
-        data={assistsByPlayer}
-        filtered={assistsForView}
-        metricLabel="Assists"
-        perGameLabel="Assists per game"
-        leaderboard
-        ariaTitle="assists"
-        emptyFilterDescription={emptyFilterDescription}
-        metricNoun="Assists"
-        metricAriaLabel="Assists metric"
-        emptyViewTitle="No assists for this view"
-      />
+        <PlayerCountSection
+          title="Assists"
+          emptyTitle="No assists yet"
+          emptyDescription="Add assists on match detail pages to populate this chart."
+          emptyFilterTitle="No assists for this filter"
+          data={assistsByPlayer}
+          filtered={assistsForView}
+          metricLabel="Assists"
+          perGameLabel="Assists per game"
+          leaderboard
+          ariaTitle="assists"
+          emptyFilterDescription={emptyFilterDescription}
+          metricNoun="Assists"
+          metricAriaLabel="Assists metric"
+          emptyViewTitle="No assists for this view"
+        />
+      </SideBySide>
 
       <PlayerCountSection
         title="Appearances"

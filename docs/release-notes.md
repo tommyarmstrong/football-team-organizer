@@ -4,6 +4,13 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 7 November 2026 — Stats charts side by side on desktop
+
+- On the **Stats** page, on larger screens, **Player of the month** now sits next to **Coach's player of the match**, and **Goals** sits next to **Assists**. On phones they stay stacked one above the other.
+- No database changes.
+
+---
+
 ## 7 November 2026 — Stats page matches the season report
 
 - On the **Stats** page, the **Results** and **Goals** charts are now rings with a legend, like the Results ring on the report's Season at a glance page.
