@@ -6,8 +6,8 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ## 7 November 2026 — Season report leans towards white text
 
-- On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and strong orange, red, green and teal club colours now get white text, where they sometimes got black.
-- Very light colours such as yellow and pale orange still get black text so they stay readable.
+- On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and deeper orange, red-orange, red, green and teal club colours now get white text, where they sometimes got black.
+- Very light and bright colours such as yellow and light orange still get black text so they stay readable.
 - No database changes.
 
 ---

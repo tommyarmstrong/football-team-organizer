@@ -47,7 +47,7 @@ export function resolveReportColour(colour: string | null | undefined): string {
  * this, is at least black's. Mid-tone colours such as orange or red therefore
  * get white; light colours such as yellow still get black.
  */
-export const WHITE_TEXT_BIAS = 2.5;
+export const WHITE_TEXT_BIAS = 2;
 
 /** White or near-black, whichever reads best on `colour` (leaning to white). */
 export function readableForeground(colour: string): "#FFFFFF" | "#111814" {
