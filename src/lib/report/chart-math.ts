@@ -6,17 +6,16 @@ import type { ReportMatch } from "@/lib/report/types";
 export const DONUT_RADIUS = 38;
 export const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
-export function donutSegments(
-  tally: Tally,
+/**
+ * Arc segments for a ring chart, in order, starting at 12 o'clock. Parts on
+ * zero are left out, and a small gap separates neighbouring segments.
+ */
+export function ringSegments<K extends string>(
+  parts: readonly { key: K; count: number }[],
   gap = 1.2,
-): Array<{ key: "W" | "D" | "L"; length: number; offset: number }> {
-  const total = tally.wins + tally.draws + tally.losses;
+): Array<{ key: K; length: number; offset: number }> {
+  const total = parts.reduce((sum, p) => sum + p.count, 0);
   if (total === 0) return [];
-  const parts = [
-    { key: "W", count: tally.wins },
-    { key: "D", count: tally.draws },
-    { key: "L", count: tally.losses },
-  ] as const;
   const visible = parts.filter((p) => p.count > 0);
   const useGap = visible.length > 1 ? gap : 0;
   let offset = 0;
@@ -30,6 +29,20 @@ export function donutSegments(
     offset += share;
     return segment;
   });
+}
+
+export function donutSegments(
+  tally: Tally,
+  gap = 1.2,
+): Array<{ key: "W" | "D" | "L"; length: number; offset: number }> {
+  return ringSegments(
+    [
+      { key: "W", count: tally.wins },
+      { key: "D", count: tally.draws },
+      { key: "L", count: tally.losses },
+    ] as const,
+    gap,
+  );
 }
 
 const MONTHS = [

@@ -59,7 +59,7 @@ describe("StatsPageContent", () => {
     const tilesIndex = source.indexOf(
       "<SeasonTiles results={filteredResults} />",
     );
-    const piesIndex = source.indexOf("<ResultPieCharts");
+    const piesIndex = source.indexOf("<ResultRingCharts");
     expect(filtersIndex).toBeGreaterThan(-1);
     expect(tilesIndex).toBeGreaterThan(filtersIndex);
     expect(piesIndex).toBeGreaterThan(tilesIndex);
@@ -121,5 +121,57 @@ describe("StatsPageContent", () => {
     );
     expect(goals).toContain('<Section title="Goals">');
     expect(goals).not.toContain("Goal Scorers");
+  });
+
+  it("draws results and goals as rings, not pies", () => {
+    expect(source).toContain("<ResultsRingChart data={filteredResults} />");
+    expect(source).toContain("<GoalsRingChart data={filteredResults} />");
+    expect(source).not.toContain("PieChart");
+  });
+
+  it("draws goal difference with the report's goals-per-match chart", () => {
+    const stats = readFileSync(
+      path.join(import.meta.dirname, "stats-charts.tsx"),
+      "utf8",
+    );
+    const chart = stats.slice(
+      stats.indexOf("export function GoalDifferenceChart"),
+      stats.indexOf("export function ResultsOverTimeChart"),
+    );
+    expect(chart).toContain("<GoalsPerMatch");
+    expect(chart).not.toContain("LineChart");
+  });
+
+  it("draws goals, assists and both awards as leader bars", () => {
+    const goals = readFileSync(
+      path.join(import.meta.dirname, "goals-section.tsx"),
+      "utf8",
+    );
+    expect(goals).toContain("<PlayerLeaderChart");
+    expect(goals).not.toContain("<PlayerCountChart");
+
+    const awards = source.slice(
+      source.indexOf('title="Player of the month"'),
+      source.indexOf("<GoalsSection"),
+    );
+    expect(awards.match(/leaderboard/g)).toHaveLength(2);
+
+    const assists = source.slice(
+      source.indexOf('title="Assists"'),
+      source.indexOf('title="Appearances"'),
+    );
+    expect(assists).toContain("leaderboard");
+  });
+
+  it("keeps the bar chart and table for appearances and period starts", () => {
+    const appearances = source.slice(
+      source.indexOf('title="Appearances"'),
+      source.indexOf("{periodStartsByPlayer ? ("),
+    );
+    expect(appearances).not.toContain("leaderboard");
+    const periods = source.slice(
+      source.indexOf("function PeriodStartsSection"),
+    );
+    expect(periods).toContain("<PlayerCountChart");
   });
 });
