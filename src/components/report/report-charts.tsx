@@ -270,10 +270,17 @@ export function FormStrip({ matches }: { matches: readonly ReportMatch[] }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Cumulative points after each match. Hovering a
- * point shows the match, as a native tooltip on the point.
+ * Cumulative points after each match. Each point is tagged `data-point` (its
+ * index) and, by default, carries a native hover tooltip. The Stats page turns
+ * the native tooltip off and draws its own, which also works on touch.
  */
-export function PointsTrend({ matches }: { matches: readonly TrendMatch[] }) {
+export function PointsTrend({
+  matches,
+  nativeTooltips = true,
+}: {
+  matches: readonly TrendMatch[];
+  nativeTooltips?: boolean;
+}) {
   const W = 688;
   const H = 230;
   const pad = { l: 30, r: 10, t: 12, b: 26 };
@@ -332,8 +339,10 @@ export function PointsTrend({ matches }: { matches: readonly TrendMatch[] }) {
         strokeLinecap="round"
       />
       {matches.map((m, i) => (
-        <g key={m.id}>
-          <title>{pointsTooltip(m, points[i]!)}</title>
+        <g key={m.id} data-point={i}>
+          {nativeTooltips ? (
+            <title>{pointsTooltip(m, points[i]!)}</title>
+          ) : null}
           <circle
             cx={x(i)}
             cy={y(points[i]!)}
@@ -348,6 +357,7 @@ export function PointsTrend({ matches }: { matches: readonly TrendMatch[] }) {
             cy={y(points[i]!)}
             r="9"
             fill="transparent"
+            className="cursor-pointer"
             data-hit="true"
           />
         </g>

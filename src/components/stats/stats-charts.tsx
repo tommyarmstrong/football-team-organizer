@@ -10,11 +10,11 @@ import {
   GoalsLegend,
   GoalsPerMatch,
   LeaderBars,
-  PointsTrend,
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
 import { formatPeriodsPerGamePercent } from "@/lib/stats/period-starts-view";
+import { PointsTrendWithTooltip } from "@/components/stats/points-trend-chart";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
 
 /** What the leader bars need from each player. */
@@ -54,7 +54,7 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
 
 /**
  * Results through the season, using the report's cumulative points chart.
- * Hover a point to see the match.
+ * Hover a point, or tap it on a touch screen, to see the match.
  */
 export function ResultsOverTimeChart({
   data,
@@ -77,7 +77,7 @@ export function ResultsOverTimeChart({
   return (
     <figure className={statsChartFrameClassName()}>
       <ChartTheme>
-        <PointsTrend matches={matches} />
+        <PointsTrendWithTooltip matches={matches} />
       </ChartTheme>
       <figcaption className="sr-only">
         Cumulative points through the season: {summary}

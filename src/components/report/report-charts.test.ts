@@ -159,6 +159,22 @@ describe("PointsTrend", () => {
     expect(html).toContain(">OCT</text>");
   });
 
+  it("tags each point with its index, for the Stats page tooltip", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend }),
+    );
+    expect(html).toContain('data-point="0"');
+    expect(html).toContain('data-point="1"');
+  });
+
+  it("can leave out the native tooltips", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend, nativeTooltips: false }),
+    );
+    expect(html).not.toContain("<title>");
+    expect(html).toContain('data-point="0"');
+  });
+
   it("renders nothing without matches", () => {
     expect(
       renderToStaticMarkup(createElement(PointsTrend, { matches: [] })),

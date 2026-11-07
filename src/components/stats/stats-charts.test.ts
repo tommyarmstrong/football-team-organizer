@@ -122,24 +122,26 @@ describe("ResultsOverTimeChart", () => {
     expect(html).toContain("#cf4437");
   });
 
-  it("keeps a hover tooltip on every point, with the match and points so far", () => {
+  it("makes every point hoverable and tappable, with its own tooltip rather than the native one", () => {
     const html = renderToStaticMarkup(
       createElement(ResultsOverTimeChart, { data: results }),
     );
-    const titles = [...html.matchAll(/<title>([^<]*)<\/title>/g)].map(
-      (m) => m[1],
-    );
-    expect(titles).toHaveLength(3);
-    expect(titles[0]).toContain("vs Rovers: W 3–1 · 3 pts");
-    expect(titles[1]).toContain("vs United: D 1–1 · 4 pts");
-    expect(titles[2]).toContain("vs City: L 0–2 · 4 pts");
+    // One tagged point per match, each with the larger invisible target.
+    expect(html.match(/data-point="\d+"/g)).toEqual([
+      'data-point="0"',
+      'data-point="1"',
+      'data-point="2"',
+    ]);
+    expect(html.match(/data-hit="true"/g)).toHaveLength(3);
+    // The custom tooltip replaces the native one, so it does not show twice.
+    expect(html).not.toContain("<title>");
   });
 
-  it("gives each point a larger invisible hover target", () => {
+  it("shows no tooltip until a point is hovered or tapped", () => {
     const html = renderToStaticMarkup(
       createElement(ResultsOverTimeChart, { data: results }),
     );
-    expect(html.match(/data-hit="true"/g)).toHaveLength(3);
+    expect(html).not.toContain("points-tooltip");
   });
 
   it("describes the points for screen readers", () => {
