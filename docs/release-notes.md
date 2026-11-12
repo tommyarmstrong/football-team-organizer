@@ -4,6 +4,19 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 12 November 2026 — Switch a match between halves and quarters
+
+- If the referee plays halves when the fixture was set up with quarters (or the other way round), you no longer need to delete periods and start again. On the match page, under **Goals**, tap **Change to halves** or **Change to quarters**. It shows up once the match is in progress or played.
+- The dialog shows what will happen before you confirm. Periods are matched **by order**: Quarter 1 becomes First half, Quarter 2 becomes Second half (and the reverse). Goals and starting players stay where they are.
+- **Quarters to halves:** any extra quarters (Quarter 3 and 4) are removed, and any goals in them move into Second half.
+- **Halves to quarters:** the missing quarters are added, with the same starting players as the last quarter you had.
+- If you had recorded the third and fourth quarters as **Extra time 1 and 2** (because that was the only way to add periods), a tick box lets you turn them into Quarter 3 and 4. Untick it if there really was extra time.
+- It also fixes the **Period starts** stats for those matches, which counted those quarters as extra time.
+- Penalty shootouts are never changed. The change happens all at once, so a match can't end up half-converted.
+- One database migration: `20261112180000_change_match_period_format.sql` adds the `change_match_period_format` function.
+
+---
+
 ## 7 November 2026 — Bigger points on the Stats Results chart
 
 - The coloured points on the **Stats** page **Results** chart are bigger, so they are easier to see and to tap on a phone. The season report is unchanged.

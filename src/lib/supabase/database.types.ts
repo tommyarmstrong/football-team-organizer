@@ -1371,6 +1371,16 @@ export type Database = {
         Args: { p_team_id: string };
         Returns: Json;
       };
+      change_match_period_format: {
+        Args: {
+          p_match_id: string;
+          p_keep: Json;
+          p_merge: Json;
+          p_create: Json;
+          p_copy_starters_from?: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       person_account_status: "none" | "invited" | "active" | "disabled";

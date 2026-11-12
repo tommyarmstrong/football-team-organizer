@@ -81,6 +81,19 @@ keeps them in step: deleting a `match_players` row also deletes that player's
 `match_period_starters` rows for the same match. Stats count starters directly,
 so without it a player removed from the squad would keep their period starts.
 
+### Changing a match between halves and quarters
+
+A match does not store its format. It is whatever regulation periods exist in
+`match_periods` (`Quarter 1`-`Quarter 4`, or `First half` / `Second half`).
+`change_match_period_format(p_match_id, p_keep, p_merge, p_create,
+p_copy_starters_from)` switches a match that is in progress or played, in one
+transaction: it renames the periods that stay (relabelling their goals), moves
+the goals of merged periods onto the period they join and deletes them, and
+creates the missing periods with copied starters. The app builds the plan in
+`src/lib/match-periods/format-change.ts` (nth period recorded becomes nth period
+of the new format). The function is `SECURITY INVOKER`, so RLS decides who can
+do it, and it aborts if a policy hides a row it needs to change.
+
 ### Sensitive player data
 
 Personal contact details (`phone`, `email`, `address`, `medical_notes`) live in
