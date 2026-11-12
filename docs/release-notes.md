@@ -4,123 +4,78 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
-## 7 November 2026 — Bigger points on the Stats Results chart
+## 12 November 2026 — Switch a match between halves and quarters
 
-- The coloured points on the **Stats** page **Results** chart are bigger, so they are easier to see and to tap on a phone. The season report is unchanged.
-- No database changes.
+- If the referee plays halves when the fixture was set up with quarters (or the other way round), you no longer need to delete periods and start again.
+- On the match page, under Goals, tap Change to halves or Change to quarters.
+- It shows up once the match is in progress or played.
+- The dialog shows what will happen before you confirm.
+- Penalty shootouts are never changed.
+- The change happens all at once, so a match can't end up half-converted.
 
----
-
-## 7 November 2026 — Stats Results chart matches the season report
-
-- On the **Stats** page, the **Results** chart now shows **cumulative points through the season**, like "Results through the season" in the season report, instead of three lines for wins, draws and losses.
-- Each match is a coloured point (green win, amber draw, red loss). **Hover a point, or tap it on a phone,** to see the match: date, opponent, score and points so far. Tap it again, or tap elsewhere, to close it.
-- It follows the competition filters at the top of the page.
-- No database changes.
+**One database migration**: `20261112180000_change_match_period_format.sql` adds the `change_match_period_format` function.
 
 ---
 
-## 7 November 2026 — Appearances and Period starts match the other stats charts
+## 7 November 2026 — Season report refresh (continued)
 
-- On the **Stats** page, **Appearances** and **Period starts** (club managers only) are now ranked bars, like Goals, Assists and the awards. The position, Type and Total / Per game filters still work.
-- On larger screens they sit **side by side**; on phones they stay stacked. If you can't see Period starts, Appearances uses the full width.
-- The tables under these two charts are gone. Period starts shows **Periods per game (%)** directly when you pick that view.
-- No database changes.
+## Align Stats page and season report
 
----
-
-## 7 November 2026 — Stats charts side by side on desktop
-
-- On the **Stats** page, on larger screens, **Player of the month** now sits next to **Coach's player of the match**, and **Goals** sits next to **Assists**. On phones they stay stacked one above the other.
-- No database changes.
-
----
-
-## 7 November 2026 — Stats page matches the season report
-
-- On the **Stats** page, the **Results** and **Goals** charts are now rings with a legend, like the Results ring on the report's Season at a glance page.
-- **Goal difference** now shows goals scored above, and goals conceded below, the line for every match, like the report's "Goals in every league and cup match" chart.
-- **Goals**, **Assists**, **Player of the month** and **Coach's player of the match** are now ranked bars, like the report's Top scorers and Most assists. Players on zero are left out. The competition, position and Total / Per game / Per period filters still work.
-- The Goals and Assists charts no longer have a table underneath. Switch the view to **Per game** to see rates.
+- On the Stats page, the Results chart now shows cumulative points through the season
+- Each match is a coloured point (green win, amber draw, red loss).
+- On the Stats page, Appearances and Period starts are now ranked bars.
+- The tables under these two charts are gone.
+- On the Stats page, on larger screens, charts sit side by side. On phones they remain stacked.
+- On the Stats page, the Results and Goals charts are now rings with a legend.
+- Goal difference now shows goals scored above, and goals conceded below
+- Goals, Assists, Player of the month and Coach's player of the match are now ranked bars
+- The Goals and Assists charts no longer have a table underneath.
 - The charts follow your club colour, and dark mode.
-- No database changes.
 
----
-
-## 7 November 2026 — Season report leans towards white text
+## Season report leans towards white text
 
 - On the season report, text that sits on a **club-coloured panel** (the cover, and the coloured boxes and labels through the book) now favours **white** more often. Mid-tone and deeper orange, red-orange, red, green and teal club colours now get white text, where they sometimes got black.
 - Very light and bright colours such as yellow and light orange still get black text so they stay readable.
-- No database changes.
 
----
-
-## 6 November 2026 — Team photos are shrunk and cleaned
-
-- The **team photo** you upload on the team page now gets the same treatment as venue photos. Large phone photos are **scaled down and compressed**, so they upload reliably and load quickly on the team page and in the season report.
-- Location and camera details hidden inside the picture (such as where and when it was taken) are **removed** before the photo is stored.
-- Replacing or removing a team photo now also deletes the old file.
-- No database changes.
-
----
-
-## 6 November 2026 — Centred default club icon
-
-- The football shown for clubs **without a club badge** is now centred, in the app, on the cards and in the season report. It used to sit towards the left and top of its circle. It is now a glossy football picture (an Openclipart public domain image) rather than an emoji, so it looks the same on every device and browser.
-- The browser tab icon uses the same football.
-- No database changes.
-
----
-
-## 6 November 2026 — Season report: Competitions moved, Safari cards fixed
-
-- The **Competitions** page now comes straight after **The season in numbers** and before the **Player Gallery**.
-- The Player Gallery cards now show correctly in **Safari**. They used to appear as empty white boxes, because Safari mis-sized the card artwork. Chrome was never affected.
-- No database changes.
-
----
-
-## 6 November 2026 — Season report counts league and cup matches
-
-- The season report's numbers now count **league and cup matches only**. Friendlies, tournaments and other kinds of game no longer count towards Season at a glance, the season in numbers (the goals chart, top scorers and most assists), Competitions, Awards, or the stats on the Player Gallery cards.
-- The **Competitions** page now lists league and cup competitions only.
-- The **Venues** page is the exception: it lists **every ground the team played at**, including grounds used only for friendlies or tournaments, and its results at each ground count every game played there.
-- The **Results** page still lists **every match** that was played, whatever the type. Scores now read the way they do on a match sheet: the **home team's score first**, so an away game shows the opposition's goals first. At a neutral venue our score stays first. The "H home · A away · N neutral" key at the bottom of the page is gone.
-- The **Player Gallery** no longer has a card for a player who has not played a league or cup match. Coach cards are unchanged.
-- Pages that count league and cup matches only say so at the bottom of the page.
-- No database changes.
-
----
-
-## 6 November 2026 — Season report layout updates
-
-- **Player Gallery** cards are easier to read when printed. The club name is gone from the bottom of each card, the team name and year are **bold**, and the team name, year, goals, assists and player of the match text are all larger. This applies to the cards in the report only; the cards you share from the app are unchanged.
-- **Venues** page is tidier. Each venue shows its name, surface and results at that ground, with the venue **photo** underneath the name when one has been added. The address, parking and food and drink details are no longer printed.
-- **Notes** page is now a solid white box with a club colour outline, like the Autographs page, with ruled lines inside, so the page background no longer shows through the writing area.
-- **Double-page covers** for printing. A blank cover page is now page 2, so the team info starts on page 3, and another blank cover page sits just before the back cover with the thank you message. The book still always has an even number of pages.
-- No database changes. Venue photos use the setup from the previous release.
-
----
-
-## 6 November 2026 — Venue photos
-
-- Coaches and club management can now add a **photo** to a venue when adding or editing it. It shows at the top of the venue page, above the Location map, and can be replaced or removed at any time.
-- Photos are cropped to a 16:9 landscape shape to match the map, so landscape pictures work best. PNG, JPEG, WebP or GIF.
-- Big phone photos are **shrunk and compressed automatically** when you upload them, so there is no need to resize them first.
-- All hidden details in the picture, such as the location it was taken, the camera and the date, are **removed** before it is stored.
+**No database changes**
 
 ---
 
 ## 6 November 2026 — Season report refresh
 
-- The report now runs in this order: cover, team info, coach's notes, season at a glance, the season in numbers, player gallery, competitions, venues, results, awards, looking ahead, autographs, notes, back cover. There is always at least one blank **Notes** page before the back cover.
-- **Team info** leaves the team photo out when the team has no photo, instead of showing a placeholder box.
-- The **Player Gallery** shows nine cards to a page, three across and three down, so the card text is easy to read. A large squad carries on to further pages.
-- **Season at a glance**: the strip of results is now headed "Results · every match, in order", the last chart is "Results through the season", and the Goals scored tile matches the Played tile.
-- **The season in numbers** no longer has the "Numbered in date order" caption.
-- Players appear by **first name only** throughout the report, including the cards, charts and awards. Coaches keep their full names.
-- The **Records** page is **Awards** again. It has new boxes for Player of the season, Player's player of the season and Most improved player of the season, above the thank you to the coaching team. The winners are written in a `season-awards.json` file next to the other hand-written sections (see `content/reports/README.md`); a box with no winner prints a blank line to write on. Player of the month is set in smaller type to fit a full season of awards.
-- The back cover now thanks every player, **coach**, parent, guardian and volunteer.
+### Photo upload improvements
+
+- Uploaded photos are automatically scaled down and compressed.
+- Photos are cropped to a 16:9 landscape shape, so landscape pictures work best.
+- PNG, JPEG, WebP or GIF are supported.
+- All metadata is stripped from the photo before it is stored.
+- Replacing or removing a team photo now also deletes the old file.
+
+## Centred default club and browser tab icon
+
+- The football icon used as the default club badge and browser tab icon now uses a glossy football picture (an Openclipart public domain image) rather than an emoji, so it looks the same on every device and browser.
+
+## Season report refresh
+
+- Pages are reordered.
+- Player Gallery cards now show correctly in Safari. They used to appear as empty white boxes, because Safari mis-sized the card artwork. Chrome was never affected.
+- The season report's numbers now count league and cup matches only. Friendlies, tournaments and other kinds of game no longer count towards Season at a glance, the season in numbers (the goals chart, top scorers and most assists), Competitions, Awards, or the stats on the Player Gallery cards.
+- The Venues page is an exception: it lists every ground the team played at, including grounds used only for friendlies or tournaments, and its results at each ground count every game played there.
+- The Results page still lists every match that was played, whatever the type.
+- Player Gallery no longer has a card for a player who has not played a league or cup match.
+- Player Gallery cards are easier to read when printed; cards shared from the app are unchanged.
+- Venues now include photos.
+- Venues page is tidier. Each venue shows its name, surface and results at that ground.
+- Notes page is now a solid white box with a club colour outline, like the Autographs page, with ruled lines inside, so the page background no longer shows through the writing area.
+- Double-page covers for printing. The book still always has an even number of pages.
+- The Awards page now has
+  - Player of the season
+  - Player's player of the season
+  - Most improved player of the season.
+- The winners are written in a `season-awards.json` file next to the other hand-written sections (see `content/reports/README.md`); a box with no winner prints a blank line to write on. Player of the month is set in smaller type to fit a full season of awards.
+- The back cover now thanks every player, coach, parent, guardian and volunteer.
+
+**No database changes**
 
 ---
 
@@ -130,52 +85,44 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
-## 4 November 2026 — Coach cards
+## 4 November 2026 — Season report, coach cards and period starts on Stats
 
-- A coach's page now has a **Share coach card** button, next to the player card button. The card matches the player card: 4:5, sized for WhatsApp and Instagram, in the club colours.
-- It shows the coach's full name, their role on the team (for example Head Coach), and the team's competitive record for the season: played, wins, draws, losses, and goals for and against. Friendlies are left out.
-- Coaches, club managers, and the coaches and team managers of that team can generate it. Guardians and players cannot.
+- A coach's page now has a **Share coach card** button, next to the player card button.
+- It shows the coach's full name, role and the team's competitive record for the season.
+- Coaches and club managers can generate it. Guardians and players cannot.
 - A coach on several teams gets a card for each team they can see.
-
----
 
 ## 4 November 2026 — Season report
 
-- Managers get a **Season report** button on the Team page. It opens the team's season as a printable A4 book in the club colours: cover, coach's notes, season at a glance, results, charts, competitions, player gallery, awards, looking ahead, autographs, and a back cover. Use Print / Save as PDF, with A4, margins None, and Background graphics on.
-- The **Player Gallery** shows every player's collectable player card, four to a row, and carries on to a second page for a large squad. Cards use the same design and rules as shared player cards: children appear by first name only. They are drawn straight into the page, so every card shows, large squads load quickly, and the PDF stays small.
-- The **Player Gallery** now starts with the coaching staff's cards, with the head coach first and the other coaches after in name order, then the players. Coach cards show the team's league and cup record, with friendlies left out.
-- A **Team info** page follows the cover. It carries the team photo, which has moved off the cover, plus the club, gender, age group and season, head coach, home and training venues, and training days.
-- A **Venues** section lists every ground the team played at, with its address, surface, parking, food and drink, the team's record there, and the biggest win.
-- The **Awards** page is now called **Records**.
-- Every page is white with the app's pitch markings faintly drawn in the club colour.
-- **Autographs** is a large blank rounded space after Looking ahead, for players to collect signatures.
+- Managers get a **Season report** button on the Team page.
+- It opens the team's season as a printable A4 book in the club colours
+- The **Player Gallery** shows every coach and player's collectable player card.
+- A **Team info** page follows the cover. It carries the team photo if available.
 - The coach's notes and Looking ahead pages are written as markdown files in `content/reports/`. See the README there.
-
----
 
 ## 4 November 2026 — Period starts on Stats
 
-- Club managers see a new "Period starts" section on Stats. It shows how many periods each player started, and periods as a percentage of appearances. The chart and table follow the style of Goals and Assists.
-- Appearances no longer has a View filter. It still follows the Competition and Competition type filters, and can be narrowed by position.
-- The Goal Scorers section on Stats is now called Goals.
+- Club managers see "Period starts" in Stats, showing how many periods each player started.
+- Appearances no longer has a View filter.
+- The Goal Scorers section on Stats is renamed Goals.
 - Taking a player out of a match-day squad now also removes them from that match's starting players. Before, they stayed in the starting lineups out of sight, and Period starts on Stats still counted those periods.
 
 ---
 
-## 2 November 2026 — Speed and reliability
+## 2 November 2026 — Speed, reliability and match cards
 
-- The dashboard loads faster. The fixtures, leaderboards, and season tiles appear as each one is ready instead of all at once.
-- Renaming a player or changing their details shows on rosters straight away, rather than after up to an hour.
-- When someone is removed from the app, they lose access to pages within 15 minutes at most (it was up to 90 minutes).
-- Club, venue, competition, and roster pages check that you can see that club or team before showing it.
+### Speed and reliability
 
----
+- The dashboard loads faster. Fixtures, leaderboards and season tiles appear as each one is ready.
+- Renaming a player or changing their details shows straight away, rather than after up to an hour.
+- When a person is removed from the app, they lose access within 15 minutes instead of 90 minutes.
+- Club, venue, competition, and squad pages check club or team access before showing it.
 
-## 2 November 2026 — Match cards
+### Match cards
 
 - Results headings on Stats match the other sections on that page.
-- Next fixture and last result include friendlies. Season totals, form, and the goals and assists leaderboards still count league and cup matches only.
-- Scheduled matches show a green Scheduled label instead of "vs", on the dashboard and the matches list.
+- Next fixture and last result include friendlies.
+- Scheduled matches show a green Scheduled label on the dashboard and the matches list.
 - Those cards can be shared. A fixture card includes the match-day squad and form under the venue.
 
 ---

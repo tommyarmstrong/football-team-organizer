@@ -28,6 +28,13 @@ import {
 } from "@/components/shared/stacked-actions";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
 import { MatchPeriodCreateSection } from "@/components/matches/match-period-create-section";
+import {
+  MatchPeriodFormatSection,
+  periodFormatChangeLabel,
+  periodFormatChangeTarget,
+  type PeriodFormatPeriod,
+} from "@/components/matches/match-period-format-section";
+import { PERIOD_FORMAT_LABELS } from "@/lib/match-periods/format-change";
 
 /** Card shell around the goals table; overflow clip keeps rounded corners. */
 export function goalsTableShellClassName(className?: string): string {
@@ -363,6 +370,7 @@ export function MatchGoalsSection({
   homeAway,
   addGoal = null,
   addPeriod = null,
+  changeFormat = null,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
@@ -386,7 +394,12 @@ export function MatchGoalsSection({
     squadPlayers: RosterPlayer[];
     defaultStarterPlayerIds: string[];
   } | null;
+  /** When set, offers "Change to halves / quarters" for the match's periods. */
+  changeFormat?: { periods: PeriodFormatPeriod[] } | null;
 }) {
+  const changeFormatTarget = changeFormat
+    ? periodFormatChangeTarget(changeFormat.periods)
+    : null;
   const groups = groupGoalsByPeriod(goals, periods);
   const endScores = homeAway ? periodEndScores(groups, homeAway) : null;
   const hasRows = groups.length > 0;
@@ -533,6 +546,33 @@ export function MatchGoalsSection({
             >
               Add period
             </Link>
+          ) : null}
+          {changeFormatTarget && changeFormat ? (
+            <div className={stackedActionCellClassName()}>
+              <InlineFormDialog
+                title="Change period format"
+                description={`Switch this match to ${PERIOD_FORMAT_LABELS[changeFormatTarget]}. Goals and starting players are kept.`}
+                trigger={(open) => (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={stackedActionButtonClassName()}
+                    onClick={open}
+                  >
+                    {periodFormatChangeLabel(changeFormatTarget)}
+                  </Button>
+                )}
+              >
+                {(close) => (
+                  <MatchPeriodFormatSection
+                    matchId={matchId}
+                    periods={changeFormat.periods}
+                    onSuccess={close}
+                    onCancel={close}
+                  />
+                )}
+              </InlineFormDialog>
+            </div>
           ) : null}
         </div>
       ) : null}

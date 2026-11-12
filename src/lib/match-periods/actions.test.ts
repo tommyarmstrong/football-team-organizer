@@ -13,6 +13,7 @@ const {
   updatePeriodMock,
   deletePeriodMock,
   setPeriodStartersMock,
+  changeMatchPeriodFormatMock,
 } = vi.hoisted(() => ({
   revalidatePathMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
@@ -26,6 +27,7 @@ const {
   updatePeriodMock: vi.fn(),
   deletePeriodMock: vi.fn(),
   setPeriodStartersMock: vi.fn(),
+  changeMatchPeriodFormatMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
@@ -42,9 +44,11 @@ vi.mock("@/lib/data/match-periods", () => ({
   updatePeriod: updatePeriodMock,
   deletePeriod: deletePeriodMock,
   setPeriodStarters: setPeriodStartersMock,
+  changeMatchPeriodFormat: changeMatchPeriodFormatMock,
 }));
 
 import {
+  changePeriodFormatAction,
   createPeriodAction,
   createPeriodOnMatchAction,
   deletePeriodAction,
@@ -76,6 +80,7 @@ describe("match period actions", () => {
     updatePeriodMock.mockResolvedValue({ error: null });
     deletePeriodMock.mockResolvedValue({ error: null });
     setPeriodStartersMock.mockResolvedValue({ error: null });
+    changeMatchPeriodFormatMock.mockResolvedValue({ error: null });
   });
 
   it("rejects regulation periods and invalid names", async () => {
@@ -206,5 +211,225 @@ describe("match period actions", () => {
         formDataFrom({ name: "Extra time 1" }),
       ),
     ).toMatchObject({ error: expect.stringMatching(/already on this match/i) });
+  });
+});
+
+describe("changePeriodFormatAction", () => {
+  const quarters = [
+    { id: "q1", name: "Quarter 1", sort_order: 10 },
+    { id: "q2", name: "Quarter 2", sort_order: 20 },
+    { id: "q3", name: "Quarter 3", sort_order: 30 },
+    { id: "q4", name: "Quarter 4", sort_order: 40 },
+  ];
+  const halves = [
+    { id: "h1", name: "First half", sort_order: 50 },
+    { id: "h2", name: "Second half", sort_order: 60 },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getViewerContextMock.mockResolvedValue(viewerFixture());
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "in_progress" }),
+      error: null,
+    });
+    listPeriodsForMatchMock.mockResolvedValue({ data: quarters, error: null });
+    changeMatchPeriodFormatMock.mockResolvedValue({ error: null });
+  });
+
+  it("changes quarters to halves, merging leftover quarters into the last half", async () => {
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ success: "Changed to halves." });
+
+    expect(changeMatchPeriodFormatMock).toHaveBeenCalledTimes(1);
+    const [matchId, plan] = changeMatchPeriodFormatMock.mock.calls[0] ?? [];
+    expect(matchId).toBe("match-1");
+    expect(plan.keep.map((k: { periodId: string }) => k.periodId)).toEqual([
+      "q1",
+      "q2",
+    ]);
+    expect(plan.merge).toEqual([
+      expect.objectContaining({ periodId: "q3", intoPeriodId: "q2" }),
+      expect.objectContaining({ periodId: "q4", intoPeriodId: "q2" }),
+    ]);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/matches/match-1");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/stats");
+  });
+
+  it("changes halves to quarters and creates the missing periods", async () => {
+    listPeriodsForMatchMock.mockResolvedValue({ data: halves, error: null });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "quarters" }),
+      ),
+    ).toEqual({ success: "Changed to quarters." });
+
+    const plan = changeMatchPeriodFormatMock.mock.calls[0]?.[1];
+    expect(plan.create.map((c: { name: string }) => c.name)).toEqual([
+      "Quarter 3",
+      "Quarter 4",
+    ]);
+    expect(plan.copyStartersFrom).toBe("h2");
+  });
+
+  it("only uses extra time as quarters when the checkbox is ticked", async () => {
+    listPeriodsForMatchMock.mockResolvedValue({
+      data: [
+        ...halves,
+        { id: "e1", name: "Extra time 1", sort_order: 80 },
+        { id: "e2", name: "Extra time 2", sort_order: 90 },
+      ],
+      error: null,
+    });
+
+    await changePeriodFormatAction(
+      "match-1",
+      {},
+      formDataFrom({ target: "quarters", use_extra_time: "on" }),
+    );
+    const used = changeMatchPeriodFormatMock.mock.calls[0]?.[1];
+    expect(used.usesExtraTime).toBe(true);
+    expect(used.create).toEqual([]);
+
+    await changePeriodFormatAction(
+      "match-1",
+      {},
+      formDataFrom({ target: "quarters" }),
+    );
+    const notUsed = changeMatchPeriodFormatMock.mock.calls[1]?.[1];
+    expect(notUsed.usesExtraTime).toBe(false);
+    expect(notUsed.create).toHaveLength(2);
+  });
+
+  it("rejects an invalid or missing target", async () => {
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "thirds" }),
+      ),
+    ).toEqual({ error: "Choose halves or quarters." });
+    expect(
+      await changePeriodFormatAction("match-1", {}, formDataFrom({})),
+    ).toEqual({ error: "Choose halves or quarters." });
+    expect(changeMatchPeriodFormatMock).not.toHaveBeenCalled();
+  });
+
+  it("requires match-day edit permission", async () => {
+    getViewerContextMock.mockResolvedValue(null);
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/permission/i) });
+    expect(changeMatchPeriodFormatMock).not.toHaveBeenCalled();
+  });
+
+  it("only works when the match is in progress or played", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "scheduled" }),
+      error: null,
+    });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toMatchObject({ error: expect.stringMatching(/in progress or played/i) });
+
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "played" }),
+      error: null,
+    });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ success: "Changed to halves." });
+  });
+
+  it("reports a missing match and load errors", async () => {
+    getMatchMock.mockResolvedValue({ data: null, error: null });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ error: "Match not found." });
+
+    getMatchMock.mockResolvedValue({ data: null, error: "load failed" });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ error: "load failed" });
+
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "in_progress" }),
+      error: null,
+    });
+    listPeriodsForMatchMock.mockResolvedValue({
+      data: [],
+      error: "periods failed",
+    });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ error: "periods failed" });
+  });
+
+  it("explains when the match is already in that format or has other periods", async () => {
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "quarters" }),
+      ),
+    ).toEqual({ error: "This match is already in quarters." });
+
+    listPeriodsForMatchMock.mockResolvedValue({
+      data: [{ id: "s", name: "Single period match", sort_order: 70 }],
+      error: null,
+    });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toMatchObject({
+      error: expect.stringMatching(/not quarters or halves/i),
+    });
+    expect(changeMatchPeriodFormatMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the database error without revalidating", async () => {
+    changeMatchPeriodFormatMock.mockResolvedValue({ error: "rpc failed" });
+    expect(
+      await changePeriodFormatAction(
+        "match-1",
+        {},
+        formDataFrom({ target: "halves" }),
+      ),
+    ).toEqual({ error: "rpc failed" });
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });
