@@ -11,6 +11,7 @@ import {
   matchPeriodSortOrder,
 } from "@/lib/constants";
 import {
+  changeMatchPeriodFormat,
   createPeriod,
   deletePeriod,
   getPeriod,
@@ -20,6 +21,11 @@ import {
 } from "@/lib/data/match-periods";
 import { getMatch } from "@/lib/data/matches";
 import { str } from "@/lib/form-parse";
+import {
+  formatChangeSuccessMessage,
+  isPeriodFormat,
+  planFormatChange,
+} from "@/lib/match-periods/format-change";
 
 function revalidateMatch(matchId: string, periodId?: string) {
   revalidatePath(`/matches/${matchId}`);
@@ -188,6 +194,51 @@ export async function deletePeriodAction(
 
   revalidateMatch(matchId);
   return {};
+}
+
+/**
+ * Switches a match between halves and quarters, in game. Periods are mapped by
+ * position, extra periods merge into the last one, and the whole change runs in
+ * one database transaction. The plan is rebuilt here from the saved periods, so
+ * the form only says which format and whether Extra time counts.
+ */
+export async function changePeriodFormatAction(
+  matchId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const targetRaw = str(formData, "target");
+  if (!isPeriodFormat(targetRaw)) {
+    return { error: "Choose halves or quarters." };
+  }
+  const useExtraTime = formData.get("use_extra_time") === "on";
+
+  const [ctx, loaded, existing] = await Promise.all([
+    getViewerContext(),
+    getMatch(matchId),
+    listPeriodsForMatch(matchId),
+  ]);
+  if (loaded.error) return { error: loaded.error };
+  if (!loaded.data) return { error: "Match not found." };
+  if (!ctx || !canEditMatchDay(ctx, loaded.data.team_id)) {
+    return { error: "You do not have permission to edit this match." };
+  }
+  if (!matchAllowsEvents(loaded.data.status)) {
+    return {
+      error:
+        "The period format can only be changed when the match is in progress or played.",
+    };
+  }
+  if (existing.error) return { error: existing.error };
+
+  const result = planFormatChange(existing.data, targetRaw, { useExtraTime });
+  if (!result.ok) return { error: result.error };
+
+  const { error } = await changeMatchPeriodFormat(matchId, result.plan);
+  if (error) return { error };
+
+  revalidateMatch(matchId);
+  return { success: formatChangeSuccessMessage(targetRaw) };
 }
 
 export async function deletePeriodAndReturnToMatchAction(

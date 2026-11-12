@@ -109,6 +109,14 @@ export default async function MatchDetailPage({
     periods.map((period) => period.name),
   );
 
+  const formatChangePeriods = periods.map((period) => ({
+    id: period.id,
+    name: period.name,
+    sort_order: period.sort_order,
+    goalCount: goals.filter((goal) => goal.period_id === period.id).length,
+    starterCount: period.starter_player_ids.length,
+  }));
+
   const loadErrors = [playersError, competitionsError, venuesError]
     .filter(Boolean)
     .join(" ");
@@ -202,6 +210,7 @@ export default async function MatchDetailPage({
                   }
                 : null
             }
+            changeFormat={canEdit ? { periods: formatChangePeriods } : null}
           />
         </Section>
       ) : null}

@@ -1,6 +1,7 @@
 import { one } from "@/lib/supabase/relations";
 import { createClient } from "@/lib/supabase/server";
 import { matchPeriodSortOrder } from "@/lib/constants";
+import type { FormatChangePlan } from "@/lib/match-periods/format-change";
 import { rejectIfMatchTeamArchived } from "@/lib/team/readonly-guard";
 import {
   mapPlayerNameEmbed,
@@ -224,6 +225,41 @@ export async function setPeriodStarters(
   }
 
   return { error: null };
+}
+
+/**
+ * Applies a halves/quarters format change in one database transaction (see
+ * `planFormatChange` and the `change_match_period_format` function).
+ */
+export async function changeMatchPeriodFormat(
+  matchId: string,
+  plan: FormatChangePlan,
+): Promise<{ error: string | null }> {
+  const archivedError = await rejectIfMatchTeamArchived(matchId);
+  if (archivedError) return { error: archivedError };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("change_match_period_format", {
+    p_match_id: matchId,
+    p_keep: plan.keep.map((item) => ({
+      period_id: item.periodId,
+      from_name: item.fromName,
+      name: item.toName,
+      sort_order: item.sortOrder,
+    })),
+    p_merge: plan.merge.map((item) => ({
+      period_id: item.periodId,
+      into_period_id: item.intoPeriodId,
+      from_name: item.fromName,
+    })),
+    p_create: plan.create.map((item) => ({
+      name: item.name,
+      sort_order: item.sortOrder,
+    })),
+    p_copy_starters_from: plan.copyStartersFrom ?? undefined,
+  });
+
+  return { error: error?.message ?? null };
 }
 
 export type { MatchPeriod, MatchPeriodStarter };
