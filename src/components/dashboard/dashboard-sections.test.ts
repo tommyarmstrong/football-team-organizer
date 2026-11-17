@@ -155,10 +155,18 @@ describe("DashboardLeaderboards", () => {
       "silver",
       "silver",
     ]);
-    expect(awardTonesInPanel(html, "month")).toEqual(["gold"]);
-    expect(panelHtml(html, "month")).not.toContain("text-primary");
+    expect(awardTonesInSection(html, "Player of the month")).toEqual(["gold"]);
+    expect(sectionHtml(html, "Player of the month")).not.toContain(
+      "text-primary",
+    );
     expect(panelHtml(html, "goals")).not.toContain("bg-[#F5C518]");
-    expect(sectionTitles(html)).toEqual(["Awards", "Leaderboards"]);
+    expect(sectionTitles(html)).toEqual([
+      "Leaderboards",
+      "Player of the month",
+    ]);
+    expect(html.indexOf(">Leaderboards<")).toBeLessThan(
+      html.indexOf(">Player of the month<"),
+    );
     expect(html).toContain(">Player of the month<");
     expect(html).toContain(">Player of the match<");
     expect(html).toContain(">Goals<");
@@ -255,7 +263,11 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(awardTonesInPanel(html, "month")).toEqual(["gold", "gold", "gold"]);
+    expect(awardTonesInSection(html, "Player of the month")).toEqual([
+      "gold",
+      "gold",
+      "gold",
+    ]);
     expect(html.indexOf("March 2025")).toBeLessThan(
       html.indexOf("February 2025"),
     );
@@ -314,7 +326,7 @@ function dashboardData(overrides: Record<string, unknown> = {}) {
 }
 
 function sectionTitles(html: string): string[] {
-  return ["Awards", "Leaderboards"].sort(
+  return ["Leaderboards", "Player of the month"].sort(
     (a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`),
   );
 }
@@ -338,15 +350,34 @@ function monthlyAward(
   };
 }
 
-function panelHtml(html: string, id: string): string {
-  const marker = `data-dashboard-panel="${id}"`;
-  const start = html.indexOf(marker);
-  const next = html.indexOf("data-dashboard-panel=", start + marker.length);
+function sectionHtml(html: string, title: string): string {
+  const start = html.indexOf(`>${title}<`);
+  const next = html.indexOf("<h2", start + 1);
   return html.slice(start, next === -1 ? undefined : next);
 }
 
+function panelHtml(html: string, id: string): string {
+  const marker = `data-dashboard-panel="${id}"`;
+  const start = html.indexOf(marker);
+  const nextPanel = html.indexOf(
+    "data-dashboard-panel=",
+    start + marker.length,
+  );
+  const nextHeading = html.indexOf("<h2", start + marker.length);
+  const ends = [nextPanel, nextHeading].filter((index) => index > start);
+  const next = ends.length === 0 ? -1 : Math.min(...ends);
+  return html.slice(start, next === -1 ? undefined : next);
+}
+
+function awardTonesInSection(html: string, title: string): string[] {
+  return awardTonesIn(sectionHtml(html, title));
+}
+
 function awardTonesInPanel(html: string, id: string): string[] {
-  const section = panelHtml(html, id);
+  return awardTonesIn(panelHtml(html, id));
+}
+
+function awardTonesIn(section: string): string[] {
   return [...section.matchAll(/text-\[(#[A-Fa-f0-9]+)\]/g)].map((match) => {
     const colour = match[1] ?? "";
     const tone = (
@@ -532,8 +563,12 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain("Leagues, cups, and other competitions");
     expect(source).toContain("showAddForm={false}");
     expect(source).toContain("compact");
-    expect(source).toContain('title="Awards"');
     expect(source).toContain('title="Leaderboards"');
+    expect(source).toContain('title="Player of the month"');
+    expect(source.indexOf('title="Leaderboards"')).toBeLessThan(
+      source.indexOf('title="Player of the month"'),
+    );
+    expect(source).not.toContain('title="Awards"');
     expect(source).toContain(
       "Record goals on played matches to see the table.",
     );

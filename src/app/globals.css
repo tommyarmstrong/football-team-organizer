@@ -183,8 +183,8 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    /* Half the etching strength so the pitch stays texture. */
-    opacity: 0.5;
+    /* A quarter of the etching strength so the pitch stays texture. */
+    opacity: 0.25;
   }
   /* Same asset and tile on the fixed page layer and the sign-in shell.
      540×330 is the intrinsic size of public/pitch-pattern.svg. */

@@ -167,44 +167,6 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
     <div className="space-y-8">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
       <DashboardViewSwitch
-        title="Awards"
-        views={[
-          {
-            id: "month",
-            label: "Player of the month",
-            content: (
-              <LeaderboardList
-                emptyTitle="No monthly awards yet"
-                rows={potMonth.data.map((award) => ({
-                  id: award.id,
-                  personId: award.player.person_id,
-                  name: playerDisplayName(award.player),
-                  valueLabel: formatAwardMonth(award.month),
-                }))}
-              />
-            ),
-          },
-          {
-            id: "match",
-            label: "Player of the match",
-            content: (
-              <LeaderboardList
-                emptyTitle="No awards yet"
-                rows={rankedLeaderboardRows(
-                  potm.data.map((row) => ({
-                    id: row.playerId,
-                    personId: row.personId,
-                    name: row.name,
-                    valueLabel: formatCountLabel(row.count, "award", "awards"),
-                    metric: row.count,
-                  })),
-                )}
-              />
-            ),
-          },
-        ]}
-      />
-      <DashboardViewSwitch
         title="Leaderboards"
         views={[
           {
@@ -248,8 +210,37 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
               />
             ),
           },
+          {
+            id: "match",
+            label: "Player of the match",
+            content: (
+              <LeaderboardList
+                emptyTitle="No awards yet"
+                rows={rankedLeaderboardRows(
+                  potm.data.map((row) => ({
+                    id: row.playerId,
+                    personId: row.personId,
+                    name: row.name,
+                    valueLabel: formatCountLabel(row.count, "award", "awards"),
+                    metric: row.count,
+                  })),
+                )}
+              />
+            ),
+          },
         ]}
       />
+      <Section title="Player of the month">
+        <LeaderboardList
+          emptyTitle="No monthly awards yet"
+          rows={potMonth.data.map((award) => ({
+            id: award.id,
+            personId: award.player.person_id,
+            name: playerDisplayName(award.player),
+            valueLabel: formatAwardMonth(award.month),
+          }))}
+        />
+      </Section>
     </div>
   );
 }

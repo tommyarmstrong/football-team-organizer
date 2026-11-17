@@ -11,8 +11,8 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 - Form now sits under Season at a glance, and above Next fixture.
 - The share button is no longer on the Dashboard fixture cards. Sharing a postcard stays on the Matches list and the match page.
 - Competitions leave out the Ongoing badge and the Add button. A badge shows for a result such as Completed, or Upcoming when the date is still to come. Rows are a little shorter.
-- Player of the month and Player of the match share one Awards card. Goals and assists share one Leaderboards card. A filter switches the table.
-- The pitch pattern behind the app is lighter, and cards sit slightly lighter than the page with a thin border.
+- Leaderboards sits above Player of the month. The leaderboard filter switches between Goals, Assists, and Player of the match.
+- The pitch pattern behind the app, the sign-in screen, and the season report is lighter, and cards sit slightly lighter than the page with a thin border.
 
 **No database changes.**
 
