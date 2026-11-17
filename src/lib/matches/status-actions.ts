@@ -18,7 +18,8 @@ export type MatchActionPlan = {
 
 /**
  * The quick status controls for a match, or null when there are none
- * (played, cancelled and postponed matches). One table drives both the match
+ * (played, cancelled and postponed matches; a played match still gets the
+ * period actions, see `matchOptionEntries`). One table drives both the match
  * page buttons and the server-side check, so they cannot disagree.
  */
 export function matchActionPlan(status: MatchStatus): MatchActionPlan | null {
