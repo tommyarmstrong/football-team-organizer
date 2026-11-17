@@ -134,7 +134,7 @@ export default async function MatchDetailPage({
   return (
     <div className={pageBodyClassName("space-y-6")}>
       <h1 className="sr-only">{titleText}</h1>
-      <div className="space-y-4">
+      <div className="space-y-3">
         <MatchHero
           size="hero"
           teamName={teamName}
@@ -184,7 +184,7 @@ export default async function MatchDetailPage({
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {allowsEvents ? (
-        <Section title="Goals">
+        <Section title="Goals" compact>
           <MatchGoalsSection
             matchId={match.id}
             goals={goals}
@@ -216,7 +216,7 @@ export default async function MatchDetailPage({
       ) : null}
 
       {!isCancelledOrPostponed ? (
-        <Section title="Match-day squad">
+        <Section title="Match-day squad" compact>
           <MatchSquadSection
             matchId={match.id}
             roster={players}
@@ -236,7 +236,7 @@ export default async function MatchDetailPage({
             canEdit={canEditPlayerOfTheMatch}
           />
 
-          <Section title="Cards">
+          <Section title="Cards" compact>
             <MatchCardsSection
               matchId={match.id}
               cards={cards}

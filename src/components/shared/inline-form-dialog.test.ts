@@ -17,4 +17,16 @@ describe("InlineFormDialog", () => {
     expect(source).toContain("DialogTitle");
     expect(source).toContain("DialogDescription");
   });
+
+  it("can be controlled from outside, with an optional trigger", () => {
+    expect(source).toContain("open: controlledOpen");
+    expect(source).toContain("onOpenChange");
+    expect(source).toContain("trigger?.(");
+    expect(source).toContain("controlledOpen === undefined");
+  });
+
+  it("stays uncontrolled (trigger-driven) when no open prop is passed", () => {
+    expect(source).toContain("useState(false)");
+    expect(source).toContain("controlledOpen ?? uncontrolledOpen");
+  });
 });

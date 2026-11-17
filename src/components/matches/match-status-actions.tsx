@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/shared/error-banner";
 import {
-  stackedActionButtonClassName,
-  stackedActionsRowClassName,
+  actionBarButtonClassName,
+  actionBarClassName,
 } from "@/components/shared/stacked-actions";
 
 export function MatchStatusActions({
@@ -46,11 +46,11 @@ export function MatchStatusActions({
 
   return (
     <div className="space-y-2">
-      <div className={stackedActionsRowClassName()}>
+      <div className={actionBarClassName()}>
         {showKickOff ? (
           <Button
             type="button"
-            className={stackedActionButtonClassName()}
+            className={actionBarButtonClassName()}
             disabled={pending}
             onClick={() => setStatus("in_progress")}
           >
@@ -60,7 +60,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant={showFullTimePrimary ? "default" : "outline"}
-          className={stackedActionButtonClassName()}
+          className={actionBarButtonClassName()}
           disabled={pending}
           onClick={() => setStatus("played")}
         >
@@ -69,7 +69,7 @@ export function MatchStatusActions({
         <Button
           type="button"
           variant="destructive"
-          className={stackedActionButtonClassName()}
+          className={actionBarButtonClassName()}
           disabled={pending}
           aria-haspopup="dialog"
           onClick={() => setCancelOpen(true)}

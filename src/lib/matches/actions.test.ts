@@ -439,6 +439,28 @@ describe("updateMatchPlayersOfTheMatchAction", () => {
       }),
     );
   });
+
+  it("clears an award when its selector is emptied, without touching the other", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "played" }),
+      error: null,
+    });
+    updateMatchMock.mockResolvedValue({ data: {}, error: null });
+
+    const result = await updateMatchPlayersOfTheMatchAction(
+      "match-1",
+      {},
+      formDataFrom({
+        player_of_the_match_id: "",
+        players_player_of_the_match_id: "player-2",
+      }),
+    );
+    expect(result.success).toMatch(/saved/i);
+    expect(updateMatchMock).toHaveBeenCalledWith("match-1", {
+      player_of_the_match_id: null,
+      players_player_of_the_match_id: "player-2",
+    });
+  });
 });
 
 describe("updateMatchAction", () => {

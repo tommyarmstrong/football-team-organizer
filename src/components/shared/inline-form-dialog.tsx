@@ -10,25 +10,40 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+/**
+ * Form in a dialog. Uncontrolled by default: `trigger` receives an `open`
+ * callback. Pass `open` / `onOpenChange` to control it from outside, e.g. when
+ * the opener lives in a menu that unmounts as it closes; `trigger` is then
+ * optional.
+ */
 export function InlineFormDialog({
   trigger,
+  open: controlledOpen,
+  onOpenChange,
   title,
   description,
   size = "default",
   children,
 }: {
-  trigger: (open: () => void) => ReactNode;
+  trigger?: (open: () => void) => ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description: string;
   size?: "default" | "lg";
   children: (close: () => void) => ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   const close = () => setOpen(false);
 
   return (
     <>
-      {trigger(() => setOpen(true))}
+      {trigger?.(() => setOpen(true))}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className={cn(

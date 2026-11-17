@@ -33,7 +33,7 @@ export function teamPickerSelection(
   return "switch-to-dashboard";
 }
 
-function teamSwitcherLabel(team: TeamOption): string {
+export function teamSwitcherLabel(team: TeamOption): string {
   const base = `${team.name} · ${team.season_label}`;
   return isTeamArchived(team) ? `${base} (archived)` : base;
 }
