@@ -1,25 +1,27 @@
 import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: unknown; href: string }) => ({
-    type: "a",
-    props: { href, children },
-  }),
-}));
+vi.mock("next/link", async () =>
+  (await import("@/components/matches/match-card-test-utils")).nextLinkMock(),
+);
 
-import { ScheduledIndicator } from "@/components/matches/match-header-meta";
+import {
+  dateRowHtml,
+  expectInOrder,
+  expectSharedCardLayout,
+  metaStackHtml,
+  renderCard,
+  visibleText,
+} from "@/components/matches/match-card-test-utils";
+import { matchSummaryLines } from "@/lib/format";
+
 import {
   MatchHero,
   matchHeroAriaLabel,
   matchHeroDigitClassName,
   matchHeroFrameClassName,
   matchHeroGroupClassName,
-  matchHeroMetaClassName,
-  matchHeroMetaItemClassName,
   matchHeroNameClassName,
-  matchHeroScoreCellClassName,
   matchHeroShowsScore,
   matchHeroSideClassName,
   matchHeroSides,
@@ -80,10 +82,10 @@ describe("matchHeroAriaLabel", () => {
 });
 
 describe("matchHeroDigitClassName", () => {
-  it("scales digits by surface", () => {
-    expect(matchHeroDigitClassName("hero")).toContain("text-6xl");
-    expect(matchHeroDigitClassName("card")).toContain("text-5xl");
-    expect(matchHeroDigitClassName("compact")).toContain("text-4xl");
+  it("scales digits by surface, smaller on phones", () => {
+    expect(matchHeroDigitClassName("hero")).toBe("text-4xl sm:text-6xl");
+    expect(matchHeroDigitClassName("card")).toBe("text-4xl sm:text-5xl");
+    expect(matchHeroDigitClassName("compact")).toBe("text-4xl");
   });
 });
 
@@ -96,419 +98,309 @@ describe("matchHeroFrameClassName", () => {
   });
 });
 
-function renderTree(node: unknown): string {
-  return JSON.stringify(node, (_key, value) =>
-    typeof value === "function" ? value.name || "Function" : value,
-  );
-}
+describe("matchHero row layout helpers", () => {
+  it("is one home | score | away row at every breakpoint", () => {
+    const group = matchHeroGroupClassName();
+    expect(group).toContain("grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]");
+    // No breakpoint-specific regrouping: desktop matches mobile.
+    expect(group).not.toMatch(/\b(sm|md|lg):/);
+  });
 
-function stackMarkup(node: unknown): string {
-  const html = renderTree(node);
-  const start = html.indexOf('"data-slot":"match-card-stack"');
-  expect(start).toBeGreaterThan(-1);
-  return html.slice(start);
-}
+  it("aligns each name towards the score", () => {
+    expect(matchHeroSideClassName("home")).toContain("text-right");
+    expect(matchHeroSideClassName("away")).toContain("text-left");
+  });
 
-function expectStackOrder(html: string, parts: string[]) {
-  let from = 0;
-  for (const part of parts) {
-    const index = html.indexOf(part, from);
-    expect(index, part).toBeGreaterThan(-1);
-    from = index + part.length;
-  }
-}
+  it("wraps long names to two lines on every size", () => {
+    for (const size of ["hero", "card", "compact"] as const) {
+      expect(matchHeroNameClassName(size)).toContain("line-clamp-2");
+      expect(matchHeroNameClassName(size)).toContain("break-words");
+    }
+  });
+});
+
+const scheduledProps = {
+  ...playedHome,
+  status: "scheduled" as const,
+  goalsFor: 0,
+  goalsAgainst: 0,
+  date: "2026-03-15",
+  kickoffTime: "10:00",
+  meetupTime: "09:30",
+  venueName: "Wembley",
+  competitionName: "Premier League",
+};
+
+const sizes = ["hero", "card", "compact"] as const;
 
 describe("MatchHero", () => {
   it("renders home-first digits for a played home win", () => {
-    const html = JSON.stringify(MatchHero(playedHome));
-    expect(html).toContain("MGA Select");
-    expect(html).toContain("Rose FC");
+    const html = renderCard(createElement(MatchHero, playedHome));
     expect(html).toContain("MGA Select 2-1 Rose FC");
-    expect(html).toContain('"2"');
-    expect(html).toContain('"1"');
-    expect(html).not.toContain('"vs"');
+    expect(visibleText(html)).toContain("MGA Select 2 – 1 Rose FC");
+    expect(html).not.toContain(">vs<");
   });
 
-  it("swaps score digits when we are away", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        homeAway: "away",
-      }),
+  it("puts the opponent first and swaps the digits when we are away", () => {
+    const html = renderCard(
+      createElement(MatchHero, { ...playedHome, homeAway: "away" }),
     );
-    expect(html).toContain("Rose FC");
-    expect(html).toMatch(/"1"[\s\S]*"2"/);
+    expect(html).toContain("Rose FC 1-2 MGA Select");
+    expect(visibleText(html)).toContain("Rose FC 1 – 2 MGA Select");
   });
 
-  it("shows vs with no digits for scheduled matches", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        status: "scheduled",
-        goalsFor: 0,
-        goalsAgainst: 0,
-      }),
+  it("shows vs with no digits for scheduled hero matches", () => {
+    const html = renderCard(
+      createElement(MatchHero, { ...scheduledProps, size: "hero" }),
     );
-    expect(html).toContain("vs");
-    expect(html).not.toContain("LIVE");
-    expect(html).not.toMatch(/font-display[^"]*text-6xl/);
+    expect(html).toContain(">vs<");
+    expect(html).not.toContain("font-display");
+    expect(html).not.toContain(">LIVE<");
   });
 
-  it("shows digits and LIVE only when in progress", () => {
-    const live = renderTree(
-      MatchHero({
-        ...playedHome,
-        status: "in_progress",
-        goalsFor: 0,
-        goalsAgainst: 0,
-      }),
-    );
-    expect(live).toContain("LiveIndicator");
-    expect(live).toContain('"0"');
-
-    const played = renderTree(MatchHero(playedHome));
-    expect(played).not.toContain("LiveIndicator");
-  });
-
-  it("stacks home/away, venue, LIVE, competition, date, then scheduled times", () => {
-    const scheduled = stackMarkup(
-      MatchHero({
-        ...playedHome,
-        status: "scheduled",
-        date: "2026-03-15",
-        kickoffTime: "10:00",
-        meetupTime: "09:30",
-        venueName: "Wembley",
-        competitionName: "Premier League",
-      }),
-    );
-    expectStackOrder(scheduled, [
-      "Home",
-      "Wembley",
-      "Premier League",
-      "Meet up: 09:30",
-      "Kick off: 10:00",
-    ]);
-    expect(scheduled).toContain("font-bold");
-    expect(scheduled).not.toContain("LiveIndicator");
-    expect(scheduled).not.toContain("Meet up: 09:30 · Kick off: 10:00");
-    expect(scheduled).not.toContain("Scheduled");
-    expect(scheduled).not.toContain("Squad:");
-  });
-
-  it("keeps the same stack on compact, card, and hero sizes", () => {
-    const props = {
-      ...playedHome,
-      status: "scheduled" as const,
-      date: "2026-03-15",
-      kickoffTime: "10:00",
-      meetupTime: "09:30",
-      venueName: "Wembley",
-      competitionName: "Premier League",
-    };
-    for (const size of ["compact", "card", "hero"] as const) {
-      const scheduled = stackMarkup(MatchHero({ ...props, size }));
-      expectStackOrder(scheduled, [
-        "Home",
-        "Wembley",
-        "Premier League",
-        "Meet up: 09:30",
-        "Kick off: 10:00",
-      ]);
-      expect(scheduled).not.toContain("Squad:");
-      expect(scheduled).not.toContain('aria-label":"Cards"');
+  it("shows a static scheduled chip instead of vs on summary cards", () => {
+    for (const size of ["card", "compact"] as const) {
+      const html = renderCard(
+        createElement(MatchHero, { ...scheduledProps, size }),
+      );
+      expect(html).toContain(">Scheduled<");
+      expect(html).not.toContain(">vs<");
     }
   });
 
-  it("omits missing venue, competition, and times", () => {
-    const scheduled = stackMarkup(
-      MatchHero({
-        ...playedHome,
-        status: "scheduled",
-        date: "2026-03-15",
-        kickoffTime: null,
-        meetupTime: null,
-        venueName: null,
-        competitionName: null,
-      }),
-    );
-    expect(scheduled).toContain("Home");
-    expect(scheduled).not.toContain("Wembley");
-    expect(scheduled).not.toContain("Premier League");
-    expect(scheduled).not.toContain("Meet up:");
-    expect(scheduled).not.toContain("Kick off:");
-  });
-
-  it("puts the LIVE chip after the venue and before competition", () => {
-    const live = stackMarkup(
-      MatchHero({
-        ...playedHome,
-        status: "in_progress",
-        date: "2026-03-15",
-        kickoffTime: "10:00",
-        meetupTime: "09:30",
-        venueName: "Wembley",
-        competitionName: "Premier League",
-      }),
-    );
-    expectStackOrder(live, [
-      "Home",
-      "Wembley",
-      "LiveIndicator",
-      "Premier League",
-    ]);
-    expect(live).not.toContain("Kick off: 10:00");
-    expect(live).not.toContain("Meet up: 09:30");
-  });
-
-  it("puts share/edit/delete under the score on the hero", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        size: "hero",
-        actions: "Share",
-      }),
-    );
-    const scoreIndex = html.indexOf("text-6xl");
-    const actionsIndex = html.indexOf("Share");
-    expect(scoreIndex).toBeGreaterThan(-1);
-    expect(actionsIndex).toBeGreaterThan(scoreIndex);
+  it("shows status text instead of a score for postponed and cancelled", () => {
+    for (const status of ["postponed", "cancelled"] as const) {
+      const html = renderCard(
+        createElement(MatchHero, { ...playedHome, status }),
+      );
+      expect(html).toContain(">vs<");
+      expect(html).toContain(
+        status === "postponed" ? "Postponed" : "Cancelled",
+      );
+      expect(html).toContain("text-destructive");
+      expect(html).toContain("col-span-full");
+    }
   });
 
   it("uses a paper masthead with a hero rail instead of a solid club fill", () => {
-    const html = JSON.stringify(MatchHero(playedHome));
+    const html = renderCard(createElement(MatchHero, playedHome));
     expect(html).toContain("bg-card");
-    expect(html).toContain("text-foreground");
     expect(html).toContain("border-hero-rail");
     expect(html).not.toContain("bg-hero");
     expect(html).not.toContain("text-header-foreground");
   });
 
-  it("uses destructive text for cancelled and postponed on paper", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        status: "postponed",
-      }),
-    );
-    expect(html).toContain("text-destructive");
-    expect(html).not.toContain("text-red-300");
-  });
-
-  it("can put a share control under the score on a last-result card", () => {
-    const html = JSON.stringify(
-      MatchHero({ ...playedHome, size: "card", actions: "Share" }),
-    );
-    expect(html).toContain("Share");
-    expect(html.indexOf("Share")).toBeGreaterThan(html.indexOf("text-5xl"));
-  });
-
-  it("shows vs and status for postponed matches", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        status: "postponed",
-      }),
-    );
-    expect(html).toContain("vs");
-    expect(html).toContain("Postponed");
-    expect(html).not.toContain("LIVE");
-  });
-
-  it("includes a share slot on compact size", () => {
-    const compact = JSON.stringify(
-      MatchHero({ ...playedHome, size: "compact", actions: "Share" }),
-    );
-    expect(compact).toContain("Share");
-  });
-
-  it("colours the scheduled chip with the win green and leaves it still", () => {
-    const html = renderToStaticMarkup(createElement(ScheduledIndicator));
-    expect(html).toContain("Scheduled");
-    expect(html).toContain("text-win");
-    expect(html).toContain("border-win");
-    expect(html).not.toContain("scheduled-throb");
-    expect(html).not.toContain("animate-");
-    expect(html).not.toContain("text-red-600");
-  });
-
-  it("replaces vs with a static scheduled chip on summary cards", () => {
-    for (const size of ["card", "compact"] as const) {
-      const html = renderTree(
-        MatchHero({
-          ...playedHome,
-          status: "scheduled",
-          size,
-          goalsFor: 0,
-          goalsAgainst: 0,
-        }),
+  it("keeps the full name in the title and wraps it on every size", () => {
+    const opponentName = "Upper Wolverhampton Athletic Youth Development Squad";
+    for (const size of sizes) {
+      const html = renderCard(
+        createElement(MatchHero, { ...playedHome, size, opponentName }),
       );
-      expect(html).toContain("ScheduledIndicator");
-      expect(html).not.toContain('"vs"');
+      expect(html).toContain(`title="${opponentName}"`);
+      expect(html).toContain("line-clamp-2");
     }
   });
 
-  it("keeps vs on the match detail hero", () => {
-    const html = JSON.stringify(
-      MatchHero({
-        ...playedHome,
-        status: "scheduled",
-        size: "hero",
-        goalsFor: 0,
-        goalsAgainst: 0,
+  it("puts share/edit/delete under the card with a 44px row", () => {
+    for (const size of sizes) {
+      const html = renderCard(
+        createElement(MatchHero, { ...playedHome, size, actions: "ACTIONS" }),
+      );
+      expect(html.indexOf("ACTIONS")).toBeGreaterThan(
+        html.indexOf("font-display"),
+      );
+      expect(html).toContain("min-h-11");
+    }
+  });
+
+  it("uses tighter phone padding but the original desktop padding on the hero", () => {
+    const html = renderCard(
+      createElement(MatchHero, { ...playedHome, size: "hero" }),
+    );
+    expect(html).toContain("px-4 py-3 sm:px-6 sm:py-6");
+  });
+
+  it("links the whole card when given an href, and the venue only on the hero", () => {
+    const card = renderCard(
+      createElement(MatchHero, {
+        ...scheduledProps,
+        size: "card",
+        href: "/matches/1",
+        venueId: "venue-1",
       }),
     );
-    expect(html).toContain("vs");
-    expect(html).not.toContain("ScheduledIndicator");
+    expect(card).toContain('href="/matches/1"');
+    expect(card).not.toContain("/venues/venue-1");
+
+    const hero = renderCard(
+      createElement(MatchHero, {
+        ...scheduledProps,
+        size: "hero",
+        venueId: "venue-1",
+      }),
+    );
+    expect(hero).toContain('href="/venues/venue-1"');
   });
 });
 
-describe("MatchHero compact phone layout (detail hero)", () => {
-  const props = {
-    ...playedHome,
-    size: "hero" as const,
-    date: "2026-03-15",
-    kickoffTime: "10:00",
-    meetupTime: "09:30",
-    venueName: "Wembley",
-    venueId: "venue-1",
-    competitionName: "Premier League",
-  };
+describe("MatchHero layout is identical on every size", () => {
+  for (const size of sizes) {
+    it(`${size}: names flank the score, no HOME/AWAY text`, () => {
+      expectSharedCardLayout(
+        renderCard(createElement(MatchHero, { ...scheduledProps, size })),
+        { homeName: "MGA Select", awayName: "Rose FC" },
+      );
+      expectSharedCardLayout(
+        renderCard(
+          createElement(MatchHero, {
+            ...scheduledProps,
+            size,
+            homeAway: "away",
+          }),
+        ),
+        { homeName: "Rose FC", awayName: "MGA Select" },
+      );
+    });
+  }
 
-  it("puts home, score and away on one phone row and restores two columns from sm", () => {
-    expect(matchHeroGroupClassName("hero")).toContain(
-      "grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]",
-    );
-    expect(matchHeroGroupClassName("hero")).toContain("sm:grid-cols-2");
-    expect(matchHeroScoreCellClassName("hero")).toContain("sm:col-span-2");
-    expect(matchHeroScoreCellClassName("hero")).toContain("sm:row-start-2");
-    expect(matchHeroSideClassName("hero", "home")).toContain("sm:col-start-1");
-    expect(matchHeroSideClassName("hero", "away")).toContain("sm:col-start-2");
-  });
-
-  it("renders home, score, then away in document order when we are home", () => {
-    const html = renderTree(MatchHero({ ...props, status: "played" }));
-    const home = html.indexOf("MGA Select");
-    const score = html.indexOf('"2"');
-    const away = html.indexOf("Rose FC", score);
-    expect(home).toBeGreaterThan(-1);
-    expect(score).toBeGreaterThan(home);
-    expect(away).toBeGreaterThan(score);
-  });
-
-  it("puts the opponent first and swaps the digits when MGA are away", () => {
-    const html = renderTree(MatchHero({ ...props, homeAway: "away" }));
-    const opponent = html.indexOf("Rose FC");
-    const homeDigits = html.indexOf('"1"');
-    const awayDigits = html.indexOf('"2"');
-    const us = html.indexOf("MGA Select", awayDigits);
-    expect(opponent).toBeGreaterThan(-1);
-    expect(homeDigits).toBeGreaterThan(opponent);
-    expect(awayDigits).toBeGreaterThan(homeDigits);
-    expect(us).toBeGreaterThan(awayDigits);
-    expect(html).toContain("Rose FC 1-2 MGA Select");
-  });
-
-  it("drops the redundant HOME/AWAY labels on phones only, and only on the hero", () => {
-    const hero = renderTree(MatchHero(props));
-    expect(hero.match(/max-sm:hidden/g)?.length).toBe(3);
-    // Still present (hidden below sm) so the desktop layout is unchanged.
-    expect(hero).toContain('"Home"');
-    for (const size of ["card", "compact"] as const) {
-      const html = renderTree(MatchHero({ ...props, size }));
-      expect(html).not.toContain("max-sm:");
-      expect(html).toContain('"Home"');
+  it("never renders HOME or AWAY, even with a home/away value set", () => {
+    for (const homeAway of ["home", "away", null] as const) {
+      const html = renderCard(
+        createElement(MatchHero, { ...scheduledProps, homeAway }),
+      );
+      expect(visibleText(html)).not.toMatch(/\b(Home|Away)\b/i);
     }
   });
 
-  it("scales the score down on phones and back up from sm", () => {
-    expect(matchHeroDigitClassName("hero")).toBe("text-4xl sm:text-6xl");
+  it("puts the LIVE pill directly above the score on every size", () => {
+    for (const size of sizes) {
+      const html = renderCard(
+        createElement(MatchHero, {
+          ...scheduledProps,
+          status: "in_progress",
+          goalsFor: 1,
+          goalsAgainst: 0,
+          size,
+        }),
+      );
+      expectSharedCardLayout(html, {
+        homeName: "MGA Select",
+        awayName: "Rose FC",
+        live: true,
+      });
+      expect(html).toContain("live-throb");
+      // The pill is a sibling above the names/score row, not inside the meta.
+      expect(metaStackHtml(html)).not.toContain(">LIVE<");
+      expect(html.indexOf(">LIVE<")).toBeLessThan(html.indexOf("font-display"));
+      // Scheduled-only times are not shown while live.
+      expect(html).not.toContain("Kick off");
+    }
   });
 
-  it("wraps long names to two lines on phones, truncating on desktop, and keeps the full name", () => {
-    const html = renderTree(
-      MatchHero({
-        ...props,
-        opponentName: "Upper Wolverhampton Athletic Youth Development Squad",
-      }),
-    );
-    expect(matchHeroNameClassName("hero")).toContain("max-sm:line-clamp-2");
-    expect(matchHeroNameClassName("hero")).toContain("sm:truncate");
-    expect(matchHeroNameClassName("hero")).toContain("break-words");
-    expect(html).toContain(
-      '"title":"Upper Wolverhampton Athletic Youth Development Squad"',
-    );
-    expect(html).toContain("Upper Wolverhampton Athletic Youth");
-    expect(html).toContain("min-w-0");
+  it("shows no LIVE pill unless in progress", () => {
+    for (const status of ["scheduled", "played", "postponed"] as const) {
+      expect(
+        renderCard(createElement(MatchHero, { ...playedHome, status })),
+      ).not.toContain(">LIVE<");
+    }
+  });
+});
+
+describe("MatchHero meta under the score", () => {
+  for (const size of sizes) {
+    it(`${size}: competition (bold), venue, then date · meet up · kick off`, () => {
+      const html = renderCard(
+        createElement(MatchHero, { ...scheduledProps, size }),
+      );
+      const stack = metaStackHtml(html);
+      const lines = matchSummaryLines({
+        competitionName: "Premier League",
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        venueName: "Wembley",
+        status: "scheduled",
+      });
+      expectInOrder(stack, [
+        "Premier League",
+        "Wembley",
+        lines.dateTime,
+        "Meet up: 09:30",
+        "Kick off: 10:00",
+      ]);
+      // Competition is the only bold line; venue and date are regular weight.
+      expect(stack.match(/font-bold/g)?.length).toBe(1);
+      expect(stack).toMatch(
+        /<p class="text-foreground font-bold">Premier League<\/p>/,
+      );
+      expect(stack).not.toContain("font-medium");
+      expect(stack).not.toContain("font-semibold");
+    });
+
+    it(`${size}: date, meet up and kick off share one centred row with dots`, () => {
+      const row = dateRowHtml(
+        renderCard(createElement(MatchHero, { ...scheduledProps, size })),
+      );
+      const lines = matchSummaryLines({
+        date: "2026-03-15",
+        kickoffTime: "10:00",
+        meetupTime: "09:30",
+        status: "scheduled",
+      });
+      expect(row).toBe(
+        `<span>${lines.dateTime}</span><span aria-hidden="true">·</span>` +
+          `<span>Meet up: 09:30</span><span aria-hidden="true">·</span>` +
+          `<span>Kick off: 10:00</span>`,
+      );
+      expect(
+        renderCard(createElement(MatchHero, { ...scheduledProps, size })),
+      ).toContain("flex flex-wrap items-center justify-center");
+    });
+  }
+
+  it("uses one font size for every meta line", () => {
+    const html = renderCard(createElement(MatchHero, scheduledProps));
+    const stack = metaStackHtml(html);
+    // Size is set once on the container; no line overrides it.
+    expect(stack).toContain("text-xs");
+    expect(stack).toContain("sm:text-sm");
+    expect(stack.match(/(?<![:\w-])text-(xs|sm|base|lg)\b/g)?.length).toBe(1);
   });
 
-  it("flows venue, competition and date inline on phones with separators", () => {
-    expect(matchHeroMetaClassName("hero")).toContain("flex-wrap");
-    expect(matchHeroMetaClassName("hero")).toContain("sm:block");
-    expect(matchHeroMetaItemClassName("hero")).toContain(
-      String.raw`after:content-['\00b7']`,
+  it("shows only the date for played matches and omits missing fields", () => {
+    const played = renderCard(
+      createElement(MatchHero, { ...scheduledProps, status: "played" }),
     );
-    expect(matchHeroMetaItemClassName("card")).toBe("");
-    expect(matchHeroMetaClassName("card")).toBe(
-      "text-muted-foreground mt-4 space-y-1 text-center text-sm",
-    );
-  });
+    const row = dateRowHtml(played);
+    expect(row).not.toContain("Meet up");
+    expect(row).not.toContain("·");
 
-  it("keeps every meta field, in order, on the compact hero", () => {
-    const scheduled = stackMarkup(MatchHero({ ...props, status: "scheduled" }));
-    expectStackOrder(scheduled, [
-      "Wembley",
-      "Premier League",
-      "Meet up: 09:30",
-      "Kick off: 10:00",
-    ]);
-    expect(scheduled).toContain("/venues/venue-1");
-  });
-
-  it("omits missing metadata without leaving empty items", () => {
-    const html = renderTree(
-      MatchHero({
-        ...playedHome,
-        size: "hero",
-        homeAway: null,
-        date: undefined,
+    const sparse = renderCard(
+      createElement(MatchHero, {
+        ...scheduledProps,
         venueName: null,
         competitionName: null,
+        kickoffTime: null,
+        meetupTime: null,
+      }),
+    );
+    const stack = metaStackHtml(sparse);
+    expect(stack).not.toContain("Wembley");
+    expect(stack).not.toContain("Premier League");
+    expect(stack).not.toContain("font-bold");
+    expect(dateRowHtml(sparse)).not.toContain("·");
+  });
+
+  it("renders no meta block without a date", () => {
+    const html = renderCard(
+      createElement(MatchHero, {
+        ...playedHome,
+        size: "hero",
+        date: undefined,
+        venueName: "Wembley",
       }),
     );
     expect(html).not.toContain("match-card-stack");
     expect(html).toContain("MGA Select 2-1 Rose FC");
-  });
-
-  it("still shows vs with no scheduled badge, and status text for cancelled", () => {
-    const scheduled = renderTree(
-      MatchHero({
-        ...props,
-        status: "scheduled",
-        goalsFor: 0,
-        goalsAgainst: 0,
-      }),
-    );
-    expect(scheduled).toContain('"vs"');
-    expect(scheduled).not.toContain("ScheduledIndicator");
-
-    const cancelled = renderTree(MatchHero({ ...props, status: "cancelled" }));
-    expect(cancelled).toContain("Cancelled");
-    expect(cancelled).toContain("col-span-full");
-    expect(cancelled).toContain("text-destructive");
-  });
-
-  it("keeps the share, edit and delete slot under the hero with a 44px row", () => {
-    const html = renderTree(MatchHero({ ...props, actions: "ACTIONS" }));
-    expect(html).toContain("ACTIONS");
-    expect(html).toContain("min-h-11");
-    expect(html.indexOf("ACTIONS")).toBeGreaterThan(html.indexOf("text-4xl"));
-  });
-
-  it("uses tighter phone padding but the original desktop padding", () => {
-    const html = renderTree(MatchHero(props));
-    expect(html).toContain("px-4 py-3 sm:px-6 sm:py-6");
-    const live = renderTree(MatchHero({ ...props, status: "in_progress" }));
-    expect(live).toContain("px-4 py-3 sm:px-6 sm:py-4");
   });
 });
