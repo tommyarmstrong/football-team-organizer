@@ -16,7 +16,7 @@ export function VenuePhoto({
     <img
       src={venue.photo_url}
       alt={`Photo of ${venue.name}`}
-      className="venue-photo ring-foreground/10 aspect-video w-full rounded-xl object-cover ring-1"
+      className="venue-photo ring-border aspect-video w-full rounded-xl object-cover ring-1"
     />
   );
 }

@@ -13,7 +13,7 @@ export default function ReportLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="min-h-screen bg-neutral-300 pb-[10mm] print:bg-white print:pb-0">
+    <div className="report-theme min-h-screen bg-neutral-300 pb-[10mm] print:bg-white print:pb-0">
       <style>{`
         @page { size: A4; margin: 0; }
         @media print {

@@ -163,7 +163,8 @@ describe("MatchListRow status badges", () => {
   it("shows the red LIVE badge only for a match in progress", () => {
     const live = row({ status: "in_progress" });
     expect(live).toContain(">LIVE<");
-    expect(live).toContain("border-red-500");
+    expect(live).toContain("border-loss");
+    expect(live).toContain("text-loss");
     expectInOrder(live, [
       'data-slot="match-list-row-date"',
       ">LIVE<",

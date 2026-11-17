@@ -117,7 +117,7 @@ export function SearchableSelect({
 
         <Combobox.Portal>
           <Combobox.Positioner className="outline-none" sideOffset={4}>
-            <Combobox.Popup className="bg-popover text-popover-foreground ring-foreground/10 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-max max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
+            <Combobox.Popup className="bg-popover text-popover-foreground ring-border data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-max max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
               <Combobox.Empty className="text-muted-foreground px-3 py-4 text-sm">
                 {emptyMessage}
               </Combobox.Empty>
