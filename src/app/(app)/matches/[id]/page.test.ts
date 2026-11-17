@@ -50,12 +50,21 @@ describe("match detail page", () => {
     expect(source).toContain('pageBodyClassName("space-y-6")');
   });
 
-  it("only offers the match-period options to editors", () => {
-    expect(source).toContain("showAddPeriod={canEdit}");
-    expect(source).toContain("addPeriod={\n              canEdit");
-    expect(source).toContain(
-      "changeFormat={canEdit ? { periods: formatChangePeriods } : null}",
-    );
+  it("puts the status and period options on the match card, for editors only", () => {
+    const actions = source.indexOf("<MatchActions");
+    expect(actions).toBeGreaterThan(source.indexOf("<MatchHero"));
+    expect(actions).toBeLessThan(source.indexOf('<Section title="Goals"'));
+    expect(source.slice(actions - 40, actions)).toContain("canEdit ?");
+    expect(source).toContain("changeFormat={{ periods: formatChangePeriods }}");
+    expect(source).not.toContain("MatchStatusActions");
+  });
+
+  it("keeps Goals to Add goal only", () => {
+    const goals = source.slice(source.indexOf("<MatchGoalsSection"));
+    const end = goals.indexOf("/>");
+    expect(goals.slice(0, end)).not.toContain("addPeriod");
+    expect(goals.slice(0, end)).not.toContain("changeFormat");
+    expect(goals.slice(0, end)).not.toContain("showAddPeriod");
   });
 
   it("does not touch the pitch background or page width", () => {

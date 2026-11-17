@@ -22,6 +22,7 @@ import {
   matchHeroFrameClassName,
   matchHeroGroupClassName,
   matchHeroNameClassName,
+  matchHeroRailClassName,
   matchHeroShowsScore,
   matchHeroSideClassName,
   matchHeroSides,
@@ -182,10 +183,11 @@ describe("MatchHero", () => {
     }
   });
 
-  it("uses a paper masthead with a hero rail instead of a solid club fill", () => {
+  it("uses a paper masthead with a result-coloured rail instead of a solid club fill", () => {
     const html = renderCard(createElement(MatchHero, playedHome));
     expect(html).toContain("bg-card");
-    expect(html).toContain("border-hero-rail");
+    expect(html).toContain("border-l-[3px]");
+    expect(html).not.toContain("border-hero-rail");
     expect(html).not.toContain("bg-hero");
     expect(html).not.toContain("text-header-foreground");
   });
@@ -403,4 +405,75 @@ describe("MatchHero meta under the score", () => {
     expect(html).not.toContain("match-card-stack");
     expect(html).toContain("MGA Select 2-1 Rose FC");
   });
+});
+
+/** The masthead's own classes, where the rail colour lives (not the Scheduled chip's). */
+function mastheadClasses(html: string): string {
+  const match = html.match(/class="(bg-card text-foreground [^"]*)"/);
+  expect(match, "masthead present").not.toBeNull();
+  return match?.[1] ?? "";
+}
+
+describe("match card rail colour", () => {
+  const cases = [
+    ["win", { goalsFor: 2, goalsAgainst: 1 }, "text-win", "border-win"],
+    ["draw", { goalsFor: 1, goalsAgainst: 1 }, "text-draw", "border-draw"],
+    ["loss", { goalsFor: 0, goalsAgainst: 3 }, "text-loss", "border-loss"],
+  ] as const;
+
+  it("maps each result to its rail colour", () => {
+    expect(matchHeroRailClassName("W")).toBe("border-win");
+    expect(matchHeroRailClassName("D")).toBe("border-draw");
+    expect(matchHeroRailClassName("L")).toBe("border-loss");
+    expect(matchHeroRailClassName(null)).toContain("border-muted-foreground");
+  });
+
+  for (const size of sizes) {
+    for (const [name, goals, scoreClass, railClass] of cases) {
+      for (const status of ["played", "in_progress"] as const) {
+        it(`${size} ${status} ${name}: rail matches the score colour`, () => {
+          const html = renderCard(
+            createElement(MatchHero, { ...playedHome, ...goals, status, size }),
+          );
+          expect(html).toContain(scoreClass);
+          const rail = mastheadClasses(html);
+          expect(rail).toContain(railClass);
+          // Exactly one rail colour.
+          expect(rail.match(/border-(win|draw|loss)\b/g)?.length).toBe(1);
+        });
+      }
+    }
+
+    it(`${size}: rail follows the result for an away team too`, () => {
+      // Away win 1-2: our goals_for is 2.
+      const html = renderCard(
+        createElement(MatchHero, {
+          ...playedHome,
+          homeAway: "away",
+          goalsFor: 2,
+          goalsAgainst: 1,
+          size,
+        }),
+      );
+      expect(mastheadClasses(html)).toContain("border-win");
+    });
+
+    it(`${size}: rail is grey for scheduled, postponed and cancelled`, () => {
+      for (const status of ["scheduled", "postponed", "cancelled"] as const) {
+        const html = renderCard(
+          createElement(MatchHero, {
+            ...playedHome,
+            status,
+            goalsFor: 5,
+            goalsAgainst: 0,
+            size,
+          }),
+        );
+        const rail = mastheadClasses(html);
+        expect(rail).toContain("border-muted-foreground/40");
+        expect(rail).not.toMatch(/border-(win|draw|loss)\b/);
+        expect(html).not.toContain("border-hero-rail");
+      }
+    });
+  }
 });
