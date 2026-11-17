@@ -19,15 +19,21 @@ function attr(source: string, name: string): string | undefined {
 }
 
 function shapes(svg: string): Shape[] {
-  return [...svg.matchAll(/<(rect|line|circle|path)\b([^>]*?)\/?>/g)].map(
-    (match) => {
-      const attrs: Record<string, string> = {};
-      for (const found of match[2].matchAll(/\b([a-zA-Z0-9:-]+)="([^"]*)"/g)) {
-        attrs[found[1]] = found[2];
-      }
-      return { tag: match[1], attrs };
-    },
-  );
+  const drawn: Shape[] = [];
+  for (const match of svg.matchAll(/<(rect|line|circle|path)\b([^>]*?)\/?>/g)) {
+    const tag = match[1];
+    const raw = match[2];
+    if (!tag || raw == null) continue;
+    const attrs: Record<string, string> = {};
+    for (const found of raw.matchAll(/\b([a-zA-Z0-9:-]+)="([^"]*)"/g)) {
+      const name = found[1];
+      const value = found[2];
+      if (!name || value == null) continue;
+      attrs[name] = value;
+    }
+    drawn.push({ tag, attrs });
+  }
+  return drawn;
 }
 
 function numberAttr(shape: Shape, name: string): number {
@@ -60,14 +66,20 @@ function geometry(
     "rx",
     "d",
   ];
-  return shapes(svg).map((shape) => ({
-    tag: shape.tag,
-    attrs: Object.fromEntries(
-      kept
-        .filter((name) => shape.attrs[name] != null)
-        .map((name) => [name, shape.attrs[name]]),
-    ),
-  }));
+  return shapes(svg).map((shape) => {
+    const attrs: Record<string, string> = {};
+    for (const name of kept) {
+      const value = shape.attrs[name];
+      if (value != null) attrs[name] = value;
+    }
+    return { tag: shape.tag, attrs };
+  });
+}
+
+function shapeAt(list: Shape[], index: number): Shape {
+  const shape = list[index];
+  if (!shape) throw new Error(`missing pitch shape at index ${index}`);
+  return shape;
 }
 
 describe("pitch background etching", () => {
@@ -158,7 +170,7 @@ describe("pitch background etching", () => {
       }
 
       for (const [index, box] of sixYard.entries()) {
-        const area = penalties[index];
+        const area = shapeAt(penalties, index);
         expect(numberAttr(box, "width")).toBeLessThan(
           numberAttr(area, "width"),
         );
@@ -195,12 +207,16 @@ describe("pitch background etching", () => {
         "M64 86a36 36 0 0 1 0 48",
         "M296 86a36 36 0 0 0 0 48",
       ]);
-      expect(arcs[0].attrs.d?.startsWith("M64 ")).toBe(true);
+      const leftArc = shapeAt(arcs, 0);
+      const rightArc = shapeAt(arcs, 1);
+      const leftPenalty = shapeAt(penalties, 0);
+      const rightPenalty = shapeAt(penalties, 1);
+      expect(leftArc.attrs.d?.startsWith("M64 ")).toBe(true);
       expect(
-        numberAttr(penalties[0], "x") + numberAttr(penalties[0], "width"),
+        numberAttr(leftPenalty, "x") + numberAttr(leftPenalty, "width"),
       ).toBe(64);
-      expect(arcs[1].attrs.d?.startsWith("M296 ")).toBe(true);
-      expect(numberAttr(penalties[1], "x")).toBe(296);
+      expect(rightArc.attrs.d?.startsWith("M296 ")).toBe(true);
+      expect(numberAttr(rightPenalty, "x")).toBe(296);
     }
   });
 
