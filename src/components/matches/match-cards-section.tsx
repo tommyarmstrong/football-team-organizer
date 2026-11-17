@@ -48,7 +48,7 @@ export function MatchCardsSection({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {cards.length === 0 ? (
         <EmptyState
           title="No cards recorded"
@@ -123,7 +123,7 @@ export function MatchCardsSection({
           title="Add card"
           description="Choose the player and card type. Save keeps you on this match."
           trigger={(open) => (
-            <Button type="button" onClick={open}>
+            <Button type="button" className="h-11 sm:h-8" onClick={open}>
               Add
             </Button>
           )}

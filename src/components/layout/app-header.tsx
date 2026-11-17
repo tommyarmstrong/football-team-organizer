@@ -8,7 +8,18 @@ import { isValidClubColour } from "@/lib/clubs/branding";
 import { ClubIcon } from "@/components/clubs/club-icon";
 import { AppNav, MobileTabBar } from "@/components/layout/app-nav";
 import { ClubColourBinder } from "@/components/layout/club-colour-binder";
-import { TeamSwitcher } from "@/components/layout/team-switcher";
+import {
+  CollapsingHeader,
+  appHeaderClassName,
+  brandNameRowClassName,
+  headerInnerClassName,
+  mobileHeaderSpacerClassName,
+  teamTriggerClassName,
+} from "@/components/layout/collapsing-header";
+import {
+  TeamSwitcher,
+  teamSwitcherLabel,
+} from "@/components/layout/team-switcher";
 import { Skeleton } from "@/components/shared/skeleton";
 
 function viewerFullName(ctx: {
@@ -64,8 +75,9 @@ function MobileTabBarFallback() {
 export function AppHeaderFallback() {
   return (
     <>
-      <header className="club-themed-header club-chrome text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
+      <div aria-hidden className={mobileHeaderSpacerClassName} />
+      <header className={appHeaderClassName}>
+        <div className={headerInnerClassName}>
           <BrandFallback />
           <NavFallback />
         </div>
@@ -93,14 +105,16 @@ async function AppHeaderBrand() {
   const teams = ctx ? sortTeamsForDisplay(ctx.visibleTeams) : [];
   const activeTeamId = activeTeam?.id ?? null;
 
+  const activeTeamOption = teams.find((team) => team.id === activeTeamId);
+
   return (
     <>
       <ClubColourBinder colour={colour} />
       <div className="flex items-center gap-3">
-        <div className="flex min-w-0 items-start gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5 md:items-start">
           <Link
             href="/dashboard"
-            className="focus-visible:ring-header-foreground/70 mt-0.5 shrink-0 focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-header-foreground/70 shrink-0 focus-visible:ring-2 focus-visible:outline-none md:mt-0.5"
           >
             <ClubIcon
               iconUrl={club?.icon_url}
@@ -110,19 +124,31 @@ async function AppHeaderBrand() {
             />
           </Link>
           <div className="flex min-w-0 flex-col">
-            <Link
-              href="/dashboard"
-              className="font-display focus-visible:ring-header-foreground/70 truncate text-xl leading-tight tracking-tight focus-visible:ring-2 focus-visible:outline-none sm:text-2xl"
-            >
-              {brandName}
-            </Link>
+            <div className={brandNameRowClassName}>
+              <div className="min-h-0 overflow-hidden">
+                <Link
+                  href="/dashboard"
+                  className="font-display focus-visible:ring-header-foreground/70 block truncate text-xl leading-tight tracking-tight focus-visible:ring-2 focus-visible:outline-none sm:text-2xl"
+                >
+                  {brandName}
+                </Link>
+              </div>
+            </div>
             <div className="md:hidden">
               <TeamSwitcher
                 teams={teams}
                 activeTeamId={activeTeamId}
                 align="start"
-                triggerClassName="text-header-foreground/75 hover:text-header-foreground"
+                triggerClassName={teamTriggerClassName}
               />
+              {teams.length < 2 && activeTeamOption ? (
+                <p
+                  data-slot="active-team-label"
+                  className="text-header-foreground/75 max-md:group-data-[collapsed=true]/header:text-header-foreground truncate text-sm max-md:group-data-[collapsed=true]/header:font-medium"
+                >
+                  {teamSwitcherLabel(activeTeamOption)}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
@@ -189,8 +215,9 @@ async function AppHeaderMobileNav() {
 export function AppHeader() {
   return (
     <>
-      <header className="club-themed-header club-chrome text-header-foreground border-header/30 sticky top-0 z-30 border-b shadow-sm">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6">
+      <div aria-hidden className={mobileHeaderSpacerClassName} />
+      <CollapsingHeader>
+        <div className={headerInnerClassName}>
           {/* Zone 1: brand bar — club name, icon, colour, mobile team switcher */}
           <Suspense fallback={<BrandFallback />}>
             <AppHeaderBrand />
@@ -203,7 +230,7 @@ export function AppHeader() {
             </Suspense>
           </div>
         </div>
-      </header>
+      </CollapsingHeader>
 
       {/* Mobile tab bar streams with the nav data */}
       <Suspense fallback={<MobileTabBarFallback />}>

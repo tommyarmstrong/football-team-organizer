@@ -4,6 +4,20 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Easier match details on your phone
+
+- The match summary is much shorter on a phone: home team, score and away team sit on one row, so more of the match fits on screen.
+- The top bar shrinks as you scroll down, leaving more room, and expands again at the top. Your team picker stays within reach.
+- Coach's and players' Player of the Match are now together in one section, without repeating the chosen player underneath.
+- Add goal is now the main button under Goals. Add period and Change to halves/quarters moved into an Options menu.
+- Goals are more compact, with the assist shown under the scorer. Goals for and against are told apart by icon and label, not only colour.
+- Match-day squad rows are tighter, and removing a player on a phone asks you to confirm first.
+- Buttons and fields are easier to tap on a phone. Desktop looks the same as before.
+
+**No database changes.**
+
+---
+
 ## 12 November 2026 — Switch a match between halves and quarters
 
 - If the referee plays halves when the fixture was set up with quarters (or the other way round), you no longer need to delete periods and start again.

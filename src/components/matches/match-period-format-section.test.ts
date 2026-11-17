@@ -70,12 +70,15 @@ describe("format change wiring", () => {
     expect(section).toContain("planPreviewRows(");
   });
 
-  it("adds a Change period format dialog next to Add goal and Add period", () => {
+  it("offers Change period format from the Options menu next to Add goal", () => {
+    const menu = readSrc("components/matches/match-period-options-menu.tsx");
+    expect(menu).toContain('title="Change period format"');
+    expect(menu).toContain("periodFormatChangeLabel(changeFormatTarget)");
+    expect(menu).toContain("changeFormat && changeFormatTarget");
+    expect(menu).toContain("<MatchPeriodFormatSection");
     const goals = readSrc("components/matches/match-goals-section.tsx");
-    expect(goals).toContain('title="Change period format"');
-    expect(goals).toContain("periodFormatChangeLabel(changeFormatTarget)");
-    expect(goals).toContain("changeFormatTarget && changeFormat");
-    expect(goals).toContain("<MatchPeriodFormatSection");
+    expect(goals).toContain("<MatchPeriodOptionsMenu");
+    expect(goals).toContain("changeFormatTarget={changeFormatTarget}");
   });
 
   it("only passes the format change to editors on the match page", () => {

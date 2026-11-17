@@ -15,7 +15,13 @@ import {
   matchHeroAriaLabel,
   matchHeroDigitClassName,
   matchHeroFrameClassName,
+  matchHeroGroupClassName,
+  matchHeroMetaClassName,
+  matchHeroMetaItemClassName,
+  matchHeroNameClassName,
+  matchHeroScoreCellClassName,
   matchHeroShowsScore,
+  matchHeroSideClassName,
   matchHeroSides,
 } from "@/components/matches/match-hero";
 
@@ -354,5 +360,155 @@ describe("MatchHero", () => {
     );
     expect(html).toContain("vs");
     expect(html).not.toContain("ScheduledIndicator");
+  });
+});
+
+describe("MatchHero compact phone layout (detail hero)", () => {
+  const props = {
+    ...playedHome,
+    size: "hero" as const,
+    date: "2026-03-15",
+    kickoffTime: "10:00",
+    meetupTime: "09:30",
+    venueName: "Wembley",
+    venueId: "venue-1",
+    competitionName: "Premier League",
+  };
+
+  it("puts home, score and away on one phone row and restores two columns from sm", () => {
+    expect(matchHeroGroupClassName("hero")).toContain(
+      "grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]",
+    );
+    expect(matchHeroGroupClassName("hero")).toContain("sm:grid-cols-2");
+    expect(matchHeroScoreCellClassName("hero")).toContain("sm:col-span-2");
+    expect(matchHeroScoreCellClassName("hero")).toContain("sm:row-start-2");
+    expect(matchHeroSideClassName("hero", "home")).toContain("sm:col-start-1");
+    expect(matchHeroSideClassName("hero", "away")).toContain("sm:col-start-2");
+  });
+
+  it("renders home, score, then away in document order when we are home", () => {
+    const html = renderTree(MatchHero({ ...props, status: "played" }));
+    const home = html.indexOf("MGA Select");
+    const score = html.indexOf('"2"');
+    const away = html.indexOf("Rose FC", score);
+    expect(home).toBeGreaterThan(-1);
+    expect(score).toBeGreaterThan(home);
+    expect(away).toBeGreaterThan(score);
+  });
+
+  it("puts the opponent first and swaps the digits when MGA are away", () => {
+    const html = renderTree(MatchHero({ ...props, homeAway: "away" }));
+    const opponent = html.indexOf("Rose FC");
+    const homeDigits = html.indexOf('"1"');
+    const awayDigits = html.indexOf('"2"');
+    const us = html.indexOf("MGA Select", awayDigits);
+    expect(opponent).toBeGreaterThan(-1);
+    expect(homeDigits).toBeGreaterThan(opponent);
+    expect(awayDigits).toBeGreaterThan(homeDigits);
+    expect(us).toBeGreaterThan(awayDigits);
+    expect(html).toContain("Rose FC 1-2 MGA Select");
+  });
+
+  it("drops the redundant HOME/AWAY labels on phones only, and only on the hero", () => {
+    const hero = renderTree(MatchHero(props));
+    expect(hero.match(/max-sm:hidden/g)?.length).toBe(3);
+    // Still present (hidden below sm) so the desktop layout is unchanged.
+    expect(hero).toContain('"Home"');
+    for (const size of ["card", "compact"] as const) {
+      const html = renderTree(MatchHero({ ...props, size }));
+      expect(html).not.toContain("max-sm:");
+      expect(html).toContain('"Home"');
+    }
+  });
+
+  it("scales the score down on phones and back up from sm", () => {
+    expect(matchHeroDigitClassName("hero")).toBe("text-4xl sm:text-6xl");
+  });
+
+  it("wraps long names to two lines on phones, truncating on desktop, and keeps the full name", () => {
+    const html = renderTree(
+      MatchHero({
+        ...props,
+        opponentName: "Upper Wolverhampton Athletic Youth Development Squad",
+      }),
+    );
+    expect(matchHeroNameClassName("hero")).toContain("max-sm:line-clamp-2");
+    expect(matchHeroNameClassName("hero")).toContain("sm:truncate");
+    expect(matchHeroNameClassName("hero")).toContain("break-words");
+    expect(html).toContain(
+      '"title":"Upper Wolverhampton Athletic Youth Development Squad"',
+    );
+    expect(html).toContain("Upper Wolverhampton Athletic Youth");
+    expect(html).toContain("min-w-0");
+  });
+
+  it("flows venue, competition and date inline on phones with separators", () => {
+    expect(matchHeroMetaClassName("hero")).toContain("flex-wrap");
+    expect(matchHeroMetaClassName("hero")).toContain("sm:block");
+    expect(matchHeroMetaItemClassName("hero")).toContain(
+      String.raw`after:content-['\00b7']`,
+    );
+    expect(matchHeroMetaItemClassName("card")).toBe("");
+    expect(matchHeroMetaClassName("card")).toBe(
+      "text-muted-foreground mt-4 space-y-1 text-center text-sm",
+    );
+  });
+
+  it("keeps every meta field, in order, on the compact hero", () => {
+    const scheduled = stackMarkup(MatchHero({ ...props, status: "scheduled" }));
+    expectStackOrder(scheduled, [
+      "Wembley",
+      "Premier League",
+      "Meet up: 09:30",
+      "Kick off: 10:00",
+    ]);
+    expect(scheduled).toContain("/venues/venue-1");
+  });
+
+  it("omits missing metadata without leaving empty items", () => {
+    const html = renderTree(
+      MatchHero({
+        ...playedHome,
+        size: "hero",
+        homeAway: null,
+        date: undefined,
+        venueName: null,
+        competitionName: null,
+      }),
+    );
+    expect(html).not.toContain("match-card-stack");
+    expect(html).toContain("MGA Select 2-1 Rose FC");
+  });
+
+  it("still shows vs with no scheduled badge, and status text for cancelled", () => {
+    const scheduled = renderTree(
+      MatchHero({
+        ...props,
+        status: "scheduled",
+        goalsFor: 0,
+        goalsAgainst: 0,
+      }),
+    );
+    expect(scheduled).toContain('"vs"');
+    expect(scheduled).not.toContain("ScheduledIndicator");
+
+    const cancelled = renderTree(MatchHero({ ...props, status: "cancelled" }));
+    expect(cancelled).toContain("Cancelled");
+    expect(cancelled).toContain("col-span-full");
+    expect(cancelled).toContain("text-destructive");
+  });
+
+  it("keeps the share, edit and delete slot under the hero with a 44px row", () => {
+    const html = renderTree(MatchHero({ ...props, actions: "ACTIONS" }));
+    expect(html).toContain("ACTIONS");
+    expect(html).toContain("min-h-11");
+    expect(html.indexOf("ACTIONS")).toBeGreaterThan(html.indexOf("text-4xl"));
+  });
+
+  it("uses tighter phone padding but the original desktop padding", () => {
+    const html = renderTree(MatchHero(props));
+    expect(html).toContain("px-4 py-3 sm:px-6 sm:py-6");
+    const live = renderTree(MatchHero({ ...props, status: "in_progress" }));
+    expect(live).toContain("px-4 py-3 sm:px-6 sm:py-4");
   });
 });
