@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { HandshakeIcon, TrophyIcon } from "lucide-react";
+import { matchPeriodSortOrder } from "@/lib/constants";
 import {
-  matchPeriodSortOrder,
-  type ExtraTimeOrPenaltyPeriodName,
-} from "@/lib/constants";
+  primaryActionButtonClassName,
+  primaryActionRowClassName,
+} from "@/components/shared/stacked-actions";
 import { FootballIcon } from "@/components/matches/football-icon";
 import { deleteGoalAction } from "@/lib/goals/actions";
 import { goalAssistsAllowed } from "@/lib/form-parse";
@@ -24,11 +25,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { InlineFormDialog } from "@/components/shared/inline-form-dialog";
 import { ListDeleteButton } from "@/components/shared/list-delete-button";
 import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-section";
-import { MatchPeriodOptionsMenu } from "@/components/matches/match-period-options-menu";
-import {
-  periodFormatChangeTarget,
-  type PeriodFormatPeriod,
-} from "@/components/matches/match-period-format-section";
 
 /** Card shell around the goals table; overflow clip keeps rounded corners. */
 export function goalsTableShellClassName(className?: string): string {
@@ -92,11 +88,6 @@ export function playerEventNameClassName(className?: string): string {
     "inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 text-sm font-medium",
     className,
   );
-}
-
-/** Add goal is the primary action: full-width-ish on phones, content-sized on desktop. */
-export function addGoalButtonClassName(className?: string): string {
-  return cn("h-11 min-w-0 flex-1 sm:h-8 sm:flex-none", className);
 }
 
 export function goalScorerNameClassName(
@@ -381,11 +372,8 @@ export function MatchGoalsSection({
   canEdit = true,
   periodId = null,
   periods,
-  showAddPeriod = false,
   homeAway,
   addGoal = null,
-  addPeriod = null,
-  changeFormat = null,
 }: {
   matchId: string;
   goals: GoalWithPlayers[];
@@ -394,7 +382,6 @@ export function MatchGoalsSection({
   periodId?: string | null;
   /** When set, every period is listed in this order, including those with no goals. */
   periods?: GoalPeriodRef[];
-  showAddPeriod?: boolean;
   /** When set, show the cumulative home-first score under each period name. */
   homeAway?: MatchHomeAway;
   /** When set, Add goal opens an inline dialog instead of `/goals/new`. */
@@ -403,18 +390,7 @@ export function MatchGoalsSection({
     teamName: string;
     opponentName: string;
   } | null;
-  /** When set, Add period opens an inline dialog instead of `/periods/new`. */
-  addPeriod?: {
-    availablePeriodNames: ExtraTimeOrPenaltyPeriodName[];
-    squadPlayers: RosterPlayer[];
-    defaultStarterPlayerIds: string[];
-  } | null;
-  /** When set, offers "Change to halves / quarters" for the match's periods. */
-  changeFormat?: { periods: PeriodFormatPeriod[] } | null;
 }) {
-  const changeFormatTarget = changeFormat
-    ? periodFormatChangeTarget(changeFormat.periods)
-    : null;
   const groups = groupGoalsByPeriod(goals, periods);
   const endScores = homeAway ? periodEndScores(groups, homeAway) : null;
   const hasRows = groups.length > 0;
@@ -482,7 +458,7 @@ export function MatchGoalsSection({
       )}
 
       {canEdit ? (
-        <div className="flex items-center gap-2">
+        <div className={primaryActionRowClassName()}>
           {addGoal ? (
             <InlineFormDialog
               title="Add goal"
@@ -490,7 +466,7 @@ export function MatchGoalsSection({
               trigger={(open) => (
                 <Button
                   type="button"
-                  className={addGoalButtonClassName()}
+                  className={primaryActionButtonClassName()}
                   onClick={open}
                 >
                   Add goal
@@ -515,18 +491,11 @@ export function MatchGoalsSection({
           ) : (
             <Link
               href={addHref}
-              className={cn(buttonVariants(), addGoalButtonClassName())}
+              className={cn(buttonVariants(), primaryActionButtonClassName())}
             >
               Add goal
             </Link>
           )}
-          <MatchPeriodOptionsMenu
-            matchId={matchId}
-            showAddPeriod={showAddPeriod}
-            addPeriod={addPeriod}
-            changeFormat={changeFormat}
-            changeFormatTarget={changeFormatTarget}
-          />
         </div>
       ) : null}
     </div>
