@@ -136,7 +136,6 @@ export default async function MatchDetailPage({
       <h1 className="sr-only">{titleText}</h1>
       <div className="space-y-3">
         <MatchHero
-          size="hero"
           teamName={teamName}
           opponentName={opponentName}
           homeAway={match.home_away}

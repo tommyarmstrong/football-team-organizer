@@ -6,7 +6,6 @@ import {
   MatchListRow,
   matchListContainerClassName,
 } from "@/components/matches/match-list-row";
-import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 
 export function MatchesDirectoryList({
@@ -38,18 +37,7 @@ export function MatchesDirectoryList({
       emptyFilterTitle="No fixtures match"
       emptyFilterDescription="Try a different opponent, venue, or competition."
       listClassName={matchListContainerClassName}
-      renderItem={(match) => (
-        <>
-          {/* Phones: compact row inside one continuous list. */}
-          <div className="sm:hidden">
-            <MatchListRow match={match} teamName={teamName} />
-          </div>
-          {/* sm and up: the existing stacked cards, unchanged. */}
-          <div className="hidden sm:block">
-            <MatchSummaryCard match={match} teamName={teamName} />
-          </div>
-        </>
-      )}
+      renderItem={(match) => <MatchListRow match={match} teamName={teamName} />}
     />
   );
 }

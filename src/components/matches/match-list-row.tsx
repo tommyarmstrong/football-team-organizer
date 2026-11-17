@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ChevronRightIcon } from "lucide-react";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import {
   formatHomeFirstScore,
@@ -18,20 +17,23 @@ import { LiveIndicator } from "@/components/matches/match-indicators";
 import { matchCardShare } from "@/components/matches/match-summary-card";
 
 /**
- * The continuous container that holds every mobile fixture row: one rounded
- * surface with thin separators instead of a stack of individual cards. From
- * `sm` up the list reverts to the stacked cards, so the desktop layout is
- * unchanged.
+ * One continuous list on every screen: a rounded surface with thin separators
+ * instead of a stack of cards. Desktop uses the same rows, with slightly
+ * larger type and padding.
  */
 export const matchListContainerClassName =
-  "max-sm:bg-card max-sm:ring-foreground/10 max-sm:divide-border max-sm:divide-y max-sm:overflow-hidden max-sm:rounded-xl max-sm:shadow-sm max-sm:ring-1 sm:space-y-3";
+  "bg-card ring-foreground/10 divide-border divide-y overflow-hidden rounded-xl shadow-sm ring-1";
 
 /** Home | score | away on one row; long names wrap rather than push the score. */
 export const matchListRowGroupClassName =
-  "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3";
+  "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3 sm:gap-x-4";
 
 export const matchListRowNameClassName =
-  "line-clamp-2 min-w-0 text-left text-sm leading-tight font-semibold break-words";
+  "line-clamp-2 min-w-0 text-left text-sm leading-tight font-semibold break-words sm:text-base";
+
+/** Score beside the names: smaller on a phone, one step larger on a wide screen. */
+export const matchListRowScoreClassName =
+  "font-display text-2xl leading-none tracking-tight tabular-nums sm:text-3xl";
 
 /** "Competition · Venue" on one line, in that order, dropping missing parts. */
 export function matchListMetaLine(match: {
@@ -48,7 +50,7 @@ export function matchListMetaLine(match: {
 }
 
 /**
- * Compact fixture row for the Matches list on phones. Date and LIVE badge sit
+ * Fixture row for the Matches list on every screen. Date and LIVE badge sit
  * on the top line, home | score | away on the next, competition · venue below.
  * The whole row opens the match; the share control keeps its own click handler
  * and sits above the row's link so sharing never navigates.
@@ -97,7 +99,7 @@ export function MatchListRow({
   return (
     <div
       data-slot="match-list-row"
-      className="hover:bg-muted/50 relative px-4 py-3 transition-colors"
+      className="hover:bg-muted/50 relative px-4 py-3 transition-colors sm:px-5 sm:py-4"
     >
       <Link
         href={`/matches/${match.id}`}
@@ -108,7 +110,7 @@ export function MatchListRow({
       <div className="flex items-center justify-between gap-2">
         <p
           data-slot="match-list-row-date"
-          className="text-muted-foreground text-xs"
+          className="text-muted-foreground text-xs sm:text-sm"
         >
           {dateLabel}
         </p>
@@ -126,7 +128,7 @@ export function MatchListRow({
               <p
                 data-slot="match-list-row-score"
                 className={cn(
-                  "font-display text-3xl leading-none tracking-tight tabular-nums",
+                  matchListRowScoreClassName,
                   result === "W" && "text-win",
                   result === "D" && "text-draw",
                   result === "L" && "text-loss",
@@ -139,7 +141,7 @@ export function MatchListRow({
             ) : (
               <p
                 data-slot="match-list-row-score"
-                className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase"
+                className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase sm:text-sm"
               >
                 vs
               </p>
@@ -154,22 +156,19 @@ export function MatchListRow({
             <p
               data-slot="match-list-row-meta"
               title={metaLine}
-              className="text-muted-foreground mt-1 truncate text-xs"
+              className="text-muted-foreground mt-1 truncate text-xs sm:text-sm"
             >
               {metaLine}
             </p>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center">
-          {/* Above the row link so tapping share never opens the match. */}
-          <div data-slot="match-list-row-share" className="relative z-10">
-            {share ?? <span className="block size-11" aria-hidden="true" />}
-          </div>
-          <ChevronRightIcon
-            className="text-muted-foreground size-4 shrink-0"
-            aria-hidden="true"
-          />
+        {/* Above the row link so tapping share never opens the match. */}
+        <div
+          data-slot="match-list-row-share"
+          className="relative z-10 shrink-0"
+        >
+          {share ?? <span className="block size-11" aria-hidden="true" />}
         </div>
       </div>
     </div>
