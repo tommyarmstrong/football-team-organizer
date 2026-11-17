@@ -4,6 +4,20 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — A quieter dashboard
+
+- The coloured pitch banner at the top of the Dashboard is gone.
+- Season at a glance sits at the top. On a phone it shows W–D–L and Goals. Played and Goal difference stay on a larger screen, in shorter cards with gentler corners.
+- Form now sits under Season at a glance, and above Next fixture.
+- The share button is no longer on the Dashboard fixture cards. Sharing a postcard stays on the Matches list and the match page.
+- Competitions leave out the Ongoing badge and the Add button. A badge shows for a result such as Completed, or Upcoming when the date is still to come. Rows are a little shorter.
+- Player of the month and Player of the match share one Awards card. Goals and assists share one Leaderboards card. A filter switches the table.
+- The pitch pattern behind the app is lighter, and cards sit slightly lighter than the page with a thin border.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — A full pitch in the background
 
 - The faint lines behind the app now draw a football pitch: the outer lines, the halfway line, the centre circle, both penalty areas, both six-yard boxes, and both penalty arcs.

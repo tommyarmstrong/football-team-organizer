@@ -99,6 +99,7 @@ describe("pitch background etching", () => {
 
     const fixed = globals.match(/body::before\s*\{([^}]+)\}/)?.[1] ?? "";
     expect(fixed).toMatch(/position:\s*fixed/);
+    expect(fixed).toMatch(/opacity:\s*0\.5/);
     expect(fixed).not.toMatch(/background-image/);
 
     expect(authShell).toContain("pitch-pattern");

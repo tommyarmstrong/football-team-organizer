@@ -366,7 +366,8 @@ describe("app pages", () => {
 
   it("dashboard page renders for a selected team", async () => {
     const tree = await DashboardPage();
-    expect(JSON.stringify(tree)).toContain("Dashboard");
-    expect(JSON.stringify(tree)).toContain("U12 Blues");
+    const html = JSON.stringify(tree);
+    expect(html).toContain("U12 Blues");
+    expect(html).not.toContain("dashboard-title-card");
   });
 });

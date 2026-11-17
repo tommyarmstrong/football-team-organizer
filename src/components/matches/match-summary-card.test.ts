@@ -60,7 +60,7 @@ function cardProps(element: ReactElement) {
 }
 
 describe("MatchSummaryCard", () => {
-  it("uses the scheduled fixture fields and the fixture share control", () => {
+  it("uses the scheduled fixture fields and leaves the share control off", () => {
     const props = cardProps(
       MatchSummaryCard({ match: match(), teamName: "MGA Select" }),
     );
@@ -72,13 +72,16 @@ describe("MatchSummaryCard", () => {
     expect(props.meetupTime).toBe("19:08:00");
     expect(props.kickoffTime).toBe("20:08:00");
     expect(props.competitionName).toBe("North London League");
-    expect(props.actions?.props).toMatchObject({
+    expect(props.actions).toBeUndefined();
+    expect(
+      (matchCardShare(match()) as ReactElement | undefined)?.props,
+    ).toMatchObject({
       matchId: "match-1",
       kind: "scheduled",
     });
   });
 
-  it("uses the same card and share control for a played result", () => {
+  it("uses the same card for a played result, still without a share control", () => {
     const played = match({
       status: "played",
       goals_for: 2,
@@ -90,10 +93,7 @@ describe("MatchSummaryCard", () => {
     expect(props).not.toHaveProperty("size");
     expect(props.href).toBe("/matches/match-1");
     expect(props.status).toBe("played");
-    expect(props.actions?.props).toMatchObject({
-      matchId: "match-1",
-      kind: "played",
-    });
+    expect(props.actions).toBeUndefined();
     expect(
       (matchCardShare(played) as ReactElement | undefined)?.props,
     ).toMatchObject({
@@ -155,11 +155,25 @@ describe("MatchSummaryCard rendering", () => {
           meetupTime: fixture.meetup_time,
           venueName: fixture.venue?.name ?? null,
           href: `/matches/${fixture.id}`,
-          actions: matchCardShare(fixture),
         }),
       );
       expect(summary).toBe(hero);
     }
+  });
+});
+
+describe("dashboard fixture card share", () => {
+  it("keeps the share helper for other screens and leaves it off the card", () => {
+    const source = readFileSync(
+      path.join(import.meta.dirname, "match-summary-card.tsx"),
+      "utf8",
+    );
+    const card = source.slice(
+      source.indexOf("export function MatchSummaryCard"),
+    );
+    expect(source).toContain("export function matchCardShare");
+    expect(card).not.toContain("matchCardShare");
+    expect(card).not.toContain("actions=");
   });
 });
 
