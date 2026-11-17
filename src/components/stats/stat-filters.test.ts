@@ -29,6 +29,16 @@ describe("StatFilters", () => {
     expect(html).toMatch(/aria-pressed="false"[^>]*>ALL</);
   });
 
+  it("omits Position when it is not wired up", () => {
+    const html = render({
+      positions: undefined,
+      periodType: "all",
+      onPeriodTypeChange: vi.fn(),
+    });
+    expect(html).not.toContain(">Position<");
+    expect(html).toContain(">Type<");
+  });
+
   it("omits the view filter unless a metric is wired up", () => {
     const html = render();
     expect(html).not.toContain(">View<");

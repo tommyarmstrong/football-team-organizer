@@ -6,6 +6,7 @@ import { cumulativePoints, pointsTooltip } from "@/lib/report/summary";
 import { buildLeaderRows } from "@/lib/stats/leader-rows";
 import {
   ChartTheme,
+  goalDifferenceFill,
   GoalsDonut,
   GoalsLegend,
   GoalsPerMatch,
@@ -13,6 +14,7 @@ import {
   ResultsDonut,
   ResultsLegend,
 } from "@/components/report/report-charts";
+import { formatGoalDifference } from "@/lib/stats/season-tiles";
 import { formatPeriodsPerGamePercent } from "@/lib/stats/period-starts-view";
 import { PointsTrendWithTooltip } from "@/components/stats/points-trend-chart";
 import { statsChartFrameClassName } from "@/components/stats/chart-frame";
@@ -104,10 +106,12 @@ export function ResultsRingChart({ data }: { data: ResultOverTimePoint[] }) {
   );
 }
 
-/** Goals scored and conceded as a ring with a legend. */
+/** Goals scored and conceded as a ring. The hole shows the goal difference. */
 export function GoalsRingChart({ data }: { data: ResultOverTimePoint[] }) {
   const tally = tallyGoals(data);
-  const summary = `Goals for ${tally.goalsFor}, goals against ${tally.goalsAgainst}`;
+  const difference = tally.goalsFor - tally.goalsAgainst;
+  const signed = formatGoalDifference(tally.goalsFor, tally.goalsAgainst);
+  const summary = `Goals for ${tally.goalsFor}, goals against ${tally.goalsAgainst}, goal difference ${signed}`;
 
   return (
     <figure className={statsChartFrameClassName()}>
@@ -116,6 +120,9 @@ export function GoalsRingChart({ data }: { data: ResultOverTimePoint[] }) {
           <GoalsDonut
             goalsFor={tally.goalsFor}
             goalsAgainst={tally.goalsAgainst}
+            centreValue={signed}
+            centreLabel="GD"
+            centreColour={goalDifferenceFill(difference)}
           />
         </div>
         <GoalsLegend

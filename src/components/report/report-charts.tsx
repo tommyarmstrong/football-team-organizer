@@ -103,16 +103,31 @@ type RingSlice = {
   colour: string;
 };
 
+/** Win, draw and loss, so a goal difference uses the same shades as results. */
+export function goalDifferenceFill(difference: number): string {
+  if (difference > 0) return CHART_RESULT.W;
+  if (difference < 0) return CHART_RESULT.L;
+  return CHART_RESULT.D;
+}
+
 function RingChart({
   slices,
   centreLabel,
+  centreValue,
+  centreColour,
   ariaLabel,
 }: {
   slices: readonly RingSlice[];
   centreLabel: string;
+  /** Replaces the slice total in the hole. */
+  centreValue?: string;
+  centreColour?: string;
   ariaLabel: string;
 }) {
   const total = slices.reduce((sum, s) => sum + s.count, 0);
+  const shown = centreValue ?? String(total);
+  const centreFontSize =
+    shown.length > 3 ? "16" : shown.length > 2 ? "20" : "26";
   const colours = new Map(slices.map((s) => [s.key, s.colour]));
   const segments = ringSegments(
     slices.map((s) => ({ key: s.key, count: s.count })),
@@ -152,11 +167,11 @@ function RingChart({
         y="52"
         textAnchor="middle"
         className="font-display"
-        fontSize="26"
+        fontSize={centreFontSize}
         fontWeight="600"
-        fill={INK}
+        fill={centreColour ?? INK}
       >
-        {total}
+        {shown}
       </text>
       <text
         x="50"
@@ -239,15 +254,27 @@ export function ResultsLegend({ tally }: { tally: Tally }) {
 export function GoalsDonut({
   goalsFor,
   goalsAgainst,
+  centreValue,
+  centreLabel = "GOALS",
+  centreColour,
 }: {
   goalsFor: number;
   goalsAgainst: number;
+  /** Stats page passes the signed goal difference. The report shows the total. */
+  centreValue?: string;
+  centreLabel?: string;
+  centreColour?: string;
 }) {
+  const ariaLabel = centreValue
+    ? `${goalsFor} goals scored, ${goalsAgainst} goals conceded, goal difference ${centreValue}`
+    : `${goalsFor} goals scored, ${goalsAgainst} goals conceded`;
   return (
     <RingChart
       slices={goalSlices({ goalsFor, goalsAgainst })}
-      centreLabel="GOALS"
-      ariaLabel={`${goalsFor} goals scored, ${goalsAgainst} goals conceded`}
+      centreLabel={centreLabel}
+      centreValue={centreValue}
+      centreColour={centreColour}
+      ariaLabel={ariaLabel}
     />
   );
 }

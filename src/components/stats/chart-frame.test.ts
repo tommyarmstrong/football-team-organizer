@@ -16,19 +16,17 @@ describe("stats charts use the card frame", () => {
       path.join(import.meta.dirname, "stats-charts.tsx"),
       "utf8",
     );
-    const goals = readFileSync(
-      path.join(import.meta.dirname, "goals-section.tsx"),
+    const page = readFileSync(
+      path.join(import.meta.dirname, "stats-page-content.tsx"),
       "utf8",
     );
     expect(charts).toContain("statsChartFrameClassName()");
-    // Goals draws its bars with the shared leader chart, inside the card frame.
-    expect(goals).toContain("<PlayerLeaderChart");
+    // Player charts draw their bars with the shared leader chart, inside the card frame.
+    expect(page).toContain("<PlayerLeaderChart");
     expect(charts).toMatch(
       /export function PlayerLeaderChart[\s\S]*?statsChartFrameClassName\(\)/,
     );
-    expect(goals).not.toContain("<BarChart");
-    // No hard-coded bar colour: the leader bars use the club colour.
-    expect(goals).not.toContain("barFill");
+    expect(page).not.toContain("<BarChart");
     expect(charts).not.toContain("--color-chart-1");
   });
 });

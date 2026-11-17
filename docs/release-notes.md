@@ -4,6 +4,18 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Stats charts, regrouped
+
+- The Played, W–D–L, Goals and Goal difference cards are gone from the Stats page. They stay on the Dashboard.
+- The goals ring shows the goal difference in the middle, with a plus or a minus. Above zero is green, below zero is red, and zero is yellow.
+- Goals, assists and appearances share one chart. Switch between them. The bars stay.
+- Player of the month and the coach's player of the match share one chart the same way.
+- Position and View sit once at the top and apply to every player chart they belong to. Period starts keeps its own Type filter.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — A quieter dashboard
 
 - The coloured pitch banner at the top of the Dashboard is gone.
