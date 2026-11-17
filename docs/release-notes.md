@@ -10,7 +10,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 - Scheduled match: Kick off, with Full time, Cancelled, Postponed, Add period and Change to halves/quarters in Options. Add period and Change to halves/quarters are greyed out until kick off.
 - Match in progress: Full time, with Scheduled, Cancelled, Postponed, Add period and Change to halves/quarters in Options.
 - Cancelling, postponing, or moving a match back to scheduled asks you to confirm first.
-- Played matches have no buttons under the card.
+- Played match: just Options, with Add period and Change to halves/quarters.
 - Under Goals there is now just Add goal.
 - The stripe down the left of a match card is green for a win, yellow for a draw and red for a loss, matching the score. It is grey for scheduled, postponed and cancelled matches.
 

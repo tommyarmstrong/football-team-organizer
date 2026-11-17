@@ -72,8 +72,9 @@ export type MatchOptionEntry =
 /**
  * The Options menu for a match: its other status changes, then Add period and
  * Change to halves/quarters. Periods only exist once a match has kicked off, so
- * before then those two are listed but disabled. Returns [] when the match has
- * no controls at all (played, cancelled, postponed).
+ * before then those two are listed but disabled. A played match has no status
+ * changes but keeps the two period actions. Returns [] for cancelled and
+ * postponed matches, which have no controls at all.
  */
 export function matchOptionEntries({
   status,
@@ -83,9 +84,9 @@ export function matchOptionEntries({
   changeFormatTarget: PeriodFormat | null;
 }): MatchOptionEntry[] {
   const plan = matchActionPlan(status);
-  if (!plan) return [];
   const periodsOpen = matchAllowsEvents(status);
-  const entries: MatchOptionEntry[] = plan.menu.map((next) => ({
+  if (!plan && !periodsOpen) return [];
+  const entries: MatchOptionEntry[] = (plan?.menu ?? []).map((next) => ({
     kind: "status",
     status: next,
   }));
@@ -155,7 +156,7 @@ export const matchOptionItemClassName =
 /**
  * Controls under the match card: one primary status button (Kick off or Full
  * time) and an Options menu with the other status changes and the period
- * actions. Same primary + Options layout as under Goals.
+ * actions. A played match has just the Options menu. Same primary + Options layout as under Goals.
  *
  * Dialogs live here, outside the popover, so they survive it closing.
  */
@@ -179,7 +180,7 @@ export function MatchActions({
   const plan = matchActionPlan(status);
   const changeFormatTarget = periodFormatChangeTarget(changeFormat.periods);
   const entries = matchOptionEntries({ status, changeFormatTarget });
-  if (!plan) return null;
+  if (entries.length === 0) return null;
 
   function setStatus(next: MatchStatus) {
     setError(null);
@@ -211,14 +212,16 @@ export function MatchActions({
   return (
     <div className="space-y-2">
       <div className={primaryActionRowClassName()}>
-        <Button
-          type="button"
-          className={primaryActionButtonClassName()}
-          disabled={pending}
-          onClick={() => requestStatus(plan.primary)}
-        >
-          {quickStatusLabel(plan.primary)}
-        </Button>
+        {plan ? (
+          <Button
+            type="button"
+            className={primaryActionButtonClassName()}
+            disabled={pending}
+            onClick={() => requestStatus(plan.primary)}
+          >
+            {quickStatusLabel(plan.primary)}
+          </Button>
+        ) : null}
 
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           <PopoverTrigger

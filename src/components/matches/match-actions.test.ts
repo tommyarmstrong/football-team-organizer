@@ -87,8 +87,20 @@ describe("matchOptionEntries", () => {
     expect(kinds).toEqual(["status", "status", "status", "add-period"]);
   });
 
-  it("offers nothing for played, cancelled and postponed matches", () => {
-    for (const status of ["played", "cancelled", "postponed"] as const) {
+  it("played: no status changes, but Add period and Change format stay", () => {
+    expect(
+      matchOptionEntries({ status: "played", changeFormatTarget: "halves" }),
+    ).toEqual([
+      { kind: "add-period", enabled: true },
+      { kind: "change-format", enabled: true, target: "halves" },
+    ]);
+    expect(
+      matchOptionEntries({ status: "played", changeFormatTarget: null }),
+    ).toEqual([{ kind: "add-period", enabled: true }]);
+  });
+
+  it("offers nothing for cancelled and postponed matches", () => {
+    for (const status of ["cancelled", "postponed"] as const) {
       expect(
         matchOptionEntries({ status, changeFormatTarget: "halves" }),
       ).toEqual([]);
@@ -114,8 +126,16 @@ describe("MatchActions rendering", () => {
     expect(html.match(/<button/g)).toHaveLength(2);
   });
 
-  it("played, cancelled and postponed: no buttons at all", () => {
-    for (const status of ["played", "cancelled", "postponed"] as const) {
+  it("played: no primary button, just Options", () => {
+    const html = render("played", ["1st Half", "2nd Half"]);
+    expect(html).toContain("Options");
+    expect(html).not.toContain("Kick off");
+    expect(html).not.toContain("Full time");
+    expect(html.match(/<button/g)).toHaveLength(1);
+  });
+
+  it("cancelled and postponed: no buttons at all", () => {
+    for (const status of ["cancelled", "postponed"] as const) {
       expect(render(status)).toBe("");
     }
   });
