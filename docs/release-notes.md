@@ -4,6 +4,19 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — A more compact Matches list on your phone
+
+- On a phone, the Matches page now fits many more fixtures on screen. Fixtures sit in one continuous list with thin dividers instead of separate cards.
+- Each fixture shows the date at the top, the teams either side of the score, then the competition and venue on one line.
+- A match in progress shows a small red LIVE badge at the top right. Other matches no longer show a status badge.
+- Tap anywhere on a fixture to open it, and tap the share icon to share a postcard without leaving the list.
+- The search box now just says "Search matches…".
+- Desktop looks the same as before.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — Match controls move to the match card
 
 - The buttons under the match card are now one main button and an Options menu, like Goals.

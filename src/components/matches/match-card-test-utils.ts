@@ -14,11 +14,13 @@ export function nextLinkMock() {
       children,
       href,
       className,
+      ...rest
     }: {
-      children: unknown;
+      children?: unknown;
       href: string;
       className?: string;
-    }) => createElement("a", { href, className }, children as never),
+      "aria-label"?: string;
+    }) => createElement("a", { href, className, ...rest }, children as never),
   };
 }
 
