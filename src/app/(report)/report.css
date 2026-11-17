@@ -46,8 +46,8 @@
   pointer-events: none;
   background-color: var(--club);
   opacity: 0.1;
-  -webkit-mask: url("/report-pitch-pattern.svg") 0 0 / 160px 160px repeat;
-  mask: url("/report-pitch-pattern.svg") 0 0 / 160px 160px repeat;
+  -webkit-mask: url("/report-pitch-pattern.svg") 0 0 / 540px 330px repeat;
+  mask: url("/report-pitch-pattern.svg") 0 0 / 540px 330px repeat;
 }
 
 .report-sheet:nth-child(even) {

@@ -1,5 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-  <path d="M0 80h160M80 0v160" stroke="#A9B5B2" stroke-opacity="0.16" stroke-width="1.25"/>
-  <circle cx="80" cy="80" r="22" stroke="#A9B5B2" stroke-opacity="0.16" stroke-width="1.25"/>
-  <rect x="8" y="8" width="144" height="144" rx="4" stroke="#A9B5B2" stroke-opacity="0.1" stroke-width="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="330" viewBox="0 0 360 220" fill="none" aria-hidden="true">
+  <g stroke="#A9B5B2" stroke-opacity="0.16" stroke-width="1.25">
+    <rect x="12" y="12" width="336" height="196" rx="10"/>
+    <line x1="180" y1="12" x2="180" y2="208"/>
+    <circle cx="180" cy="110" r="32"/>
+    <circle cx="180" cy="110" r="3.5" fill="#A9B5B2" fill-opacity="0.16" stroke="none"/>
+    <rect x="12" y="58" width="52" height="104"/>
+    <rect x="12" y="82" width="22" height="56"/>
+    <rect x="296" y="58" width="52" height="104"/>
+    <rect x="326" y="82" width="22" height="56"/>
+    <path d="M64 86a36 36 0 0 1 0 48"/>
+    <path d="M296 86a36 36 0 0 0 0 48"/>
+  </g>
 </svg>

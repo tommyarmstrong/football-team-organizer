@@ -4,6 +4,16 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — A full pitch in the background
+
+- The faint lines behind the app now draw a football pitch: the outer lines, the halfway line, the centre circle, both penalty areas, both six-yard boxes, and both penalty arcs.
+- Each pitch is larger, so the pattern repeats less often as you scroll.
+- The end of season report uses the same pitch lines, still as a light etching on the page.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — Dark background
 
 - The app now uses a dark background, with darker cards and tables, light text, and thin grey dividers.
