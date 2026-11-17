@@ -20,6 +20,7 @@ export function MatchSquadSection({
       roster={roster}
       selectedPlayerIds={selectedPlayerIds}
       canEdit={canEdit}
+      compact
       saveAction={saveMatchSquadAction.bind(null, matchId)}
       labels={{
         emptyTitle: "No match-day squad",

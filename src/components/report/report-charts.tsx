@@ -34,11 +34,23 @@ export const RESULT_COLOURS = {
   L: "#cf4437",
 } as const;
 
+/**
+ * Same colours as the printed report, unless `ChartTheme` sets the app
+ * win, draw, and loss tokens. The fallbacks keep the season report unchanged.
+ */
+const CHART_RESULT = {
+  W: "var(--chart-win, #1c8a4e)",
+  D: "var(--chart-draw, #e0a526)",
+  L: "var(--chart-loss, #cf4437)",
+} as const;
+
 /** Goals scored and conceded use the win and loss colours. */
 export const GOALS_COLOURS = {
-  for: RESULT_COLOURS.W,
-  against: RESULT_COLOURS.L,
+  for: CHART_RESULT.W,
+  against: CHART_RESULT.L,
 } as const;
+
+const POINT_STROKE = "var(--chart-point-stroke, #fff)";
 
 const GRID = "var(--chart-grid, #d9dfdb)";
 const MUTED = "var(--chart-muted, #6b7770)";
@@ -60,6 +72,10 @@ export const CHART_THEME_STYLE = {
   "--chart-ink": "var(--foreground)",
   "--chart-track": "var(--muted)",
   "--chart-against": "var(--muted-foreground)",
+  "--chart-win": "var(--win)",
+  "--chart-draw": "var(--draw)",
+  "--chart-loss": "var(--loss)",
+  "--chart-point-stroke": "var(--card)",
 } as CSSProperties;
 
 export function ChartTheme({
@@ -179,9 +195,9 @@ function RingLegend({ slices }: { slices: readonly RingSlice[] }) {
 
 function resultSlices(tally: Tally): RingSlice[] {
   return [
-    { key: "W", label: "Won", count: tally.wins, colour: RESULT_COLOURS.W },
-    { key: "D", label: "Drawn", count: tally.draws, colour: RESULT_COLOURS.D },
-    { key: "L", label: "Lost", count: tally.losses, colour: RESULT_COLOURS.L },
+    { key: "W", label: "Won", count: tally.wins, colour: CHART_RESULT.W },
+    { key: "D", label: "Drawn", count: tally.draws, colour: CHART_RESULT.D },
+    { key: "L", label: "Lost", count: tally.losses, colour: CHART_RESULT.L },
   ];
 }
 
@@ -353,8 +369,8 @@ export function PointsTrend({
             cx={x(i)}
             cy={y(points[i]!)}
             r={size.radius}
-            fill={RESULT_COLOURS[m.result]}
-            stroke="#fff"
+            fill={CHART_RESULT[m.result]}
+            stroke={POINT_STROKE}
             strokeWidth={size.radius > REPORT_POINT_RADIUS ? 2.4 : 1.6}
           />
           {/* A larger invisible target, so the tooltip is easy to hit. */}

@@ -2,7 +2,10 @@
 
 import type { MatchWithRelations } from "@/lib/data/matches";
 import { labelMatchStatus, matchCompetitionLabel } from "@/lib/format";
-import { MatchSummaryCard } from "@/components/matches/match-summary-card";
+import {
+  MatchListRow,
+  matchListContainerClassName,
+} from "@/components/matches/match-list-row";
 import { FilterablePaginatedList } from "@/components/shared/filterable-paginated-list";
 
 export function MatchesDirectoryList({
@@ -27,16 +30,14 @@ export function MatchesDirectoryList({
           labelMatchStatus(match.status),
         ].join(" ")
       }
-      filterPlaceholder="Filter matches by opponent, venue, or competition…"
+      filterPlaceholder="Search matches…"
       singularLabel="match"
       pluralLabel="matches"
       defaultPageSize={20}
       emptyFilterTitle="No fixtures match"
       emptyFilterDescription="Try a different opponent, venue, or competition."
-      listClassName="space-y-3"
-      renderItem={(match) => (
-        <MatchSummaryCard match={match} teamName={teamName} />
-      )}
+      listClassName={matchListContainerClassName}
+      renderItem={(match) => <MatchListRow match={match} teamName={teamName} />}
     />
   );
 }

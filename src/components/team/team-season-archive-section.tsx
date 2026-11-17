@@ -211,9 +211,7 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
             <ErrorBanner message={archiveState.error} />
           ) : null}
           {archiveState.success ? (
-            <p className="text-sm text-green-700 dark:text-green-400">
-              {archiveState.success}
-            </p>
+            <p className="text-win text-sm">{archiveState.success}</p>
           ) : null}
           <form
             action={archiveAction}
@@ -247,9 +245,7 @@ export function TeamSeasonArchiveSection({ team }: { team: Team }) {
             <ErrorBanner message={restoreState.error} />
           ) : null}
           {restoreState.success ? (
-            <p className="text-sm text-green-700 dark:text-green-400">
-              {restoreState.success}
-            </p>
+            <p className="text-win text-sm">{restoreState.success}</p>
           ) : null}
           <form action={restoreAction}>
             <Button type="submit" variant="outline" disabled={restorePending}>

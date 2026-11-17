@@ -116,10 +116,14 @@ describe("ResultsOverTimeChart", () => {
     expect(html).toContain("Cumulative points through the season");
     expect(html).toContain("<polyline");
     expect(html).not.toContain("recharts");
-    // One coloured point per match: win, draw, loss.
-    expect(html).toContain("#1c8a4e");
-    expect(html).toContain("#e0a526");
-    expect(html).toContain("#cf4437");
+    // Points follow the app win, draw, and loss colours. The printed
+    // report colours stay as the fallback when that theme is absent.
+    expect(html).toContain("--chart-win:var(--win)");
+    expect(html).toContain("--chart-draw:var(--draw)");
+    expect(html).toContain("--chart-loss:var(--loss)");
+    expect(html).toContain("var(--chart-win, #1c8a4e)");
+    expect(html).toContain("var(--chart-draw, #e0a526)");
+    expect(html).toContain("var(--chart-loss, #cf4437)");
   });
 
   it("makes every point hoverable and tappable, with its own tooltip rather than the native one", () => {

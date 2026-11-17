@@ -32,7 +32,7 @@ import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
-import { MatchStatusActions } from "@/components/matches/match-status-actions";
+import { MatchActions } from "@/components/matches/match-actions";
 
 export default async function MatchDetailPage({
   params,
@@ -134,9 +134,8 @@ export default async function MatchDetailPage({
   return (
     <div className={pageBodyClassName("space-y-6")}>
       <h1 className="sr-only">{titleText}</h1>
-      <div className="space-y-4">
+      <div className="space-y-3">
         <MatchHero
-          size="hero"
           teamName={teamName}
           opponentName={opponentName}
           homeAway={match.home_away}
@@ -177,20 +176,28 @@ export default async function MatchDetailPage({
         />
 
         {canEdit ? (
-          <MatchStatusActions matchId={match.id} status={match.status} />
+          <MatchActions
+            matchId={match.id}
+            status={match.status}
+            addPeriod={{
+              availablePeriodNames,
+              squadPlayers: eventPlayers,
+              defaultStarterPlayerIds,
+            }}
+            changeFormat={{ periods: formatChangePeriods }}
+          />
         ) : null}
       </div>
 
       {loadErrors ? <ErrorBanner message={loadErrors} /> : null}
 
       {allowsEvents ? (
-        <Section title="Goals">
+        <Section title="Goals" compact>
           <MatchGoalsSection
             matchId={match.id}
             goals={goals}
             periods={periods}
             canEdit={canEdit}
-            showAddPeriod={canEdit}
             homeAway={match.home_away}
             addGoal={
               canEdit
@@ -201,22 +208,12 @@ export default async function MatchDetailPage({
                   }
                 : null
             }
-            addPeriod={
-              canEdit
-                ? {
-                    availablePeriodNames,
-                    squadPlayers: eventPlayers,
-                    defaultStarterPlayerIds,
-                  }
-                : null
-            }
-            changeFormat={canEdit ? { periods: formatChangePeriods } : null}
           />
         </Section>
       ) : null}
 
       {!isCancelledOrPostponed ? (
-        <Section title="Match-day squad">
+        <Section title="Match-day squad" compact>
           <MatchSquadSection
             matchId={match.id}
             roster={players}
@@ -236,7 +233,7 @@ export default async function MatchDetailPage({
             canEdit={canEditPlayerOfTheMatch}
           />
 
-          <Section title="Cards">
+          <Section title="Cards" compact>
             <MatchCardsSection
               matchId={match.id}
               cards={cards}

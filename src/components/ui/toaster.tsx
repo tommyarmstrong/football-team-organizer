@@ -33,7 +33,7 @@ function ToastList() {
           toast={toast}
           swipeDirection="down"
           className={cn(
-            "bg-card text-card-foreground ring-foreground/10 relative rounded-xl p-3 shadow-lg ring-1",
+            "bg-card text-card-foreground ring-border relative rounded-xl p-3 shadow-lg ring-1",
             "data-ending:translate-y-2 data-ending:opacity-0 data-starting:translate-y-2 data-starting:opacity-0",
             "transition-[opacity,translate] duration-100 motion-reduce:transition-none",
             toast.type === "success" && "border-win/30 border",

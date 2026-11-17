@@ -5,6 +5,22 @@ import { Combobox } from "@base-ui/react/combobox";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export type SearchableSelectSize = "default" | "touch";
+
+/**
+ * `touch` is a 44px control on phones (clear and open buttons grow to 36px) and
+ * returns to the default 32px from `sm`. Input text is always 16px on phones so
+ * iOS Safari does not zoom on focus.
+ */
+export function searchableSelectClassNames(size: SearchableSelectSize) {
+  const touch = size === "touch";
+  return {
+    group: touch ? "h-11 sm:h-8" : "h-8",
+    input: touch ? "pr-[4.75rem] sm:pr-14" : "pr-14",
+    button: touch ? "size-9 sm:size-7" : "size-7",
+  };
+}
+
 export type SearchableSelectOption = {
   value: string;
   label: string;
@@ -20,6 +36,7 @@ export function SearchableSelect({
   disabled = false,
   defaultValue,
   className,
+  size = "default",
   "aria-label": ariaLabel,
   onValueChange,
 }: {
@@ -32,10 +49,12 @@ export function SearchableSelect({
   disabled?: boolean;
   defaultValue?: string;
   className?: string;
+  size?: SearchableSelectSize;
   "aria-label"?: string;
   onValueChange?: (value: string) => void;
 }) {
   const generatedId = useId();
+  const sizes = searchableSelectClassNames(size);
   const inputId = id ?? generatedId;
   const defaultItem =
     defaultValue != null && defaultValue !== ""
@@ -57,23 +76,37 @@ export function SearchableSelect({
           onValueChange?.(item ? item.value : "");
         }}
       >
-        <Combobox.InputGroup className="border-input focus-within:border-ring focus-within:ring-ring/50 relative flex h-8 w-full min-w-0 items-center rounded-lg border bg-transparent transition-colors focus-within:ring-3 has-disabled:cursor-not-allowed has-disabled:opacity-50">
+        <Combobox.InputGroup
+          className={cn(
+            "border-input focus-within:border-ring focus-within:ring-ring/50 relative flex w-full min-w-0 items-center rounded-lg border bg-transparent transition-colors focus-within:ring-3 has-disabled:cursor-not-allowed has-disabled:opacity-50",
+            sizes.group,
+          )}
+        >
           <Combobox.Input
             id={inputId}
             placeholder={placeholder}
             aria-label={ariaLabel}
             disabled={disabled}
-            className="placeholder:text-muted-foreground h-full w-full min-w-0 border-0 bg-transparent py-1 pr-14 pl-2.5 text-base outline-none md:text-sm"
+            className={cn(
+              "placeholder:text-muted-foreground h-full w-full min-w-0 border-0 bg-transparent py-1 pl-2.5 text-base outline-none md:text-sm",
+              sizes.input,
+            )}
           />
           <div className="absolute inset-y-0 right-0 flex items-center">
             <Combobox.Clear
-              className="text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-md outline-none disabled:pointer-events-none"
+              className={cn(
+                "text-muted-foreground hover:text-foreground flex items-center justify-center rounded-md outline-none disabled:pointer-events-none",
+                sizes.button,
+              )}
               aria-label="Clear selection"
             >
               <XIcon className="size-3.5" />
             </Combobox.Clear>
             <Combobox.Trigger
-              className="text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-md outline-none disabled:pointer-events-none"
+              className={cn(
+                "text-muted-foreground hover:text-foreground flex items-center justify-center rounded-md outline-none disabled:pointer-events-none",
+                sizes.button,
+              )}
               aria-label="Open options"
               disabled={disabled}
             >
@@ -84,7 +117,7 @@ export function SearchableSelect({
 
         <Combobox.Portal>
           <Combobox.Positioner className="outline-none" sideOffset={4}>
-            <Combobox.Popup className="bg-popover text-popover-foreground ring-foreground/10 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-max max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
+            <Combobox.Popup className="bg-popover text-popover-foreground ring-border data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 relative z-50 w-max max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden rounded-lg shadow-md ring-1 duration-100">
               <Combobox.Empty className="text-muted-foreground px-3 py-4 text-sm">
                 {emptyMessage}
               </Combobox.Empty>

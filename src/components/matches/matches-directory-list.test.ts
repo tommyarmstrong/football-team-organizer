@@ -8,12 +8,30 @@ const source = readFileSync(
 );
 
 describe("MatchesDirectoryList", () => {
-  it("renders each row with the shared summary card", () => {
-    expect(source).toContain("MatchSummaryCard");
-    expect(source).toContain("match={match}");
-    expect(source).toContain("teamName={teamName}");
+  it("renders the compact fixture row on every screen", () => {
+    expect(source).toContain(
+      "<MatchListRow match={match} teamName={teamName} />",
+    );
+    expect(source).not.toContain("MatchSummaryCard");
+    expect(source).not.toContain("sm:hidden");
+    expect(source).not.toContain("hidden sm:block");
     expect(source).not.toContain("MatchHero");
-    expect(source).not.toContain('size="compact"');
+  });
+
+  it("uses the continuous list container", () => {
+    expect(source).toContain("listClassName={matchListContainerClassName}");
+    expect(source).not.toContain('listClassName="space-y-3"');
+  });
+
+  it("uses the short search placeholder", () => {
+    expect(source).toContain('filterPlaceholder="Search matches…"');
+  });
+
+  it("still searches by opponent, team, venue, competition and status", () => {
+    expect(source).toContain("match.opponent_name");
+    expect(source).toContain("match.venue?.name");
+    expect(source).toContain("matchCompetitionLabel(match)");
+    expect(source).toContain("labelMatchStatus(match.status)");
   });
 
   it("does not colour competition names with primary", () => {

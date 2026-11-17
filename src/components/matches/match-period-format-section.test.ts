@@ -70,19 +70,18 @@ describe("format change wiring", () => {
     expect(section).toContain("planPreviewRows(");
   });
 
-  it("adds a Change period format dialog next to Add goal and Add period", () => {
+  it("offers Change period format from the match card's Options menu", () => {
+    const menu = readSrc("components/matches/match-actions.tsx");
+    expect(menu).toContain('title="Change period format"');
+    expect(menu).toContain("periodFormatChangeLabel(entry.target)");
+    expect(menu).toContain("<MatchPeriodFormatSection");
     const goals = readSrc("components/matches/match-goals-section.tsx");
-    expect(goals).toContain('title="Change period format"');
-    expect(goals).toContain("periodFormatChangeLabel(changeFormatTarget)");
-    expect(goals).toContain("changeFormatTarget && changeFormat");
-    expect(goals).toContain("<MatchPeriodFormatSection");
+    expect(goals).not.toContain("changeFormat");
   });
 
-  it("only passes the format change to editors on the match page", () => {
+  it("only offers the format change to editors on the match page", () => {
     const page = readSrc("app/(app)/matches/[id]/page.tsx");
-    expect(page).toContain(
-      "changeFormat={canEdit ? { periods: formatChangePeriods } : null}",
-    );
+    expect(page).toContain("changeFormat={{ periods: formatChangePeriods }}");
     expect(page).toContain("starterCount: period.starter_player_ids.length");
     expect(page).toContain("goal.period_id === period.id");
   });

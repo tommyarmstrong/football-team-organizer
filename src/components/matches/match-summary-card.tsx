@@ -25,9 +25,8 @@ export function matchCardShare(match: {
 }
 
 /**
- * The match card used on the dashboard and the matches list, for every
- * status. Both pages render this so size, scheduled chip, score, meta lines,
- * and share stay the same.
+ * The match card on the dashboard. It renders the same `MatchHero` as the
+ * match page, so phone and desktop stay in step with that card.
  */
 export function MatchSummaryCard({
   match,
@@ -38,7 +37,6 @@ export function MatchSummaryCard({
 }) {
   return (
     <MatchHero
-      size="card"
       href={`/matches/${match.id}`}
       teamName={teamName}
       opponentName={match.opponent_name}

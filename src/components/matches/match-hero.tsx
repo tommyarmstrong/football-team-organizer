@@ -3,19 +3,14 @@ import type { ReactNode } from "react";
 import {
   formatHomeFirstScore,
   formatMatchTitle,
-  labelHomeAway,
   labelMatchStatus,
   matchSummaryLines,
   resultLetter,
 } from "@/lib/format";
 import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import {
-  LiveIndicator,
-  ScheduledIndicator,
-} from "@/components/matches/match-header-meta";
-
-export type MatchHeroSize = "hero" | "card" | "compact";
+import { MatchCardMeta } from "@/components/matches/match-card-meta";
+import { LiveIndicator } from "@/components/matches/match-indicators";
 
 export function matchHeroShowsScore(status: MatchStatus): boolean {
   return status === "played" || status === "in_progress";
@@ -58,22 +53,45 @@ export function matchHeroAriaLabel({
   );
 }
 
-export function matchHeroDigitClassName(size: MatchHeroSize): string {
-  if (size === "hero") return "text-6xl";
-  if (size === "card") return "text-5xl";
-  return "text-4xl";
+/** A step under a display score, so the team names stay readable beside it. */
+export function matchHeroDigitClassName(): string {
+  return "text-3xl sm:text-5xl";
 }
 
 /** Cap width on desktop so home/away names stay close; mobile is already this size. */
-export function matchHeroFrameClassName(size: MatchHeroSize): string {
-  return cn(
-    "bg-card ring-foreground/10 w-full max-w-lg overflow-hidden shadow-md ring-1",
-    size === "compact" ? "rounded-2xl" : "rounded-3xl",
-  );
+export function matchHeroFrameClassName(): string {
+  return "bg-card ring-border w-full max-w-lg overflow-hidden rounded-3xl shadow-md ring-1";
+}
+
+/**
+ * Colour of the rail down the left of the card. It follows the result, with
+ * the same tokens as the score digits (green win, yellow draw, red loss), and
+ * is grey when there is no result yet or at all (scheduled, postponed,
+ * cancelled).
+ */
+export function matchHeroRailClassName(result: "W" | "D" | "L" | null): string {
+  if (result === "W") return "border-win";
+  if (result === "D") return "border-draw";
+  if (result === "L") return "border-loss";
+  return "border-muted-foreground/40";
+}
+
+/** Home | score | away on one row, on every size and breakpoint. */
+export function matchHeroGroupClassName(): string {
+  return "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3";
+}
+
+/** Names flank the score, aligned towards it: home on the left, away on the right. */
+export function matchHeroSideClassName(side: "home" | "away"): string {
+  return side === "home" ? "min-w-0 text-right" : "min-w-0 text-left";
+}
+
+/** Long names wrap to two lines and keep their full text in the title. */
+export function matchHeroNameClassName(): string {
+  return "line-clamp-2 text-sm leading-tight font-semibold break-words sm:text-lg";
 }
 
 export function MatchHero({
-  size = "hero",
   teamName,
   opponentName,
   homeAway,
@@ -89,7 +107,6 @@ export function MatchHero({
   actions,
   href,
 }: {
-  size?: MatchHeroSize;
   teamName: string;
   opponentName: string;
   homeAway: MatchHomeAway | null | undefined;
@@ -136,62 +153,39 @@ export function MatchHero({
           status,
         })
       : null;
-  const showVenueLink = size === "hero" && Boolean(venueId);
-
-  const mastheadPadding =
-    isLive && size === "hero"
-      ? "px-5 py-4 sm:px-6"
-      : size === "hero"
-        ? "px-5 py-5 sm:px-6 sm:py-6"
-        : size === "card"
-          ? "px-4 py-4 sm:px-5 sm:py-5"
-          : "px-4 py-3.5";
-
+  // A card that is itself a link must not nest a venue link inside it.
+  const showVenueLink = Boolean(venueId) && !href;
   const showActions = Boolean(actions);
-  const showScheduledBadge = status === "scheduled" && size !== "hero";
   const masthead = (
     <div
       className={cn(
-        "bg-card text-foreground border-hero-rail border-l-[3px]",
-        mastheadPadding,
+        "bg-card text-foreground border-l-[3px] px-4 py-3 sm:px-6 sm:py-6",
+        matchHeroRailClassName(result),
       )}
     >
-      <div role="group" aria-label={ariaLabel}>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="min-w-0">
-            <p className="text-muted-foreground text-[11px] font-medium tracking-[0.18em] uppercase">
-              Home
-            </p>
-            <p
-              className={cn(
-                "truncate font-semibold",
-                size === "hero" ? "text-base sm:text-lg" : "text-sm",
-              )}
-            >
-              {homeName}
-            </p>
-          </div>
-          <div className="min-w-0 text-right">
-            <p className="text-muted-foreground text-[11px] font-medium tracking-[0.18em] uppercase">
-              Away
-            </p>
-            <p
-              className={cn(
-                "truncate font-semibold",
-                size === "hero" ? "text-base sm:text-lg" : "text-sm",
-              )}
-            >
-              {awayName}
-            </p>
-          </div>
+      {isLive ? (
+        <div className="mb-1.5 flex justify-center">
+          <LiveIndicator />
+        </div>
+      ) : null}
+
+      <div
+        role="group"
+        aria-label={ariaLabel}
+        className={matchHeroGroupClassName()}
+      >
+        <div className={matchHeroSideClassName("home")}>
+          <p title={homeName} className={matchHeroNameClassName()}>
+            {homeName}
+          </p>
         </div>
 
-        <div className="mt-3 text-center">
+        <div className="text-center">
           {showScore ? (
             <p
               className={cn(
                 "font-display leading-none tracking-tight tabular-nums transition-colors",
-                matchHeroDigitClassName(size),
+                matchHeroDigitClassName(),
                 result === "W" && "text-win",
                 result === "D" && "text-draw",
                 result === "L" && "text-loss",
@@ -201,65 +195,37 @@ export function MatchHero({
               <span className="text-muted-foreground px-[0.15em]">–</span>
               <span>{awayGoals}</span>
             </p>
-          ) : showScheduledBadge ? (
-            <div className="flex justify-center">
-              <ScheduledIndicator />
-            </div>
           ) : (
             <p className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase">
               vs
             </p>
           )}
-          {isCancelledOrPostponed ? (
-            <p className="text-destructive mt-2 font-medium">
-              {labelMatchStatus(status)}
-            </p>
-          ) : null}
         </div>
+
+        <div className={matchHeroSideClassName("away")}>
+          <p title={awayName} className={matchHeroNameClassName()}>
+            {awayName}
+          </p>
+        </div>
+
+        {isCancelledOrPostponed ? (
+          <p className="text-destructive col-span-full mt-2 text-center font-medium">
+            {labelMatchStatus(status)}
+          </p>
+        ) : null}
       </div>
 
-      {homeAway || meta || isLive ? (
-        <div
-          data-slot="match-card-stack"
-          className="text-muted-foreground mt-4 space-y-1 text-center text-sm"
-        >
-          {homeAway ? (
-            <p className="text-[11px] font-medium tracking-wide uppercase">
-              {labelHomeAway(homeAway)}
-            </p>
-          ) : null}
-          {meta?.venue ? (
-            <p>
-              {showVenueLink ? (
-                <Link
-                  href={`/venues/${venueId}`}
-                  className="text-foreground underline-offset-2 hover:underline"
-                >
-                  {meta.venue}
-                </Link>
-              ) : (
-                meta.venue
-              )}
-            </p>
-          ) : null}
-          {isLive ? (
-            <div className="flex justify-center">
-              <LiveIndicator />
-            </div>
-          ) : null}
-          {meta?.competition ? (
-            <p className="text-foreground font-bold">{meta.competition}</p>
-          ) : null}
-          {meta ? <p>{meta.dateTime}</p> : null}
-          {meta?.meetup ? <p>{meta.meetup}</p> : null}
-          {meta?.kickoff ? <p>{meta.kickoff}</p> : null}
-        </div>
+      {meta ? (
+        <MatchCardMeta
+          meta={meta}
+          venueHref={showVenueLink ? `/venues/${venueId}` : undefined}
+        />
       ) : null}
     </div>
   );
 
   return (
-    <div className={matchHeroFrameClassName(size)}>
+    <div className={matchHeroFrameClassName()}>
       {href ? (
         <Link
           href={href}

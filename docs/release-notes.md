@@ -4,6 +4,81 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Dark background
+
+- The app now uses a dark background, with darker cards and tables, light text, and thin grey dividers.
+- Wins are green, draws are yellow, and losses are red. A match in progress uses that same red for LIVE.
+- The end of season report is unchanged: white pages on a grey desk, with the same printed colours.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — The same match card everywhere
+
+- Dashboard fixtures now use the same card as the match page, on your phone and on a larger screen.
+- The Matches list uses the compact fixture rows on every screen. On a larger screen the rows are a little roomier.
+- Scores are a little smaller, so the team names are easier to read.
+- A fixture row no longer shows an arrow. Tap the row to open the match. The share icon still shares without opening it.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — A more compact Matches list on your phone
+
+- On a phone, the Matches page now fits many more fixtures on screen. Fixtures sit in one continuous list with thin dividers instead of separate cards.
+- Each fixture shows the date at the top, the teams either side of the score, then the competition and venue on one line.
+- A match in progress shows a small red LIVE badge at the top right. Other matches no longer show a status badge.
+- Tap anywhere on a fixture to open it, and tap the share icon to share a postcard without leaving the list.
+- The search box now just says "Search matches…".
+- Desktop looks the same as before.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — Match controls move to the match card
+
+- The buttons under the match card are now one main button and an Options menu, like Goals.
+- Scheduled match: Kick off, with Full time, Cancelled, Postponed, Add period and Change to halves/quarters in Options. Add period and Change to halves/quarters are greyed out until kick off.
+- Match in progress: Full time, with Scheduled, Cancelled, Postponed, Add period and Change to halves/quarters in Options.
+- Cancelling, postponing, or moving a match back to scheduled asks you to confirm first.
+- Played match: two buttons, Add period and Change to halves/quarters.
+- Under Goals there is now just Add goal.
+- Removed two lines of help text: under Cards ("Add a card, then set the player and other details.") and when editing a match (the note about score and goals/cards unlocking).
+- The stripe down the left of a match card is green for a win, yellow for a draw and red for a loss, matching the score. It is grey for scheduled, postponed and cancelled matches.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — Match cards, tidied up (continued)
+
+- On every match card (Dashboard, Matches and the match page, on phone and desktop), the two team names now sit either side of the score, home on the left and away on the right.
+- The HOME and AWAY labels are gone, as the order already says it.
+- Under the score: competition in bold, then the venue, then the date, meet up and kick off on one line separated by dots.
+- A match in progress shows its LIVE badge directly above the score.
+- Goals use the football icon again.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — Easier match details on your phone
+
+- The match summary is much shorter on a phone: home team, score and away team sit on one row, so more of the match fits on screen.
+- The top bar shrinks as you scroll down, leaving more room, and expands again at the top. Your team picker stays within reach.
+- Coach's and players' Player of the Match are now together in one section, without repeating the chosen player underneath.
+- Add goal is now the main button under Goals. Add period and Change to halves/quarters moved into an Options menu.
+- Goals are more compact, with the assist shown under the scorer. Goals for and against are told apart by icon and label, not only colour.
+- Match-day squad rows are tighter, and removing a player on a phone asks you to confirm first.
+- Buttons and fields are easier to tap on a phone. Desktop looks the same as before.
+
+**No database changes.**
+
+---
+
 ## 12 November 2026 — Switch a match between halves and quarters
 
 - If the referee plays halves when the fixture was set up with quarters (or the other way round), you no longer need to delete periods and start again.

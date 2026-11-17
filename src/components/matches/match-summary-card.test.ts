@@ -1,9 +1,20 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
-import type { ReactElement } from "react";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/link", async () =>
+  (await import("@/components/matches/match-card-test-utils")).nextLinkMock(),
+);
+vi.mock("@/components/postcards/match-card-share", () => ({
+  MatchCardShare: () => null,
+}));
+
+import { createElement, type ReactElement } from "react";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { MatchStatus } from "@/lib/supabase/database.types";
+import { matchCompetitionLabel } from "@/lib/format";
+import { renderCard } from "@/components/matches/match-card-test-utils";
+import { MatchHero } from "@/components/matches/match-hero";
 import {
   MatchSummaryCard,
   matchCardShare,
@@ -37,10 +48,10 @@ function match(
 
 function cardProps(element: ReactElement) {
   return element.props as {
-    size: string;
     href: string;
     status: string;
     venueName: string | null;
+    venueId?: string | null;
     meetupTime: string | null;
     kickoffTime: string | null;
     competitionName: string | null;
@@ -49,11 +60,12 @@ function cardProps(element: ReactElement) {
 }
 
 describe("MatchSummaryCard", () => {
-  it("uses one card size, the scheduled fixture fields, and the fixture share control", () => {
+  it("uses the scheduled fixture fields and the fixture share control", () => {
     const props = cardProps(
       MatchSummaryCard({ match: match(), teamName: "MGA Select" }),
     );
-    expect(props.size).toBe("card");
+    expect(props).not.toHaveProperty("size");
+    expect(props.venueId).toBeUndefined();
     expect(props.href).toBe("/matches/match-1");
     expect(props.status).toBe("scheduled");
     expect(props.venueName).toBe("Anfield");
@@ -75,7 +87,7 @@ describe("MatchSummaryCard", () => {
     const props = cardProps(
       MatchSummaryCard({ match: played, teamName: "MGA Select" }),
     );
-    expect(props.size).toBe("card");
+    expect(props).not.toHaveProperty("size");
     expect(props.href).toBe("/matches/match-1");
     expect(props.status).toBe("played");
     expect(props.actions?.props).toMatchObject({
@@ -99,10 +111,54 @@ describe("MatchSummaryCard", () => {
           teamName: "MGA Select",
         }),
       );
-      expect(props.size).toBe("card");
+      expect(props).not.toHaveProperty("size");
       expect(props.status).toBe(status);
       expect(props.actions).toBeUndefined();
       expect(matchCardShare(match({ status }))).toBeUndefined();
+    }
+  });
+});
+
+describe("MatchSummaryCard rendering", () => {
+  it("renders the same card as the match page", () => {
+    const statuses: MatchStatus[] = [
+      "scheduled",
+      "in_progress",
+      "played",
+      "postponed",
+      "cancelled",
+    ];
+    for (const status of statuses) {
+      const fixture = match({
+        status,
+        goals_for: 2,
+        goals_against: 1,
+        home_away: status === "played" ? "away" : "home",
+      });
+      const summary = renderCard(
+        createElement(MatchSummaryCard, {
+          match: fixture,
+          teamName: "MGA Select",
+        }),
+      );
+      const hero = renderCard(
+        createElement(MatchHero, {
+          teamName: "MGA Select",
+          opponentName: fixture.opponent_name,
+          homeAway: fixture.home_away,
+          status: fixture.status,
+          goalsFor: fixture.goals_for,
+          goalsAgainst: fixture.goals_against,
+          competitionName: matchCompetitionLabel(fixture),
+          date: fixture.date,
+          kickoffTime: fixture.kickoff_time,
+          meetupTime: fixture.meetup_time,
+          venueName: fixture.venue?.name ?? null,
+          href: `/matches/${fixture.id}`,
+          actions: matchCardShare(fixture),
+        }),
+      );
+      expect(summary).toBe(hero);
     }
   });
 });

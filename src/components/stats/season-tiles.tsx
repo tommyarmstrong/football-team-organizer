@@ -10,7 +10,7 @@ export function SeasonTiles({ results }: { results: ResultOverTimePoint[] }) {
       {tiles.map((tile) => (
         <div
           key={tile.label}
-          className="bg-card ring-foreground/10 flex min-h-[4.5rem] flex-col justify-center rounded-2xl px-3 py-2.5 shadow-sm ring-1"
+          className="bg-card ring-border flex min-h-[4.5rem] flex-col justify-center rounded-2xl px-3 py-2.5 shadow-sm ring-1"
         >
           <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             {tile.label}

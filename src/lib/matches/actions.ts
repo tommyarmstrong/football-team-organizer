@@ -30,6 +30,7 @@ import { getActiveTeam } from "@/lib/data/team";
 import { getCompetition } from "@/lib/data/competitions";
 import { listVenues } from "@/lib/data/venues";
 import { isOneOf, str } from "@/lib/form-parse";
+import { canQuickSetStatus } from "@/lib/matches/status-actions";
 import { resolveMatchStage } from "@/lib/matches/tournament-defaults";
 import type {
   Competition,
@@ -301,20 +302,6 @@ export async function updateMatchAction(
   redirect(`/matches/${id}`);
 }
 
-const QUICK_STATUS_TARGETS: MatchStatus[] = [
-  "in_progress",
-  "played",
-  "cancelled",
-];
-
-function canQuickSetStatus(current: MatchStatus, next: MatchStatus): boolean {
-  if (!QUICK_STATUS_TARGETS.includes(next)) return false;
-  if (current === "scheduled") return true;
-  if (current === "in_progress")
-    return next === "played" || next === "cancelled";
-  return false;
-}
-
 function revalidateMatchStatus(id: string) {
   revalidatePath("/matches");
   revalidatePath(`/matches/${id}`);
@@ -324,7 +311,7 @@ function revalidateMatchStatus(id: string) {
   revalidatePath("/club");
 }
 
-/** Kick off / full time / cancelled controls on the match page. */
+/** Kick off / full time / scheduled / postponed / cancelled controls on the match page. */
 export async function updateMatchStatusAction(
   id: string,
   status: MatchStatus,

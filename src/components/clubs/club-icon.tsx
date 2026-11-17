@@ -20,7 +20,7 @@ export function ClubIcon({
       width={size}
       height={size}
       className={cn(
-        "size-7 shrink-0 rounded-md object-cover shadow-sm ring-1 ring-black/10",
+        "ring-border size-7 shrink-0 rounded-md object-cover shadow-sm ring-1",
         className,
       )}
       style={{ width: size, height: size }}

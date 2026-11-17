@@ -6,7 +6,7 @@ export const AWARD_TONE_CLASS = {
   gold: "text-[#E6B000]",
   silver: "text-[#8E979F]",
   bronze: "text-[#CD7F32]",
-  black: "text-[#111111]",
+  black: "text-[#A9B5B2]",
 } as const;
 
 export type AwardTone = keyof typeof AWARD_TONE_CLASS;

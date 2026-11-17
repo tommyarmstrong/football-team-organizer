@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /** Paper list shell for object rows under a page section heading. */
 export const objectListClassName =
-  "bg-card divide-y divide-foreground/8 overflow-hidden rounded-2xl ring-1 ring-foreground/8 shadow-sm";
+  "bg-card divide-border divide-y overflow-hidden rounded-2xl ring-1 ring-border shadow-sm";
 
 /** Clickable row body: hover highlight, full-width flex for inline info. */
 export function objectListRowClassName(className?: string) {
