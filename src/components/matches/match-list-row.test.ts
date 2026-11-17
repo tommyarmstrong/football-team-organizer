@@ -28,6 +28,7 @@ import {
   matchListContainerClassName,
   matchListMetaLine,
   matchListRowNameClassName,
+  matchListRowScoreClassName,
 } from "@/components/matches/match-list-row";
 
 function match(
@@ -110,6 +111,13 @@ describe("MatchListRow layout", () => {
     expect(html).not.toMatch(/border-l-|rounded-(2xl|3xl)|shadow-md|ring-1/);
   });
 
+  it("uses a smaller score that still steps up on a larger screen", () => {
+    expect(matchListRowScoreClassName).toContain("text-2xl");
+    expect(matchListRowScoreClassName).toContain("sm:text-3xl");
+    expect(row()).toContain(matchListRowScoreClassName);
+    expect(row()).not.toContain("text-4xl");
+  });
+
   it("keeps a three-column grid that wraps long names without overlapping the score", () => {
     const html = row({
       opponent_name: "Afc Wimbledon Under Elevens Development Academy Orange",
@@ -118,6 +126,7 @@ describe("MatchListRow layout", () => {
     expect(matchListRowNameClassName).toContain("line-clamp-2");
     expect(matchListRowNameClassName).toContain("min-w-0");
     expect(matchListRowNameClassName).toContain("break-words");
+    expect(matchListRowNameClassName).toContain("sm:text-base");
     expect(html).toContain(
       'title="Afc Wimbledon Under Elevens Development Academy Orange"',
     );
@@ -195,12 +204,10 @@ describe("MatchListRow navigation and share", () => {
     );
   });
 
-  it("shows a decorative right-facing chevron", () => {
+  it("has no chevron; the row itself is the link", () => {
     const html = row();
-    expect(html).toContain("lucide-chevron-right");
-    expect(html).toMatch(
-      /<svg[^>]*lucide-chevron-right[^>]*aria-hidden="true"/,
-    );
+    expect(html).not.toContain("lucide-chevron-right");
+    expect(html).toContain('href="/matches/match-1"');
   });
 
   for (const status of ["played", "scheduled"] as const) {
@@ -229,15 +236,13 @@ describe("MatchListRow navigation and share", () => {
 });
 
 describe("matchListContainerClassName", () => {
-  it("is one rounded container with thin separators on phones only", () => {
-    expect(matchListContainerClassName).toContain("max-sm:rounded-xl");
-    expect(matchListContainerClassName).toContain("max-sm:divide-y");
-    expect(matchListContainerClassName).toContain("max-sm:overflow-hidden");
-    expect(matchListContainerClassName).toContain("max-sm:shadow-sm");
-  });
-
-  it("restores the stacked-card spacing from sm up", () => {
-    expect(matchListContainerClassName).toContain("sm:space-y-3");
+  it("is one rounded container with thin separators on every screen", () => {
+    expect(matchListContainerClassName).toContain("rounded-xl");
+    expect(matchListContainerClassName).toContain("divide-y");
+    expect(matchListContainerClassName).toContain("overflow-hidden");
+    expect(matchListContainerClassName).toContain("shadow-sm");
+    expect(matchListContainerClassName).not.toContain("max-sm:");
+    expect(matchListContainerClassName).not.toContain("sm:space-y-3");
   });
 });
 

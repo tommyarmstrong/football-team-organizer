@@ -4,6 +4,17 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — The same match card everywhere
+
+- Dashboard fixtures now use the same card as the match page, on your phone and on a larger screen.
+- The Matches list uses the compact fixture rows on every screen. On a larger screen the rows are a little roomier.
+- Scores are a little smaller, so the team names are easier to read.
+- A fixture row no longer shows an arrow. Tap the row to open the match. The share icon still shares without opening it.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — A more compact Matches list on your phone
 
 - On a phone, the Matches page now fits many more fixtures on screen. Fixtures sit in one continuous list with thin dividers instead of separate cards.

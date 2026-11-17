@@ -1,4 +1,4 @@
-/** Status pills shared by every match card (dashboard, list, detail). */
+/** Live pill shared by the match card and the matches list. */
 
 export function LiveIndicator() {
   return (
@@ -8,18 +8,6 @@ export function LiveIndicator() {
       title="In progress"
     >
       LIVE
-    </span>
-  );
-}
-
-export function ScheduledIndicator() {
-  return (
-    <span
-      className="text-win border-win inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide"
-      aria-label="Scheduled"
-      title="Scheduled"
-    >
-      Scheduled
     </span>
   );
 }

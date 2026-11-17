@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect } from "vitest";
 
 /**
- * Shared by the match card tests (hero, summary card, dashboard, list) so the
+ * Shared by the match card tests (hero and dashboard summary) so the
  * layout contract is asserted in one vocabulary rather than re-implemented.
  *
  * Use as: vi.mock("next/link", async () => (await import("...")).nextLinkMock());
@@ -64,8 +64,7 @@ export function dateRowHtml(html: string): string {
 }
 
 /**
- * The layout contract every match card (dashboard, matches list, match page)
- * must satisfy.
+ * The layout contract for the match card (dashboard and match page).
  */
 export function expectSharedCardLayout(
   html: string,

@@ -8,22 +8,14 @@ const source = readFileSync(
 );
 
 describe("MatchesDirectoryList", () => {
-  it("renders the compact row on phones and the shared summary card from sm up", () => {
-    expect(source).toContain("MatchListRow");
-    expect(source).toContain("MatchSummaryCard");
-    expect(source).toContain('className="sm:hidden"');
-    expect(source).toContain('className="hidden sm:block"');
-    expect(source).toContain("match={match}");
-    expect(source).toContain("teamName={teamName}");
-    expect(source).not.toContain("MatchHero");
-    expect(source).not.toContain('size="compact"');
-  });
-
-  it("keeps the desktop card path unchanged", () => {
-    const desktop = source.slice(source.indexOf('className="hidden sm:block"'));
-    expect(desktop).toContain(
-      "<MatchSummaryCard match={match} teamName={teamName} />",
+  it("renders the compact fixture row on every screen", () => {
+    expect(source).toContain(
+      "<MatchListRow match={match} teamName={teamName} />",
     );
+    expect(source).not.toContain("MatchSummaryCard");
+    expect(source).not.toContain("sm:hidden");
+    expect(source).not.toContain("hidden sm:block");
+    expect(source).not.toContain("MatchHero");
   });
 
   it("uses the continuous list container", () => {

@@ -10,12 +10,7 @@ import {
 import type { MatchHomeAway, MatchStatus } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { MatchCardMeta } from "@/components/matches/match-card-meta";
-import {
-  LiveIndicator,
-  ScheduledIndicator,
-} from "@/components/matches/match-indicators";
-
-export type MatchHeroSize = "hero" | "card" | "compact";
+import { LiveIndicator } from "@/components/matches/match-indicators";
 
 export function matchHeroShowsScore(status: MatchStatus): boolean {
   return status === "played" || status === "in_progress";
@@ -58,18 +53,14 @@ export function matchHeroAriaLabel({
   );
 }
 
-export function matchHeroDigitClassName(size: MatchHeroSize): string {
-  if (size === "hero") return "text-4xl sm:text-6xl";
-  if (size === "card") return "text-4xl sm:text-5xl";
-  return "text-4xl";
+/** A step under a display score, so the team names stay readable beside it. */
+export function matchHeroDigitClassName(): string {
+  return "text-3xl sm:text-5xl";
 }
 
 /** Cap width on desktop so home/away names stay close; mobile is already this size. */
-export function matchHeroFrameClassName(size: MatchHeroSize): string {
-  return cn(
-    "bg-card ring-foreground/10 w-full max-w-lg overflow-hidden shadow-md ring-1",
-    size === "compact" ? "rounded-2xl" : "rounded-3xl",
-  );
+export function matchHeroFrameClassName(): string {
+  return "bg-card ring-foreground/10 w-full max-w-lg overflow-hidden rounded-3xl shadow-md ring-1";
 }
 
 /**
@@ -96,15 +87,11 @@ export function matchHeroSideClassName(side: "home" | "away"): string {
 }
 
 /** Long names wrap to two lines and keep their full text in the title. */
-export function matchHeroNameClassName(size: MatchHeroSize): string {
-  return cn(
-    "line-clamp-2 leading-tight font-semibold break-words",
-    size === "hero" ? "text-sm sm:text-lg" : "text-sm",
-  );
+export function matchHeroNameClassName(): string {
+  return "line-clamp-2 text-sm leading-tight font-semibold break-words sm:text-lg";
 }
 
 export function MatchHero({
-  size = "hero",
   teamName,
   opponentName,
   homeAway,
@@ -120,7 +107,6 @@ export function MatchHero({
   actions,
   href,
 }: {
-  size?: MatchHeroSize;
   teamName: string;
   opponentName: string;
   homeAway: MatchHomeAway | null | undefined;
@@ -167,23 +153,14 @@ export function MatchHero({
           status,
         })
       : null;
-  const showVenueLink = size === "hero" && Boolean(venueId);
-
-  const isHero = size === "hero";
-  const mastheadPadding = isHero
-    ? "px-4 py-3 sm:px-6 sm:py-6"
-    : size === "card"
-      ? "px-4 py-4 sm:px-5 sm:py-5"
-      : "px-4 py-3.5";
-
+  // A card that is itself a link must not nest a venue link inside it.
+  const showVenueLink = Boolean(venueId) && !href;
   const showActions = Boolean(actions);
-  const showScheduledBadge = status === "scheduled" && !isHero;
   const masthead = (
     <div
       className={cn(
-        "bg-card text-foreground border-l-[3px]",
+        "bg-card text-foreground border-l-[3px] px-4 py-3 sm:px-6 sm:py-6",
         matchHeroRailClassName(result),
-        mastheadPadding,
       )}
     >
       {isLive ? (
@@ -198,7 +175,7 @@ export function MatchHero({
         className={matchHeroGroupClassName()}
       >
         <div className={matchHeroSideClassName("home")}>
-          <p title={homeName} className={matchHeroNameClassName(size)}>
+          <p title={homeName} className={matchHeroNameClassName()}>
             {homeName}
           </p>
         </div>
@@ -208,7 +185,7 @@ export function MatchHero({
             <p
               className={cn(
                 "font-display leading-none tracking-tight tabular-nums transition-colors",
-                matchHeroDigitClassName(size),
+                matchHeroDigitClassName(),
                 result === "W" && "text-win",
                 result === "D" && "text-draw",
                 result === "L" && "text-loss",
@@ -218,10 +195,6 @@ export function MatchHero({
               <span className="text-muted-foreground px-[0.15em]">–</span>
               <span>{awayGoals}</span>
             </p>
-          ) : showScheduledBadge ? (
-            <div className="flex justify-center">
-              <ScheduledIndicator />
-            </div>
           ) : (
             <p className="text-muted-foreground px-2 text-xs font-bold tracking-[0.2em] uppercase">
               vs
@@ -230,7 +203,7 @@ export function MatchHero({
         </div>
 
         <div className={matchHeroSideClassName("away")}>
-          <p title={awayName} className={matchHeroNameClassName(size)}>
+          <p title={awayName} className={matchHeroNameClassName()}>
             {awayName}
           </p>
         </div>
@@ -252,7 +225,7 @@ export function MatchHero({
   );
 
   return (
-    <div className={matchHeroFrameClassName(size)}>
+    <div className={matchHeroFrameClassName()}>
       {href ? (
         <Link
           href={href}
