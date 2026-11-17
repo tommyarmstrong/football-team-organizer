@@ -35,6 +35,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { EditIconLink } from "@/components/shared/edit-icon-control";
 import { buttonVariants } from "@/components/ui/button";
 import { CreateTeamForm } from "@/components/team/create-team-form";
+import { competitionListToday } from "@/components/team/competition-list-badge";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { PlayerOfTheMonthSection } from "@/components/team/player-of-the-month-section";
 import { TeamHeaderMeta } from "@/components/team/team-header-meta";
@@ -213,6 +214,7 @@ export default async function TeamPage() {
             competitions={competitions.data}
             venues={teamClubVenues}
             canEdit={canEditHistory}
+            today={competitionListToday()}
           />
         )}
       </Section>

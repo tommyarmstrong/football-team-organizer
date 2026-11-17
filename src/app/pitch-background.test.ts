@@ -99,9 +99,12 @@ describe("pitch background etching", () => {
 
     const fixed = globals.match(/body::before\s*\{([^}]+)\}/)?.[1] ?? "";
     expect(fixed).toMatch(/position:\s*fixed/);
+    expect(fixed).toMatch(/opacity:\s*0\.25/);
     expect(fixed).not.toMatch(/background-image/);
 
     expect(authShell).toContain("pitch-pattern");
+    expect(authShell).toContain("opacity-40");
+    expect(authShell).not.toContain("opacity-80");
     expect(authShell).not.toContain("report-pitch-pattern");
 
     const tile = tileSize(appPattern);
@@ -121,6 +124,7 @@ describe("pitch background etching", () => {
     expect(reportCss).toMatch(
       /(?<!-webkit-)mask:\s*url\("\/report-pitch-pattern\.svg"\)\s*0 0 \/ 540px 330px repeat/,
     );
+    expect(reportCss).toMatch(/opacity:\s*0\.05/);
     expect(reportCss).not.toContain("160px 160px");
     expect(tileSize(reportPattern)).toEqual({ width: 540, height: 330 });
   });

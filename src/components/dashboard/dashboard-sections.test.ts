@@ -9,20 +9,35 @@ const { getDashboardDataMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) =>
-    createElement("a", { href }, children),
+  default: ({
+    children,
+    href,
+    className,
+  }: {
+    children: ReactNode;
+    href: string;
+    className?: string;
+  }) => createElement("a", { href, className }, children),
 }));
 
 vi.mock("@/lib/data/dashboard", () => ({
   getDashboardData: getDashboardDataMock,
 }));
 
+vi.mock("@/lib/data/venues", () => ({
+  listVenues: vi.fn(async () => ({ data: [], error: null })),
+}));
+
 import {
+  DashboardCompetitions,
+  DashboardForm,
   DashboardLeaderboards,
   DashboardSeasonTiles,
 } from "@/components/dashboard/dashboard-sections";
 import { AWARD_TONE_CLASS } from "@/components/shared/award-badge";
+import { Section } from "@/components/shared/section";
 import { SeasonTiles } from "@/components/stats/season-tiles";
+import type { Team } from "@/lib/supabase/database.types";
 
 describe("DashboardLeaderboards", () => {
   beforeEach(() => {
@@ -125,17 +140,17 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(awardTonesInSection(html, "Goals leaderboard")).toEqual([
+    expect(awardTonesInPanel(html, "goals")).toEqual([
       "gold",
       "gold",
       "bronze",
     ]);
-    expect(awardTonesInSection(html, "Assists leaderboard")).toEqual([
+    expect(awardTonesInPanel(html, "assists")).toEqual([
       "gold",
       "silver",
       "silver",
     ]);
-    expect(awardTonesInSection(html, "Player of the match")).toEqual([
+    expect(awardTonesInPanel(html, "match")).toEqual([
       "gold",
       "silver",
       "silver",
@@ -144,15 +159,26 @@ describe("DashboardLeaderboards", () => {
     expect(sectionHtml(html, "Player of the month")).not.toContain(
       "text-primary",
     );
-    expect(sectionHtml(html, "Goals leaderboard")).not.toContain(
-      "bg-[#F5C518]",
-    );
+    expect(panelHtml(html, "goals")).not.toContain("bg-[#F5C518]");
     expect(sectionTitles(html)).toEqual([
+      "Leaderboards",
       "Player of the month",
-      "Player of the match",
-      "Goals leaderboard",
-      "Assists leaderboard",
     ]);
+    expect(html.indexOf(">Leaderboards<")).toBeLessThan(
+      html.indexOf(">Player of the month<"),
+    );
+    expect(html).toContain(">Player of the month<");
+    expect(html).toContain(">Player of the match<");
+    expect(html).toContain(">Goals<");
+    expect(html).toContain(">Assists<");
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).not.toContain(
+      "Add player of the month awards from the Team page.",
+    );
+    expect(html).not.toContain(
+      "Select the coach's player of the match on played fixtures.",
+    );
+    expect(html).not.toContain("Record assists on goals to see the table.");
     expect(html).toContain("March 2025");
     expect(html).toContain("4 awards");
   });
@@ -197,17 +223,14 @@ describe("DashboardLeaderboards", () => {
     const html = renderToStaticMarkup(
       await DashboardLeaderboards({ teamId: "team-1" }),
     );
-    expect(namesInSection(html, "Goals leaderboard")).toEqual([
+    expect(namesInPanel(html, "goals")).toEqual([
       "Ada Ace",
       "Bea Best",
       "Cleo Cross",
       "Dan Dale",
     ]);
-    expect(namesInSection(html, "Assists leaderboard")).toEqual([
-      "Ada Ace",
-      "Bea Best",
-    ]);
-    expect(namesInSection(html, "Player of the match")).toEqual([
+    expect(namesInPanel(html, "assists")).toEqual(["Ada Ace", "Bea Best"]);
+    expect(namesInPanel(html, "match")).toEqual([
       "Ada Ace",
       "Bea Best",
       "Cleo Cross",
@@ -303,12 +326,9 @@ function dashboardData(overrides: Record<string, unknown> = {}) {
 }
 
 function sectionTitles(html: string): string[] {
-  return [
-    "Player of the month",
-    "Player of the match",
-    "Goals leaderboard",
-    "Assists leaderboard",
-  ].sort((a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`));
+  return ["Leaderboards", "Player of the month"].sort(
+    (a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`),
+  );
 }
 
 function monthlyAward(
@@ -336,8 +356,28 @@ function sectionHtml(html: string, title: string): string {
   return html.slice(start, next === -1 ? undefined : next);
 }
 
+function panelHtml(html: string, id: string): string {
+  const marker = `data-dashboard-panel="${id}"`;
+  const start = html.indexOf(marker);
+  const nextPanel = html.indexOf(
+    "data-dashboard-panel=",
+    start + marker.length,
+  );
+  const nextHeading = html.indexOf("<h2", start + marker.length);
+  const ends = [nextPanel, nextHeading].filter((index) => index > start);
+  const next = ends.length === 0 ? -1 : Math.min(...ends);
+  return html.slice(start, next === -1 ? undefined : next);
+}
+
 function awardTonesInSection(html: string, title: string): string[] {
-  const section = sectionHtml(html, title);
+  return awardTonesIn(sectionHtml(html, title));
+}
+
+function awardTonesInPanel(html: string, id: string): string[] {
+  return awardTonesIn(panelHtml(html, id));
+}
+
+function awardTonesIn(section: string): string[] {
   return [...section.matchAll(/text-\[(#[A-Fa-f0-9]+)\]/g)].map((match) => {
     const colour = match[1] ?? "";
     const tone = (
@@ -347,9 +387,9 @@ function awardTonesInSection(html: string, title: string): string[] {
   });
 }
 
-function namesInSection(html: string, title: string): string[] {
+function namesInPanel(html: string, id: string): string[] {
   return [
-    ...sectionHtml(html, title).matchAll(
+    ...panelHtml(html, id).matchAll(
       /<span class="truncate font-medium">([^<]+)<\/span>/g,
     ),
   ].map((match) => match[1] ?? "");
@@ -408,9 +448,9 @@ describe("DashboardSeasonTiles", () => {
       }),
     );
 
-    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
-    expect(tree?.type).toBe(SeasonTiles);
-    expect(tree?.props.results).toHaveLength(1);
+    const tiles = glanceTiles(await DashboardSeasonTiles({ teamId: "team-1" }));
+    expect(tiles.results).toHaveLength(1);
+    expect(tiles.variant).toBe("glance");
   });
 
   it("counts league and cup matches and drops friendlies, tournaments, and other competitions", async () => {
@@ -430,13 +470,13 @@ describe("DashboardSeasonTiles", () => {
       }),
     );
 
-    const tree = await DashboardSeasonTiles({ teamId: "team-1" });
+    const tiles = glanceTiles(await DashboardSeasonTiles({ teamId: "team-1" }));
     expect(
-      tree?.props.results.map((row: { matchId: string }) => row.matchId),
+      tiles.results.map((row: { matchId: string }) => row.matchId),
     ).toEqual(["league-win", "cup-draw"]);
   });
 
-  it("passes no results when every played match is outside league and cup matches", async () => {
+  it("omits the section when every played match is outside league and cup matches", async () => {
     getDashboardDataMock.mockReturnValue(
       dashboardData({
         stats: {
@@ -451,7 +491,7 @@ describe("DashboardSeasonTiles", () => {
     );
 
     const tree = await DashboardSeasonTiles({ teamId: "team-1" });
-    expect(tree?.props.results).toEqual([]);
+    expect(tree).toBeNull();
   });
 
   it("does not offer a competition filter on the dashboard", () => {
@@ -460,7 +500,8 @@ describe("DashboardSeasonTiles", () => {
       "utf8",
     );
     expect(source).toContain("ALL_LEAGUE_AND_CUP");
-    expect(source).toContain("league and cup matches");
+    expect(source).toContain('title="Season at a glance"');
+    expect(source).toContain('variant="glance"');
     expect(source).not.toContain("ALL_COMPETITIVE");
     expect(source).not.toContain("competitive");
     expect(source).not.toContain("StatsCompetitionFilters");
@@ -468,6 +509,23 @@ describe("DashboardSeasonTiles", () => {
     expect(source).not.toContain("setCompetitionKind");
   });
 });
+
+function glanceTiles(tree: unknown) {
+  const section = tree as {
+    type: unknown;
+    props: {
+      title: string;
+      children: {
+        type: unknown;
+        props: { results: Array<{ matchId: string }>; variant?: string };
+      };
+    };
+  };
+  expect(section.type).toBe(Section);
+  expect(section.props.title).toBe("Season at a glance");
+  expect(section.props.children.type).toBe(SeasonTiles);
+  return section.props.children.props;
+}
 
 function result(
   matchId: string,
@@ -498,8 +556,22 @@ describe("DashboardFixtures last result share", () => {
     expect(source).toContain("MatchSummaryCard");
     expect(source).toContain('title="Next fixture"');
     expect(source).toContain('title="Last result"');
-    expect(source).toContain("Schedule the next match.");
+    expect(source).not.toContain("Schedule the next match.");
     expect(source).toContain("Played matches will show here.");
+    expect(source).not.toContain("Most recent");
+    expect(source).not.toContain("oldest → newest");
+    expect(source).not.toContain("Leagues, cups, and other competitions");
+    expect(source).toContain("showAddForm={false}");
+    expect(source).toContain("compact");
+    expect(source).toContain('title="Leaderboards"');
+    expect(source).toContain('title="Player of the month"');
+    expect(source.indexOf('title="Leaderboards"')).toBeLessThan(
+      source.indexOf('title="Player of the month"'),
+    );
+    expect(source).not.toContain('title="Awards"');
+    expect(source).toContain(
+      "Record goals on played matches to see the table.",
+    );
     expect(source).not.toContain("MatchHero");
     expect(source).not.toContain("scheduledBadge");
     expect(source).not.toContain("SharePostcardButton");
@@ -515,6 +587,70 @@ describe("DashboardFixtures last result share", () => {
   it("stacks next fixture and last result in the narrow page column", () => {
     expect(source).toContain("grid gap-8");
     expect(source).not.toContain("sm:grid-cols-2");
+  });
+
+  it("renders form without the match-count caption", async () => {
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({ form: { form: ["W", "D"], error: null } }),
+    );
+    const html = renderToStaticMarkup(
+      await DashboardForm({ teamId: "team-1" }),
+    );
+    expect(html).toContain(">Form<");
+    expect(html).toContain(">W<");
+    expect(html).not.toContain("Most recent");
+    expect(html).not.toContain("oldest");
+  });
+
+  it("shows Completed and Upcoming badges, and leaves Ongoing and Add off the list", async () => {
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        competitions: {
+          data: [
+            {
+              id: "league",
+              name: "League",
+              display_name: null,
+              result: "ongoing",
+              date: "2000-01-01",
+            },
+            {
+              id: "cup",
+              name: "County Cup",
+              display_name: null,
+              result: "completed",
+              date: null,
+            },
+            {
+              id: "summer",
+              name: "Summer Cup",
+              display_name: null,
+              result: "ongoing",
+              date: "2099-06-01",
+            },
+          ],
+          error: null,
+        },
+        canEditTeam: true,
+      }),
+    );
+    const html = renderToStaticMarkup(
+      await DashboardCompetitions({
+        team: {
+          id: "team-1",
+          club_id: "club-1",
+          season_label: "2025/26",
+        } as Team,
+      }),
+    );
+    expect(html).toContain(">Competitions<");
+    expect(html).toContain(">League<");
+    expect(html).not.toContain(">Ongoing<");
+    expect(html).toContain(">Completed<");
+    expect(html).toContain(">Upcoming<");
+    expect(html).not.toContain(">Add<");
+    expect(html).toContain("min-h-9");
+    expect(html).not.toContain("Leagues, cups");
   });
 
   it("omits initials on dashboard leaderboard rows and keeps a display-font count", () => {

@@ -10,6 +10,10 @@ import {
   objectListClassName,
   objectListRowClassName,
 } from "@/components/shared/object-list";
+import {
+  competitionListToday,
+  listedCompetitionResult,
+} from "@/components/team/competition-list-badge";
 import { CompetitionForm } from "@/components/team/competition-form";
 import { CompetitionResultChip } from "@/components/team/competition-result-chip";
 import { Button } from "@/components/ui/button";
@@ -19,11 +23,17 @@ export function CompetitionsSection({
   venues = [],
   canEdit = true,
   showAddForm = true,
+  compact = false,
+  today = competitionListToday(),
 }: {
   competitions: Competition[];
   venues?: Venue[];
   canEdit?: boolean;
   showAddForm?: boolean;
+  /** Slightly shorter rows, used on the dashboard. */
+  compact?: boolean;
+  /** Calendar day (YYYY-MM-DD) for the Upcoming badge. */
+  today?: string;
 }) {
   return (
     <div className="space-y-4">
@@ -42,15 +52,25 @@ export function CompetitionsSection({
             <li key={competition.id}>
               <Link
                 href={`/competitions/${competition.id}`}
-                className={objectListRowClassName()}
+                className={objectListRowClassName(
+                  compact ? "min-h-9 py-1.5" : undefined,
+                )}
               >
-                <span className="bg-draw/20 text-draw inline-flex size-9 shrink-0 items-center justify-center rounded-xl">
+                <span
+                  className={
+                    compact
+                      ? "bg-draw/20 text-draw inline-flex size-8 shrink-0 items-center justify-center rounded-lg"
+                      : "bg-draw/20 text-draw inline-flex size-9 shrink-0 items-center justify-center rounded-xl"
+                  }
+                >
                   <TrophyIcon className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {competitionDisplayName(competition)}
                 </span>
-                <CompetitionResultChip result={competition.result} />
+                <CompetitionResultChip
+                  result={listedCompetitionResult(competition, today)}
+                />
               </Link>
             </li>
           ))}

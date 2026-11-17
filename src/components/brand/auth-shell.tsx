@@ -14,7 +14,7 @@ export function AuthShell({
   return (
     <div className="relative flex flex-1 overflow-hidden">
       <div
-        className="pitch-pattern pointer-events-none absolute inset-0 opacity-80"
+        className="pitch-pattern pointer-events-none absolute inset-0 opacity-40"
         aria-hidden
       />
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-center lg:gap-14 lg:py-16">
