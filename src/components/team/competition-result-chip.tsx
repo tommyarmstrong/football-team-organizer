@@ -1,5 +1,6 @@
 import type { CompetitionResult } from "@/lib/supabase/database.types";
 import { COMPETITION_RESULT_LABELS } from "@/lib/constants";
+import type { ListedCompetitionResult } from "@/components/team/competition-list-badge";
 import { RoleChip } from "@/components/shared/role-chip";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +43,17 @@ const GREY_CHIP_CLASS = "border-muted-foreground/40 text-muted-foreground";
 export function CompetitionResultChip({
   result,
 }: {
-  result: CompetitionResult | null | undefined;
+  result: ListedCompetitionResult | null | undefined;
 }) {
-  if (!result || result === "none") return null;
+  if (!result || result === "none" || result === "ongoing") return null;
+
+  if (result === "upcoming") {
+    return (
+      <RoleChip className={GREY_CHIP_CLASS}>
+        <span>Upcoming</span>
+      </RoleChip>
+    );
+  }
 
   const styled = RESULT_CHIPS[result];
   if (styled) {

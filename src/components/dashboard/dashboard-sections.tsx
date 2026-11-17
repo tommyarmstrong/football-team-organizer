@@ -8,13 +8,14 @@ import {
   formatCountLabel,
   playerDisplayName,
 } from "@/lib/format";
-import { STATS_FORM_LIMIT } from "@/lib/constants";
 import {
   ALL_COMPETITIONS,
   ALL_LEAGUE_AND_CUP,
 } from "@/lib/stats/competition-filters";
 import { filterResults } from "@/lib/stats/results-view";
+import { seasonTilesFromResults } from "@/lib/stats/season-tiles";
 import type { Team } from "@/lib/supabase/database.types";
+import { DashboardViewSwitch } from "@/components/dashboard/dashboard-view-switch";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
@@ -26,6 +27,7 @@ import {
 } from "@/components/shared/object-list";
 import { MatchSummaryCard } from "@/components/matches/match-summary-card";
 import { SeasonTiles } from "@/components/stats/season-tiles";
+import { competitionListToday } from "@/components/team/competition-list-badge";
 import { CompetitionsSection } from "@/components/team/competitions-section";
 import { FormStrip } from "@/components/stats/form-strip";
 import { NewFixtureDialog } from "@/components/matches/new-fixture-dialog";
@@ -34,14 +36,17 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   const stats = await getDashboardData(teamId).stats;
   if (stats.error) return null;
 
+  const results = filterResults(
+    stats.resultsOverTime,
+    ALL_COMPETITIONS,
+    ALL_LEAGUE_AND_CUP,
+  );
+  if (!seasonTilesFromResults(results)) return null;
+
   return (
-    <SeasonTiles
-      results={filterResults(
-        stats.resultsOverTime,
-        ALL_COMPETITIONS,
-        ALL_LEAGUE_AND_CUP,
-      )}
-    />
+    <Section title="Season at a glance">
+      <SeasonTiles results={results} variant="glance" />
+    </Section>
   );
 }
 
@@ -74,7 +79,6 @@ export async function DashboardFixtures({
           teamName={teamName}
           match={next.data}
           emptyTitle="No upcoming fixture"
-          emptyDescription="Schedule the next match."
           emptyAction={
             canEditMatch ? (
               <NewFixtureDialog
@@ -101,10 +105,7 @@ export async function DashboardForm({ teamId }: { teamId: string }) {
   const results = await getDashboardData(teamId).form;
 
   return (
-    <Section
-      title="Form"
-      description={`Most recent ${STATS_FORM_LIMIT} league and cup matches (oldest → newest)`}
-    >
+    <Section title="Form">
       {results.error ? <ErrorBanner message={results.error} /> : null}
       {!results.error && results.form.length === 0 ? (
         <EmptyState
@@ -128,10 +129,7 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
   ]);
 
   return (
-    <Section
-      title="Competitions"
-      description={`Leagues, cups, and other competitions for ${team.season_label}.`}
-    >
+    <Section title="Competitions">
       {competitions.error ? (
         <ErrorBanner message={competitions.error} />
       ) : (
@@ -140,6 +138,9 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
           competitions={competitions.data}
           venues={venues.data}
           canEdit={canEditTeam}
+          showAddForm={false}
+          compact
+          today={competitionListToday()}
         />
       )}
     </Section>
@@ -165,59 +166,81 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
   return (
     <div className="space-y-8">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <LeaderboardSection
-        title="Player of the month"
-        emptyTitle="No monthly awards yet"
-        emptyDescription="Add player of the month awards from the Team page."
-        rows={potMonth.data.map((award) => ({
-          id: award.id,
-          personId: award.player.person_id,
-          name: playerDisplayName(award.player),
-          valueLabel: formatAwardMonth(award.month),
-        }))}
+      <DashboardViewSwitch
+        title="Leaderboards"
+        views={[
+          {
+            id: "goals",
+            label: "Goals",
+            content: (
+              <LeaderboardList
+                emptyTitle="No goals yet"
+                emptyDescription="Record goals on played matches to see the table."
+                rows={rankedLeaderboardRows(
+                  scorers.data.map((row) => ({
+                    id: row.playerId,
+                    personId: row.personId,
+                    name: row.name,
+                    valueLabel: formatCountLabel(row.count, "goal", "goals"),
+                    metric: row.count,
+                  })),
+                )}
+              />
+            ),
+          },
+          {
+            id: "assists",
+            label: "Assists",
+            content: (
+              <LeaderboardList
+                emptyTitle="No assists yet"
+                rows={rankedLeaderboardRows(
+                  assists.data.map((row) => ({
+                    id: row.playerId,
+                    personId: row.personId,
+                    name: row.name,
+                    valueLabel: formatCountLabel(
+                      row.count,
+                      "assist",
+                      "assists",
+                    ),
+                    metric: row.count,
+                  })),
+                )}
+              />
+            ),
+          },
+          {
+            id: "match",
+            label: "Player of the match",
+            content: (
+              <LeaderboardList
+                emptyTitle="No awards yet"
+                rows={rankedLeaderboardRows(
+                  potm.data.map((row) => ({
+                    id: row.playerId,
+                    personId: row.personId,
+                    name: row.name,
+                    valueLabel: formatCountLabel(row.count, "award", "awards"),
+                    metric: row.count,
+                  })),
+                )}
+              />
+            ),
+          },
+        ]}
       />
-      <LeaderboardSection
-        title="Player of the match"
-        emptyTitle="No awards yet"
-        emptyDescription="Select the coach's player of the match on played fixtures."
-        rows={rankedLeaderboardRows(
-          potm.data.map((row) => ({
-            id: row.playerId,
-            personId: row.personId,
-            name: row.name,
-            valueLabel: formatCountLabel(row.count, "award", "awards"),
-            metric: row.count,
-          })),
-        )}
-      />
-      <LeaderboardSection
-        title="Goals leaderboard"
-        emptyTitle="No goals yet"
-        emptyDescription="Record goals on played matches to see the table."
-        rows={rankedLeaderboardRows(
-          scorers.data.map((row) => ({
-            id: row.playerId,
-            personId: row.personId,
-            name: row.name,
-            valueLabel: formatCountLabel(row.count, "goal", "goals"),
-            metric: row.count,
-          })),
-        )}
-      />
-      <LeaderboardSection
-        title="Assists leaderboard"
-        emptyTitle="No assists yet"
-        emptyDescription="Record assists on goals to see the table."
-        rows={rankedLeaderboardRows(
-          assists.data.map((row) => ({
-            id: row.playerId,
-            personId: row.personId,
-            name: row.name,
-            valueLabel: formatCountLabel(row.count, "assist", "assists"),
-            metric: row.count,
-          })),
-        )}
-      />
+      <Section title="Player of the month">
+        <LeaderboardList
+          emptyTitle="No monthly awards yet"
+          rows={potMonth.data.map((award) => ({
+            id: award.id,
+            personId: award.player.person_id,
+            name: playerDisplayName(award.player),
+            valueLabel: formatAwardMonth(award.month),
+          }))}
+        />
+      </Section>
     </div>
   );
 }
@@ -234,7 +257,7 @@ function FixtureSection({
   teamName: string;
   match: MatchWithRelations | null;
   emptyTitle: string;
-  emptyDescription: string;
+  emptyDescription?: string;
   emptyAction?: ReactNode;
 }) {
   if (!match) {
@@ -281,15 +304,13 @@ function rankedLeaderboardRows(
   }));
 }
 
-function LeaderboardSection({
-  title,
+function LeaderboardList({
   emptyTitle,
   emptyDescription,
   rows,
 }: {
-  title: string;
   emptyTitle: string;
-  emptyDescription: string;
+  emptyDescription?: string;
   rows: Array<{
     id: string;
     personId: string;
@@ -298,34 +319,30 @@ function LeaderboardSection({
     rank?: number;
   }>;
 }) {
+  if (rows.length === 0) {
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+  }
+
   return (
-    <Section title={title}>
-      {rows.length === 0 ? (
-        <EmptyState title={emptyTitle} description={emptyDescription} />
-      ) : (
-        <ol className={objectListClassName}>
-          {rows.map((row) => (
-            <li key={row.id}>
-              <Link
-                href={`/people/${row.personId}`}
-                className={objectListRowClassName("justify-between")}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <AwardBadge
-                    tone={
-                      row.rank == null ? "gold" : awardToneForRank(row.rank)
-                    }
-                  />
-                  <span className="truncate font-medium">{row.name}</span>
-                </span>
-                <span className="font-display text-foreground text-lg tabular-nums">
-                  {row.valueLabel}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
-    </Section>
+    <ol className={objectListClassName}>
+      {rows.map((row) => (
+        <li key={row.id}>
+          <Link
+            href={`/people/${row.personId}`}
+            className={objectListRowClassName("justify-between")}
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <AwardBadge
+                tone={row.rank == null ? "gold" : awardToneForRank(row.rank)}
+              />
+              <span className="truncate font-medium">{row.name}</span>
+            </span>
+            <span className="font-display text-foreground text-lg tabular-nums">
+              {row.valueLabel}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ol>
   );
 }

@@ -7,9 +7,8 @@ import { MatchHero } from "@/components/matches/match-hero";
 import { MatchCardShare } from "@/components/postcards/match-card-share";
 
 /**
- * Share control for a scheduled or played match. Dashboard cards, the matches
- * list, and the match page all use this so a completed result shares the same
- * way as a fixture.
+ * Share control for a scheduled or played match on the matches list and the
+ * match page.
  */
 export function matchCardShare(match: {
   id: string;
@@ -49,7 +48,6 @@ export function MatchSummaryCard({
       kickoffTime={match.kickoff_time}
       meetupTime={match.meetup_time}
       venueName={match.venue?.name ?? null}
-      actions={matchCardShare(match)}
     />
   );
 }
