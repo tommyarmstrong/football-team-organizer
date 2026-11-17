@@ -21,18 +21,19 @@ export function stackedActionCellClassName(className?: string): string {
 }
 
 /**
- * Equal-width action buttons in one row on phones (so a 3-button bar costs one
- * 44px line, not three); from sm it is the same content-sized row as
- * {@link stackedActionsRowClassName}.
+ * The "primary button + Options" row used under the match card and under
+ * Goals: the primary action fills the row on phones, Options stays compact.
  */
-export function actionBarClassName(className?: string): string {
-  return cn(
-    "grid w-full grid-flow-col auto-cols-fr gap-2 sm:inline-grid sm:w-max sm:max-w-full",
-    className,
-  );
+export function primaryActionRowClassName(className?: string): string {
+  return cn("flex items-center gap-2", className);
 }
 
-/** Button sizing for {@link actionBarClassName}: 44px on phones, 32px from sm. */
-export function actionBarButtonClassName(className?: string): string {
-  return cn("h-11 w-full min-w-0 px-2 sm:h-8 sm:px-2.5", className);
+/** Primary action: 44px and flexible on phones, content-sized 32px from sm. */
+export function primaryActionButtonClassName(className?: string): string {
+  return cn("h-11 min-w-0 flex-1 sm:h-8 sm:flex-none", className);
+}
+
+/** The secondary "Options" trigger next to a primary action. */
+export function optionsButtonClassName(className?: string): string {
+  return cn("h-11 px-3 sm:h-8 sm:px-2.5", className);
 }

@@ -15,3 +15,10 @@ describe("MatchCardsSection", () => {
     expect(source).not.toContain("`/matches/${matchId}/cards/new`");
   });
 });
+
+describe("MatchCardsSection empty state copy", () => {
+  it("does not add instructions under 'No cards recorded' for editors", () => {
+    expect(source).not.toContain("Add a card, then set the player");
+    expect(source).toContain('title="No cards recorded"');
+  });
+});

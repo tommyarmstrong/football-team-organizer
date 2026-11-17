@@ -70,22 +70,18 @@ describe("format change wiring", () => {
     expect(section).toContain("planPreviewRows(");
   });
 
-  it("offers Change period format from the Options menu next to Add goal", () => {
-    const menu = readSrc("components/matches/match-period-options-menu.tsx");
+  it("offers Change period format from the match card's Options menu", () => {
+    const menu = readSrc("components/matches/match-actions.tsx");
     expect(menu).toContain('title="Change period format"');
-    expect(menu).toContain("periodFormatChangeLabel(changeFormatTarget)");
-    expect(menu).toContain("changeFormat && changeFormatTarget");
+    expect(menu).toContain("periodFormatChangeLabel(entry.target)");
     expect(menu).toContain("<MatchPeriodFormatSection");
     const goals = readSrc("components/matches/match-goals-section.tsx");
-    expect(goals).toContain("<MatchPeriodOptionsMenu");
-    expect(goals).toContain("changeFormatTarget={changeFormatTarget}");
+    expect(goals).not.toContain("changeFormat");
   });
 
-  it("only passes the format change to editors on the match page", () => {
+  it("only offers the format change to editors on the match page", () => {
     const page = readSrc("app/(app)/matches/[id]/page.tsx");
-    expect(page).toContain(
-      "changeFormat={canEdit ? { periods: formatChangePeriods } : null}",
-    );
+    expect(page).toContain("changeFormat={{ periods: formatChangePeriods }}");
     expect(page).toContain("starterCount: period.starter_player_ids.length");
     expect(page).toContain("goal.period_id === period.id");
   });

@@ -4,6 +4,21 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Match controls move to the match card
+
+- The buttons under the match card are now one main button and an Options menu, like Goals.
+- Scheduled match: Kick off, with Full time, Cancelled, Postponed, Add period and Change to halves/quarters in Options. Add period and Change to halves/quarters are greyed out until kick off.
+- Match in progress: Full time, with Scheduled, Cancelled, Postponed, Add period and Change to halves/quarters in Options.
+- Cancelling, postponing, or moving a match back to scheduled asks you to confirm first.
+- Played match: two buttons, Add period and Change to halves/quarters.
+- Under Goals there is now just Add goal.
+- Removed two lines of help text: under Cards ("Add a card, then set the player and other details.") and when editing a match (the note about score and goals/cards unlocking).
+- The stripe down the left of a match card is green for a win, yellow for a draw and red for a loss, matching the score. It is grey for scheduled, postponed and cancelled matches.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — Match cards, tidied up (continued)
 
 - On every match card (Dashboard, Matches and the match page, on phone and desktop), the two team names now sit either side of the score, home on the left and away on the right.

@@ -345,13 +345,6 @@ export function MatchForm({
         {mode === "edit" ? (
           showEvents ? (
             <>
-              <div className="min-w-0 space-y-2">
-                <p className="text-muted-foreground text-sm">
-                  Score is taken from goals recorded on the match page
-                  (including opposition goals). Goals and cards unlock when
-                  status is In progress or Played.
-                </p>
-              </div>
               {canEditPlayerOfTheMatch ? (
                 <>
                   <div className="space-y-2">
