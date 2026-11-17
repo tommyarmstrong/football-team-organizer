@@ -1,16 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import {
-  GoalIcon,
-  HandshakeIcon,
-  ShieldAlertIcon,
-  TrophyIcon,
-} from "lucide-react";
+import { HandshakeIcon, TrophyIcon } from "lucide-react";
 import {
   matchPeriodSortOrder,
   type ExtraTimeOrPenaltyPeriodName,
 } from "@/lib/constants";
+import { FootballIcon } from "@/components/matches/football-icon";
 import { deleteGoalAction } from "@/lib/goals/actions";
 import { goalAssistsAllowed } from "@/lib/form-parse";
 import {
@@ -103,13 +99,6 @@ export function addGoalButtonClassName(className?: string): string {
   return cn("h-11 min-w-0 flex-1 sm:h-8 sm:flex-none", className);
 }
 
-export type GoalEventKind = "scored" | "conceded";
-
-/** Goals against are the opposition's; everything else (incl. own goals) is ours. */
-export function goalEventKind(goal: { is_opposition: boolean }): GoalEventKind {
-  return goal.is_opposition ? "conceded" : "scored";
-}
-
 export function goalScorerNameClassName(
   goal: { is_opposition: boolean },
   className?: string,
@@ -127,8 +116,8 @@ export function goalAssistPlayer(
 }
 
 /**
- * Scorer line. The icon shape and a screen-reader prefix distinguish goals for
- * and against (the label "Goal against" and the red text are not the only cue).
+ * Scorer line. Every goal carries the football; goals against are told apart
+ * by their "Goal against" label (and red text), not by colour alone.
  */
 export function GoalScorerName({
   goal,
@@ -137,15 +126,10 @@ export function GoalScorerName({
   goal: GoalWithPlayers;
   className?: string;
 }) {
-  const conceded = goalEventKind(goal) === "conceded";
-  const Icon = conceded ? ShieldAlertIcon : GoalIcon;
   return (
     <span className={goalScorerNameClassName(goal, className)}>
-      <Icon
-        className={cn("size-4 shrink-0", !conceded && "text-win")}
-        aria-hidden="true"
-      />
-      {conceded ? null : <span className="sr-only">Goal by</span>}
+      <FootballIcon />
+      {goal.is_opposition ? null : <span className="sr-only">Goal by</span>}
       <span className="truncate">{goalScorerLabel(goal)}</span>
     </span>
   );

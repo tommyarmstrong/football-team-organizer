@@ -4,6 +4,18 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Match cards, tidied up (continued)
+
+- On every match card (Dashboard, Matches and the match page, on phone and desktop), the two team names now sit either side of the score, home on the left and away on the right.
+- The HOME and AWAY labels are gone, as the order already says it.
+- Under the score: competition in bold, then the venue, then the date, meet up and kick off on one line separated by dots.
+- A match in progress shows its LIVE badge directly above the score.
+- Goals use the football icon again.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — Easier match details on your phone
 
 - The match summary is much shorter on a phone: home team, score and away team sit on one row, so more of the match fits on screen.

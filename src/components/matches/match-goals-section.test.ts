@@ -25,7 +25,6 @@ import {
   goalAssistPlayer,
   goalDeleteButtonFrameClassName,
   goalEventBodyClassName,
-  goalEventKind,
   goalEventRowClassName,
   goalScorerLineClassName,
   goalScorerNameClassName,
@@ -162,13 +161,6 @@ describe("goals table layout", () => {
     expect(className).toContain("flex-1");
     expect(className).toContain("sm:h-8");
     expect(className).toContain("sm:flex-none");
-  });
-});
-
-describe("goalEventKind", () => {
-  it("treats opposition goals as conceded and everything else as scored", () => {
-    expect(goalEventKind({ is_opposition: true })).toBe("conceded");
-    expect(goalEventKind({ is_opposition: false })).toBe("scored");
   });
 });
 
@@ -539,7 +531,7 @@ describe("MatchGoalsSection rendering", () => {
     expect(rows[4]).toContain("Extra time 1");
   });
 
-  it("distinguishes goals for and against by text and icon, not colour alone", () => {
+  it("distinguishes goals for and against by text, not colour alone", () => {
     const html = renderGoals({
       periods: halves,
       goals: [
@@ -554,8 +546,10 @@ describe("MatchGoalsSection rendering", () => {
         }),
       ],
     });
-    expect(html).toContain("lucide-goal");
-    expect(html).toContain("lucide-shield-alert");
+    // Both kinds use the supplied football graphic.
+    expect(html.match(/src="\/football-icon\.svg"/g)?.length).toBe(2);
+    expect(html).not.toContain("lucide-goal");
+    expect(html).not.toContain("lucide-shield-alert");
     expect(html).toContain("Goal by");
     expect(html).toContain("Goal against");
     expect(html).toContain("text-red-600");
@@ -589,7 +583,7 @@ describe("MatchGoalsSection rendering", () => {
       ],
     });
     const firstHalf = periodRows(html)[0] ?? "";
-    const goalBlocks = firstHalf.split("lucide-goal").slice(1);
+    const goalBlocks = firstHalf.split("/football-icon.svg").slice(1);
     expect(goalBlocks).toHaveLength(2);
     const [withAssist = "", withoutAssist = ""] = goalBlocks;
     // First goal: scorer then assist, in the same event block.

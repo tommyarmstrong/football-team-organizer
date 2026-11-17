@@ -1,9 +1,23 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
-import type { ReactElement } from "react";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/link", async () =>
+  (await import("@/components/matches/match-card-test-utils")).nextLinkMock(),
+);
+vi.mock("@/components/postcards/match-card-share", () => ({
+  MatchCardShare: () => null,
+}));
+
+import { createElement, type ReactElement } from "react";
 import type { MatchWithRelations } from "@/lib/data/matches";
 import type { MatchStatus } from "@/lib/supabase/database.types";
+import {
+  dateRowHtml,
+  expectSharedCardLayout,
+  metaStackHtml,
+  renderCard,
+} from "@/components/matches/match-card-test-utils";
 import {
   MatchSummaryCard,
   matchCardShare,
@@ -104,6 +118,65 @@ describe("MatchSummaryCard", () => {
       expect(props.actions).toBeUndefined();
       expect(matchCardShare(match({ status }))).toBeUndefined();
     }
+  });
+});
+
+describe("MatchSummaryCard rendering (dashboard and matches list)", () => {
+  const statuses: MatchStatus[] = [
+    "scheduled",
+    "in_progress",
+    "played",
+    "postponed",
+    "cancelled",
+  ];
+
+  for (const status of statuses) {
+    it(`${status}: names flank the score with no HOME/AWAY text`, () => {
+      const html = renderCard(
+        createElement(MatchSummaryCard, {
+          match: match({ status, goals_for: 2, goals_against: 1 }),
+          teamName: "MGA Select",
+        }),
+      );
+      expectSharedCardLayout(html, {
+        homeName: "MGA Select",
+        awayName: "France",
+        live: status === "in_progress",
+      });
+    });
+  }
+
+  it("swaps the names when we are away", () => {
+    const html = renderCard(
+      createElement(MatchSummaryCard, {
+        match: match({ home_away: "away" }),
+        teamName: "MGA Select",
+      }),
+    );
+    expectSharedCardLayout(html, {
+      homeName: "France",
+      awayName: "MGA Select",
+    });
+  });
+
+  it("puts competition, venue, then date · meet up · kick off under the score", () => {
+    const html = renderCard(
+      createElement(MatchSummaryCard, {
+        match: match(),
+        teamName: "MGA Select",
+      }),
+    );
+    const stack = metaStackHtml(html);
+    expect(stack.indexOf("North London League")).toBeLessThan(
+      stack.indexOf("Anfield"),
+    );
+    expect(stack.indexOf("Anfield")).toBeLessThan(
+      stack.indexOf('data-slot="match-card-date-row"'),
+    );
+    expect(stack).toContain('font-bold">North London League');
+    expect(dateRowHtml(html)).toContain("Meet up");
+    expect(dateRowHtml(html)).toContain("Kick off");
+    expect(dateRowHtml(html).match(/·/g)?.length).toBe(2);
   });
 });
 
