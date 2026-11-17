@@ -13,27 +13,27 @@ const RESULT_CHIPS: Partial<Record<CompetitionResult, ChipStyle>> = {
   champions: {
     emoji: "🏆",
     text: "Champions",
-    className: "border-[#D4AF37] text-[#8a6d00]",
+    className: "border-[#D4AF37] text-[#FFD12B]",
   },
   runner_up: {
     emoji: "🥈",
     text: "Runners up",
-    className: "border-[#A8A9AD] text-[#5c5d61]",
+    className: "border-[#A8A9AD] text-[#D5D8DC]",
   },
   third_place: {
     emoji: "🥉",
     text: "3rd",
-    className: "border-[#CD7F32] text-[#8a4f12]",
+    className: "border-[#CD7F32] text-[#E8A86A]",
   },
   semi_final: {
     emoji: "🥉",
     text: "Semi",
-    className: "border-[#CD7F32] text-[#8a4f12]",
+    className: "border-[#CD7F32] text-[#E8A86A]",
   },
   promoted: {
     emoji: "🏆",
     text: "Promoted",
-    className: "border-[#D4AF37] text-[#8a6d00]",
+    className: "border-[#D4AF37] text-[#FFD12B]",
   },
 };
 

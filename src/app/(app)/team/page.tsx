@@ -200,7 +200,7 @@ export default async function TeamPage() {
         <img
           src={team.photo_url}
           alt={`${team.name} team photo`}
-          className="team-photo ring-foreground/10 h-48 w-full rounded-xl object-cover ring-1 sm:h-72 md:h-80"
+          className="team-photo ring-border h-48 w-full rounded-xl object-cover ring-1 sm:h-72 md:h-80"
         />
       ) : null}
 

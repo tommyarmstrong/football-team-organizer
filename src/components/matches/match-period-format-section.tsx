@@ -102,10 +102,10 @@ export function MatchPeriodFormatSection({
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="target" value={target} />
 
-      <div className="bg-card ring-foreground/8 overflow-hidden rounded-2xl shadow-sm ring-1">
+      <div className="bg-card ring-border overflow-hidden rounded-2xl shadow-sm ring-1">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="text-muted-foreground border-foreground/8 border-b text-left text-xs">
+            <tr className="text-muted-foreground border-border border-b text-left text-xs">
               <th scope="col" className="px-3 py-2 font-medium">
                 Now
               </th>
@@ -118,7 +118,7 @@ export function MatchPeriodFormatSection({
             {rows.map((row) => (
               <tr
                 key={`${row.kind}:${row.from ?? "new"}:${row.to}`}
-                className="border-foreground/8 border-b align-top last:border-b-0"
+                className="border-border border-b align-top last:border-b-0"
               >
                 <td className="px-3 py-2.5 font-medium whitespace-nowrap">
                   {row.from ?? (

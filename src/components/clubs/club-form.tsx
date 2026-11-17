@@ -96,7 +96,7 @@ export function ClubForm({
             alt=""
             width={48}
             height={48}
-            className="size-12 rounded-lg object-cover shadow-sm ring-1 ring-black/10"
+            className="ring-border size-12 rounded-lg object-cover shadow-sm ring-1"
           />
           <div className="min-w-0 flex-1 space-y-2">
             <Input

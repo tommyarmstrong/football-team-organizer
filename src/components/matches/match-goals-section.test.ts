@@ -118,13 +118,13 @@ describe("playerEventNameClassName", () => {
 describe("goalScorerNameClassName", () => {
   it("colours opposition goals red", () => {
     const className = goalScorerNameClassName({ is_opposition: true });
-    expect(className).toContain("text-red-600");
-    expect(className).toContain("dark:text-red-400");
+    expect(className).toContain("text-loss");
+    expect(className).not.toContain("text-red-600");
   });
 
   it("leaves our goals and own goals uncoloured", () => {
     expect(goalScorerNameClassName({ is_opposition: false })).not.toContain(
-      "text-red-600",
+      "text-loss",
     );
   });
 });
@@ -529,7 +529,7 @@ describe("MatchGoalsSection rendering", () => {
     expect(html).not.toContain("lucide-shield-alert");
     expect(html).toContain("Goal by");
     expect(html).toContain("Goal against");
-    expect(html).toContain("text-red-600");
+    expect(html).toContain("text-loss");
     // Icons are decorative; the visible/sr-only text carries the meaning.
     expect(html).toContain('aria-hidden="true"');
   });

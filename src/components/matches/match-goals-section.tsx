@@ -29,7 +29,7 @@ import { MatchGoalEditSection } from "@/components/matches/match-goal-edit-secti
 /** Card shell around the goals table; overflow clip keeps rounded corners. */
 export function goalsTableShellClassName(className?: string): string {
   return cn(
-    "bg-card overflow-hidden rounded-2xl shadow-sm ring-1 ring-foreground/8",
+    "bg-card overflow-hidden rounded-2xl shadow-sm ring-1 ring-border",
     className,
   );
 }
@@ -40,7 +40,7 @@ export function goalsTableClassName(className?: string): string {
 }
 
 export function goalsTableRowClassName(className?: string): string {
-  return cn("border-foreground/8 border-b last:border-b-0", className);
+  return cn("border-border border-b last:border-b-0", className);
 }
 
 export function goalsTablePeriodCellClassName(className?: string): string {
@@ -61,7 +61,7 @@ export function goalsTableGoalsCellClassName(className?: string): string {
  */
 export function goalEventRowClassName(className?: string): string {
   return cn(
-    "border-foreground/8 flex items-stretch border-b last:border-b-0",
+    "border-border flex items-stretch border-b last:border-b-0",
     className,
   );
 }
@@ -95,7 +95,7 @@ export function goalScorerNameClassName(
   className?: string,
 ): string {
   return playerEventNameClassName(
-    cn(goal.is_opposition && "text-red-600 dark:text-red-400", className),
+    cn(goal.is_opposition && "text-loss", className),
   );
 }
 

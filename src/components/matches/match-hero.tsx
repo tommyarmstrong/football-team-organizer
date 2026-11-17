@@ -60,7 +60,7 @@ export function matchHeroDigitClassName(): string {
 
 /** Cap width on desktop so home/away names stay close; mobile is already this size. */
 export function matchHeroFrameClassName(): string {
-  return "bg-card ring-foreground/10 w-full max-w-lg overflow-hidden rounded-3xl shadow-md ring-1";
+  return "bg-card ring-border w-full max-w-lg overflow-hidden rounded-3xl shadow-md ring-1";
 }
 
 /**

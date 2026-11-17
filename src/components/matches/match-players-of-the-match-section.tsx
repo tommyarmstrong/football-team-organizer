@@ -86,7 +86,7 @@ export function MatchPlayersOfTheMatchSection({
   if (!canEdit) {
     return (
       <Section title="Player of the Match" compact>
-        <dl className="divide-foreground/8 divide-y">
+        <dl className="divide-border divide-y">
           <ReadOnlyAward
             label={COACH_POTM_LABEL}
             name={playerOfTheMatchLabel(players, coachPlayerOfTheMatchId)}

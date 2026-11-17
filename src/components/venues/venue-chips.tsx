@@ -24,7 +24,7 @@ export function VenueSurfaceChips({
     <ul className="flex flex-wrap gap-1.5" aria-label="Surfaces">
       {values.map((surface) => (
         <li key={surface}>
-          <RoleChip className="border-green-600 text-green-800 dark:text-green-200">
+          <RoleChip className="border-win text-win">
             {VENUE_SURFACE_LABELS[surface]}
           </RoleChip>
         </li>

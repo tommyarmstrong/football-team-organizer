@@ -124,6 +124,9 @@ describe("ChartTheme", () => {
     expect(html).toContain("--club:var(--primary)");
     expect(html).toContain("--chart-grid:var(--border)");
     expect(html).toContain("--chart-ink:var(--foreground)");
+    expect(html).toContain("--chart-win:var(--win)");
+    expect(html).toContain("--chart-draw:var(--draw)");
+    expect(html).toContain("--chart-loss:var(--loss)");
   });
 });
 
@@ -146,6 +149,16 @@ describe("PointsTrend", () => {
       result: "D" as const,
     },
   ];
+
+  it("keeps the printed result colours when the app chart theme is absent", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend }),
+    );
+    expect(html).toContain("var(--chart-win, #1c8a4e)");
+    expect(html).toContain("var(--chart-draw, #e0a526)");
+    expect(html).toContain("var(--chart-point-stroke, #fff)");
+    expect(html).not.toContain("--chart-win:var(--win)");
+  });
 
   it("plots the running points and a tooltip for each match", () => {
     const html = renderToStaticMarkup(

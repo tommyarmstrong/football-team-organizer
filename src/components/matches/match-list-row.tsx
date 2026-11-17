@@ -22,7 +22,7 @@ import { matchCardShare } from "@/components/matches/match-summary-card";
  * larger type and padding.
  */
 export const matchListContainerClassName =
-  "bg-card ring-foreground/10 divide-border divide-y overflow-hidden rounded-xl shadow-sm ring-1";
+  "bg-card ring-border divide-border divide-y overflow-hidden rounded-xl shadow-sm ring-1";
 
 /** Home | score | away on one row; long names wrap rather than push the score. */
 export const matchListRowGroupClassName =

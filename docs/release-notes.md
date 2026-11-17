@@ -4,6 +4,16 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 17 November 2026 — Dark background
+
+- The app now uses a dark background, with darker cards and tables, light text, and thin grey dividers.
+- Wins are green, draws are yellow, and losses are red. A match in progress uses that same red for LIVE.
+- The end of season report is unchanged: white pages on a grey desk, with the same printed colours.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — The same match card everywhere
 
 - Dashboard fixtures now use the same card as the match page, on your phone and on a larger screen.
