@@ -58,3 +58,10 @@ describe("MatchForm", () => {
     }
   });
 });
+
+describe("MatchForm edit copy", () => {
+  it("has no score/unlock explainer above the awards", () => {
+    expect(source).not.toContain("Score is taken from goals");
+    expect(source).not.toContain("Goals and cards unlock");
+  });
+});

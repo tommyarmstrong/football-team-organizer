@@ -50,10 +50,7 @@ export function MatchCardsSection({
   return (
     <div className="space-y-3">
       {cards.length === 0 ? (
-        <EmptyState
-          title="No cards recorded"
-          description="Add a card, then set the player and other details."
-        />
+        <EmptyState title="No cards recorded" />
       ) : (
         <ul className={objectListClassName}>
           {cards.map((card) => (

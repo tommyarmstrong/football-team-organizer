@@ -149,6 +149,14 @@ const STATUS_ICONS: Partial<Record<MatchStatus, typeof FlagIcon>> = {
 };
 
 type PeriodDialog = "add-period" | "change-format";
+type PeriodEntry = Exclude<MatchOptionEntry, { kind: "status" }>;
+
+function periodEntryLabel(entry: PeriodEntry): string {
+  if (entry.kind === "add-period") return "Add period";
+  return entry.target
+    ? periodFormatChangeLabel(entry.target)
+    : "Change to halves/quarters";
+}
 
 export const matchOptionItemClassName =
   "hover:bg-muted focus-visible:ring-ring flex min-h-11 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
@@ -156,7 +164,9 @@ export const matchOptionItemClassName =
 /**
  * Controls under the match card: one primary status button (Kick off or Full
  * time) and an Options menu with the other status changes and the period
- * actions. A played match has just the Options menu. Same primary + Options layout as under Goals.
+ * actions, in the same primary + Options layout as under Goals. A played
+ * match has no status changes, so its two period actions are shown as buttons
+ * rather than behind Options.
  *
  * Dialogs live here, outside the popover, so they survive it closing.
  */
@@ -223,78 +233,96 @@ export function MatchActions({
           </Button>
         ) : null}
 
-        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                className={optionsButtonClassName()}
-                disabled={pending}
-              />
-            }
-          >
-            <EllipsisIcon aria-hidden="true" />
-            Options
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            sideOffset={6}
-            // A menu item opens a dialog; the dialog owns focus from there.
-            finalFocus={!dialogOpen}
-            className="w-64 max-w-[calc(100vw-2rem)] gap-0.5 p-1.5"
-          >
-            {entries.map((entry) => {
-              if (entry.kind === "status") {
-                const Icon = STATUS_ICONS[entry.status] ?? FlagIcon;
+        {plan ? (
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={optionsButtonClassName()}
+                  disabled={pending}
+                />
+              }
+            >
+              <EllipsisIcon aria-hidden="true" />
+              Options
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={6}
+              // A menu item opens a dialog; the dialog owns focus from there.
+              finalFocus={!dialogOpen}
+              className="w-64 max-w-[calc(100vw-2rem)] gap-0.5 p-1.5"
+            >
+              {entries.map((entry) => {
+                if (entry.kind === "status") {
+                  const Icon = STATUS_ICONS[entry.status] ?? FlagIcon;
+                  return (
+                    <button
+                      key={entry.status}
+                      type="button"
+                      className={matchOptionItemClassName}
+                      onClick={() => chooseStatus(entry.status)}
+                    >
+                      <Icon className="size-4 shrink-0" aria-hidden="true" />
+                      {quickStatusLabel(entry.status)}
+                    </button>
+                  );
+                }
+                const Icon =
+                  entry.kind === "add-period" ? ClockPlusIcon : RepeatIcon;
+                const label = periodEntryLabel(entry);
                 return (
                   <button
-                    key={entry.status}
+                    key={entry.kind}
                     type="button"
                     className={matchOptionItemClassName}
-                    onClick={() => chooseStatus(entry.status)}
+                    disabled={!entry.enabled}
+                    onClick={() =>
+                      choosePeriodDialog(
+                        entry.kind === "add-period"
+                          ? "add-period"
+                          : "change-format",
+                      )
+                    }
                   >
                     <Icon className="size-4 shrink-0" aria-hidden="true" />
-                    {quickStatusLabel(entry.status)}
+                    <span className="min-w-0">
+                      {label}
+                      {entry.enabled ? null : (
+                        <span className="text-muted-foreground block text-xs font-normal">
+                          After kick off
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
-              }
-              const Icon =
-                entry.kind === "add-period" ? ClockPlusIcon : RepeatIcon;
-              const label =
-                entry.kind === "add-period"
-                  ? "Add period"
-                  : entry.target
-                    ? periodFormatChangeLabel(entry.target)
-                    : "Change to halves/quarters";
-              return (
-                <button
-                  key={entry.kind}
-                  type="button"
-                  className={matchOptionItemClassName}
-                  disabled={!entry.enabled}
-                  onClick={() =>
-                    choosePeriodDialog(
-                      entry.kind === "add-period"
-                        ? "add-period"
-                        : "change-format",
-                    )
-                  }
-                >
-                  <Icon className="size-4 shrink-0" aria-hidden="true" />
-                  <span className="min-w-0">
-                    {label}
-                    {entry.enabled ? null : (
-                      <span className="text-muted-foreground block text-xs font-normal">
-                        After kick off
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
+              })}
+            </PopoverContent>
+          </Popover>
+        ) : (
+          entries.map((entry) =>
+            entry.kind === "status" ? null : (
+              <Button
+                key={entry.kind}
+                type="button"
+                variant="outline"
+                className={primaryActionButtonClassName()}
+                disabled={!entry.enabled}
+                onClick={() =>
+                  choosePeriodDialog(
+                    entry.kind === "add-period"
+                      ? "add-period"
+                      : "change-format",
+                  )
+                }
+              >
+                {periodEntryLabel(entry)}
+              </Button>
+            ),
+          )
+        )}
       </div>
 
       {error ? <ErrorBanner message={error} /> : null}

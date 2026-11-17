@@ -126,12 +126,25 @@ describe("MatchActions rendering", () => {
     expect(html.match(/<button/g)).toHaveLength(2);
   });
 
-  it("played: no primary button, just Options", () => {
-    const html = render("played", ["1st Half", "2nd Half"]);
-    expect(html).toContain("Options");
+  it("played: two plain buttons instead of an Options menu", () => {
+    const html = render("played", ["First half", "Second half"]);
+    expect(html).not.toContain("Options");
     expect(html).not.toContain("Kick off");
     expect(html).not.toContain("Full time");
+    expect(html.match(/<button/g)).toHaveLength(2);
+    expect(html.indexOf("Add period")).toBeGreaterThan(-1);
+    expect(html.indexOf("Change to quarters")).toBeGreaterThan(
+      html.indexOf("Add period"),
+    );
+    expect(html).not.toMatch(/ disabled(=""|>| )/);
+    expect(html).toContain("h-11 min-w-0 flex-1 sm:h-8 sm:flex-none");
+  });
+
+  it("played: only Add period when there is no format to change to", () => {
+    const html = render("played", ["Whole match"]);
     expect(html.match(/<button/g)).toHaveLength(1);
+    expect(html).toContain("Add period");
+    expect(html).not.toContain("Change to");
   });
 
   it("cancelled and postponed: no buttons at all", () => {
