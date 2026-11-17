@@ -21,7 +21,6 @@ vi.mock("@/lib/match-periods/actions", () => ({}));
 
 import {
   MatchGoalsSection,
-  addGoalButtonClassName,
   goalAssistPlayer,
   goalDeleteButtonFrameClassName,
   goalEventBodyClassName,
@@ -153,14 +152,6 @@ describe("goals table layout", () => {
     expect(goalScorerLineClassName()).toContain("items-center");
     expect(goalDeleteButtonFrameClassName()).toContain("items-center");
     expect(goalDeleteButtonFrameClassName()).toContain("shrink-0");
-  });
-
-  it("makes Add goal the full-width primary on phones and content-sized on desktop", () => {
-    const className = addGoalButtonClassName();
-    expect(className).toContain("h-11");
-    expect(className).toContain("flex-1");
-    expect(className).toContain("sm:h-8");
-    expect(className).toContain("sm:flex-none");
   });
 });
 
@@ -406,22 +397,17 @@ describe("MatchGoalsSection add goal", () => {
     expect(source).not.toContain("AddGoalDialog");
   });
 
-  it("opens add period (from the Options menu) and edit goal in dialogs on the match page", () => {
-    expect(source).toContain("addPeriod");
-    expect(source).toContain("MatchPeriodOptionsMenu");
+  it("opens edit goal in a dialog on the match page", () => {
     expect(source).toContain("Edit goal");
     expect(source).toContain("stayOnPage");
-    const menu = readFileSync(
-      path.join(import.meta.dirname, "match-period-options-menu.tsx"),
-      "utf8",
-    );
-    expect(menu).toContain("MatchPeriodCreateSection");
-    expect(menu).toContain("stayOnPage");
   });
 
-  it("keeps Add goal as the only prominent button next to Options", () => {
-    expect(source).toContain("addGoalButtonClassName");
-    expect(source).toContain("<MatchPeriodOptionsMenu");
+  it("has Add goal as its only action: period options live on the match card", () => {
+    expect(source).toContain("primaryActionButtonClassName");
+    expect(source).not.toContain("MatchPeriodOptionsMenu");
+    expect(source).not.toContain("Options");
+    expect(source).not.toContain("addPeriod");
+    expect(source).not.toContain("changeFormat");
     expect(source).not.toContain("stackedActionsRowClassName");
   });
 });
@@ -440,15 +426,6 @@ const sam = {
 };
 
 const rosterPlayers = [] as never[];
-const formatPeriods = (names: string[]) =>
-  names.map((name, index) => ({
-    id: `p${index + 1}`,
-    name,
-    sort_order: index + 1,
-    goalCount: 0,
-    starterCount: 0,
-  }));
-
 function renderGoals(
   props: Partial<Parameters<typeof MatchGoalsSection>[0]> = {},
 ) {
@@ -628,69 +605,24 @@ describe("MatchGoalsSection rendering", () => {
     expect(html).toContain('href="/matches/match-1/goals/g1"');
   });
 
-  it("keeps edit, delete, Add goal and Options for editors", () => {
+  it("keeps edit, delete and Add goal for editors, with no period options", () => {
     const html = renderGoals({
       canEdit: true,
       periods: halves,
-      showAddPeriod: true,
       addGoal: {
         players: rosterPlayers,
         teamName: "MGA",
         opponentName: "Rose",
       },
-      addPeriod: {
-        availablePeriodNames: ["Extra time 1"],
-        squadPlayers: rosterPlayers,
-        defaultStarterPlayerIds: [],
-      },
-      changeFormat: { periods: formatPeriods(["1st Half", "2nd Half"]) },
       goals: [goalFixture({ id: "g1", period: "1st Half", period_id: "h1" })],
     });
     // Editing opens a dialog rather than navigating.
     expect(html).not.toContain('href="/matches/match-1/goals/g1"');
     expect(html).toContain('aria-label="Delete goal by Alex Smith"');
     expect(html).toContain("Add goal");
-    expect(html).toContain("Options");
-  });
-
-  it("moves Add period and Change format into Options, leaving Add goal as the only direct action", () => {
-    const html = renderGoals({
-      canEdit: true,
-      periods: halves,
-      showAddPeriod: true,
-      addGoal: {
-        players: rosterPlayers,
-        teamName: "MGA",
-        opponentName: "Rose",
-      },
-      addPeriod: {
-        availablePeriodNames: ["Extra time 1"],
-        squadPlayers: rosterPlayers,
-        defaultStarterPlayerIds: [],
-      },
-      changeFormat: { periods: formatPeriods(["1st Half", "2nd Half"]) },
-    });
-    // The popover is closed, so its items are not in the page.
-    expect(html).not.toContain("Add period");
-    expect(html).not.toContain("Change to quarters");
-    expect(html.match(/<button/g)).toHaveLength(2);
-    expect(html.indexOf("Add goal")).toBeLessThan(html.indexOf("Options"));
-  });
-
-  it("omits Options when neither period action applies", () => {
-    const html = renderGoals({
-      canEdit: true,
-      periods: [{ id: "p1", name: "Whole match" }],
-      showAddPeriod: false,
-      addGoal: {
-        players: rosterPlayers,
-        teamName: "MGA",
-        opponentName: "Rose",
-      },
-      changeFormat: null,
-    });
-    expect(html).toContain("Add goal");
     expect(html).not.toContain("Options");
+    expect(html).not.toContain("Add period");
+    expect(html).not.toContain("Change to");
   });
 
   it("falls back to the add-goal page link without an inline dialog", () => {

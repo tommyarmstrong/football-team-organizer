@@ -32,7 +32,7 @@ import { MatchCardsSection } from "@/components/matches/match-cards-section";
 import { MatchGoalsSection } from "@/components/matches/match-goals-section";
 import { MatchPlayersOfTheMatchSection } from "@/components/matches/match-players-of-the-match-section";
 import { MatchSquadSection } from "@/components/matches/match-squad-section";
-import { MatchStatusActions } from "@/components/matches/match-status-actions";
+import { MatchActions } from "@/components/matches/match-actions";
 
 export default async function MatchDetailPage({
   params,
@@ -177,7 +177,16 @@ export default async function MatchDetailPage({
         />
 
         {canEdit ? (
-          <MatchStatusActions matchId={match.id} status={match.status} />
+          <MatchActions
+            matchId={match.id}
+            status={match.status}
+            addPeriod={{
+              availablePeriodNames,
+              squadPlayers: eventPlayers,
+              defaultStarterPlayerIds,
+            }}
+            changeFormat={{ periods: formatChangePeriods }}
+          />
         ) : null}
       </div>
 
@@ -190,7 +199,6 @@ export default async function MatchDetailPage({
             goals={goals}
             periods={periods}
             canEdit={canEdit}
-            showAddPeriod={canEdit}
             homeAway={match.home_away}
             addGoal={
               canEdit
@@ -201,16 +209,6 @@ export default async function MatchDetailPage({
                   }
                 : null
             }
-            addPeriod={
-              canEdit
-                ? {
-                    availablePeriodNames,
-                    squadPlayers: eventPlayers,
-                    defaultStarterPlayerIds,
-                  }
-                : null
-            }
-            changeFormat={canEdit ? { periods: formatChangePeriods } : null}
           />
         </Section>
       ) : null}

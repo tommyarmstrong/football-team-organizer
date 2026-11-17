@@ -353,6 +353,64 @@ describe("updateMatchStatusAction", () => {
     );
   });
 
+  it("allows postponing a scheduled or in-progress match and clears the awards", async () => {
+    for (const status of ["scheduled", "in_progress"] as const) {
+      getMatchMock.mockResolvedValue({
+        data: matchFixture({ status }),
+        error: null,
+      });
+      updateMatchMock.mockResolvedValue({ data: {}, error: null });
+      updateMatchMock.mockClear();
+
+      const result = await updateMatchStatusAction("match-1", "postponed");
+      expect(result).toEqual({});
+      expect(updateMatchMock).toHaveBeenCalledWith(
+        "match-1",
+        expect.objectContaining({
+          status: "postponed",
+          player_of_the_match_id: null,
+          players_player_of_the_match_id: null,
+        }),
+      );
+    }
+  });
+
+  it("allows moving an in-progress match back to scheduled and clears the awards", async () => {
+    getMatchMock.mockResolvedValue({
+      data: matchFixture({ status: "in_progress" }),
+      error: null,
+    });
+    updateMatchMock.mockResolvedValue({ data: {}, error: null });
+
+    const result = await updateMatchStatusAction("match-1", "scheduled");
+    expect(result).toEqual({});
+    expect(updateMatchMock).toHaveBeenCalledWith(
+      "match-1",
+      expect.objectContaining({
+        status: "scheduled",
+        player_of_the_match_id: null,
+        players_player_of_the_match_id: null,
+      }),
+    );
+  });
+
+  it("rejects leaving cancelled or postponed, and played to scheduled", async () => {
+    for (const [from, to] of [
+      ["cancelled", "scheduled"],
+      ["postponed", "in_progress"],
+      ["played", "scheduled"],
+    ] as const) {
+      getMatchMock.mockResolvedValue({
+        data: matchFixture({ status: from }),
+        error: null,
+      });
+      updateMatchMock.mockClear();
+      const result = await updateMatchStatusAction("match-1", to);
+      expect(result.error).toMatch(/not available/i);
+      expect(updateMatchMock).not.toHaveBeenCalled();
+    }
+  });
+
   it("allows guardian assistants to set full time", async () => {
     getViewerContextMock.mockResolvedValue(
       viewerFixture({

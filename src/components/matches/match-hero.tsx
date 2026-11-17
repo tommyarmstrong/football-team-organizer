@@ -72,6 +72,19 @@ export function matchHeroFrameClassName(size: MatchHeroSize): string {
   );
 }
 
+/**
+ * Colour of the rail down the left of the card. It follows the result, with
+ * the same tokens as the score digits (green win, yellow draw, red loss), and
+ * is grey when there is no result yet or at all (scheduled, postponed,
+ * cancelled).
+ */
+export function matchHeroRailClassName(result: "W" | "D" | "L" | null): string {
+  if (result === "W") return "border-win";
+  if (result === "D") return "border-draw";
+  if (result === "L") return "border-loss";
+  return "border-muted-foreground/40";
+}
+
 /** Home | score | away on one row, on every size and breakpoint. */
 export function matchHeroGroupClassName(): string {
   return "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3";
@@ -168,7 +181,8 @@ export function MatchHero({
   const masthead = (
     <div
       className={cn(
-        "bg-card text-foreground border-hero-rail border-l-[3px]",
+        "bg-card text-foreground border-l-[3px]",
+        matchHeroRailClassName(result),
         mastheadPadding,
       )}
     >
