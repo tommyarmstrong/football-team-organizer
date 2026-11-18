@@ -4,147 +4,56 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
-## 18 November 2026 — Dark match postcards
+## 18 November 2026 — Dashboard, Stats, and match postcards
 
-- Shared match cards now use the same dark background as the app, with light text. The inside of the pitch is a darker charcoal than the lighter frame around it. The date sits clear of the top of the pitch, and Matchday Squad has the same gap above it as Form.
-- The date sits above the two teams, and the competition name uses that same colour. Home and Away is no longer on the card.
-- The score is smaller beside the team names. Scorers, award lines, and the football, trophy, and handshake icons share one type size, set in from the left.
-- A longer list of goals splits into two columns. Matchday Squad keeps the same gap above it on every card.
+### Dashboard
 
-**No database changes.**
-
----
-
-## 18 November 2026 — Dashboard overview and squad status
-
-- Season at a glance on the Dashboard is now Results. The leaderboards and the Player of the month list are gone, so the Dashboard no longer repeats the Stats page.
-- A Players section shows the squad size, the latest player of the month, and the leaders for player of the match, goals, and assists. When players are tied, each of them is listed. The label, name, and number sit in three aligned columns, at the same type size as the competitions list. Player of the month shows the month without the year.
+- Season at a glance is now Results. Leaderboards and the Player of the month list are gone, so the Dashboard no longer repeats the Stats page.
+- A Players section shows the squad size, the latest player of the month, and the leaders for player of the match, goals, and assists. Tied players are all listed.
 - On a larger screen, Results sits beside Form, Next fixture beside Last result, and Competitions beside Players. A phone still shows one section under the next.
-- On the Team page, player of the month names line up on the left. Inactive players are marked on the squad list, and they are left out of the squad total.
+- On the Team page, inactive players are marked on the squad list and left out of the squad total.
+
+### Stats
+
+- Stats opens with a Filters button beside the heading. Competition, type, and position are chosen together, then applied, and they stay when you leave and come back.
+- Goals, assists, and goals plus assists share one chart. Switch between them, and between total, per game, and per period.
+- Appearances, period starts, and awards start with the top five, with Show all when there are more.
+
+### Match postcards
+
+- Shared match cards use the same dark background as the app. The date sits above the two teams, and Home and Away is no longer on the card.
+- A longer list of goals splits into two columns.
 
 **No database changes.**
 
 ---
 
-## 18 November 2026 — A shorter Stats page
+## 17 November 2026 — Dark theme, matches, and Stats
 
-- Stats opens with a Filters button next to the heading, instead of two large competition menus. On a phone the filters open in a panel from the bottom. On a larger screen they open beside the button.
-- Competition, competition type and position are chosen together, then applied. A dot on Filters shows when something other than the usual League and Cup view is selected, and those choices sit under the heading as chips you can remove.
-- The choices stay when you leave Stats and come back. Switching team or season drops a competition that team does not have.
-- Goals, assists and goals plus assists share one chart. Switch between them, and between total, per game and per period. The chart starts with the top five.
-- Appearances, period starts and awards also start with the top five, with Show all when there are more. Awards use the same horizontal bars as goals and assists. The goals scored and conceded chart keeps its name in the heading.
-- Hovering a result shows the date, the opposition and the score, without the running points total. The results chart has no points scale, and the goals chart has no match numbers along the bottom.
+### Dark theme
 
-**No database changes.**
+- The app uses a dark background, with light text. Wins are green, draws are yellow, and losses are red.
+- The lines behind the app, the sign-in screen, and the season report draw a full football pitch.
+- The end of season report is unchanged: white pages on a grey desk.
 
----
+### Dashboard
 
-## 17 November 2026 — Stats charts, regrouped
+- The coloured pitch banner is gone. Season at a glance sits at the top, with W–D–L and Goals on a phone, and Played and Goal difference as well on a larger screen. Form sits under it, then Next fixture.
+- Sharing a postcard stays on the Matches list and the match page.
+- Competitions leave out the Ongoing badge and the Add button.
 
-- The Played, W–D–L, Goals and Goal difference cards are gone from the Stats page. They stay on the Dashboard.
-- The goals ring shows the goal difference in the middle, with a plus or a minus. Above zero is green, below zero is red, and zero is yellow.
-- Goals, assists and appearances share one chart. Switch between them. The bars stay.
-- Player of the month and the coach's player of the match share one chart the same way.
-- Position and View sit once at the top and apply to every player chart they belong to. Period starts keeps its own Type filter.
+### Matches
 
-**No database changes.**
+- Dashboard fixtures, the Matches list, and the match page share one card. Team names sit either side of the score, and Home and Away labels are gone.
+- On a phone, the Matches list is one continuous list. Tap a row to open the match, or the share icon to share a postcard.
+- Match actions are one main button and an Options menu. Cancelling, postponing, or moving a match back to scheduled asks you to confirm.
+- On the match page, the two Player of the Match awards sit together, and goals are more compact. Removing a match-day squad player on a phone asks you to confirm.
 
----
+### Stats
 
-## 17 November 2026 — A quieter dashboard
-
-- The coloured pitch banner at the top of the Dashboard is gone.
-- Season at a glance sits at the top. On a phone it shows W–D–L and Goals. Played and Goal difference stay on a larger screen, in shorter cards with gentler corners.
-- Form now sits under Season at a glance, and above Next fixture.
-- The share button is no longer on the Dashboard fixture cards. Sharing a postcard stays on the Matches list and the match page.
-- Competitions leave out the Ongoing badge and the Add button. A badge shows for a result such as Completed, or Upcoming when the date is still to come. Rows are a little shorter.
-- Leaderboards sits above Player of the month. The leaderboard filter switches between Goals, Assists, and Player of the match.
-- The pitch pattern behind the app, the sign-in screen, and the season report is lighter, and cards sit slightly lighter than the page with a thin border.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — A full pitch in the background
-
-- The faint lines behind the app now draw a football pitch: the outer lines, the halfway line, the centre circle, both penalty areas, both six-yard boxes, and both penalty arcs.
-- Each pitch is larger, so the pattern repeats less often as you scroll.
-- The end of season report uses the same pitch lines, still as a light etching on the page.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — Dark background
-
-- The app now uses a dark background, with darker cards and tables, light text, and thin grey dividers.
-- Wins are green, draws are yellow, and losses are red. A match in progress uses that same red for LIVE.
-- The end of season report is unchanged: white pages on a grey desk, with the same printed colours.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — The same match card everywhere
-
-- Dashboard fixtures now use the same card as the match page, on your phone and on a larger screen.
-- The Matches list uses the compact fixture rows on every screen. On a larger screen the rows are a little roomier.
-- Scores are a little smaller, so the team names are easier to read.
-- A fixture row no longer shows an arrow. Tap the row to open the match. The share icon still shares without opening it.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — A more compact Matches list on your phone
-
-- On a phone, the Matches page now fits many more fixtures on screen. Fixtures sit in one continuous list with thin dividers instead of separate cards.
-- Each fixture shows the date at the top, the teams either side of the score, then the competition and venue on one line.
-- A match in progress shows a small red LIVE badge at the top right. Other matches no longer show a status badge.
-- Tap anywhere on a fixture to open it, and tap the share icon to share a postcard without leaving the list.
-- The search box now just says "Search matches…".
-- Desktop looks the same as before.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — Match controls move to the match card
-
-- The buttons under the match card are now one main button and an Options menu, like Goals.
-- Scheduled match: Kick off, with Full time, Cancelled, Postponed, Add period and Change to halves/quarters in Options. Add period and Change to halves/quarters are greyed out until kick off.
-- Match in progress: Full time, with Scheduled, Cancelled, Postponed, Add period and Change to halves/quarters in Options.
-- Cancelling, postponing, or moving a match back to scheduled asks you to confirm first.
-- Played match: two buttons, Add period and Change to halves/quarters.
-- Under Goals there is now just Add goal.
-- Removed two lines of help text: under Cards ("Add a card, then set the player and other details.") and when editing a match (the note about score and goals/cards unlocking).
-- The stripe down the left of a match card is green for a win, yellow for a draw and red for a loss, matching the score. It is grey for scheduled, postponed and cancelled matches.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — Match cards, tidied up (continued)
-
-- On every match card (Dashboard, Matches and the match page, on phone and desktop), the two team names now sit either side of the score, home on the left and away on the right.
-- The HOME and AWAY labels are gone, as the order already says it.
-- Under the score: competition in bold, then the venue, then the date, meet up and kick off on one line separated by dots.
-- A match in progress shows its LIVE badge directly above the score.
-- Goals use the football icon again.
-
-**No database changes.**
-
----
-
-## 17 November 2026 — Easier match details on your phone
-
-- The match summary is much shorter on a phone: home team, score and away team sit on one row, so more of the match fits on screen.
-- The top bar shrinks as you scroll down, leaving more room, and expands again at the top. Your team picker stays within reach.
-- Coach's and players' Player of the Match are now together in one section, without repeating the chosen player underneath.
-- Add goal is now the main button under Goals. Add period and Change to halves/quarters moved into an Options menu.
-- Goals are more compact, with the assist shown under the scorer. Goals for and against are told apart by icon and label, not only colour.
-- Match-day squad rows are tighter, and removing a player on a phone asks you to confirm first.
-- Buttons and fields are easier to tap on a phone. Desktop looks the same as before.
+- The Played, W–D–L, Goals, and Goal difference cards are gone from Stats. They stay on the Dashboard.
+- Goals, assists, and appearances share one chart. Player of the month and the coach's player of the match share another.
+- Position and View sit once at the top and apply to every player chart they belong to.
 
 **No database changes.**
 
