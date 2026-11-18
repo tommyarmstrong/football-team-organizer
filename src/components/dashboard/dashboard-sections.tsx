@@ -19,7 +19,6 @@ import type { Team } from "@/lib/supabase/database.types";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { AwardBadge } from "@/components/shared/award-badge";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -206,42 +205,42 @@ export async function DashboardPlayers({ teamId }: { teamId: string }) {
   return (
     <Section title="Players">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <div className={objectListClassName}>
-        <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
-          <p>Squad size</p>
-          <p className="font-display text-foreground text-lg tabular-nums">
+      <ul className={objectListClassName}>
+        <li className={playerRowClassName}>
+          <span>Squad size</span>
+          <span className="tabular-nums">
             {squad.error ? "—" : squad.count}
-          </p>
-        </div>
-        <PlayerHighlightList label="Player of the month" rows={monthly} />
-        <PlayerHighlightList
-          label="Player of the match"
-          rows={potm.data.map((row) => ({
+          </span>
+        </li>
+        {playerHighlightRows("Player of the month", monthly)}
+        {playerHighlightRows(
+          "Player of the match",
+          potm.data.map((row) => ({
             id: row.playerId,
             personId: row.personId,
             name: row.name,
             valueLabel: formatCountLabel(row.count, "award", "awards"),
-          }))}
-        />
-        <PlayerHighlightList
-          label="Most goals"
-          rows={scorers.data.map((row) => ({
+          })),
+        )}
+        {playerHighlightRows(
+          "Most goals",
+          scorers.data.map((row) => ({
             id: row.playerId,
             personId: row.personId,
             name: row.name,
             valueLabel: formatCountLabel(row.count, "goal", "goals"),
-          }))}
-        />
-        <PlayerHighlightList
-          label="Most assists"
-          rows={assists.data.map((row) => ({
+          })),
+        )}
+        {playerHighlightRows(
+          "Most assists",
+          assists.data.map((row) => ({
             id: row.playerId,
             personId: row.personId,
             name: row.name,
             valueLabel: formatCountLabel(row.count, "assist", "assists"),
-          }))}
-        />
-      </div>
+          })),
+        )}
+      </ul>
     </Section>
   );
 }
@@ -280,40 +279,30 @@ function FixtureSection({
   );
 }
 
-function PlayerHighlightList({
-  label,
-  rows,
-}: {
-  label: string;
-  rows: PlayerHighlight[];
-}) {
-  return (
-    <div className="space-y-1 px-3 py-2.5">
-      <p className="text-muted-foreground text-sm">{label}</p>
-      {rows.length === 0 ? (
-        <p className="text-foreground text-sm">—</p>
-      ) : (
-        <ul className="space-y-1">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <Link
-                href={`/people/${row.personId}`}
-                className={objectListRowClassName(
-                  "justify-between rounded-lg px-0",
-                )}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <AwardBadge tone="gold" />
-                  <span className="truncate font-medium">{row.name}</span>
-                </span>
-                <span className="font-display text-foreground text-lg tabular-nums">
-                  {row.valueLabel}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+/** Same height and type size as a compact competitions row. */
+const playerRowClassName =
+  "flex min-h-9 items-center justify-between gap-3 px-3 py-1.5 text-sm";
+
+function playerHighlightRows(label: string, rows: PlayerHighlight[]) {
+  if (rows.length === 0) {
+    return (
+      <li className={playerRowClassName}>
+        <span>{label}</span>
+        <span>—</span>
+      </li>
+    );
+  }
+
+  return rows.map((row) => (
+    <li key={row.id}>
+      <Link
+        href={`/people/${row.personId}`}
+        className={objectListRowClassName("min-h-9 justify-between py-1.5")}
+      >
+        <span className="shrink-0">{label}</span>
+        <span className="min-w-0 flex-1 truncate">{row.name}</span>
+        <span className="shrink-0 tabular-nums">{row.valueLabel}</span>
+      </Link>
+    </li>
+  ));
 }

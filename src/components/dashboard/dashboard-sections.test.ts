@@ -35,7 +35,6 @@ import {
   DashboardPlayers,
   DashboardSeasonTiles,
 } from "@/components/dashboard/dashboard-sections";
-import { AWARD_TONE_CLASS } from "@/components/shared/award-badge";
 import { Section } from "@/components/shared/section";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 import type { Team } from "@/lib/supabase/database.types";
@@ -61,7 +60,7 @@ describe("DashboardPlayers", () => {
     );
   });
 
-  it("lists squad size and every tied leader with a gold award", async () => {
+  it("lists squad size and every tied leader in compact rows", async () => {
     getDashboardDataMock.mockReturnValue(
       dashboardData({
         squadSize: { count: 18, error: null },
@@ -100,14 +99,10 @@ describe("DashboardPlayers", () => {
     expect(html).toContain(">Squad size<");
     expect(html).toContain(">18<");
     expect(html).not.toContain(">Leaderboards<");
-    expect(awardTonesIn(html)).toEqual([
-      "gold",
-      "gold",
-      "gold",
-      "gold",
-      "gold",
-      "gold",
-    ]);
+    expect(html).toContain("min-h-9");
+    expect(html).toContain("py-1.5 text-sm");
+    expect(html).not.toContain("text-lg");
+    expect(html).not.toContain("lucide-award");
     expect(namesIn(html, "Most goals")).toEqual(["Bea Best", "Ada Ace"]);
     expect(namesIn(html, "Most assists")).toEqual(["Eve East"]);
     expect(namesIn(html, "Player of the match")).toEqual([
@@ -133,7 +128,7 @@ describe("DashboardPlayers", () => {
     );
     expect(html).toContain(">0<");
     expect(html).toContain(">—<");
-    expect(awardTonesIn(html)).toEqual([]);
+    expect(html).not.toContain("lucide-award");
   });
 
   it("keeps an earlier player of the month off the list when a later month exists", async () => {
@@ -159,7 +154,7 @@ describe("DashboardPlayers", () => {
       "Nia North",
     ]);
     expect(html).not.toContain("Bea Best");
-    expect(awardTonesIn(html)).toEqual(["gold", "gold"]);
+    expect(html).not.toContain("lucide-award");
   });
 });
 
@@ -240,26 +235,17 @@ function categoryHtml(html: string, label: string): string {
     "Most goals",
     "Most assists",
   ]
+    .filter((next) => next !== label)
     .map((next) => html.indexOf(`>${next}<`, start + 1))
     .filter((index) => index > start);
   const next = nextLabels.length === 0 ? -1 : Math.min(...nextLabels);
   return html.slice(start, next === -1 ? undefined : next);
 }
 
-function awardTonesIn(section: string): string[] {
-  return [...section.matchAll(/text-\[(#[A-Fa-f0-9]+)\]/g)].map((match) => {
-    const colour = match[1] ?? "";
-    const tone = (
-      Object.entries(AWARD_TONE_CLASS) as Array<[string, string]>
-    ).find(([, className]) => className === `text-[${colour}]`);
-    return tone?.[0] ?? colour;
-  });
-}
-
 function namesIn(html: string, label: string): string[] {
   return [
     ...categoryHtml(html, label).matchAll(
-      /<span class="truncate font-medium">([^<]+)<\/span>/g,
+      /<span class="min-w-0 flex-1 truncate">([^<]+)<\/span>/g,
     ),
   ].map((match) => match[1] ?? "");
 }
@@ -469,7 +455,8 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain('title="Leaderboards"');
     expect(source).not.toContain('title="Season at a glance"');
     expect(source).not.toContain('title="Awards"');
-    expect(source).toContain('tone="gold"');
+    expect(source).not.toContain("AwardBadge");
+    expect(source).toContain("min-h-9 justify-between py-1.5");
     expect(source).not.toContain("MatchHero");
     expect(source).not.toContain("scheduledBadge");
     expect(source).not.toContain("SharePostcardButton");
@@ -552,9 +539,12 @@ describe("DashboardFixtures last result share", () => {
     expect(html).not.toContain("Leagues, cups");
   });
 
-  it("omits initials on player rows and keeps a display-font count", () => {
+  it("uses the competitions row size for player rows", () => {
     expect(source).not.toContain("InitialsAvatar");
-    expect(source).toContain("font-display text-foreground text-lg");
+    expect(source).not.toContain("font-display");
+    expect(source).not.toContain("text-lg");
+    expect(source).toContain("text-sm");
+    expect(source).toContain("min-h-9");
     expect(source).not.toContain("showAvatar={false}");
     expect(source).not.toContain("text-primary text-sm font-semibold");
   });
