@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GoalsByPlayerPoint, PlayerCountPoint } from "@/lib/data/stats";
 import {
+  ATTACKING_METRIC_OPTIONS,
   attackingUnit,
   buildAttackingViewRows,
 } from "@/lib/stats/attacking-view";
@@ -165,6 +166,18 @@ describe("buildAttackingViewRows", () => {
         "total",
       ).map((row) => row.name),
     ).toEqual(["Bea Fwd"]);
+  });
+});
+
+describe("ATTACKING_METRIC_OPTIONS", () => {
+  it("offers total and per game", () => {
+    expect(ATTACKING_METRIC_OPTIONS.map((option) => option.label)).toEqual([
+      "Total",
+      "Per game",
+    ]);
+    expect(
+      ATTACKING_METRIC_OPTIONS.map((option) => option.value),
+    ).not.toContain("per_period");
   });
 });
 
