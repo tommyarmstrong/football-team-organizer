@@ -6,7 +6,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ## 18 November 2026 — Dark match postcards
 
-- Shared match cards now use the same dark background as the app, with light text. A faint pitch sits in the card body under the club header.
+- Shared match cards now use the same dark background as the app, with light text. The pitch is a slightly lighter charcoal than the card around it, with faint lines, and it sits under the club header.
 - The date sits above the two teams, and the competition name uses that same colour. Home and Away is no longer on the card.
 - The score is smaller beside the team names. Scorers, award lines, and the football, trophy, and handshake icons share one type size, set in from the left.
 - A longer list of goals splits into two columns. Matchday Squad keeps the same gap above it on every card.

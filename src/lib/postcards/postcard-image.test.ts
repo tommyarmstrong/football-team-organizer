@@ -7,6 +7,7 @@ import {
   POSTCARD_BACKGROUND,
   POSTCARD_DETAIL_FONT_SIZE,
   POSTCARD_HEIGHT,
+  POSTCARD_PITCH_FILL,
   POSTCARD_ICON_FONT_SIZE,
   POSTCARD_INK,
   POSTCARD_LIST_INDENT,
@@ -291,11 +292,15 @@ describe("MatchPostcardImage layout", () => {
     const bodyHeight = POSTCARD_HEIGHT - POSTCARD_MASTHEAD_HEIGHT;
     expect(POSTCARD_PITCH_OPACITY).toBeLessThanOrEqual(0.45 * 0.25);
     expect(postcardPitchTop()).toBe((bodyHeight - 1190) / 2);
-    const style = slotStyle(postcardMarkup(basePayload), "postcard-pitch");
-    expect(style).toContain(`opacity:${POSTCARD_PITCH_OPACITY}`);
+    const html = postcardMarkup(basePayload);
+    const style = slotStyle(html, "postcard-pitch");
+    expect(style).not.toContain("opacity:");
     expect(style).toContain("color:#A9B5B2");
     expect(style).toContain(`top:${postcardPitchTop()}px`);
     expect(style).toContain("left:0");
+    expect(html).toContain(`fill="${POSTCARD_PITCH_FILL}"`);
+    expect(html).toContain(`opacity="${POSTCARD_PITCH_OPACITY}"`);
+    expect(POSTCARD_PITCH_FILL.toLowerCase() > POSTCARD_BACKGROUND).toBe(true);
   });
 
   it("splits a long goal list into two columns", () => {

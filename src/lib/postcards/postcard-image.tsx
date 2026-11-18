@@ -13,6 +13,8 @@ export const POSTCARD_HEIGHT = 1350;
 
 /** Same dark page and light ink as the app (`--background`, `--foreground`). */
 export const POSTCARD_BACKGROUND = "#181c1d";
+/** A step lighter than the page, the same lift as a card on the dark background. */
+export const POSTCARD_PITCH_FILL = "#232a2b";
 export const POSTCARD_INK = "#f5f7f6";
 /** Team names sit larger than the score box beside them. */
 export const POSTCARD_TEAM_NAME_FONT_SIZE = 50;
@@ -192,7 +194,6 @@ function PitchLines() {
         left: 0,
         top: postcardPitchTop(),
         color: PITCH_LINE,
-        opacity: POSTCARD_PITCH_OPACITY,
       }}
     >
       <rect
@@ -201,61 +202,71 @@ function PitchLines() {
         width="996"
         height="1114"
         rx="16"
+        fill={POSTCARD_PITCH_FILL}
         stroke="currentColor"
+        strokeOpacity={POSTCARD_PITCH_OPACITY}
         strokeWidth="5"
       />
-      <line
-        x1="42"
-        y1="595"
-        x2="1038"
-        y2="595"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <circle cx="540" cy="595" r="138" stroke="currentColor" strokeWidth="5" />
-      <circle cx="540" cy="595" r="8" fill="currentColor" />
-      <rect
-        x="302"
-        y="38"
-        width="476"
-        height="176"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <rect
-        x="408"
-        y="38"
-        width="264"
-        height="76"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <path
-        d="M420 214a138 138 0 0 0 240 0"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <rect
-        x="302"
-        y="976"
-        width="476"
-        height="176"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <rect
-        x="408"
-        y="1076"
-        width="264"
-        height="76"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
-      <path
-        d="M420 976a138 138 0 0 1 240 0"
-        stroke="currentColor"
-        strokeWidth="5"
-      />
+      <g opacity={POSTCARD_PITCH_OPACITY}>
+        <line
+          x1="42"
+          y1="595"
+          x2="1038"
+          y2="595"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <circle
+          cx="540"
+          cy="595"
+          r="138"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <circle cx="540" cy="595" r="8" fill="currentColor" />
+        <rect
+          x="302"
+          y="38"
+          width="476"
+          height="176"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <rect
+          x="408"
+          y="38"
+          width="264"
+          height="76"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <path
+          d="M420 214a138 138 0 0 0 240 0"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <rect
+          x="302"
+          y="976"
+          width="476"
+          height="176"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <rect
+          x="408"
+          y="1076"
+          width="264"
+          height="76"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+        <path
+          d="M420 976a138 138 0 0 1 240 0"
+          stroke="currentColor"
+          strokeWidth="5"
+        />
+      </g>
     </svg>
   );
 }
