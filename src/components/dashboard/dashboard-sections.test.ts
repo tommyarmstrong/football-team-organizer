@@ -31,7 +31,8 @@ vi.mock("@/lib/data/venues", () => ({
 import {
   DashboardCompetitions,
   DashboardForm,
-  DashboardLeaderboards,
+  DashboardOverviewAndForm,
+  DashboardPlayers,
   DashboardSeasonTiles,
 } from "@/components/dashboard/dashboard-sections";
 import { AWARD_TONE_CLASS } from "@/components/shared/award-badge";
@@ -39,7 +40,7 @@ import { Section } from "@/components/shared/section";
 import { SeasonTiles } from "@/components/stats/season-tiles";
 import type { Team } from "@/lib/supabase/database.types";
 
-describe("DashboardLeaderboards", () => {
+describe("DashboardPlayers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getDashboardDataMock.mockReturnValue(
@@ -54,206 +55,96 @@ describe("DashboardLeaderboards", () => {
         assists: { data: [], error: null },
         potm: { data: [], error: null },
         potMonth: { data: [], error: null },
+        squadSize: { count: 0, error: null },
         stats: { resultsOverTime: [], form: [], error: null },
       }),
     );
   });
 
-  it("lists player of the match names without shirt numbers", async () => {
+  it("lists squad size and every tied leader with a gold award", async () => {
     getDashboardDataMock.mockReturnValue(
       dashboardData({
-        next: { data: null, error: null },
-        last: { data: null, error: null },
-        canEditMatch: false,
-        form: { form: [], error: null },
-        competitions: { data: [], error: null },
-        canEditTeam: false,
-        scorers: { data: [], error: null },
-        assists: { data: [], error: null },
-        potm: {
-          data: [countStat("player-1", "person-1", "Maya", "Hall", 3)],
-          error: null,
-        },
-        potMonth: { data: [], error: null },
-      }),
-    );
-
-    const tree = await DashboardLeaderboards({ teamId: "team-1" });
-    const html = JSON.stringify(tree);
-    expect(html).toContain("Maya Hall");
-    expect(html).not.toContain("7 Maya Hall");
-    expect(html).toContain("3 awards");
-  });
-
-  it("colours ribbons gold, silver, bronze, then black, and monthly awards gold", async () => {
-    getDashboardDataMock.mockReturnValue(
-      dashboardData({
-        next: { data: null, error: null },
-        last: { data: null, error: null },
-        canEditMatch: false,
-        form: { form: [], error: null },
-        competitions: { data: [], error: null },
-        canEditTeam: false,
+        squadSize: { count: 18, error: null },
         scorers: {
           data: [
-            playerStat("player-1", "person-1", "Ada", "Ace", 5),
             playerStat("player-2", "person-2", "Bea", "Best", 5),
-            playerStat("player-3", "person-3", "Cleo", "Cross", 3),
+            playerStat("player-1", "person-1", "Ada", "Ace", 5),
           ],
           error: null,
         },
         assists: {
-          data: [
-            countStat("player-1", "person-1", "Ada", "Ace", 4),
-            countStat("player-2", "person-2", "Bea", "Best", 2),
-            countStat("player-5", "person-5", "Eve", "East", 2),
-          ],
+          data: [countStat("player-5", "person-5", "Eve", "East", 2)],
           error: null,
         },
         potm: {
           data: [
             countStat("player-1", "person-1", "Ada", "Ace", 4),
-            countStat("player-2", "person-2", "Bea", "Best", 3),
-            countStat("player-3", "person-3", "Cleo", "Cross", 3),
+            countStat("player-3", "person-3", "Cleo", "Cross", 4),
           ],
           error: null,
         },
         potMonth: {
           data: [
-            {
-              id: "award-1",
-              month: "2025-03",
-              player: {
-                id: "player-9",
-                person_id: "person-9",
-                first_name: "Nia",
-                last_name: "North",
-              },
-            },
+            monthlyAward("award-old", "2025-01-01", "person-2", "Bea", "Best"),
+            monthlyAward("award-new", "2025-03-01", "person-9", "Nia", "North"),
           ],
           error: null,
         },
-        stats: { resultsOverTime: [], form: [], error: null },
       }),
     );
 
     const html = renderToStaticMarkup(
-      await DashboardLeaderboards({ teamId: "team-1" }),
+      await DashboardPlayers({ teamId: "team-1" }),
     );
-    expect(awardTonesInPanel(html, "goals")).toEqual([
+    expect(html).toContain(">Players<");
+    expect(html).toContain(">Squad size<");
+    expect(html).toContain(">18<");
+    expect(html).not.toContain(">Leaderboards<");
+    expect(awardTonesIn(html)).toEqual([
       "gold",
       "gold",
-      "bronze",
-    ]);
-    expect(awardTonesInPanel(html, "assists")).toEqual([
       "gold",
-      "silver",
-      "silver",
-    ]);
-    expect(awardTonesInPanel(html, "match")).toEqual([
       "gold",
-      "silver",
-      "silver",
+      "gold",
+      "gold",
     ]);
-    expect(awardTonesInSection(html, "Player of the month")).toEqual(["gold"]);
-    expect(sectionHtml(html, "Player of the month")).not.toContain(
-      "text-primary",
-    );
-    expect(panelHtml(html, "goals")).not.toContain("bg-[#F5C518]");
-    expect(sectionTitles(html)).toEqual([
-      "Leaderboards",
-      "Player of the month",
+    expect(namesIn(html, "Most goals")).toEqual(["Bea Best", "Ada Ace"]);
+    expect(namesIn(html, "Most assists")).toEqual(["Eve East"]);
+    expect(namesIn(html, "Player of the match")).toEqual([
+      "Ada Ace",
+      "Cleo Cross",
     ]);
-    expect(html.indexOf(">Leaderboards<")).toBeLessThan(
-      html.indexOf(">Player of the month<"),
-    );
-    expect(html).toContain(">Player of the month<");
-    expect(html).toContain(">Player of the match<");
-    expect(html).toContain(">Goals<");
-    expect(html).toContain(">Assists<");
-    expect(html).toContain('aria-pressed="true"');
-    expect(html).not.toContain(
-      "Add player of the month awards from the Team page.",
-    );
-    expect(html).not.toContain(
-      "Select the coach's player of the match on played fixtures.",
-    );
-    expect(html).not.toContain("Record assists on goals to see the table.");
+    expect(namesIn(html, "Player of the month")).toEqual(["Nia North"]);
     expect(html).toContain("March 2025");
+    expect(html).not.toContain("January 2025");
+    expect(html).not.toContain("February 2025");
+    expect(html).toContain("5 goals");
+    expect(html).toContain("2 assists");
     expect(html).toContain("4 awards");
+    expect(html).toContain('href="/people/person-1"');
+    expect(html).not.toContain("7 Ada Ace");
+    expect(html).not.toContain("text-[#8E979F]");
+    expect(html).not.toContain("text-[#CD7F32]");
   });
 
-  it("sorts players on the same rank alphabetically", async () => {
-    getDashboardDataMock.mockReturnValue(
-      dashboardData({
-        next: { data: null, error: null },
-        last: { data: null, error: null },
-        canEditMatch: false,
-        form: { form: [], error: null },
-        competitions: { data: [], error: null },
-        canEditTeam: false,
-        scorers: {
-          data: [
-            playerStat("player-3", "person-3", "Cleo", "Cross", 3),
-            playerStat("player-2", "person-2", "Bea", "Best", 5),
-            playerStat("player-1", "person-1", "Ada", "Ace", 5),
-            playerStat("player-4", "person-4", "Dan", "Dale", 3),
-          ],
-          error: null,
-        },
-        assists: {
-          data: [
-            countStat("player-2", "person-2", "Bea", "Best", 2),
-            countStat("player-1", "person-1", "Ada", "Ace", 2),
-          ],
-          error: null,
-        },
-        potm: {
-          data: [
-            countStat("player-3", "person-3", "Cleo", "Cross", 1),
-            countStat("player-1", "person-1", "Ada", "Ace", 4),
-            countStat("player-2", "person-2", "Bea", "Best", 1),
-          ],
-          error: null,
-        },
-        potMonth: { data: [], error: null },
-      }),
-    );
-
+  it("shows a dash when a highlight has nobody yet", async () => {
     const html = renderToStaticMarkup(
-      await DashboardLeaderboards({ teamId: "team-1" }),
+      await DashboardPlayers({ teamId: "team-1" }),
     );
-    expect(namesInPanel(html, "goals")).toEqual([
-      "Ada Ace",
-      "Bea Best",
-      "Cleo Cross",
-      "Dan Dale",
-    ]);
-    expect(namesInPanel(html, "assists")).toEqual(["Ada Ace", "Bea Best"]);
-    expect(namesInPanel(html, "match")).toEqual([
-      "Ada Ace",
-      "Bea Best",
-      "Cleo Cross",
-    ]);
+    expect(html).toContain(">0<");
+    expect(html).toContain(">—<");
+    expect(awardTonesIn(html)).toEqual([]);
   });
 
-  it("lists monthly awards in month order with a ribbon, not a rank", async () => {
+  it("keeps an earlier player of the month off the list when a later month exists", async () => {
     getDashboardDataMock.mockReturnValue(
       dashboardData({
-        next: { data: null, error: null },
-        last: { data: null, error: null },
-        canEditMatch: false,
-        form: { form: [], error: null },
-        competitions: { data: [], error: null },
-        canEditTeam: false,
-        scorers: { data: [], error: null },
-        assists: { data: [], error: null },
-        potm: { data: [], error: null },
+        squadSize: { count: 2, error: null },
         potMonth: {
           data: [
-            monthlyAward("award-1", "2025-03", "person-1", "Nia", "North"),
-            monthlyAward("award-2", "2025-02", "person-2", "Bea", "Best"),
-            monthlyAward("award-3", "2025-01", "person-3", "Cleo", "Cross"),
+            monthlyAward("award-2", "2025-02-01", "person-2", "Bea", "Best"),
+            monthlyAward("award-3", "2025-03-01", "person-1", "Ada", "Ace"),
+            monthlyAward("award-3b", "2025-03-01", "person-9", "Nia", "North"),
           ],
           error: null,
         },
@@ -261,19 +152,14 @@ describe("DashboardLeaderboards", () => {
     );
 
     const html = renderToStaticMarkup(
-      await DashboardLeaderboards({ teamId: "team-1" }),
+      await DashboardPlayers({ teamId: "team-1" }),
     );
-    expect(awardTonesInSection(html, "Player of the month")).toEqual([
-      "gold",
-      "gold",
-      "gold",
+    expect(namesIn(html, "Player of the month")).toEqual([
+      "Ada Ace",
+      "Nia North",
     ]);
-    expect(html.indexOf("March 2025")).toBeLessThan(
-      html.indexOf("February 2025"),
-    );
-    expect(html.indexOf("February 2025")).toBeLessThan(
-      html.indexOf("January 2025"),
-    );
+    expect(html).not.toContain("Bea Best");
+    expect(awardTonesIn(html)).toEqual(["gold", "gold"]);
   });
 });
 
@@ -315,6 +201,7 @@ function dashboardData(overrides: Record<string, unknown> = {}) {
     assists: { data: [], error: null },
     potm: { data: [], error: null },
     potMonth: { data: [], error: null },
+    squadSize: { count: 0, error: null },
     stats: { resultsOverTime: [], form: [], error: null },
   };
   return Object.fromEntries(
@@ -322,12 +209,6 @@ function dashboardData(overrides: Record<string, unknown> = {}) {
       key,
       Promise.resolve(value),
     ]),
-  );
-}
-
-function sectionTitles(html: string): string[] {
-  return ["Leaderboards", "Player of the month"].sort(
-    (a, b) => html.indexOf(`>${a}<`) - html.indexOf(`>${b}<`),
   );
 }
 
@@ -350,31 +231,19 @@ function monthlyAward(
   };
 }
 
-function sectionHtml(html: string, title: string): string {
-  const start = html.indexOf(`>${title}<`);
-  const next = html.indexOf("<h2", start + 1);
+function categoryHtml(html: string, label: string): string {
+  const start = html.indexOf(`>${label}<`);
+  const nextLabels = [
+    "Squad size",
+    "Player of the month",
+    "Player of the match",
+    "Most goals",
+    "Most assists",
+  ]
+    .map((next) => html.indexOf(`>${next}<`, start + 1))
+    .filter((index) => index > start);
+  const next = nextLabels.length === 0 ? -1 : Math.min(...nextLabels);
   return html.slice(start, next === -1 ? undefined : next);
-}
-
-function panelHtml(html: string, id: string): string {
-  const marker = `data-dashboard-panel="${id}"`;
-  const start = html.indexOf(marker);
-  const nextPanel = html.indexOf(
-    "data-dashboard-panel=",
-    start + marker.length,
-  );
-  const nextHeading = html.indexOf("<h2", start + marker.length);
-  const ends = [nextPanel, nextHeading].filter((index) => index > start);
-  const next = ends.length === 0 ? -1 : Math.min(...ends);
-  return html.slice(start, next === -1 ? undefined : next);
-}
-
-function awardTonesInSection(html: string, title: string): string[] {
-  return awardTonesIn(sectionHtml(html, title));
-}
-
-function awardTonesInPanel(html: string, id: string): string[] {
-  return awardTonesIn(panelHtml(html, id));
 }
 
 function awardTonesIn(section: string): string[] {
@@ -387,9 +256,9 @@ function awardTonesIn(section: string): string[] {
   });
 }
 
-function namesInPanel(html: string, id: string): string[] {
+function namesIn(html: string, label: string): string[] {
   return [
-    ...panelHtml(html, id).matchAll(
+    ...categoryHtml(html, label).matchAll(
       /<span class="truncate font-medium">([^<]+)<\/span>/g,
     ),
   ].map((match) => match[1] ?? "");
@@ -494,13 +363,45 @@ describe("DashboardSeasonTiles", () => {
     expect(tree).toBeNull();
   });
 
+  it("puts overview beside form, and lets form fill the row when overview is absent", async () => {
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: { resultsOverTime: [], form: [], error: null },
+        form: { form: ["W"], error: null },
+      }),
+    );
+    const empty = renderToStaticMarkup(
+      await DashboardOverviewAndForm({ teamId: "team-1" }),
+    );
+    expect(empty).not.toContain(">Overview<");
+    expect(empty).toContain(">Form<");
+    expect(empty).toContain("lg:col-span-2");
+    expect(empty).toContain("lg:grid-cols-2");
+
+    getDashboardDataMock.mockReturnValue(
+      dashboardData({
+        stats: {
+          resultsOverTime: [result("league-win", "league", false)],
+          form: ["W"],
+          error: null,
+        },
+        form: { form: ["W"], error: null },
+      }),
+    );
+    const both = renderToStaticMarkup(
+      await DashboardOverviewAndForm({ teamId: "team-1" }),
+    );
+    expect(both.indexOf(">Overview<")).toBeLessThan(both.indexOf(">Form<"));
+    expect(both).not.toContain("lg:col-span-2");
+  });
+
   it("does not offer a competition filter on the dashboard", () => {
     const source = readFileSync(
       path.join(import.meta.dirname, "dashboard-sections.tsx"),
       "utf8",
     );
     expect(source).toContain("ALL_LEAGUE_AND_CUP");
-    expect(source).toContain('title="Season at a glance"');
+    expect(source).toContain('title="Overview"');
     expect(source).toContain('variant="glance"');
     expect(source).not.toContain("ALL_COMPETITIVE");
     expect(source).not.toContain("competitive");
@@ -522,7 +423,7 @@ function glanceTiles(tree: unknown) {
     };
   };
   expect(section.type).toBe(Section);
-  expect(section.props.title).toBe("Season at a glance");
+  expect(section.props.title).toBe("Overview");
   expect(section.props.children.type).toBe(SeasonTiles);
   return section.props.children.props;
 }
@@ -563,15 +464,12 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain("Leagues, cups, and other competitions");
     expect(source).toContain("showAddForm={false}");
     expect(source).toContain("compact");
-    expect(source).toContain('title="Leaderboards"');
-    expect(source).toContain('title="Player of the month"');
-    expect(source.indexOf('title="Leaderboards"')).toBeLessThan(
-      source.indexOf('title="Player of the month"'),
-    );
+    expect(source).toContain('title="Players"');
+    expect(source).toContain('title="Overview"');
+    expect(source).not.toContain('title="Leaderboards"');
+    expect(source).not.toContain('title="Season at a glance"');
     expect(source).not.toContain('title="Awards"');
-    expect(source).toContain(
-      "Record goals on played matches to see the table.",
-    );
+    expect(source).toContain('tone="gold"');
     expect(source).not.toContain("MatchHero");
     expect(source).not.toContain("scheduledBadge");
     expect(source).not.toContain("SharePostcardButton");
@@ -584,9 +482,10 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain('href="/matches/new"');
   });
 
-  it("stacks next fixture and last result in the narrow page column", () => {
-    expect(source).toContain("grid gap-8");
+  it("pairs next fixture and last result from the large screen up", () => {
+    expect(source).toContain("grid gap-8 lg:grid-cols-2 lg:items-start");
     expect(source).not.toContain("sm:grid-cols-2");
+    expect(source).toContain("lg:col-span-2");
   });
 
   it("renders form without the match-count caption", async () => {
@@ -653,7 +552,7 @@ describe("DashboardFixtures last result share", () => {
     expect(html).not.toContain("Leagues, cups");
   });
 
-  it("omits initials on dashboard leaderboard rows and keeps a display-font count", () => {
+  it("omits initials on player rows and keeps a display-font count", () => {
     expect(source).not.toContain("InitialsAvatar");
     expect(source).toContain("font-display text-foreground text-lg");
     expect(source).not.toContain("showAvatar={false}");

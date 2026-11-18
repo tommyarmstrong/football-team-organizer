@@ -8,6 +8,7 @@ const {
   canEditActiveTeamHistoryMock,
   listPlayerOfTheMonthMock,
   getAllTeamStatsMock,
+  listRosterForTeamMock,
 } = vi.hoisted(() => ({
   getNextFixtureMock: vi.fn(),
   getLastResultMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   canEditActiveTeamHistoryMock: vi.fn(),
   listPlayerOfTheMonthMock: vi.fn(),
   getAllTeamStatsMock: vi.fn(),
+  listRosterForTeamMock: vi.fn(),
 }));
 
 vi.mock("@/lib/data/matches", () => ({
@@ -34,6 +36,9 @@ vi.mock("@/lib/data/competitions", () => ({
 }));
 vi.mock("@/lib/data/player-of-the-month", () => ({
   listPlayerOfTheMonth: listPlayerOfTheMonthMock,
+}));
+vi.mock("@/lib/data/players", () => ({
+  listRosterForTeam: listRosterForTeamMock,
 }));
 
 import { getDashboardData } from "@/lib/data/dashboard";
@@ -71,6 +76,7 @@ describe("getDashboardData (§5.5)", () => {
     listCompetitionsMock.mockResolvedValue({ data: [], error: null });
     canEditActiveTeamHistoryMock.mockResolvedValue(false);
     listPlayerOfTheMonthMock.mockResolvedValue({ data: [], error: null });
+    listRosterForTeamMock.mockResolvedValue({ data: [], error: null });
     getAllTeamStatsMock.mockResolvedValue(emptyStats());
   });
 
@@ -80,7 +86,8 @@ describe("getDashboardData (§5.5)", () => {
     expect(getNextFixtureMock).toHaveBeenCalledOnce();
     expect(getLastResultMock).toHaveBeenCalledOnce();
     expect(listCompetitionsMock).toHaveBeenCalledWith("team-1");
-    expect(listPlayerOfTheMonthMock).toHaveBeenCalledWith("team-1", 5);
+    expect(listPlayerOfTheMonthMock).toHaveBeenCalledWith("team-1");
+    expect(listRosterForTeamMock).toHaveBeenCalledWith("team-1");
     expect(getAllTeamStatsMock).toHaveBeenCalledOnce();
     expect(getAllTeamStatsMock).toHaveBeenCalledWith("team-1");
 
@@ -93,6 +100,56 @@ describe("getDashboardData (§5.5)", () => {
     expect(await data.scorers).toEqual({ data: [], error: null });
     expect(await data.assists).toEqual({ data: [], error: null });
     expect(await data.potm).toEqual({ data: [], error: null });
+    expect(await data.squadSize).toEqual({ count: 0, error: null });
+  });
+
+  it("counts active squad players and keeps only the leaders", async () => {
+    listRosterForTeamMock.mockResolvedValue({
+      data: [{ active: true }, { active: true }, { active: false }],
+      error: null,
+    });
+    getAllTeamStatsMock.mockResolvedValue({
+      ...emptyStats(),
+      goalsByPlayer: [
+        {
+          playerId: "player-1",
+          personId: "person-1",
+          name: "Sam Striker",
+          goals: 2,
+          position: null,
+          matchesPlayed: 0,
+          periodsPlayed: 0,
+          goalCompetitions: [league, league],
+        },
+        {
+          playerId: "player-2",
+          personId: "person-2",
+          name: "Bea Bench",
+          goals: 2,
+          position: null,
+          matchesPlayed: 0,
+          periodsPlayed: 0,
+          goalCompetitions: [league, league],
+        },
+        {
+          playerId: "player-3",
+          personId: "person-3",
+          name: "Cal Cover",
+          goals: 1,
+          position: null,
+          matchesPlayed: 0,
+          periodsPlayed: 0,
+          goalCompetitions: [league],
+        },
+      ],
+    });
+
+    const data = getDashboardData("team-leaders");
+    expect(await data.squadSize).toEqual({ count: 2, error: null });
+    expect((await data.scorers).data.map((row) => row.name)).toEqual([
+      "Bea Bench",
+      "Sam Striker",
+    ]);
   });
 
   it("derives leaderboards and form from the stats result without extra queries", async () => {

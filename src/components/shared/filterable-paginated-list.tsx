@@ -25,6 +25,7 @@ export function FilterablePaginatedList<T>({
   singularLabel,
   pluralLabel,
   totalCountPhrase = "in total",
+  countInTotal,
 }: {
   items: T[];
   getSearchText: (item: T) => string;
@@ -39,6 +40,8 @@ export function FilterablePaginatedList<T>({
   pluralLabel: string;
   /** Phrase after the count, e.g. "in this squad" instead of "in total". */
   totalCountPhrase?: string;
+  /** Rows that count toward the total under the list. Others still render. */
+  countInTotal?: (item: T) => boolean;
 }) {
   const idPrefix = useId();
   const filterId = `${idPrefix}-filter`;
@@ -55,13 +58,20 @@ export function FilterablePaginatedList<T>({
     : items;
 
   const total = filtered.length;
+  const countedFiltered = countInTotal
+    ? filtered.filter(countInTotal)
+    : filtered;
+  const displayTotal = countedFiltered.length;
+  const baselineTotal = countInTotal
+    ? items.filter(countInTotal).length
+    : items.length;
   const size = pageSize === "all" ? Math.max(total, 1) : pageSize;
   const totalPages = Math.max(1, Math.ceil(total / size));
   const currentPage = Math.min(page, totalPages);
   const startIndex = total === 0 ? 0 : (currentPage - 1) * size;
   const pageItems = filtered.slice(startIndex, startIndex + size);
   const showPagination = pageSize !== "all" && totalPages > 1;
-  const totalNoun = total === 1 ? singularLabel : pluralLabel;
+  const totalNoun = displayTotal === 1 ? singularLabel : pluralLabel;
 
   function handleFilterChange(value: string) {
     setFilter(value);
@@ -105,8 +115,8 @@ export function FilterablePaginatedList<T>({
           <div className="text-muted-foreground flex flex-col gap-3 text-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p>
-                {total} {totalNoun} {totalCountPhrase}
-                {normalizedFilter ? ` (filtered from ${items.length})` : ""}
+                {displayTotal} {totalNoun} {totalCountPhrase}
+                {normalizedFilter ? ` (filtered from ${baselineTotal})` : ""}
               </p>
               {totalPages > 1 ? (
                 <div className="flex items-center gap-2 sm:justify-end">

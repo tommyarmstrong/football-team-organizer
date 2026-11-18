@@ -47,9 +47,9 @@ export function PlayerOfTheMonthSection({
                     <button
                       type="button"
                       onClick={open}
-                      className={objectListRowClassName()}
+                      className={objectListRowClassName("w-full text-left")}
                     >
-                      <span className="min-w-0 flex-1 truncate font-medium">
+                      <span className="min-w-0 flex-1 truncate text-left font-medium">
                         {playerDisplayName(award.player)}
                       </span>
                       <span className="text-muted-foreground shrink-0">
@@ -72,9 +72,9 @@ export function PlayerOfTheMonthSection({
               ) : (
                 <Link
                   href={`/people/${award.player.person_id}`}
-                  className={objectListRowClassName()}
+                  className={objectListRowClassName("w-full text-left")}
                 >
-                  <span className="min-w-0 flex-1 truncate font-medium">
+                  <span className="min-w-0 flex-1 truncate text-left font-medium">
                     {playerDisplayName(award.player)}
                   </span>
                   <span className="text-muted-foreground shrink-0">
