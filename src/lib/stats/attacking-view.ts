@@ -7,6 +7,15 @@ import {
   type GoalsPositionFilter,
 } from "@/lib/stats/goals-view";
 
+/** View choices on the attacking chart: total and per game. */
+export const ATTACKING_METRIC_OPTIONS: ReadonlyArray<{
+  value: Exclude<GoalsMetric, "per_period">;
+  label: string;
+}> = [
+  { value: "total", label: "Total" },
+  { value: "per_game", label: "Per game" },
+];
+
 export type AttackingMode = "goals" | "assists" | "involvements";
 
 export const ATTACKING_MODE_OPTIONS: ReadonlyArray<{

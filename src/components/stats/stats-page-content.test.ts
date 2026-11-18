@@ -69,6 +69,9 @@ describe("StatsPageContent", () => {
     );
     expect(attacking).toContain('title="Attacking stats"');
     expect(attacking).toContain("ATTACKING_MODE_OPTIONS");
+    expect(attacking).toContain("ATTACKING_METRIC_OPTIONS");
+    expect(attacking).not.toContain("GOALS_METRIC_OPTIONS");
+    expect(attacking).not.toContain("Per period");
     expect(attacking).toContain('aria-label="Attacking stat"');
     expect(attacking).toContain('aria-label="Attacking stat view"');
     expect(attacking).toContain('useState<AttackingMode>("goals")');
