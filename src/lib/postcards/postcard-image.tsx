@@ -11,18 +11,40 @@ import type { MatchPostcardPayload } from "@/lib/postcards/types";
 export const POSTCARD_WIDTH = 1080;
 export const POSTCARD_HEIGHT = 1350;
 
+/** Same dark page and light ink as the app (`--background`, `--foreground`). */
+export const POSTCARD_BACKGROUND = "#181c1d";
+export const POSTCARD_INK = "#f5f7f6";
+/** Team names sit larger than the score box beside them. */
+export const POSTCARD_TEAM_NAME_FONT_SIZE = 50;
+export const POSTCARD_SCORE_FONT_SIZE = 40;
+/** Scorers and award lines share one size. Icons are a step smaller. */
+export const POSTCARD_DETAIL_FONT_SIZE = 32;
+export const POSTCARD_ICON_FONT_SIZE = 20;
+/** One column until a longer list would crowd the card. */
+export const POSTCARD_GOAL_SINGLE_COLUMN_MAX = 4;
+
 const PITCH_DEEP = "#143328";
-const BACKGROUND = "#F6FAF4";
-const INK = "#183B2B";
-const MUTED = "#537261";
-const PITCH_LINE = "#146C4A";
+const BACKGROUND = POSTCARD_BACKGROUND;
+const INK = POSTCARD_INK;
+const MUTED = "#a9b5b2";
+const PITCH_LINE = "#A9B5B2";
 const PAPER = "#F4FBF5";
-const WIN_BG = "#1B7A4A";
-const WIN_FG = "#F4FFF8";
-const DRAW_BG = "#E8C44A";
-const DRAW_FG = "#3D2E0A";
-const LOSS_BG = "#C4452B";
-const LOSS_FG = "#FFF5F3";
+const WIN_BG = "#36dd52";
+const WIN_FG = "#101414";
+const DRAW_BG = "#ffd12b";
+const DRAW_FG = "#101414";
+const LOSS_BG = "#ff5555";
+const LOSS_FG = "#101414";
+
+export function postcardGoalColumnCount(rowCount: number): 1 | 2 {
+  return rowCount > POSTCARD_GOAL_SINGLE_COLUMN_MAX ? 2 : 1;
+}
+
+export function splitPostcardGoalRows<T>(rows: readonly T[]): T[][] {
+  if (postcardGoalColumnCount(rows.length) === 1) return [[...rows]];
+  const mid = Math.ceil(rows.length / 2);
+  return [rows.slice(0, mid), rows.slice(mid)];
+}
 
 function luminance(hex: string): number {
   const r = Number.parseInt(hex.slice(1, 3), 16);
@@ -150,7 +172,7 @@ function PitchLines() {
         position: "absolute",
         inset: 0,
         color: PITCH_LINE,
-        opacity: 0.08,
+        opacity: 0.45,
       }}
     >
       <rect
@@ -312,7 +334,7 @@ function ScoreboardNames({
       style={{
         display: "flex",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: 18,
       }}
     >
       <div
@@ -323,13 +345,25 @@ function ScoreboardNames({
           paddingRight: 20,
         }}
       >
-        <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
+        <div
+          data-slot="postcard-team-name"
+          style={ellipsisStyle({
+            fontSize: POSTCARD_TEAM_NAME_FONT_SIZE,
+            fontWeight: 700,
+          })}
+        >
           {homeName}
         </div>
       </div>
       {centre}
       <div style={{ flex: 1, display: "flex", paddingLeft: 20 }}>
-        <div style={ellipsisStyle({ fontSize: 40, fontWeight: 700 })}>
+        <div
+          data-slot="postcard-team-name"
+          style={ellipsisStyle({
+            fontSize: POSTCARD_TEAM_NAME_FONT_SIZE,
+            fontWeight: 700,
+          })}
+        >
           {awayName}
         </div>
       </div>
@@ -337,49 +371,104 @@ function ScoreboardNames({
   );
 }
 
-function FixtureMeta({
-  homeAwayLabel,
-  competitionLabel,
-  dateLabel,
+function PostcardDate({ dateLabel }: { dateLabel: string }) {
+  return (
+    <div
+      data-slot="postcard-date"
+      style={centredStyle({
+        fontSize: 29,
+        color: MUTED,
+        marginBottom: 16,
+      })}
+    >
+      {dateLabel}
+    </div>
+  );
+}
+
+function CompetitionLine({ label }: { label: string | null }) {
+  if (!label) return null;
+  return (
+    <div
+      style={centredStyle({
+        fontSize: 32,
+        color: INK,
+        fontWeight: 700,
+        marginBottom: 16,
+      })}
+    >
+      {label}
+    </div>
+  );
+}
+
+function PostcardIcon({
+  glyph,
+  gapBefore = 0,
 }: {
-  homeAwayLabel: string;
-  competitionLabel: string | null;
-  dateLabel: string;
+  glyph: string;
+  gapBefore?: number;
 }) {
   return (
-    <div style={stackStyle({ width: "100%" })}>
+    <div
+      data-slot="postcard-icon"
+      style={{
+        display: "flex",
+        fontSize: POSTCARD_ICON_FONT_SIZE,
+        lineHeight: 1,
+        marginLeft: gapBefore,
+        marginRight: 8,
+      }}
+    >
+      {glyph}
+    </div>
+  );
+}
+
+function GoalLine({
+  row,
+  nameWidth,
+}: {
+  row: {
+    label: string;
+    isPenalty: boolean;
+    assistLabel: string | null;
+  };
+  nameWidth: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        color: INK,
+        marginBottom: 10,
+      }}
+    >
+      <PostcardIcon glyph="⚽" />
       <div
-        style={centredStyle({
-          fontSize: 29,
-          color: MUTED,
-          marginBottom: 10,
-          textTransform: "uppercase",
-          letterSpacing: 2,
+        data-slot="postcard-goal-label"
+        style={ellipsisStyle({
+          maxWidth: nameWidth,
+          fontSize: POSTCARD_DETAIL_FONT_SIZE,
+          fontWeight: 700,
         })}
       >
-        {homeAwayLabel}
+        {`${row.label}${row.isPenalty ? " (P)" : ""}`}
       </div>
-      {competitionLabel ? (
-        <div
-          style={centredStyle({
-            fontSize: 32,
-            color: INK,
-            fontWeight: 700,
-            marginBottom: 7,
-          })}
-        >
-          {competitionLabel}
-        </div>
+      {row.assistLabel ? (
+        <>
+          <PostcardIcon glyph="🤝" gapBefore={10} />
+          <div
+            style={ellipsisStyle({
+              maxWidth: nameWidth,
+              fontSize: POSTCARD_DETAIL_FONT_SIZE,
+            })}
+          >
+            {row.assistLabel}
+          </div>
+        </>
       ) : null}
-      <div
-        style={centredStyle({
-          fontSize: 29,
-          color: MUTED,
-          marginBottom: 28,
-        })}
-      >
-        {dateLabel}
-      </div>
     </div>
   );
 }
@@ -395,8 +484,18 @@ function GoalRows({
   if (list.kind === "summary") {
     return (
       <div style={stackStyle({ marginBottom: 32 })}>
-        <div style={{ fontSize: 34, color: INK, lineHeight: 1.35 }}>
-          {`⚽ ${list.text}`}
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <PostcardIcon glyph="⚽" />
+          <div
+            data-slot="postcard-goal-label"
+            style={{
+              fontSize: POSTCARD_DETAIL_FONT_SIZE,
+              color: INK,
+              lineHeight: 1.35,
+            }}
+          >
+            {list.text}
+          </div>
         </div>
         {list.extra ? (
           <div style={{ fontSize: 30, color: MUTED, marginTop: 6 }}>
@@ -407,32 +506,58 @@ function GoalRows({
     );
   }
 
-  const fontSize = list.kind === "full" ? 36 : 31;
-  const rows = list.rows.map((row, index) => (
+  const columns = splitPostcardGoalRows(list.rows);
+  const twoColumns = columns.length === 2;
+  const nameWidth = twoColumns ? 160 : 420;
+
+  return (
     <div
-      key={`${row.label}-${index}`}
+      data-slot="postcard-goals"
+      data-columns={columns.length}
       style={{
         display: "flex",
-        alignItems: "center",
-        fontSize,
-        color: INK,
-        marginBottom: list.kind === "full" ? 12 : 7,
+        width: "100%",
+        marginBottom: 32,
       }}
     >
-      <div style={{ marginRight: 12 }}>⚽</div>
-      <div style={ellipsisStyle({ maxWidth: 500, fontWeight: 700 })}>
-        {`${row.label}${row.isPenalty ? " (P)" : ""}`}
-      </div>
-      {row.assistLabel ? (
-        <>
-          <div style={{ marginLeft: 18, marginRight: 12 }}>🤝</div>
-          <div style={ellipsisStyle({ maxWidth: 360 })}>{row.assistLabel}</div>
-        </>
-      ) : null}
+      {columns.map((column, columnIndex) => (
+        <div
+          key={columnIndex}
+          style={stackStyle({
+            width: twoColumns ? "50%" : "100%",
+            paddingRight: twoColumns && columnIndex === 0 ? 12 : 0,
+          })}
+        >
+          {column.map((row, index) => (
+            <GoalLine
+              key={`${row.label}-${index}`}
+              row={row}
+              nameWidth={nameWidth}
+            />
+          ))}
+        </div>
+      ))}
     </div>
-  ));
+  );
+}
 
-  return <div style={stackStyle({ marginBottom: 32 })}>{rows}</div>;
+function AwardLine({ label }: { label: string }) {
+  const text = label.replace(/^🏆\s*/, "");
+  return (
+    <div style={{ display: "flex", alignItems: "center", marginBottom: 0 }}>
+      <PostcardIcon glyph="🏆" />
+      <div
+        data-slot="postcard-award"
+        style={ellipsisStyle({
+          fontSize: POSTCARD_DETAIL_FONT_SIZE,
+          fontWeight: 700,
+          maxWidth: 920,
+        })}
+      >
+        {text}
+      </div>
+    </div>
+  );
 }
 
 function PlayedPostcardBody({
@@ -445,30 +570,28 @@ function PlayedPostcardBody({
 
   return (
     <div style={stackStyle({ width: "100%" })}>
+      <PostcardDate dateLabel={payload.dateLabel} />
       <ScoreboardNames
         homeName={payload.homeName}
         awayName={payload.awayName}
         centre={
           <div
+            data-slot="postcard-score"
             style={{
               backgroundColor: scoreColors.bg,
               color: scoreColors.fg,
-              fontSize: 82,
+              fontSize: POSTCARD_SCORE_FONT_SIZE,
               fontWeight: 700,
-              padding: "12px 22px",
-              borderRadius: 18,
-              letterSpacing: -2,
+              padding: "2px 12px",
+              borderRadius: 10,
+              letterSpacing: -1,
             }}
           >
             {payload.scoreLabel}
           </div>
         }
       />
-      <FixtureMeta
-        homeAwayLabel={payload.homeAwayLabel}
-        competitionLabel={payload.competitionLabel}
-        dateLabel={payload.dateLabel}
-      />
+      <CompetitionLine label={payload.competitionLabel} />
 
       <div
         style={centredStyle({
@@ -489,25 +612,21 @@ function PlayedPostcardBody({
         <div style={stackStyle({ marginBottom: 28 })}>
           {payload.coachPotmLabel ? (
             <div
-              style={ellipsisStyle({
-                fontSize: 32,
-                fontWeight: 700,
+              style={{
+                display: "flex",
                 marginBottom: payload.playersPotmLabel ? 13 : 0,
-                maxWidth: 984,
-              })}
+              }}
             >
-              {postcardPotmLine(payload.coachPotmLabel, "coach")}
+              <AwardLine
+                label={postcardPotmLine(payload.coachPotmLabel, "coach")}
+              />
             </div>
           ) : null}
           {payload.playersPotmLabel ? (
-            <div
-              style={ellipsisStyle({
-                fontSize: 32,
-                fontWeight: 700,
-                maxWidth: 984,
-              })}
-            >
-              {postcardPotmLine(payload.playersPotmLabel, "players")}
+            <div style={{ display: "flex" }}>
+              <AwardLine
+                label={postcardPotmLine(payload.playersPotmLabel, "players")}
+              />
             </div>
           ) : null}
         </div>
@@ -614,6 +733,9 @@ function ScheduledPostcardBody({
 }) {
   return (
     <div style={stackStyle({ width: "100%" })}>
+      <PostcardDate
+        dateLabel={payload.dateLabel.trim() || SCHEDULED_POSTCARD_TBC}
+      />
       <ScoreboardNames
         homeName={payload.homeName}
         awayName={payload.awayName}
@@ -624,18 +746,14 @@ function ScheduledPostcardBody({
               fontWeight: 700,
               letterSpacing: 6,
               color: MUTED,
-              padding: "12px 18px",
+              padding: "4px 12px",
             }}
           >
             VS
           </div>
         }
       />
-      <FixtureMeta
-        homeAwayLabel={payload.homeAwayLabel}
-        competitionLabel={payload.competitionLabel}
-        dateLabel={payload.dateLabel.trim() || SCHEDULED_POSTCARD_TBC}
-      />
+      <CompetitionLine label={payload.competitionLabel} />
 
       <div
         style={centredStyle({
