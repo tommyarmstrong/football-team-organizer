@@ -42,7 +42,6 @@ import {
   tallyGoals,
   tallyResults,
 } from "@/lib/stats/results-view";
-import { RankedPlayerList } from "@/components/stats/ranked-player-list";
 import { ShowAllToggle } from "@/components/stats/show-all-toggle";
 import {
   StatsFilterChips,
@@ -381,7 +380,7 @@ function AttackingStatsSection({
       actions={
         <NativeSelect
           aria-label="Attacking stat view"
-          className="h-11 w-auto"
+          className="h-11 w-fit"
           value={metric}
           onChange={(event) => {
             setMetric(event.target.value as GoalsMetric);
@@ -484,7 +483,7 @@ function AwardsSection({
       rows: monthly,
       emptyTitle: "No awards yet",
       emptyDescription:
-        "Add player of the month awards from the Team page to populate this list.",
+        "Add player of the month awards from the Team page to populate this chart.",
       filteredOut: false,
     },
     {
@@ -494,7 +493,7 @@ function AwardsSection({
       rows: filteredPotm,
       emptyTitle: "No awards yet",
       emptyDescription:
-        "Select the coach's player of the match on fixtures to populate this list.",
+        "Select the coach's player of the match on fixtures to populate this chart.",
       filteredOut: potm.length > 0 && filteredPotm.length === 0,
     },
   ];
@@ -549,7 +548,6 @@ function AwardList({
   filteredOut: boolean;
   emptyFilterDescription: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
   if (sourceCount === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
@@ -561,18 +559,7 @@ function AwardList({
       />
     );
   }
-  const visible = visibleLeaderRows(rows, expanded);
-  return (
-    <div className="space-y-2">
-      <RankedPlayerList rows={visible} unit="awards" />
-      {leaderboardCanExpand(rows.length) ? (
-        <ShowAllToggle
-          expanded={expanded}
-          onToggle={() => setExpanded((open) => !open)}
-        />
-      ) : null}
-    </div>
-  );
+  return <LeaderboardChart rows={rows} unit="awards" />;
 }
 
 function CountLeaderboard({
@@ -688,7 +675,7 @@ function PeriodStartsSection({
           <div className="flex flex-wrap gap-2">
             <NativeSelect
               aria-label="Period type"
-              className="h-11 w-auto"
+              className="h-11 w-fit"
               value={periodType}
               onChange={(event) =>
                 setPeriodType(event.target.value as PeriodTypeFilter)
@@ -702,7 +689,7 @@ function PeriodStartsSection({
             </NativeSelect>
             <NativeSelect
               aria-label="Period starts view"
-              className="h-11 w-auto"
+              className="h-11 w-fit"
               value={metric}
               onChange={(event) => setMetric(event.target.value as GoalsMetric)}
             >

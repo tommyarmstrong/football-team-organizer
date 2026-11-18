@@ -323,15 +323,18 @@ export function PointsTrend({
   matches,
   nativeTooltips = true,
   pointRadius = REPORT_POINT_RADIUS,
+  yAxisLabels = true,
 }: {
   matches: readonly TrendMatch[];
   nativeTooltips?: boolean;
   /** Size of each match's point, in SVG units. The Stats page uses bigger ones. */
   pointRadius?: number;
+  /** The printed report shows the points scale. The Stats page leaves it off. */
+  yAxisLabels?: boolean;
 }) {
   const W = 688;
   const H = 230;
-  const pad = { l: 30, r: 10, t: 12, b: 26 };
+  const pad = { l: yAxisLabels ? 30 : 12, r: 10, t: 12, b: 26 };
   const points = cumulativePoints(matches);
   if (points.length === 0) return null;
 
@@ -367,15 +370,17 @@ export function PointsTrend({
             stroke={GRID}
             strokeWidth="1"
           />
-          <text
-            x={pad.l - 6}
-            y={y(v) + 3.5}
-            textAnchor="end"
-            fontSize="10"
-            fill={MUTED}
-          >
-            {v}
-          </text>
+          {yAxisLabels ? (
+            <text
+              x={pad.l - 6}
+              y={y(v) + 3.5}
+              textAnchor="end"
+              fontSize="10"
+              fill={MUTED}
+            >
+              {v}
+            </text>
+          ) : null}
         </g>
       ))}
       <polygon points={area} fill="var(--club)" opacity="0.14" />
@@ -434,12 +439,15 @@ export function PointsTrend({
 
 export function GoalsPerMatch({
   matches,
+  xAxisLabels = true,
 }: {
   matches: ReadonlyArray<Pick<ReportMatch, "id" | "goalsFor" | "goalsAgainst">>;
+  /** The printed report numbers each match. The Stats page leaves them off. */
+  xAxisLabels?: boolean;
 }) {
   const W = 688;
   const H = 330;
-  const pad = { l: 30, r: 10, t: 14, b: 26 };
+  const pad = { l: 30, r: 10, t: 14, b: xAxisLabels ? 26 : 12 };
   if (matches.length === 0) return null;
 
   const maxGoals = Math.max(
@@ -531,15 +539,17 @@ export function GoalsPerMatch({
               rx="2"
               fill={AGAINST}
             />
-            <text
-              x={cx}
-              y={H - 8}
-              textAnchor="middle"
-              fontSize="9.5"
-              fill={MUTED}
-            >
-              {i + 1}
-            </text>
+            {xAxisLabels ? (
+              <text
+                x={cx}
+                y={H - 8}
+                textAnchor="middle"
+                fontSize="9.5"
+                fill={MUTED}
+              >
+                {i + 1}
+              </text>
+            ) : null}
           </g>
         );
       })}

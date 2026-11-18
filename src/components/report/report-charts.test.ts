@@ -97,6 +97,21 @@ describe("GoalsPerMatch", () => {
     expect(html).toContain("Goals scored and conceded in each match");
     // One scored and one conceded bar per match.
     expect(html.match(/<rect/g)).toHaveLength(4);
+    expect(html).toContain('text-anchor="middle"');
+  });
+
+  it("can leave the match numbers off", () => {
+    const html = renderToStaticMarkup(
+      createElement(GoalsPerMatch, {
+        matches: [
+          { id: "a", goalsFor: 3, goalsAgainst: 1 },
+          { id: "b", goalsFor: 0, goalsAgainst: 2 },
+        ],
+        xAxisLabels: false,
+      }),
+    );
+    expect(html).not.toContain('text-anchor="middle"');
+    expect(html).toContain(">SCORED</text>");
   });
 
   it("renders nothing without matches", () => {
@@ -201,6 +216,15 @@ describe("PointsTrend", () => {
     // Month ticks come from the match dates.
     expect(html).toContain(">SEP</text>");
     expect(html).toContain(">OCT</text>");
+    expect(html).toContain('text-anchor="end"');
+  });
+
+  it("can leave the points scale off", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend, yAxisLabels: false }),
+    );
+    expect(html).not.toContain('text-anchor="end"');
+    expect(html).toContain(">SEP</text>");
   });
 
   it("tags each point with its index, for the Stats page tooltip", () => {

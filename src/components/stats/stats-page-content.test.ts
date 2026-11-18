@@ -94,7 +94,7 @@ describe("StatsPageContent", () => {
     expect(source).toContain("<GoalDifferenceChart data={filteredResults} />");
   });
 
-  it("uses a ranked list for awards and bars for the longer leaderboards", () => {
+  it("uses the same bars for awards as the other leaderboards", () => {
     const awards = sliceBetween(
       "function AwardsSection",
       "function CountLeaderboard",
@@ -102,8 +102,8 @@ describe("StatsPageContent", () => {
     expect(awards).toContain('label: "Player of the month"');
     expect(awards).toContain('label: "Player of the match"');
     expect(awards).toContain("coach's player of the match");
-    expect(awards).toContain("<RankedPlayerList");
-    expect(awards).not.toContain("<PlayerLeaderChart");
+    expect(awards).toContain('<LeaderboardChart rows={rows} unit="awards" />');
+    expect(awards).not.toContain("<RankedPlayerList");
 
     expect(source).toContain('title="Appearances"');
     expect(source).toContain("visibleLeaderRows");

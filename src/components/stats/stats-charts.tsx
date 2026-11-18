@@ -2,7 +2,7 @@
 
 import type { PlayerCountPoint, ResultOverTimePoint } from "@/lib/data/stats";
 import { tallyGoals, tallyResults } from "@/lib/stats/results-view";
-import { cumulativePoints, pointsTooltip } from "@/lib/report/summary";
+import { matchResultTooltip } from "@/lib/report/summary";
 import { buildLeaderRows } from "@/lib/stats/leader-rows";
 import {
   ChartTheme,
@@ -45,7 +45,7 @@ export function GoalDifferenceChart({ data }: { data: ResultOverTimePoint[] }) {
   return (
     <figure className={statsChartFrameClassName()}>
       <ChartTheme>
-        <GoalsPerMatch matches={matches} />
+        <GoalsPerMatch matches={matches} xAxisLabels={false} />
       </ChartTheme>
       <figcaption className="sr-only">
         Goals scored and conceded in each match: {summary}
@@ -71,10 +71,7 @@ export function ResultsOverTimeChart({
     goalsAgainst: point.goalsAgainst,
     result: point.result,
   }));
-  const totals = cumulativePoints(matches);
-  const summary = matches
-    .map((m, i) => pointsTooltip(m, totals[i]!))
-    .join("; ");
+  const summary = matches.map((m) => matchResultTooltip(m)).join("; ");
 
   return (
     <figure className={statsChartFrameClassName()}>

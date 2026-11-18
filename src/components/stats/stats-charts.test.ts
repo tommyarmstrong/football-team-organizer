@@ -128,6 +128,7 @@ describe("GoalDifferenceChart", () => {
     expect(html).toContain(">SCORED</text>");
     expect(html).toContain(">CONCEDED</text>");
     expect(html).toContain("2026-09-06 vs Rovers: 3-1");
+    expect(html).not.toContain('text-anchor="middle"');
     expect(html).not.toContain("recharts");
   });
 });
@@ -148,6 +149,7 @@ describe("ResultsOverTimeChart", () => {
     expect(html).toContain("var(--chart-win, #1c8a4e)");
     expect(html).toContain("var(--chart-draw, #e0a526)");
     expect(html).toContain("var(--chart-loss, #cf4437)");
+    expect(html).not.toContain('text-anchor="end"');
   });
 
   it("makes every point hoverable and tappable, with its own tooltip rather than the native one", () => {
@@ -185,7 +187,8 @@ describe("ResultsOverTimeChart", () => {
       createElement(ResultsOverTimeChart, { data: results }),
     );
     expect(html).toContain("Cumulative points through the season:");
-    expect(html).toContain("vs Rovers: W 3–1 · 3 pts; ");
+    expect(html).toContain("vs Rovers: W 3–1; ");
+    expect(html).not.toContain("pts");
   });
 
   it("renders no chart without matches", () => {

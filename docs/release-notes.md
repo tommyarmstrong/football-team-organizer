@@ -10,7 +10,8 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 - Competition, competition type and position are chosen together, then applied. A dot on Filters shows when something other than the usual League and Cup view is selected, and those choices sit under the heading as chips you can remove.
 - The choices stay when you leave Stats and come back. Switching team or season drops a competition that team does not have.
 - Goals, assists and goals plus assists share one chart. Switch between them, and between total, per game and per period. The chart starts with the top five.
-- Appearances, period starts and the award lists also start with the top five, with Show all when there are more. Awards are a compact list. The goals scored and conceded chart keeps its name in the heading.
+- Appearances, period starts and awards also start with the top five, with Show all when there are more. Awards use the same horizontal bars as goals and assists. The goals scored and conceded chart keeps its name in the heading.
+- Hovering a result shows the date, the opposition and the score, without the running points total. The results chart has no points scale, and the goals chart has no match numbers along the bottom.
 
 **No database changes.**
 
