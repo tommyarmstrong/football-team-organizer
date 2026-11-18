@@ -4,6 +4,17 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 18 November 2026 — Dark match postcards
+
+- Shared match cards now use the same dark background as the app, with light text. The inside of the pitch is a darker charcoal than the lighter frame around it. The date sits clear of the top of the pitch, and Matchday Squad has the same gap above it as Form.
+- The date sits above the two teams, and the competition name uses that same colour. Home and Away is no longer on the card.
+- The score is smaller beside the team names. Scorers, award lines, and the football, trophy, and handshake icons share one type size, set in from the left.
+- A longer list of goals splits into two columns. Matchday Squad keeps the same gap above it on every card.
+
+**No database changes.**
+
+---
+
 ## 18 November 2026 — Dashboard overview and squad status
 
 - Season at a glance on the Dashboard is now Results. The leaderboards and the Player of the month list are gone, so the Dashboard no longer repeats the Stats page.
