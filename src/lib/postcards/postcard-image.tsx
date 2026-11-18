@@ -17,11 +17,26 @@ export const POSTCARD_INK = "#f5f7f6";
 /** Team names sit larger than the score box beside them. */
 export const POSTCARD_TEAM_NAME_FONT_SIZE = 50;
 export const POSTCARD_SCORE_FONT_SIZE = 40;
-/** Scorers and award lines share one size. Icons are a step smaller. */
+/** Scorers, award lines, and their icons share one size. */
 export const POSTCARD_DETAIL_FONT_SIZE = 32;
-export const POSTCARD_ICON_FONT_SIZE = 20;
+export const POSTCARD_ICON_FONT_SIZE = POSTCARD_DETAIL_FONT_SIZE;
+/** Goals and awards sit in from the card edge. */
+export const POSTCARD_LIST_INDENT = 72;
+/** The same gap above Matchday Squad on every card. */
+export const POSTCARD_SECTION_GAP = 32;
 /** One column until a longer list would crowd the card. */
 export const POSTCARD_GOAL_SINGLE_COLUMN_MAX = 4;
+const POSTCARD_PITCH_HEIGHT = 1190;
+/**
+ * A quarter of the previous etching strength (0.45), so the lines stay a
+ * faint texture on the dark card.
+ */
+export const POSTCARD_PITCH_OPACITY = 0.1;
+
+/** Vertical offset that puts the pitch centre on the centre of the card. */
+export function postcardPitchTop(): number {
+  return (POSTCARD_HEIGHT - POSTCARD_PITCH_HEIGHT) / 2;
+}
 
 const PITCH_DEEP = "#143328";
 const BACKGROUND = POSTCARD_BACKGROUND;
@@ -168,11 +183,13 @@ function PitchLines() {
       viewBox="0 0 1080 1190"
       fill="none"
       aria-hidden="true"
+      data-slot="postcard-pitch"
       style={{
         position: "absolute",
-        inset: 0,
+        left: 0,
+        top: postcardPitchTop(),
         color: PITCH_LINE,
-        opacity: 0.45,
+        opacity: POSTCARD_PITCH_OPACITY,
       }}
     >
       <rect
@@ -390,9 +407,10 @@ function CompetitionLine({ label }: { label: string | null }) {
   if (!label) return null;
   return (
     <div
+      data-slot="postcard-competition"
       style={centredStyle({
         fontSize: 32,
-        color: INK,
+        color: MUTED,
         fontWeight: 700,
         marginBottom: 16,
       })}
@@ -415,7 +433,7 @@ function PostcardIcon({
       style={{
         display: "flex",
         fontSize: POSTCARD_ICON_FONT_SIZE,
-        lineHeight: 1,
+        lineHeight: 1.35,
         marginLeft: gapBefore,
         marginRight: 8,
       }}
@@ -442,7 +460,6 @@ function GoalLine({
         display: "flex",
         alignItems: "center",
         color: INK,
-        marginBottom: 10,
       }}
     >
       <PostcardIcon glyph="⚽" />
@@ -483,7 +500,13 @@ function GoalRows({
 
   if (list.kind === "summary") {
     return (
-      <div style={stackStyle({ marginBottom: 32 })}>
+      <div
+        data-slot="postcard-goals"
+        style={stackStyle({
+          marginTop: POSTCARD_SECTION_GAP,
+          paddingLeft: POSTCARD_LIST_INDENT,
+        })}
+      >
         <div style={{ display: "flex", alignItems: "center" }}>
           <PostcardIcon glyph="⚽" />
           <div
@@ -517,7 +540,8 @@ function GoalRows({
       style={{
         display: "flex",
         width: "100%",
-        marginBottom: 32,
+        marginTop: POSTCARD_SECTION_GAP,
+        paddingLeft: POSTCARD_LIST_INDENT,
       }}
     >
       {columns.map((column, columnIndex) => (
@@ -525,6 +549,7 @@ function GoalRows({
           key={columnIndex}
           style={stackStyle({
             width: twoColumns ? "50%" : "100%",
+            gap: 10,
             paddingRight: twoColumns && columnIndex === 0 ? 12 : 0,
           })}
         >
@@ -597,7 +622,7 @@ function PlayedPostcardBody({
         style={centredStyle({
           fontSize: 42,
           fontWeight: 700,
-          marginBottom: 34,
+          marginBottom: 0,
           lineHeight: 1.25,
           paddingLeft: 40,
           paddingRight: 40,
@@ -609,7 +634,13 @@ function PlayedPostcardBody({
       <GoalRows payload={payload} />
 
       {hasPotm ? (
-        <div style={stackStyle({ marginBottom: 28 })}>
+        <div
+          data-slot="postcard-awards"
+          style={stackStyle({
+            marginTop: POSTCARD_SECTION_GAP,
+            paddingLeft: POSTCARD_LIST_INDENT,
+          })}
+        >
           {payload.coachPotmLabel ? (
             <div
               style={{
@@ -643,25 +674,22 @@ function PlayedPostcardBody({
 function PostcardSquadAndForm({
   squadLines,
   form,
-  marginTop = 0,
 }: {
   squadLines: string[];
   form: Array<"W" | "D" | "L">;
-  /** Gap above the block. Played cards already separate this from the awards. */
-  marginTop?: number;
 }) {
-  const squadMarginTop = squadLines.length > 0 ? marginTop : 0;
-  const formMarginTop = squadLines.length > 0 ? 28 : Math.max(marginTop, 28);
+  const formMarginTop = POSTCARD_SECTION_GAP;
   if (squadLines.length === 0 && form.length === 0) return null;
 
   return (
     <div style={stackStyle({ width: "100%" })}>
       {squadLines.length > 0 ? (
         <div
+          data-slot="postcard-squad"
           style={stackStyle({
             alignItems: "center",
             marginBottom: 10,
-            marginTop: squadMarginTop,
+            marginTop: POSTCARD_SECTION_GAP,
           })}
         >
           <div
@@ -840,7 +868,6 @@ function ScheduledPostcardBody({
       <PostcardSquadAndForm
         squadLines={payload.squadLines}
         form={payload.form}
-        marginTop={28}
       />
     </div>
   );
@@ -860,23 +887,22 @@ export function MatchPostcardImage({
         height: POSTCARD_HEIGHT,
         display: "flex",
         flexDirection: "column",
+        position: "relative",
         backgroundColor: BACKGROUND,
         color: INK,
         fontFamily: "sans-serif",
       }}
     >
+      <PitchLines />
       <ClubMasthead payload={payload} crestSrc={crestSrc} />
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          position: "relative",
           padding: "34px 48px 42px",
           flex: 1,
-          backgroundColor: BACKGROUND,
         }}
       >
-        <PitchLines />
         {payload.kind === "scheduled" ? (
           <ScheduledPostcardBody payload={payload} />
         ) : (

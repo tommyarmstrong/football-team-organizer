@@ -9,10 +9,14 @@ import {
   POSTCARD_HEIGHT,
   POSTCARD_ICON_FONT_SIZE,
   POSTCARD_INK,
+  POSTCARD_LIST_INDENT,
+  POSTCARD_PITCH_OPACITY,
   POSTCARD_SCORE_FONT_SIZE,
+  POSTCARD_SECTION_GAP,
   POSTCARD_TEAM_NAME_FONT_SIZE,
   POSTCARD_WIDTH,
   postcardGoalColumnCount,
+  postcardPitchTop,
   splitPostcardGoalRows,
 } from "@/lib/postcards/postcard-image";
 import type {
@@ -62,12 +66,15 @@ function postcardMarkup(payload: MatchPostcardPayload) {
   );
 }
 
+function slotStyle(html: string, slot: string): string | null {
+  const tag = html.match(new RegExp(`<[^>]*data-slot="${slot}"[^>]*>`))?.[0];
+  return tag?.match(/style="([^"]*)"/)?.[1] ?? null;
+}
+
 function styleFontSize(html: string, slot: string): number | null {
-  const pattern = new RegExp(
-    `data-slot="${slot}" style="([^"]*font-size:(\\d+)px[^"]*)"`,
-  );
-  const match = html.match(pattern);
-  return match ? Number(match[2]) : null;
+  const style = slotStyle(html, slot);
+  const match = style?.match(/font-size:(\d+)px/);
+  return match ? Number(match[1]) : null;
 }
 
 async function renderPostcard(payload: MatchPostcardPayload) {
@@ -187,7 +194,7 @@ describe("MatchPostcardImage layout", () => {
     );
   });
 
-  it("matches scorer type to the awards and draws the icons smaller", () => {
+  it("matches scorer type to the awards and draws the icons at that size", () => {
     const html = postcardMarkup({
       ...basePayload,
       goalList: {
@@ -204,10 +211,88 @@ describe("MatchPostcardImage layout", () => {
       POSTCARD_DETAIL_FONT_SIZE,
     );
     expect(styleFontSize(html, "postcard-icon")).toBe(POSTCARD_ICON_FONT_SIZE);
-    expect(POSTCARD_ICON_FONT_SIZE).toBeLessThan(POSTCARD_DETAIL_FONT_SIZE);
+    expect(POSTCARD_ICON_FONT_SIZE).toBe(POSTCARD_DETAIL_FONT_SIZE);
     expect(html).toContain("⚽");
     expect(html).toContain("🏆");
     expect(html).toContain("🤝");
+  });
+
+  it("paints the competition in the same colour as the date", () => {
+    const html = postcardMarkup(basePayload);
+    const date = slotStyle(html, "postcard-date");
+    const competition = slotStyle(html, "postcard-competition");
+    expect(date).toContain("color:#a9b5b2");
+    expect(competition).toContain("color:#a9b5b2");
+  });
+
+  it("indents goals and awards in from the left edge", () => {
+    const html = postcardMarkup({
+      ...basePayload,
+      goalList: {
+        kind: "full",
+        rows: [{ label: "Amara", isPenalty: false, assistLabel: null }],
+      },
+      coachPotmLabel: "Amara",
+    });
+    expect(slotStyle(html, "postcard-goals")).toContain(
+      `padding-left:${POSTCARD_LIST_INDENT}px`,
+    );
+    expect(slotStyle(html, "postcard-awards")).toContain(
+      `padding-left:${POSTCARD_LIST_INDENT}px`,
+    );
+  });
+
+  it("keeps the same gap above Matchday Squad", () => {
+    const withAwards = postcardMarkup({
+      ...basePayload,
+      coachPotmLabel: "Amara",
+      goalList: {
+        kind: "full",
+        rows: [{ label: "Amara", isPenalty: false, assistLabel: null }],
+      },
+    });
+    const bare = postcardMarkup({
+      ...basePayload,
+      squadLines: ["1 Ali"],
+      form: [],
+      goalList: { kind: "none" },
+    });
+    const scheduled = postcardMarkup({
+      kind: "scheduled",
+      matchId: "match-1",
+      clubName: "Mill Green Athletic",
+      clubColour: "#146C4A",
+      clubIconUrl: null,
+      teamName: "U11 Girls",
+      seasonLabel: "2025/26",
+      opponentName: "Riverside Rovers",
+      dateLabel: "Sun 8 Mar 2026",
+      homeAwayLabel: "Home",
+      competitionLabel: "League",
+      homeName: "U11 Girls",
+      awayName: "Riverside Rovers",
+      venueName: "Main Pitch",
+      venueAddress: null,
+      kickoffLabel: "10:00",
+      meetupLabel: "09:30",
+      squadLines: ["1 Ali"],
+      form: ["W"],
+      caption: "U11 Girls vs Riverside Rovers",
+      fileName: "card.png",
+    });
+    const gap = `margin-top:${POSTCARD_SECTION_GAP}px`;
+    expect(slotStyle(withAwards, "postcard-squad")).toContain(gap);
+    expect(slotStyle(bare, "postcard-squad")).toContain(gap);
+    expect(slotStyle(scheduled, "postcard-squad")).toContain(gap);
+  });
+
+  it("draws a faint pitch centred on the card", () => {
+    expect(POSTCARD_PITCH_OPACITY).toBeLessThanOrEqual(0.45 * 0.25);
+    expect(postcardPitchTop()).toBe((POSTCARD_HEIGHT - 1190) / 2);
+    const style = slotStyle(postcardMarkup(basePayload), "postcard-pitch");
+    expect(style).toContain(`opacity:${POSTCARD_PITCH_OPACITY}`);
+    expect(style).toContain(`top:${postcardPitchTop()}px`);
+    expect(style).toContain("left:0");
   });
 
   it("splits a long goal list into two columns", () => {
