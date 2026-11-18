@@ -26,14 +26,27 @@ describe("crestDataUrl", () => {
     expect(url).toBe("data:image/png;base64,AQID");
   });
 
-  it("resolves the default icon against the request origin", async () => {
-    const fetchMock = stubFetch(
-      new Response("<svg/>", { headers: { "content-type": "image/svg+xml" } }),
+  it("embeds the default football badge as a PNG without fetching the host", async () => {
+    const fetchMock = stubFetch(new Response("unused"));
+    const url = await crestDataUrl(null, "http://localhost:3000");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(url?.startsWith("data:image/png;base64,")).toBe(true);
+    const bytes = Buffer.from(
+      url!.slice("data:image/png;base64,".length),
+      "base64",
     );
-    expect(await crestDataUrl(null, "http://localhost:3000")).toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:3000/football-icon.svg",
+    expect(bytes.subarray(0, 4).toString("hex")).toBe("89504e47");
+  });
+
+  it("draws a remote SVG crest to PNG", async () => {
+    stubFetch(
+      new Response(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="12" fill="#111"/></svg>`,
+        { headers: { "content-type": "image/svg+xml" } },
+      ),
     );
+    const url = await crestDataUrl("https://cdn.example/crest.svg", "http://x");
+    expect(url?.startsWith("data:image/png;base64,")).toBe(true);
   });
 
   it("returns null for failed, non-raster, or unreachable crests", async () => {
