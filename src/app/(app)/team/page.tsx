@@ -271,10 +271,7 @@ export default async function TeamPage() {
         )}
       </Section>
 
-      <Section
-        title="Guardian assistants"
-        description="Guardians who can add fixtures and record match-day squad, periods, goals, assists, and cards. They cannot set player of the match."
-      >
+      <Section title="Guardian assistants">
         {/* §5.2: guardian assistant candidates deferred. */}
         <Suspense
           fallback={
@@ -296,10 +293,7 @@ export default async function TeamPage() {
         </Suspense>
       </Section>
 
-      <Section
-        title="Player of the month"
-        description="Monthly awards for standout players this season."
-      >
+      <Section title="Player of the month">
         {potmError ? (
           <ErrorBanner message={potmError} />
         ) : (

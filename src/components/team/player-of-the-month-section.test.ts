@@ -9,6 +9,8 @@ const source = readFileSync(
 
 describe("PlayerOfTheMonthSection", () => {
   it("opens add and edit in a stay-on-page dialog", () => {
+    expect(source).toContain('objectListRowClassName("w-full text-left")');
+    expect(source).toContain("truncate text-left font-medium");
     expect(source).toContain("InlineFormDialog");
     expect(source).toContain("stayOnPage");
     expect(source).toContain("PlayerOfTheMonthForm");

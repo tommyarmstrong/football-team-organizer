@@ -19,6 +19,7 @@ import { FilterablePaginatedList } from "@/components/shared/filterable-paginate
 import { ListUnlinkButton } from "@/components/shared/list-unlink-button";
 import { objectListRowClassName } from "@/components/shared/object-list";
 import { SearchableSelect } from "@/components/shared/searchable-select";
+import { RoleChip } from "@/components/shared/role-chip";
 import { SquadPlayerIdentity } from "@/components/shared/squad-player-identity";
 
 export function TeamRosterSection({
@@ -54,6 +55,7 @@ export function TeamRosterSection({
           singularLabel="player"
           pluralLabel="players"
           totalCountPhrase="in this squad"
+          countInTotal={(entry) => entry.active}
           defaultPageSize={20}
           emptyFilterTitle="No players match"
           emptyFilterDescription="Try a different name, or clear the filter."
@@ -66,6 +68,13 @@ export function TeamRosterSection({
                 <SquadPlayerIdentity
                   name={playerDisplayName(entry)}
                   shirtNumber={entry.shirt_number}
+                  trailing={
+                    entry.active ? null : (
+                      <RoleChip className="border-muted-foreground/40 text-muted-foreground">
+                        Inactive
+                      </RoleChip>
+                    )
+                  }
                 />
                 <span className="text-muted-foreground shrink-0">
                   {entry.position ?? "No position"}

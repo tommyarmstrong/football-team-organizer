@@ -108,6 +108,10 @@ describe("formatAwardMonth", () => {
     expect(formatAwardMonth("2025-03")).toBe("March 2025");
   });
 
+  it("can omit the year", () => {
+    expect(formatAwardMonth("2025-03-01", "month")).toBe("March");
+  });
+
   it("returns the original string when the month is invalid", () => {
     expect(formatAwardMonth("2025")).toBe("2025");
     expect(formatAwardMonth("not-a-month")).toBe("not-a-month");

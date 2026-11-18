@@ -7,6 +7,7 @@ import type {
 import {
   countLeaders,
   goalLeaders,
+  latestMonthAwards,
   recentLeagueAndCupForm,
 } from "@/lib/stats/dashboard-leaders";
 
@@ -203,6 +204,23 @@ describe("countLeaders", () => {
       3,
     );
     expect(leaders[0]?.name).toBe("Madonna");
+  });
+});
+
+describe("latestMonthAwards", () => {
+  it("keeps every award from the latest month", () => {
+    expect(
+      latestMonthAwards([
+        { id: "old", month: "2025-01-01" },
+        { id: "new-b", month: "2025-03-01" },
+        { id: "new-a", month: "2025-03-01" },
+        { id: "mid", month: "2025-02-01" },
+      ]).map((award) => award.id),
+    ).toEqual(["new-b", "new-a"]);
+  });
+
+  it("returns nothing when there are no awards", () => {
+    expect(latestMonthAwards([])).toEqual([]);
   });
 });
 

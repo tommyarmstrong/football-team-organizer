@@ -9,6 +9,7 @@ import type {
 } from "@/lib/data/stats";
 import type { CompetitionFilterOption } from "@/lib/stats/competition-filters";
 import {
+  ATTACKING_METRIC_OPTIONS,
   ATTACKING_MODE_OPTIONS,
   attackingUnit,
   buildAttackingViewRows,
@@ -17,7 +18,6 @@ import {
 import { buildCountViewRows } from "@/lib/stats/count-view";
 import {
   filterGoalsByCompetition,
-  GOALS_METRIC_OPTIONS,
   type GoalsMetric,
   type GoalsPositionFilter,
 } from "@/lib/stats/goals-view";
@@ -387,7 +387,7 @@ function AttackingStatsSection({
             setExpanded(false);
           }}
         >
-          {GOALS_METRIC_OPTIONS.map((option) => (
+          {ATTACKING_METRIC_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
