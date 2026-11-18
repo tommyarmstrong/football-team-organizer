@@ -110,9 +110,10 @@ describe("DashboardPlayers", () => {
       "Cleo Cross",
     ]);
     expect(namesIn(html, "Player of the month")).toEqual(["Nia North"]);
-    expect(html).toContain("March 2025");
-    expect(html).not.toContain("January 2025");
-    expect(html).not.toContain("February 2025");
+    expect(html).toContain(">March<");
+    expect(html).not.toContain("March 2025");
+    expect(html).not.toContain("January");
+    expect(html).not.toContain("February");
     expect(html).toContain("5 goals");
     expect(html).toContain("2 assists");
     expect(html).toContain("4 awards");

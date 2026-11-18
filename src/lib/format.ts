@@ -472,14 +472,17 @@ export function formatCountLabel(
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-export function formatAwardMonth(month: string): string {
+export function formatAwardMonth(
+  month: string,
+  style: "month" | "month-year" = "month-year",
+): string {
   const [year, monthPart] = month.split("-");
   if (!year || !monthPart) return month;
   const date = new Date(Number(year), Number(monthPart) - 1, 1);
   if (Number.isNaN(date.getTime())) return month;
   return new Intl.DateTimeFormat("en-GB", {
     month: "long",
-    year: "numeric",
+    ...(style === "month-year" ? { year: "numeric" as const } : {}),
   }).format(date);
 }
 

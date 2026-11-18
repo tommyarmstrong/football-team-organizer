@@ -196,7 +196,7 @@ export async function DashboardPlayers({ teamId }: { teamId: string }) {
       id: award.id,
       personId: award.player.person_id,
       name: playerDisplayName(award.player),
-      valueLabel: formatAwardMonth(award.month),
+      valueLabel: formatAwardMonth(award.month, "month"),
     }))
     .sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
