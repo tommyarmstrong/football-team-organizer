@@ -11,7 +11,7 @@ import {
   POSTCARD_INK,
   POSTCARD_LIST_INDENT,
   POSTCARD_MASTHEAD_HEIGHT,
-  POSTCARD_PITCH_FRAME,
+  POSTCARD_PITCH_OPACITY,
   POSTCARD_SCORE_FONT_SIZE,
   POSTCARD_SECTION_GAP,
   POSTCARD_TEAM_NAME_FONT_SIZE,
@@ -287,17 +287,15 @@ describe("MatchPostcardImage layout", () => {
     expect(slotStyle(scheduled, "postcard-squad")).toContain(gap);
   });
 
-  it("draws a lighter charcoal pitch frame in the card body", () => {
+  it("draws a faint pitch centred in the card body", () => {
     const bodyHeight = POSTCARD_HEIGHT - POSTCARD_MASTHEAD_HEIGHT;
+    expect(POSTCARD_PITCH_OPACITY).toBeLessThanOrEqual(0.45 * 0.25);
     expect(postcardPitchTop()).toBe((bodyHeight - 1190) / 2);
-    const html = postcardMarkup(basePayload);
-    const style = slotStyle(html, "postcard-pitch");
-    expect(style).toContain(`color:${POSTCARD_PITCH_FRAME}`);
+    const style = slotStyle(postcardMarkup(basePayload), "postcard-pitch");
+    expect(style).toContain(`opacity:${POSTCARD_PITCH_OPACITY}`);
+    expect(style).toContain("color:#A9B5B2");
     expect(style).toContain(`top:${postcardPitchTop()}px`);
     expect(style).toContain("left:0");
-    expect(style).not.toContain("opacity:");
-    expect(html).toContain(`stroke="${POSTCARD_PITCH_FRAME}"`);
-    expect(POSTCARD_PITCH_FRAME.toLowerCase()).not.toBe(POSTCARD_BACKGROUND);
   });
 
   it("splits a long goal list into two columns", () => {
