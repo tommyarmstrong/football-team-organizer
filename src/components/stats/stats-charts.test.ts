@@ -76,15 +76,39 @@ describe("results and goals ring charts", () => {
     expect(html).not.toContain("recharts");
   });
 
-  it("draws goals scored and conceded in the same format", () => {
+  it("draws goals scored and conceded with the goal difference in the hole", () => {
     const html = renderToStaticMarkup(
       createElement(GoalsRingChart, { data: results }),
     );
-    expect(html).toContain("4 goals scored, 4 goals conceded");
+    expect(html).toContain(
+      "4 goals scored, 4 goals conceded, goal difference +0",
+    );
     expect(html).toContain(">Scored<");
     expect(html).toContain(">Conceded<");
-    expect(html).toContain("Goals for 4, goals against 4");
+    expect(html).toContain("Goals for 4, goals against 4, goal difference +0");
+    expect(html).toContain(">+0</text>");
+    expect(html).toContain(">GD</text>");
+    expect(html).toContain('fill="var(--chart-draw, #e0a526)"');
+    expect(html).not.toContain(">GOALS</text>");
     expect(html).not.toContain("recharts");
+  });
+
+  it("colours a positive goal difference green and a negative one red", () => {
+    const positive = renderToStaticMarkup(
+      createElement(GoalsRingChart, {
+        data: [results[0]!],
+      }),
+    );
+    expect(positive).toContain(">+2</text>");
+    expect(positive).toContain('fill="var(--chart-win, #1c8a4e)"');
+
+    const negative = renderToStaticMarkup(
+      createElement(GoalsRingChart, {
+        data: [results[2]!],
+      }),
+    );
+    expect(negative).toContain(">−2</text>");
+    expect(negative).toContain('fill="var(--chart-loss, #cf4437)"');
   });
 
   it("themes the report charts with the app colours", () => {
@@ -104,6 +128,7 @@ describe("GoalDifferenceChart", () => {
     expect(html).toContain(">SCORED</text>");
     expect(html).toContain(">CONCEDED</text>");
     expect(html).toContain("2026-09-06 vs Rovers: 3-1");
+    expect(html).not.toContain('text-anchor="middle"');
     expect(html).not.toContain("recharts");
   });
 });
@@ -124,6 +149,7 @@ describe("ResultsOverTimeChart", () => {
     expect(html).toContain("var(--chart-win, #1c8a4e)");
     expect(html).toContain("var(--chart-draw, #e0a526)");
     expect(html).toContain("var(--chart-loss, #cf4437)");
+    expect(html).not.toContain('text-anchor="end"');
   });
 
   it("makes every point hoverable and tappable, with its own tooltip rather than the native one", () => {
@@ -161,7 +187,8 @@ describe("ResultsOverTimeChart", () => {
       createElement(ResultsOverTimeChart, { data: results }),
     );
     expect(html).toContain("Cumulative points through the season:");
-    expect(html).toContain("vs Rovers: W 3–1 · 3 pts; ");
+    expect(html).toContain("vs Rovers: W 3–1; ");
+    expect(html).not.toContain("pts");
   });
 
   it("renders no chart without matches", () => {

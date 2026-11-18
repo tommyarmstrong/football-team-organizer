@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { PointsTrend } from "@/components/report/report-charts";
-import { cumulativePoints, pointsTooltip } from "@/lib/report/summary";
+import { matchResultTooltip } from "@/lib/report/summary";
 import type { TrendMatch } from "@/lib/report/summary";
 import {
   clampTooltipCentre,
@@ -41,7 +41,6 @@ export function PointsTrendWithTooltip({
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState<Open | null>(null);
-  const totals = useMemo(() => cumulativePoints(matches), [matches]);
 
   function pointAt(target: EventTarget | null): Open | null {
     const wrap = wrapRef.current;
@@ -111,6 +110,7 @@ export function PointsTrendWithTooltip({
         matches={matches}
         nativeTooltips={false}
         pointRadius={STATS_POINT_RADIUS}
+        yAxisLabels={false}
       />
       {open && match ? (
         <div
@@ -124,7 +124,7 @@ export function PointsTrendWithTooltip({
             transform: below ? "translateX(-50%)" : "translate(-50%, -100%)",
           }}
         >
-          {pointsTooltip(match, totals[open.index]!)}
+          {matchResultTooltip(match)}
         </div>
       ) : null}
     </div>

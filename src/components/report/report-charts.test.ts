@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   ChartTheme,
+  goalDifferenceFill,
   GoalsDonut,
   GoalsLegend,
   GoalsPerMatch,
@@ -45,6 +46,36 @@ describe("ring charts", () => {
     expect(legend).toContain(">Conceded<");
   });
 
+  it("keeps the printed total when no centre value is passed", () => {
+    const ring = renderToStaticMarkup(
+      createElement(GoalsDonut, { goalsFor: 7, goalsAgainst: 3 }),
+    );
+    expect(ring).toContain(">10</text>");
+    expect(ring).toContain('fill="var(--chart-ink, #14201a)"');
+    expect(ring).not.toContain(">GD</text>");
+  });
+
+  it("uses the win, draw and loss shades for a goal difference", () => {
+    expect(goalDifferenceFill(4)).toBe("var(--chart-win, #1c8a4e)");
+    expect(goalDifferenceFill(0)).toBe("var(--chart-draw, #e0a526)");
+    expect(goalDifferenceFill(-2)).toBe("var(--chart-loss, #cf4437)");
+
+    const ring = renderToStaticMarkup(
+      createElement(GoalsDonut, {
+        goalsFor: 7,
+        goalsAgainst: 3,
+        centreValue: "+4",
+        centreLabel: "GD",
+        centreColour: goalDifferenceFill(4),
+      }),
+    );
+    expect(ring).toContain(">+4</text>");
+    expect(ring).toContain(">GD</text>");
+    expect(ring).toContain("goal difference +4");
+    expect(ring).toContain('fill="var(--chart-win, #1c8a4e)"');
+    expect(ring).not.toContain(">10</text>");
+  });
+
   it("draws one arc when only one side has goals", () => {
     const ring = renderToStaticMarkup(
       createElement(GoalsDonut, { goalsFor: 4, goalsAgainst: 0 }),
@@ -66,6 +97,21 @@ describe("GoalsPerMatch", () => {
     expect(html).toContain("Goals scored and conceded in each match");
     // One scored and one conceded bar per match.
     expect(html.match(/<rect/g)).toHaveLength(4);
+    expect(html).toContain('text-anchor="middle"');
+  });
+
+  it("can leave the match numbers off", () => {
+    const html = renderToStaticMarkup(
+      createElement(GoalsPerMatch, {
+        matches: [
+          { id: "a", goalsFor: 3, goalsAgainst: 1 },
+          { id: "b", goalsFor: 0, goalsAgainst: 2 },
+        ],
+        xAxisLabels: false,
+      }),
+    );
+    expect(html).not.toContain('text-anchor="middle"');
+    expect(html).toContain(">SCORED</text>");
   });
 
   it("renders nothing without matches", () => {
@@ -170,6 +216,15 @@ describe("PointsTrend", () => {
     // Month ticks come from the match dates.
     expect(html).toContain(">SEP</text>");
     expect(html).toContain(">OCT</text>");
+    expect(html).toContain('text-anchor="end"');
+  });
+
+  it("can leave the points scale off", () => {
+    const html = renderToStaticMarkup(
+      createElement(PointsTrend, { matches: trend, yAxisLabels: false }),
+    );
+    expect(html).not.toContain('text-anchor="end"');
+    expect(html).toContain(">SEP</text>");
   });
 
   it("tags each point with its index, for the Stats page tooltip", () => {

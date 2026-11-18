@@ -60,11 +60,10 @@ function FilterGroup({
 }
 
 /**
- * Position filters, then the period Type filter when `periodType` and
- * `onPeriodTypeChange` are given, then the Total / Per game / Per period view
- * when `metric`, `onMetricChange` and `metricAriaLabel` are all given.
- * Sections that only make sense as a total (e.g. appearances) leave the view
- * out.
+ * Position filters when `positions` and `onPositionsChange` are given, then
+ * the period Type filter when `periodType` and `onPeriodTypeChange` are
+ * given, then the Total / Per game / Per period view when `metric`,
+ * `onMetricChange` and `metricAriaLabel` are all given.
  */
 export function StatFilters({
   positions,
@@ -76,8 +75,8 @@ export function StatFilters({
   periodType,
   onPeriodTypeChange,
 }: {
-  positions: GoalsPositionFilter[];
-  onPositionsChange: (next: GoalsPositionFilter[]) => void;
+  positions?: GoalsPositionFilter[];
+  onPositionsChange?: (next: GoalsPositionFilter[]) => void;
   metric?: GoalsMetric;
   onMetricChange?: (next: GoalsMetric) => void;
   metricAriaLabel?: string;
@@ -89,18 +88,20 @@ export function StatFilters({
 }) {
   return (
     <>
-      <FilterGroup heading="Position" groupLabel="Position filters">
-        {GOALS_POSITION_FILTERS.map((value) => (
-          <FilterButton
-            key={value}
-            label={value}
-            pressed={positions.includes(value)}
-            onClick={() =>
-              onPositionsChange(toggleGoalsPositionFilter(positions, value))
-            }
-          />
-        ))}
-      </FilterGroup>
+      {positions && onPositionsChange ? (
+        <FilterGroup heading="Position" groupLabel="Position filters">
+          {GOALS_POSITION_FILTERS.map((value) => (
+            <FilterButton
+              key={value}
+              label={value}
+              pressed={positions.includes(value)}
+              onClick={() =>
+                onPositionsChange(toggleGoalsPositionFilter(positions, value))
+              }
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
 
       {periodType && onPeriodTypeChange ? (
         <FilterGroup heading="Type" groupLabel="Period type filters">

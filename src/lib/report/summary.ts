@@ -34,7 +34,12 @@ export type TrendMatch = Pick<
 
 /** Hover text for one point: "6 Sep vs Rovers: W 3–1 · 7 pts". */
 export function pointsTooltip(match: TrendMatch, totalPoints: number): string {
-  return `${formatShortDate(match.date)} vs ${match.opponent}: ${match.result} ${match.goalsFor}–${match.goalsAgainst} · ${totalPoints} pts`;
+  return `${matchResultTooltip(match)} · ${totalPoints} pts`;
+}
+
+/** Stats hover text: the match, without the running points total. */
+export function matchResultTooltip(match: TrendMatch): string {
+  return `${formatShortDate(match.date)} vs ${match.opponent}: ${match.result} ${match.goalsFor}–${match.goalsAgainst}`;
 }
 
 /** Three points for a win, one for a draw. */

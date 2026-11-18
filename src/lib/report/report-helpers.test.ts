@@ -43,6 +43,7 @@ import {
   cleanSheets,
   cumulativePoints,
   pointsTooltip,
+  matchResultTooltip,
   displayScore,
   goalTotals,
   honourNames,
@@ -500,5 +501,18 @@ describe("pointsTooltip", () => {
         7,
       ),
     ).toMatch(/vs Rovers: W 3–1 · 7 pts$/);
+  });
+
+  it("names the match without the running points total", () => {
+    expect(
+      matchResultTooltip({
+        id: "m",
+        date: "2026-09-06",
+        opponent: "Rovers",
+        goalsFor: 3,
+        goalsAgainst: 1,
+        result: "W",
+      }),
+    ).toMatch(/vs Rovers: W 3–1$/);
   });
 });

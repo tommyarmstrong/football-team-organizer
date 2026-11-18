@@ -4,6 +4,31 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 
 ---
 
+## 18 November 2026 — A shorter Stats page
+
+- Stats opens with a Filters button next to the heading, instead of two large competition menus. On a phone the filters open in a panel from the bottom. On a larger screen they open beside the button.
+- Competition, competition type and position are chosen together, then applied. A dot on Filters shows when something other than the usual League and Cup view is selected, and those choices sit under the heading as chips you can remove.
+- The choices stay when you leave Stats and come back. Switching team or season drops a competition that team does not have.
+- Goals, assists and goals plus assists share one chart. Switch between them, and between total, per game and per period. The chart starts with the top five.
+- Appearances, period starts and awards also start with the top five, with Show all when there are more. Awards use the same horizontal bars as goals and assists. The goals scored and conceded chart keeps its name in the heading.
+- Hovering a result shows the date, the opposition and the score, without the running points total. The results chart has no points scale, and the goals chart has no match numbers along the bottom.
+
+**No database changes.**
+
+---
+
+## 17 November 2026 — Stats charts, regrouped
+
+- The Played, W–D–L, Goals and Goal difference cards are gone from the Stats page. They stay on the Dashboard.
+- The goals ring shows the goal difference in the middle, with a plus or a minus. Above zero is green, below zero is red, and zero is yellow.
+- Goals, assists and appearances share one chart. Switch between them. The bars stay.
+- Player of the month and the coach's player of the match share one chart the same way.
+- Position and View sit once at the top and apply to every player chart they belong to. Period starts keeps its own Type filter.
+
+**No database changes.**
+
+---
+
 ## 17 November 2026 — A quieter dashboard
 
 - The coloured pitch banner at the top of the Dashboard is gone.
