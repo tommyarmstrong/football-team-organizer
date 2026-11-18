@@ -26,23 +26,23 @@ export const POSTCARD_LIST_INDENT = 72;
 export const POSTCARD_SECTION_GAP = 32;
 /** One column until a longer list would crowd the card. */
 export const POSTCARD_GOAL_SINGLE_COLUMN_MAX = 4;
+/** Crest row: 34px padding, 84px mark, 34px padding. */
+export const POSTCARD_MASTHEAD_HEIGHT = 152;
 const POSTCARD_PITCH_HEIGHT = 1190;
-/**
- * A quarter of the previous etching strength (0.45), so the lines stay a
- * faint texture on the dark card.
- */
-export const POSTCARD_PITCH_OPACITY = 0.1;
+/** Lighter charcoal than the page, for the rounded pitch frame. */
+export const POSTCARD_PITCH_FRAME = "#5c6a6c";
 
-/** Vertical offset that puts the pitch centre on the centre of the card. */
+/** Offset inside the body that centres the pitch under the masthead. */
 export function postcardPitchTop(): number {
-  return (POSTCARD_HEIGHT - POSTCARD_PITCH_HEIGHT) / 2;
+  const bodyHeight = POSTCARD_HEIGHT - POSTCARD_MASTHEAD_HEIGHT;
+  return (bodyHeight - POSTCARD_PITCH_HEIGHT) / 2;
 }
 
 const PITCH_DEEP = "#143328";
 const BACKGROUND = POSTCARD_BACKGROUND;
 const INK = POSTCARD_INK;
 const MUTED = "#a9b5b2";
-const PITCH_LINE = "#A9B5B2";
+const PITCH_LINE = POSTCARD_PITCH_FRAME;
 const PAPER = "#F4FBF5";
 const WIN_BG = "#36dd52";
 const WIN_FG = "#101414";
@@ -174,7 +174,7 @@ function FormBox({
   );
 }
 
-/** The same low-contrast pitch motif used behind the app shell. */
+/** Rounded pitch frame in lighter charcoal, centred in the card body. */
 function PitchLines() {
   return (
     <svg
@@ -189,7 +189,6 @@ function PitchLines() {
         left: 0,
         top: postcardPitchTop(),
         color: PITCH_LINE,
-        opacity: POSTCARD_PITCH_OPACITY,
       }}
     >
       <rect
@@ -197,9 +196,9 @@ function PitchLines() {
         y="38"
         width="996"
         height="1114"
-        rx="16"
-        stroke="currentColor"
-        strokeWidth="5"
+        rx="32"
+        stroke={POSTCARD_PITCH_FRAME}
+        strokeWidth="6"
       />
       <line
         x1="42"
@@ -887,22 +886,22 @@ export function MatchPostcardImage({
         height: POSTCARD_HEIGHT,
         display: "flex",
         flexDirection: "column",
-        position: "relative",
         backgroundColor: BACKGROUND,
         color: INK,
         fontFamily: "sans-serif",
       }}
     >
-      <PitchLines />
       <ClubMasthead payload={payload} crestSrc={crestSrc} />
       <div
         style={{
           display: "flex",
           flexDirection: "column",
+          position: "relative",
           padding: "34px 48px 42px",
           flex: 1,
         }}
       >
+        <PitchLines />
         {payload.kind === "scheduled" ? (
           <ScheduledPostcardBody payload={payload} />
         ) : (
