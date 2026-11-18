@@ -6,17 +6,19 @@ import {
   MatchPostcardImage,
   POSTCARD_BACKGROUND,
   POSTCARD_DETAIL_FONT_SIZE,
+  POSTCARD_FRAME,
+  POSTCARD_HEADING_GAP,
   POSTCARD_HEIGHT,
-  POSTCARD_PITCH_FILL,
+  POSTCARD_PITCH_TEXT_GAP,
   POSTCARD_ICON_FONT_SIZE,
   POSTCARD_INK,
   POSTCARD_LIST_INDENT,
   POSTCARD_MASTHEAD_HEIGHT,
   POSTCARD_PITCH_OPACITY,
   POSTCARD_SCORE_FONT_SIZE,
-  POSTCARD_SECTION_GAP,
   POSTCARD_TEAM_NAME_FONT_SIZE,
   POSTCARD_WIDTH,
+  postcardBodyPaddingTop,
   postcardGoalColumnCount,
   postcardPitchTop,
   splitPostcardGoalRows,
@@ -135,9 +137,11 @@ describe("postcard goal columns", () => {
 });
 
 describe("MatchPostcardImage layout", () => {
-  it("uses the dark page background and light text", () => {
+  it("uses a lighter frame around a darker pitch, with light text", () => {
     const html = postcardMarkup(basePayload);
-    expect(html).toContain(`background-color:${POSTCARD_BACKGROUND}`);
+    expect(html).toContain(`background-color:${POSTCARD_FRAME}`);
+    expect(html).toContain(`fill="${POSTCARD_BACKGROUND}"`);
+    expect(POSTCARD_BACKGROUND < POSTCARD_FRAME).toBe(true);
     expect(html).toContain(`color:${POSTCARD_INK}`);
   });
 
@@ -282,10 +286,12 @@ describe("MatchPostcardImage layout", () => {
       caption: "U11 Girls vs Riverside Rovers",
       fileName: "card.png",
     });
-    const gap = `margin-top:${POSTCARD_SECTION_GAP}px`;
+    const gap = `margin-top:${POSTCARD_HEADING_GAP}px`;
     expect(slotStyle(withAwards, "postcard-squad")).toContain(gap);
+    expect(slotStyle(withAwards, "postcard-form")).toContain(gap);
     expect(slotStyle(bare, "postcard-squad")).toContain(gap);
     expect(slotStyle(scheduled, "postcard-squad")).toContain(gap);
+    expect(slotStyle(scheduled, "postcard-form")).toContain(gap);
   });
 
   it("draws a faint pitch centred in the card body", () => {
@@ -298,9 +304,14 @@ describe("MatchPostcardImage layout", () => {
     expect(style).toContain("color:#A9B5B2");
     expect(style).toContain(`top:${postcardPitchTop()}px`);
     expect(style).toContain("left:0");
-    expect(html).toContain(`fill="${POSTCARD_PITCH_FILL}"`);
+    expect(html).toContain(`fill="${POSTCARD_BACKGROUND}"`);
     expect(html).toContain(`opacity="${POSTCARD_PITCH_OPACITY}"`);
-    expect(POSTCARD_PITCH_FILL.toLowerCase() > POSTCARD_BACKGROUND).toBe(true);
+    expect(slotStyle(html, "postcard-body")).toContain(
+      `padding-top:${postcardBodyPaddingTop()}px`,
+    );
+    expect(postcardBodyPaddingTop()).toBe(
+      postcardPitchTop() + 38 + POSTCARD_PITCH_TEXT_GAP,
+    );
   });
 
   it("splits a long goal list into two columns", () => {

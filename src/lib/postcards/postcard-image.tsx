@@ -11,10 +11,10 @@ import type { MatchPostcardPayload } from "@/lib/postcards/types";
 export const POSTCARD_WIDTH = 1080;
 export const POSTCARD_HEIGHT = 1350;
 
-/** Same dark page and light ink as the app (`--background`, `--foreground`). */
+/** Dark charcoal inside the pitch. */
 export const POSTCARD_BACKGROUND = "#181c1d";
-/** A step lighter than the page, the same lift as a card on the dark background. */
-export const POSTCARD_PITCH_FILL = "#232a2b";
+/** Lighter charcoal in the frame around the pitch. */
+export const POSTCARD_FRAME = "#232a2b";
 export const POSTCARD_INK = "#f5f7f6";
 /** Team names sit larger than the score box beside them. */
 export const POSTCARD_TEAM_NAME_FONT_SIZE = 50;
@@ -26,11 +26,17 @@ export const POSTCARD_ICON_FONT_SIZE = POSTCARD_DETAIL_FONT_SIZE;
 export const POSTCARD_LIST_INDENT = 72;
 /** The same gap above Matchday Squad on every card. */
 export const POSTCARD_SECTION_GAP = 32;
+/** Space above Matchday Squad and Form. They share one gap. */
+export const POSTCARD_HEADING_GAP = 42;
 /** One column until a longer list would crowd the card. */
 export const POSTCARD_GOAL_SINGLE_COLUMN_MAX = 4;
 /** Crest row: 34px padding, 84px mark, 34px padding. */
 export const POSTCARD_MASTHEAD_HEIGHT = 152;
 const POSTCARD_PITCH_HEIGHT = 1190;
+/** Top of the pitch outline inside the etching. */
+const POSTCARD_PITCH_EDGE = 38;
+/** Clear space between that edge and the date. */
+export const POSTCARD_PITCH_TEXT_GAP = 32;
 /**
  * A quarter of the earlier etching strength (0.45), so the lines stay a
  * faint texture on the dark card.
@@ -43,8 +49,13 @@ export function postcardPitchTop(): number {
   return (bodyHeight - POSTCARD_PITCH_HEIGHT) / 2;
 }
 
+/** Padding that keeps the date below the top edge of the pitch. */
+export function postcardBodyPaddingTop(): number {
+  return postcardPitchTop() + POSTCARD_PITCH_EDGE + POSTCARD_PITCH_TEXT_GAP;
+}
+
 const PITCH_DEEP = "#143328";
-const BACKGROUND = POSTCARD_BACKGROUND;
+const BACKGROUND = POSTCARD_FRAME;
 const INK = POSTCARD_INK;
 const MUTED = "#a9b5b2";
 const PITCH_LINE = "#A9B5B2";
@@ -202,7 +213,7 @@ function PitchLines() {
         width="996"
         height="1114"
         rx="16"
-        fill={POSTCARD_PITCH_FILL}
+        fill={POSTCARD_BACKGROUND}
         stroke="currentColor"
         strokeOpacity={POSTCARD_PITCH_OPACITY}
         strokeWidth="5"
@@ -692,7 +703,7 @@ function PostcardSquadAndForm({
   squadLines: string[];
   form: Array<"W" | "D" | "L">;
 }) {
-  const formMarginTop = POSTCARD_SECTION_GAP;
+  const formMarginTop = POSTCARD_HEADING_GAP;
   if (squadLines.length === 0 && form.length === 0) return null;
 
   return (
@@ -702,8 +713,7 @@ function PostcardSquadAndForm({
           data-slot="postcard-squad"
           style={stackStyle({
             alignItems: "center",
-            marginBottom: 10,
-            marginTop: POSTCARD_SECTION_GAP,
+            marginTop: POSTCARD_HEADING_GAP,
           })}
         >
           <div
@@ -736,6 +746,7 @@ function PostcardSquadAndForm({
 
       {form.length > 0 ? (
         <div
+          data-slot="postcard-form"
           style={stackStyle({
             marginTop: formMarginTop,
             alignItems: "center",
@@ -908,11 +919,15 @@ export function MatchPostcardImage({
     >
       <ClubMasthead payload={payload} crestSrc={crestSrc} />
       <div
+        data-slot="postcard-body"
         style={{
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          padding: "34px 48px 42px",
+          paddingTop: postcardBodyPaddingTop(),
+          paddingRight: 48,
+          paddingBottom: 42,
+          paddingLeft: 48,
           flex: 1,
         }}
       >
