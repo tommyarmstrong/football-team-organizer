@@ -118,7 +118,7 @@ export function FilterablePaginatedList<T>({
                   </Label>
                   <NativeSelect
                     id={pageSizeId}
-                    className="w-auto min-w-20"
+                    className="w-fit min-w-20"
                     value={pageSize === "all" ? "all" : String(pageSize)}
                     onChange={(event) =>
                       handlePageSizeChange(event.target.value)
@@ -156,7 +156,7 @@ export function FilterablePaginatedList<T>({
                   </Label>
                   <NativeSelect
                     id={`${idPrefix}-page`}
-                    className="w-auto min-w-16"
+                    className="w-fit min-w-16"
                     value={String(currentPage)}
                     onChange={(event) => setPage(Number(event.target.value))}
                     aria-label="Page"

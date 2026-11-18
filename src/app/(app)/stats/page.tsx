@@ -22,20 +22,29 @@ export default async function StatsPage() {
     );
   }
 
+  const description = `${teamDisplayName(team)} · ${team.season_label}`;
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Stats"
-        description={`${teamDisplayName(team)} · ${team.season_label}`}
-      />
-      <Suspense fallback={<PageSkeleton rows={4} />}>
-        <StatsBody team={team} />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="space-y-5">
+          <PageHeader title="Stats" description={description} />
+          <PageSkeleton rows={4} />
+        </div>
+      }
+    >
+      <StatsBody team={team} description={description} />
+    </Suspense>
   );
 }
 
-export async function StatsBody({ team }: { team: Team }) {
+export async function StatsBody({
+  team,
+  description = `${teamDisplayName(team)} · ${team.season_label}`,
+}: {
+  team: Team;
+  description?: string;
+}) {
   // §5.1 + §6.4 — Single composite RPC replaces 5 separate stat functions
   // (which collectively made ~11 DB queries). Now: 1 RPC + 1 competitions query.
   // Period starts are for club managers only, so other roles never fetch them.
@@ -58,9 +67,11 @@ export async function StatsBody({ team }: { team: Team }) {
   );
 
   return (
-    <>
+    <div className="space-y-5">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
       <StatsPageContent
+        teamId={team.id}
+        headingDescription={description}
         goalsByPlayer={stats.goalsByPlayer}
         assistsByPlayer={stats.assistsByPlayer}
         potmByPlayer={stats.potmByPlayer}
@@ -70,6 +81,6 @@ export async function StatsBody({ team }: { team: Team }) {
         results={stats.resultsOverTime}
         competitions={competitionOptions}
       />
-    </>
+    </div>
   );
 }
