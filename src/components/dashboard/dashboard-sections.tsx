@@ -205,10 +205,13 @@ export async function DashboardPlayers({ teamId }: { teamId: string }) {
   return (
     <Section title="Players">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <ul className={objectListClassName}>
+      <ul
+        className={`${objectListClassName} grid grid-cols-[max-content_minmax(0,1fr)_max-content]`}
+      >
         <li className={playerRowClassName}>
-          <span>Squad size</span>
-          <span className="tabular-nums">
+          <span className="whitespace-nowrap">Squad size</span>
+          <span />
+          <span className="text-right whitespace-nowrap tabular-nums">
             {squad.error ? "—" : squad.count}
           </span>
         </li>
@@ -279,29 +282,34 @@ function FixtureSection({
   );
 }
 
-/** Same height and type size as a compact competitions row. */
+/** Three shared columns: label, player, value. Same row height as competitions. */
 const playerRowClassName =
-  "flex min-h-9 items-center justify-between gap-3 px-3 py-1.5 text-sm";
+  "col-span-3 grid min-h-9 grid-cols-subgrid items-center gap-3 px-3 py-1.5 text-sm";
 
 function playerHighlightRows(label: string, rows: PlayerHighlight[]) {
   if (rows.length === 0) {
     return (
       <li className={playerRowClassName}>
-        <span>{label}</span>
-        <span>—</span>
+        <span className="whitespace-nowrap">{label}</span>
+        <span />
+        <span className="text-right whitespace-nowrap">—</span>
       </li>
     );
   }
 
   return rows.map((row) => (
-    <li key={row.id}>
+    <li key={row.id} className="col-span-3 grid grid-cols-subgrid">
       <Link
         href={`/people/${row.personId}`}
-        className={objectListRowClassName("min-h-9 justify-between py-1.5")}
+        className={objectListRowClassName(
+          "col-span-3 grid min-h-9 grid-cols-subgrid py-1.5",
+        )}
       >
-        <span className="shrink-0">{label}</span>
-        <span className="min-w-0 flex-1 truncate">{row.name}</span>
-        <span className="shrink-0 tabular-nums">{row.valueLabel}</span>
+        <span className="whitespace-nowrap">{label}</span>
+        <span className="min-w-0 truncate">{row.name}</span>
+        <span className="text-right whitespace-nowrap tabular-nums">
+          {row.valueLabel}
+        </span>
       </Link>
     </li>
   ));

@@ -245,7 +245,7 @@ function categoryHtml(html: string, label: string): string {
 function namesIn(html: string, label: string): string[] {
   return [
     ...categoryHtml(html, label).matchAll(
-      /<span class="min-w-0 flex-1 truncate">([^<]+)<\/span>/g,
+      /<span class="min-w-0 truncate">([^<]+)<\/span>/g,
     ),
   ].map((match) => match[1] ?? "");
 }
@@ -456,7 +456,10 @@ describe("DashboardFixtures last result share", () => {
     expect(source).not.toContain('title="Season at a glance"');
     expect(source).not.toContain('title="Awards"');
     expect(source).not.toContain("AwardBadge");
-    expect(source).toContain("min-h-9 justify-between py-1.5");
+    expect(source).toContain(
+      "grid-cols-[max-content_minmax(0,1fr)_max-content]",
+    );
+    expect(source).toContain("grid-cols-subgrid");
     expect(source).not.toContain("MatchHero");
     expect(source).not.toContain("scheduledBadge");
     expect(source).not.toContain("SharePostcardButton");

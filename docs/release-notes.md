@@ -7,7 +7,7 @@ Product updates for Football Team Organizer, written for coaches, managers, and 
 ## 18 November 2026 — Dashboard overview and squad status
 
 - Season at a glance on the Dashboard is now Results. The leaderboards and the Player of the month list are gone, so the Dashboard no longer repeats the Stats page.
-- A Players section shows the squad size, the latest player of the month, and the leaders for player of the match, goals, and assists. When players are tied, each of them is listed. The rows use the same type size as the competitions list.
+- A Players section shows the squad size, the latest player of the month, and the leaders for player of the match, goals, and assists. When players are tied, each of them is listed. The label, name, and number sit in three aligned columns, at the same type size as the competitions list.
 - On a larger screen, Results sits beside Form, Next fixture beside Last result, and Competitions beside Players. A phone still shows one section under the next.
 - On the Team page, player of the month names line up on the left. Inactive players are marked on the squad list, and they are left out of the squad total.
 
