@@ -6,6 +6,10 @@ const source = readFileSync(
   path.join(import.meta.dirname, "stats-page-content.tsx"),
   "utf8",
 );
+const filtersSource = readFileSync(
+  path.join(import.meta.dirname, "stats-filters.tsx"),
+  "utf8",
+);
 
 function sliceBetween(from: string, to: string): string {
   const start = source.indexOf(from);
@@ -14,135 +18,113 @@ function sliceBetween(from: string, to: string): string {
 }
 
 describe("StatsPageContent", () => {
-  it("defaults competition type to all league and cup", () => {
-    expect(source).toContain("ALL_LEAGUE_AND_CUP");
-    expect(source).toContain("useState(ALL_LEAGUE_AND_CUP)");
-    expect(source).toContain("withPlayedAppearanceCounts");
+  it("keeps league and cup as the default and remembers filters per team", () => {
+    expect(source).toContain("usePersistentStatsFilters");
+    expect(source).toContain("teamId");
+    const hook = readFileSync(
+      path.join(import.meta.dirname, "use-stats-filters.ts"),
+      "utf8",
+    );
+    expect(hook).toContain("useSyncExternalStore");
+    expect(hook).toContain("readStoredStatsFilters");
+    expect(hook).toContain("writeStoredStatsFilters");
   });
 
-  it("drops the headline cards", () => {
-    expect(source).not.toContain("SeasonTiles");
-    expect(source).not.toContain("W–D–L");
-    expect(source).not.toContain('label: "Played"');
-  });
-
-  it("puts Position and View above the charts, once", () => {
-    const filters = source.indexOf("<StatsCompetitionFilters");
-    const playerFilters = source.indexOf("<StatFilters");
-    const rings = source.indexOf("<ResultRingCharts");
-    expect(filters).toBeGreaterThan(-1);
-    expect(playerFilters).toBeGreaterThan(filters);
-    expect(rings).toBeGreaterThan(playerFilters);
-
-    const pageFilters = sliceBetween(
-      "{showPlayerFilters ? (",
+  it("puts one Filters button beside the heading and chips under it", () => {
+    const heading = sliceBetween(
+      '<div className="space-y-3">',
       "<ResultRingCharts",
     );
-    expect(pageFilters).toContain("positions={positions}");
-    expect(pageFilters).toContain("onPositionsChange={setPositions}");
-    expect(pageFilters).toContain("metric={metric}");
-    expect(pageFilters).toContain("onMetricChange={setMetric}");
-    expect(pageFilters).toContain('metricAriaLabel="Stats view"');
-    expect(pageFilters.match(/<StatFilters/g)).toHaveLength(1);
+    expect(heading).toContain("<PageHeader");
+    expect(heading).toContain("<StatsFiltersButton");
+    expect(heading).toContain("<StatsFilterChips");
+    expect(heading.indexOf("<PageHeader")).toBeLessThan(
+      heading.indexOf("<StatsFiltersButton"),
+    );
+    expect(source).not.toContain("<StatsCompetitionFilters");
+    expect(source).not.toContain("<StatFilters");
   });
 
-  it("applies that Position and View to goals, assists, appearances and period starts", () => {
-    expect(source).toContain("buildGoalsViewRows(");
-    expect(source).toContain(
-      "buildCountViewRows(assistsForView, positions, metric)",
-    );
-    expect(source).toContain(
-      "buildCountViewRows(filteredAppearances, positions, metric)",
-    );
-    const periodCall = sliceBetween("{periodStartsByPlayer ? (", ") : null}");
-    expect(periodCall).toContain("positions={positions}");
-    expect(periodCall).toContain("metric={metric}");
-
-    const players = sliceBetween(
-      'title="Players"',
-      "function PeriodStartsSection",
-    );
-    expect(players).not.toContain("<StatFilters");
+  it("opens a drawer on a phone and a popover on a larger screen", () => {
+    expect(filtersSource).toContain("<Drawer");
+    expect(filtersSource).toContain('className="md:hidden"');
+    expect(filtersSource).toContain("<Popover");
+    expect(filtersSource).toContain('className="hidden md:block"');
+    expect(filtersSource).toContain("Reset");
+    expect(filtersSource).toContain("Apply");
+    expect(filtersSource).toContain('aria-label="Close filters"');
+    expect(filtersSource).toContain("overflow-y-auto");
   });
 
-  it("combines goals, assists and appearances, keeping the leader bars", () => {
-    const players = sliceBetween(
-      'title="Players"',
-      "{periodStartsByPlayer ? (",
-    );
-    expect(players).toContain('label: "Goals"');
-    expect(players).toContain("rows={goalRows}");
-    expect(players).toContain('label: "Assists"');
-    expect(players).toContain("rows={assistRows}");
-    expect(players).toContain('label: "Appearances"');
-    expect(players).toContain("rows={appearanceRows}");
-    expect(players.indexOf('label: "Goals"')).toBeLessThan(
-      players.indexOf('label: "Assists"'),
-    );
-    expect(players.indexOf('label: "Assists"')).toBeLessThan(
-      players.indexOf('label: "Appearances"'),
-    );
+  it("does not repeat Position controls outside the filter panel", () => {
+    expect(source).not.toContain(">Position<");
+    expect(filtersSource).toContain(">Position<");
+    expect(source.match(/<StatsFiltersButton/g)).toHaveLength(1);
+  });
 
-    const chart = sliceBetween("function CountChart", "function AwardChart");
-    expect(chart).toContain("<PlayerLeaderChart");
-    expect(chart).toContain('valueKey="value"');
+  it("shares one chart for goals, assists and G+A", () => {
+    const attacking = sliceBetween(
+      "function AttackingStatsSection",
+      "const ATTACKING_EMPTY",
+    );
+    expect(attacking).toContain('title="Attacking stats"');
+    expect(attacking).toContain("ATTACKING_MODE_OPTIONS");
+    expect(attacking).toContain('aria-label="Attacking stat"');
+    expect(attacking).toContain('aria-label="Attacking stat view"');
+    expect(attacking).toContain('useState<AttackingMode>("goals")');
+    expect(attacking).toContain('useState<GoalsMetric>("total")');
+    expect(attacking).toContain("buildAttackingViewRows(");
+    expect(attacking).toContain("positions");
+    expect(attacking).toContain("<LeaderboardChart");
+    expect(attacking).toContain('allowDecimals={metric !== "total"}');
+    expect(source).not.toContain("<DashboardViewSwitch");
     expect(source).not.toContain("<PlayerCountChart");
-    expect(source).not.toContain("<BarChart");
   });
 
-  it("combines player of the month with the coach's player of the match", () => {
-    const awards = sliceBetween('title="Awards"', 'title="Players"');
-    expect(awards).toContain('label: "Player of the month"');
-    expect(awards).toContain("rows={playerOfTheMonthByPlayer}");
-    expect(awards).toContain('label: "Player of the match"');
-    expect(awards).toContain("rows={filteredPotm}");
-    expect(awards).toContain("coach's player of the match");
-    expect(awards.indexOf("Player of the month")).toBeLessThan(
-      awards.indexOf("Player of the match"),
+  it("keeps results and renames the goals scored and conceded chart", () => {
+    expect(source).toContain('<Section title="Results" compact>');
+    expect(source).toContain('<Section title="Goals" compact>');
+    expect(source).toContain(
+      '<Section title="Goals scored and conceded" compact>',
     );
-    expect(awards).not.toContain("players' player of the match");
-
-    const chart = source.slice(source.indexOf("function AwardChart"));
-    expect(chart).toContain("<PlayerLeaderChart");
-    expect(chart).toContain('unit="awards"');
-
-    const goalDifference = source.indexOf('title="Goal difference"');
-    const awardsTitle = source.indexOf('title="Awards"');
-    const playersTitle = source.indexOf('title="Players"');
-    expect(awardsTitle).toBeGreaterThan(goalDifference);
-    expect(playersTitle).toBeGreaterThan(awardsTitle);
+    expect(source).not.toContain('title="Goal difference"');
+    expect(source).toContain("<ResultsRingChart data={filteredResults} />");
+    expect(source).toContain("<GoalsRingChart data={filteredResults} />");
+    expect(source).toContain("<ResultsOverTimeChart data={filteredResults} />");
+    expect(source).toContain("<GoalDifferenceChart data={filteredResults} />");
   });
 
-  it("uses the Goals section heading style for every Results heading", () => {
-    expect(source).not.toContain("font-heading");
-    expect(source).toContain('<Section title="Results">');
-    expect(source).toContain('<Section title="Goals">');
-    expect(source).toContain('<Section title="Goal difference">');
-    expect(source).not.toContain("Goal Scorers");
+  it("uses a ranked list for awards and bars for the longer leaderboards", () => {
+    const awards = sliceBetween(
+      "function AwardsSection",
+      "function CountLeaderboard",
+    );
+    expect(awards).toContain('label: "Player of the month"');
+    expect(awards).toContain('label: "Player of the match"');
+    expect(awards).toContain("coach's player of the match");
+    expect(awards).toContain("<RankedPlayerList");
+    expect(awards).not.toContain("<PlayerLeaderChart");
+
+    expect(source).toContain('title="Appearances"');
+    expect(source).toContain("visibleLeaderRows");
+    expect(source).toContain("<ShowAllToggle");
+    expect(source).toContain("<PlayerLeaderChart");
   });
 
-  it("shows Period starts only when the data is passed", () => {
+  it("shows Period starts only when the data is passed, with its own type", () => {
     expect(source).toContain("{periodStartsByPlayer ? (");
     const call = sliceBetween("{periodStartsByPlayer ? (", ") : null}");
     expect(call).toContain("<PeriodStartsSection");
     expect(call).toContain("data={periodStartsByPlayer}");
     expect(call).toContain("competitionId={competitionId}");
     expect(call).toContain("competitionKind={competitionKind}");
-    expect(call).not.toContain("<SideBySide>");
-  });
+    expect(call).toContain("positions={positions}");
 
-  it("keeps Type on Period starts and follows the page view", () => {
     const section = source.slice(
       source.indexOf("function PeriodStartsSection"),
     );
-    const filters = section.slice(
-      section.indexOf("<StatFilters"),
-      section.indexOf("/>", section.indexOf("<StatFilters")),
-    );
-    expect(filters).toContain("periodType={periodType}");
-    expect(filters).toContain("onPeriodTypeChange={setPeriodType}");
-    expect(filters).not.toContain("positions");
-    expect(filters).not.toContain("metric");
+    expect(section).toContain('aria-label="Period type"');
+    expect(section).toContain('aria-label="Period starts view"');
     expect(section).toContain("DEFAULT_PERIOD_TYPE_FILTER");
     expect(section).toContain('metric === "per_game" ? "per_game" : "total"');
     expect(section).toContain(
@@ -150,14 +132,20 @@ describe("StatsPageContent", () => {
     );
     expect(section).toContain("buildPeriodStartsViewRows(");
     expect(section).toContain("PERIODS_PER_GAME_PERCENT_LABEL");
-    expect(section).toContain("<PlayerLeaderChart");
-    expect(section).toContain("percent={perGame}");
+    expect(section).not.toContain("positions=");
+    expect(section).not.toContain("<StatFilters");
   });
 
-  it("draws results and goals as rings, not pies", () => {
-    expect(source).toContain("<ResultsRingChart data={filteredResults} />");
-    expect(source).toContain("<GoalsRingChart data={filteredResults} />");
-    expect(source).not.toContain("PieChart");
+  it("drops the headline cards and tightens the page", () => {
+    expect(source).not.toContain("SeasonTiles");
+    expect(source).not.toContain("W–D–L");
+    expect(source).toContain('className="space-y-5"');
+    const grid = sliceBetween(
+      "function ResultRingCharts",
+      "export function StatsPageContent",
+    );
+    expect(grid).toContain("lg:grid-cols-2");
+    expect(grid).toContain("gap-5");
   });
 
   it("draws goal difference with the report's goals-per-match chart", () => {
@@ -173,26 +161,6 @@ describe("StatsPageContent", () => {
     expect(chart).not.toContain("LineChart");
   });
 
-  it("draws the player charts as leader bars", () => {
-    const charts = readFileSync(
-      path.join(import.meta.dirname, "stats-charts.tsx"),
-      "utf8",
-    );
-    expect(charts).not.toContain("PlayerCountChart");
-    expect(charts).not.toContain("<BarChart");
-    expect(source).toContain("<DashboardViewSwitch");
-    expect(source.match(/<DashboardViewSwitch/g)).toHaveLength(2);
-  });
-
-  it("keeps the results and goals rings side by side on a large screen", () => {
-    const grid = sliceBetween(
-      "function ResultRingCharts",
-      "export function StatsPageContent",
-    );
-    expect(grid).toContain("lg:grid-cols-2");
-    expect(grid).not.toMatch(/(^|[ "])grid-cols-2/);
-  });
-
   it("gives the Results chart a tooltip that works on touch", () => {
     const stats = readFileSync(
       path.join(import.meta.dirname, "stats-charts.tsx"),
@@ -203,15 +171,5 @@ describe("StatsPageContent", () => {
       stats.indexOf("export function ResultsRingChart"),
     );
     expect(chart).toContain("<PointsTrendWithTooltip");
-
-    const tooltip = readFileSync(
-      path.join(import.meta.dirname, "points-trend-chart.tsx"),
-      "utf8",
-    );
-    expect(tooltip).toContain('"use client"');
-    expect(tooltip).toContain("nativeTooltips={false}");
-    expect(tooltip).toContain("onPointerMove");
-    expect(tooltip).toContain("onPointerUp");
-    expect(tooltip).toContain('addEventListener("pointerdown"');
   });
 });

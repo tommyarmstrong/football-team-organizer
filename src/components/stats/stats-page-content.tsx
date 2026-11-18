@@ -7,40 +7,54 @@ import type {
   PlayerCountPoint,
   ResultOverTimePoint,
 } from "@/lib/data/stats";
+import type { CompetitionFilterOption } from "@/lib/stats/competition-filters";
 import {
-  ALL_COMPETITIONS,
-  ALL_LEAGUE_AND_CUP,
-  type CompetitionFilterOption,
-} from "@/lib/stats/competition-filters";
-import { buildCountViewRows, countMetricLabel } from "@/lib/stats/count-view";
+  ATTACKING_MODE_OPTIONS,
+  attackingUnit,
+  buildAttackingViewRows,
+  type AttackingMode,
+} from "@/lib/stats/attacking-view";
+import { buildCountViewRows } from "@/lib/stats/count-view";
 import {
-  buildPeriodStartsViewRows,
-  DEFAULT_PERIOD_TYPE_FILTER,
-  filterPeriodStarts,
-  PERIODS_PER_GAME_PERCENT_LABEL,
-  type PeriodTypeFilter,
-} from "@/lib/stats/period-starts-view";
+  filterGoalsByCompetition,
+  GOALS_METRIC_OPTIONS,
+  type GoalsMetric,
+  type GoalsPositionFilter,
+} from "@/lib/stats/goals-view";
+import {
+  leaderboardCanExpand,
+  visibleLeaderRows,
+} from "@/lib/stats/leaderboard-window";
 import {
   filterPlayerCountPoints,
   withPlayedAppearanceCounts,
 } from "@/lib/stats/player-counts";
 import {
-  buildGoalsViewRows,
-  goalsMetricLabel,
-  type GoalsMetric,
-  type GoalsPositionFilter,
-} from "@/lib/stats/goals-view";
-import { StatFilters } from "@/components/stats/stat-filters";
+  buildPeriodStartsViewRows,
+  DEFAULT_PERIOD_TYPE_FILTER,
+  filterPeriodStarts,
+  PERIOD_TYPE_FILTER_OPTIONS,
+  PERIODS_PER_GAME_PERCENT_LABEL,
+  type PeriodTypeFilter,
+} from "@/lib/stats/period-starts-view";
 import {
   filterResults,
   tallyGoals,
   tallyResults,
 } from "@/lib/stats/results-view";
-import { StatsCompetitionFilters } from "@/components/stats/stats-competition-filters";
-import { DashboardViewSwitch } from "@/components/dashboard/dashboard-view-switch";
+import { RankedPlayerList } from "@/components/stats/ranked-player-list";
+import { ShowAllToggle } from "@/components/stats/show-all-toggle";
+import {
+  StatsFilterChips,
+  StatsFiltersButton,
+} from "@/components/stats/stats-filters";
+import { usePersistentStatsFilters } from "@/components/stats/use-stats-filters";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PageHeader } from "@/components/shared/page-header";
 import { Section } from "@/components/shared/section";
 import { Skeleton } from "@/components/shared/skeleton";
+import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 
 const GoalDifferenceChart = dynamic(
   () =>
@@ -104,8 +118,8 @@ function ResultRingCharts({
   emptyFilterDescription: string;
 }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      <Section title="Results">
+    <div className="grid gap-5 lg:grid-cols-2">
+      <Section title="Results" compact>
         {results.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -121,7 +135,7 @@ function ResultRingCharts({
         )}
       </Section>
 
-      <Section title="Goals">
+      <Section title="Goals" compact>
         {results.length === 0 ? (
           <EmptyState
             title="No goals yet"
@@ -141,6 +155,8 @@ function ResultRingCharts({
 }
 
 export function StatsPageContent({
+  teamId,
+  headingDescription,
   goalsByPlayer,
   assistsByPlayer,
   potmByPlayer,
@@ -150,6 +166,8 @@ export function StatsPageContent({
   results,
   competitions,
 }: {
+  teamId: string;
+  headingDescription: string;
   goalsByPlayer: GoalsByPlayerPoint[];
   assistsByPlayer: PlayerCountPoint[];
   potmByPlayer: PlayerCountPoint[];
@@ -160,10 +178,11 @@ export function StatsPageContent({
   results: ResultOverTimePoint[];
   competitions: CompetitionFilterOption[];
 }) {
-  const [competitionId, setCompetitionId] = useState(ALL_COMPETITIONS);
-  const [competitionKind, setCompetitionKind] = useState(ALL_LEAGUE_AND_CUP);
-  const [positions, setPositions] = useState<GoalsPositionFilter[]>(["ALL"]);
-  const [metric, setMetric] = useState<GoalsMetric>("total");
+  const { filters, updateFilters } = usePersistentStatsFilters(
+    teamId,
+    competitions,
+  );
+  const { competitionId, competitionKind, positions } = filters;
 
   const filteredResults = useMemo(
     () => filterResults(results, competitionId, competitionKind),
@@ -184,31 +203,20 @@ export function StatsPageContent({
     [competitionId, competitionKind, matchesPlayed],
   );
   const goalsForView = useMemo(
-    () => withPlayedAppearanceCounts(goalsByPlayer, filteredAppearances),
-    [filteredAppearances, goalsByPlayer],
+    () =>
+      withPlayedAppearanceCounts(
+        filterGoalsByCompetition(goalsByPlayer, competitionId, competitionKind),
+        filteredAppearances,
+      ),
+    [competitionId, competitionKind, filteredAppearances, goalsByPlayer],
   );
   const assistsForView = useMemo(
     () => withPlayedAppearanceCounts(filteredAssists, filteredAppearances),
     [filteredAppearances, filteredAssists],
   );
-  const goalRows = useMemo(
-    () =>
-      buildGoalsViewRows(
-        goalsForView,
-        positions,
-        metric,
-        competitionId,
-        competitionKind,
-      ),
-    [competitionId, competitionKind, goalsForView, metric, positions],
-  );
-  const assistRows = useMemo(
-    () => buildCountViewRows(assistsForView, positions, metric),
-    [assistsForView, metric, positions],
-  );
   const appearanceRows = useMemo(
-    () => buildCountViewRows(filteredAppearances, positions, metric),
-    [filteredAppearances, metric, positions],
+    () => buildCountViewRows(filteredAppearances, positions, "total"),
+    [filteredAppearances, positions],
   );
 
   const resultTally = tallyResults(filteredResults);
@@ -218,40 +226,38 @@ export function StatsPageContent({
     resultTally.wins + resultTally.draws + resultTally.losses > 0;
   const hasGoals = goalsTally.goalsFor + goalsTally.goalsAgainst > 0;
   const emptyFilterDescription = "Try another competition or competition type.";
-  const showCompetitionFilters =
+  const showFilters =
     results.length > 0 ||
     goalsByPlayer.length > 0 ||
     assistsByPlayer.length > 0 ||
     potmByPlayer.length > 0 ||
-    matchesPlayed.length > 0;
-  const showPlayerFilters =
-    goalsByPlayer.length > 0 ||
-    assistsByPlayer.length > 0 ||
     matchesPlayed.length > 0 ||
     (periodStartsByPlayer?.length ?? 0) > 0;
 
   return (
-    <>
-      {showCompetitionFilters ? (
-        <StatsCompetitionFilters
-          idPrefix="stats"
-          competitions={competitions}
-          competitionId={competitionId}
-          competitionKind={competitionKind}
-          onCompetitionIdChange={setCompetitionId}
-          onCompetitionKindChange={setCompetitionKind}
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <PageHeader
+          title="Stats"
+          description={headingDescription}
+          actions={
+            showFilters ? (
+              <StatsFiltersButton
+                competitions={competitions}
+                value={filters}
+                onChange={updateFilters}
+              />
+            ) : null
+          }
         />
-      ) : null}
-
-      {showPlayerFilters ? (
-        <StatFilters
-          positions={positions}
-          onPositionsChange={setPositions}
-          metric={metric}
-          onMetricChange={setMetric}
-          metricAriaLabel="Stats view"
-        />
-      ) : null}
+        {showFilters ? (
+          <StatsFilterChips
+            competitions={competitions}
+            value={filters}
+            onChange={updateFilters}
+          />
+        ) : null}
+      </div>
 
       <ResultRingCharts
         results={results}
@@ -261,7 +267,7 @@ export function StatsPageContent({
         emptyFilterDescription={emptyFilterDescription}
       />
 
-      <Section title="Results">
+      <Section title="Results" compact>
         {results.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -277,7 +283,7 @@ export function StatsPageContent({
         )}
       </Section>
 
-      <Section title="Goal difference">
+      <Section title="Goals scored and conceded" compact>
         {results.length === 0 ? (
           <EmptyState
             title="No results yet"
@@ -293,91 +299,33 @@ export function StatsPageContent({
         )}
       </Section>
 
-      {/* Monthly awards are recorded per team, so competition filters do not change that chart. */}
-      <DashboardViewSwitch
-        title="Awards"
-        views={[
-          {
-            id: "month",
-            label: "Player of the month",
-            content: (
-              <AwardChart
-                sourceCount={playerOfTheMonthByPlayer.length}
-                rows={playerOfTheMonthByPlayer}
-                emptyTitle="No awards yet"
-                emptyDescription="Add player of the month awards from the Team page to populate this chart."
-              />
-            ),
-          },
-          {
-            id: "match",
-            label: "Player of the match",
-            content: (
-              <AwardChart
-                sourceCount={potmByPlayer.length}
-                rows={filteredPotm}
-                emptyTitle="No awards yet"
-                emptyDescription="Select the coach's player of the match on fixtures to populate this chart."
-                filteredOut={
-                  potmByPlayer.length > 0 && filteredPotm.length === 0
-                }
-                emptyFilterDescription={emptyFilterDescription}
-              />
-            ),
-          },
-        ]}
+      <AttackingStatsSection
+        goalsByPlayer={goalsByPlayer}
+        assistsByPlayer={assistsByPlayer}
+        goalsForView={goalsForView}
+        assistsForView={assistsForView}
+        positions={positions}
       />
 
-      <DashboardViewSwitch
-        title="Players"
-        views={[
-          {
-            id: "goals",
-            label: "Goals",
-            content: (
-              <CountChart
-                sourceCount={goalsByPlayer.length}
-                rows={goalRows}
-                emptyTitle="No goals yet"
-                emptyDescription="Add goals on match detail pages to populate this chart."
-                emptyViewTitle="No goals for this view"
-                unit={goalsMetricLabel(metric).toLowerCase()}
-                allowDecimals={metric !== "total"}
-              />
-            ),
-          },
-          {
-            id: "assists",
-            label: "Assists",
-            content: (
-              <CountChart
-                sourceCount={assistsByPlayer.length}
-                rows={assistRows}
-                emptyTitle="No assists yet"
-                emptyDescription="Add assists on match detail pages to populate this chart."
-                emptyViewTitle="No assists for this view"
-                unit={countMetricLabel(metric, "Assists").toLowerCase()}
-                allowDecimals={metric !== "total"}
-              />
-            ),
-          },
-          {
-            id: "appearances",
-            label: "Appearances",
-            content: (
-              <CountChart
-                sourceCount={matchesPlayed.length}
-                rows={appearanceRows}
-                emptyTitle="No squad appearances yet"
-                emptyDescription="Add match-day squads to populate this chart."
-                emptyViewTitle="No appearances for this view"
-                unit={countMetricLabel(metric, "Matches").toLowerCase()}
-                allowDecimals={metric !== "total"}
-              />
-            ),
-          },
-        ]}
+      {/* Monthly awards have no competition. Match awards do. Neither row
+          carries a position, so the position filter is not applied here. */}
+      <AwardsSection
+        monthly={playerOfTheMonthByPlayer}
+        potm={potmByPlayer}
+        filteredPotm={filteredPotm}
+        emptyFilterDescription={emptyFilterDescription}
       />
+
+      <Section title="Appearances" compact>
+        <CountLeaderboard
+          sourceCount={matchesPlayed.length}
+          rows={appearanceRows}
+          emptyTitle="No squad appearances yet"
+          emptyDescription="Add match-day squads to populate this chart."
+          emptyViewTitle="No appearances for this view"
+          unit="matches"
+        />
+      </Section>
 
       {periodStartsByPlayer ? (
         <PeriodStartsSection
@@ -385,34 +333,338 @@ export function StatsPageContent({
           competitionId={competitionId}
           competitionKind={competitionKind}
           positions={positions}
-          metric={metric}
         />
       ) : null}
-    </>
+    </div>
+  );
+}
+
+function AttackingStatsSection({
+  goalsByPlayer,
+  assistsByPlayer,
+  goalsForView,
+  assistsForView,
+  positions,
+}: {
+  goalsByPlayer: GoalsByPlayerPoint[];
+  assistsByPlayer: PlayerCountPoint[];
+  goalsForView: GoalsByPlayerPoint[];
+  assistsForView: PlayerCountPoint[];
+  positions: GoalsPositionFilter[];
+}) {
+  const [mode, setMode] = useState<AttackingMode>("goals");
+  const [metric, setMetric] = useState<GoalsMetric>("total");
+  const [expanded, setExpanded] = useState(false);
+  const rows = useMemo(
+    () =>
+      buildAttackingViewRows(
+        goalsForView,
+        assistsForView,
+        positions,
+        mode,
+        metric,
+      ),
+    [assistsForView, goalsForView, metric, mode, positions],
+  );
+  const sourceCount =
+    mode === "assists"
+      ? assistsByPlayer.length
+      : mode === "goals"
+        ? goalsByPlayer.length
+        : goalsByPlayer.length + assistsByPlayer.length;
+  const copy = ATTACKING_EMPTY[mode];
+
+  return (
+    <Section
+      title="Attacking stats"
+      compact
+      actions={
+        <NativeSelect
+          aria-label="Attacking stat view"
+          className="h-11 w-auto"
+          value={metric}
+          onChange={(event) => {
+            setMetric(event.target.value as GoalsMetric);
+            setExpanded(false);
+          }}
+        >
+          {GOALS_METRIC_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </NativeSelect>
+      }
+    >
+      <div className="space-y-3">
+        <div
+          className="grid grid-cols-3 gap-2"
+          role="group"
+          aria-label="Attacking stat"
+        >
+          {ATTACKING_MODE_OPTIONS.map((option) => {
+            const pressed = option.value === mode;
+            return (
+              <Button
+                key={option.value}
+                type="button"
+                variant={pressed ? "default" : "outline"}
+                className="h-11 w-full"
+                aria-pressed={pressed}
+                onClick={() => {
+                  setMode(option.value);
+                  setExpanded(false);
+                }}
+              >
+                {option.label}
+              </Button>
+            );
+          })}
+        </div>
+        {sourceCount === 0 ? (
+          <EmptyState title={copy.title} description={copy.description} />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            title={copy.viewTitle}
+            description="Try another competition, competition type, or position."
+          />
+        ) : (
+          <LeaderboardChart
+            rows={rows}
+            expanded={expanded}
+            onToggle={() => setExpanded((open) => !open)}
+            unit={attackingUnit(mode, metric)}
+            allowDecimals={metric !== "total"}
+          />
+        )}
+      </div>
+    </Section>
+  );
+}
+
+const ATTACKING_EMPTY: Record<
+  AttackingMode,
+  { title: string; description: string; viewTitle: string }
+> = {
+  goals: {
+    title: "No goals yet",
+    description: "Add goals on match detail pages to populate this chart.",
+    viewTitle: "No goals for this view",
+  },
+  assists: {
+    title: "No assists yet",
+    description: "Add assists on match detail pages to populate this chart.",
+    viewTitle: "No assists for this view",
+  },
+  involvements: {
+    title: "No goals or assists yet",
+    description:
+      "Add goals and assists on match detail pages to populate this chart.",
+    viewTitle: "No attacking stats for this view",
+  },
+};
+
+function AwardsSection({
+  monthly,
+  potm,
+  filteredPotm,
+  emptyFilterDescription,
+}: {
+  monthly: PlayerCountPoint[];
+  potm: PlayerCountPoint[];
+  filteredPotm: PlayerCountPoint[];
+  emptyFilterDescription: string;
+}) {
+  const [view, setView] = useState<"month" | "match">("month");
+  const views = [
+    {
+      id: "month" as const,
+      label: "Player of the month",
+      sourceCount: monthly.length,
+      rows: monthly,
+      emptyTitle: "No awards yet",
+      emptyDescription:
+        "Add player of the month awards from the Team page to populate this list.",
+      filteredOut: false,
+    },
+    {
+      id: "match" as const,
+      label: "Player of the match",
+      sourceCount: potm.length,
+      rows: filteredPotm,
+      emptyTitle: "No awards yet",
+      emptyDescription:
+        "Select the coach's player of the match on fixtures to populate this list.",
+      filteredOut: potm.length > 0 && filteredPotm.length === 0,
+    },
+  ];
+  const active = views.find((item) => item.id === view) ?? views[0]!;
+
+  return (
+    <Section title="Awards" compact>
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Awards">
+          {views.map((item) => {
+            const pressed = item.id === view;
+            return (
+              <Button
+                key={item.id}
+                type="button"
+                variant={pressed ? "default" : "outline"}
+                className="h-11"
+                aria-pressed={pressed}
+                onClick={() => setView(item.id)}
+              >
+                {item.label}
+              </Button>
+            );
+          })}
+        </div>
+        <AwardList
+          key={active.id}
+          sourceCount={active.sourceCount}
+          rows={active.rows}
+          emptyTitle={active.emptyTitle}
+          emptyDescription={active.emptyDescription}
+          filteredOut={active.filteredOut}
+          emptyFilterDescription={emptyFilterDescription}
+        />
+      </div>
+    </Section>
+  );
+}
+
+function AwardList({
+  sourceCount,
+  rows,
+  emptyTitle,
+  emptyDescription,
+  filteredOut,
+  emptyFilterDescription,
+}: {
+  sourceCount: number;
+  rows: PlayerCountPoint[];
+  emptyTitle: string;
+  emptyDescription: string;
+  filteredOut: boolean;
+  emptyFilterDescription: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (sourceCount === 0) {
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+  }
+  if (filteredOut || rows.length === 0) {
+    return (
+      <EmptyState
+        title="No awards for this filter"
+        description={emptyFilterDescription}
+      />
+    );
+  }
+  const visible = visibleLeaderRows(rows, expanded);
+  return (
+    <div className="space-y-2">
+      <RankedPlayerList rows={visible} unit="awards" />
+      {leaderboardCanExpand(rows.length) ? (
+        <ShowAllToggle
+          expanded={expanded}
+          onToggle={() => setExpanded((open) => !open)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CountLeaderboard({
+  sourceCount,
+  rows,
+  emptyTitle,
+  emptyDescription,
+  emptyViewTitle,
+  unit,
+}: {
+  sourceCount: number;
+  rows: Array<{ playerId: string; name: string; count: number; value: number }>;
+  emptyTitle: string;
+  emptyDescription: string;
+  emptyViewTitle: string;
+  unit: string;
+}) {
+  if (sourceCount === 0) {
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+  }
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title={emptyViewTitle}
+        description="Try another competition, competition type, or position."
+      />
+    );
+  }
+  return <LeaderboardChart rows={rows} unit={unit} />;
+}
+
+function LeaderboardChart({
+  rows,
+  unit,
+  allowDecimals = false,
+  percent = false,
+  expanded: expandedProp,
+  onToggle,
+}: {
+  rows: Array<{
+    playerId: string;
+    name: string;
+    count: number;
+    value?: number;
+  }>;
+  unit: string;
+  allowDecimals?: boolean;
+  percent?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
+}) {
+  const [expandedState, setExpandedState] = useState(false);
+  const expanded = expandedProp ?? expandedState;
+  const toggle = onToggle ?? (() => setExpandedState((open) => !open));
+  const visible = visibleLeaderRows(rows, expanded);
+
+  return (
+    <div className="space-y-2">
+      <PlayerLeaderChart
+        data={visible}
+        unit={unit}
+        allowDecimals={allowDecimals}
+        percent={percent}
+        valueKey="value"
+      />
+      {leaderboardCanExpand(rows.length) ? (
+        <ShowAllToggle expanded={expanded} onToggle={toggle} />
+      ) : null}
+    </div>
   );
 }
 
 /**
- * Club-manager-only Period starts. Position and View come from the page.
- * Type stays here. "Per period" is a rate for goals, assists and appearances,
- * so that view keeps the periods total.
+ * Club-manager-only Period starts. Position comes from the page filters.
+ * Type and the periods / per-game view stay here, because they belong to
+ * this statistic alone.
  */
 function PeriodStartsSection({
   data,
   competitionId,
   competitionKind,
   positions,
-  metric,
 }: {
   data: PlayerCountPoint[];
   competitionId: string;
   competitionKind: string;
   positions: GoalsPositionFilter[];
-  metric: GoalsMetric;
 }) {
   const [periodType, setPeriodType] = useState<PeriodTypeFilter>(
     DEFAULT_PERIOD_TYPE_FILTER,
   );
+  const [metric, setMetric] = useState<GoalsMetric>("total");
   const rows = useMemo(
     () =>
       buildPeriodStartsViewRows(
@@ -425,26 +677,47 @@ function PeriodStartsSection({
   const perGame = metric === "per_game";
 
   return (
-    <Section title="Period starts">
+    <Section title="Period starts" compact>
       {data.length === 0 ? (
         <EmptyState
           title="No period starts yet"
           description="Add starting players to match periods to populate this chart."
         />
       ) : (
-        <div className="space-y-4">
-          <StatFilters
-            periodType={periodType}
-            onPeriodTypeChange={setPeriodType}
-          />
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <NativeSelect
+              aria-label="Period type"
+              className="h-11 w-auto"
+              value={periodType}
+              onChange={(event) =>
+                setPeriodType(event.target.value as PeriodTypeFilter)
+              }
+            >
+              {PERIOD_TYPE_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              aria-label="Period starts view"
+              className="h-11 w-auto"
+              value={metric}
+              onChange={(event) => setMetric(event.target.value as GoalsMetric)}
+            >
+              <option value="total">Periods</option>
+              <option value="per_game">Per game</option>
+            </NativeSelect>
+          </div>
           {rows.length === 0 ? (
             <EmptyState
               title="No period starts for this view"
-              description="Try another competition, position filter, type, or view."
+              description="Try another competition, position filter, or type."
             />
           ) : (
-            <PlayerLeaderChart
-              data={rows}
+            <LeaderboardChart
+              rows={rows}
               unit={
                 perGame
                   ? PERIODS_PER_GAME_PERCENT_LABEL.toLowerCase()
@@ -452,78 +725,10 @@ function PeriodStartsSection({
               }
               percent={perGame}
               allowDecimals={perGame}
-              valueKey="value"
             />
           )}
         </div>
       )}
     </Section>
   );
-}
-
-function CountChart({
-  sourceCount,
-  rows,
-  emptyTitle,
-  emptyDescription,
-  emptyViewTitle,
-  unit,
-  allowDecimals,
-}: {
-  sourceCount: number;
-  rows: Array<{ playerId: string; name: string; count: number; value: number }>;
-  emptyTitle: string;
-  emptyDescription: string;
-  emptyViewTitle: string;
-  unit: string;
-  allowDecimals: boolean;
-}) {
-  if (sourceCount === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
-  }
-  if (rows.length === 0) {
-    return (
-      <EmptyState
-        title={emptyViewTitle}
-        description="Try another competition, position filter, or view."
-      />
-    );
-  }
-  return (
-    <PlayerLeaderChart
-      data={rows}
-      unit={unit}
-      allowDecimals={allowDecimals}
-      valueKey="value"
-    />
-  );
-}
-
-function AwardChart({
-  sourceCount,
-  rows,
-  emptyTitle,
-  emptyDescription,
-  filteredOut = false,
-  emptyFilterDescription,
-}: {
-  sourceCount: number;
-  rows: PlayerCountPoint[];
-  emptyTitle: string;
-  emptyDescription: string;
-  filteredOut?: boolean;
-  emptyFilterDescription?: string;
-}) {
-  if (sourceCount === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
-  }
-  if (filteredOut || rows.length === 0) {
-    return (
-      <EmptyState
-        title="No awards for this filter"
-        description={emptyFilterDescription}
-      />
-    );
-  }
-  return <PlayerLeaderChart data={rows} unit="awards" />;
 }
