@@ -38,7 +38,7 @@ export function GuardianAssistantsSection({
           title="No guardian assistants"
           description={
             canEdit
-              ? "Assign a guardian with a linked login so they can record goals during matches."
+              ? undefined
               : "Guardian assistants for this team will appear here."
           }
         />

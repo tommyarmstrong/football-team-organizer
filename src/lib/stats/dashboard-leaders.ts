@@ -88,6 +88,21 @@ export function countLeaders(
 }
 
 /**
+ * Awards from the latest month. `month` sorts as `YYYY-MM-DD`, so a string
+ * comparison is chronological. Everyone who shares that month is kept.
+ */
+export function latestMonthAwards<T extends { month: string }>(
+  awards: readonly T[],
+): T[] {
+  let latest = "";
+  for (const award of awards) {
+    if (award.month > latest) latest = award.month;
+  }
+  if (!latest) return [];
+  return awards.filter((award) => award.month === latest);
+}
+
+/**
  * The last `limit` league and cup results, oldest to newest. `results` must be
  * in chronological order, as `get_team_stats` returns them.
  */

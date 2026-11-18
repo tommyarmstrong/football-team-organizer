@@ -8,9 +8,8 @@ import { SectionSkeleton } from "@/components/shared/skeleton";
 import {
   DashboardCompetitions,
   DashboardFixtures,
-  DashboardForm,
-  DashboardLeaderboards,
-  DashboardSeasonTiles,
+  DashboardOverviewAndForm,
+  DashboardPlayers,
 } from "@/components/dashboard/dashboard-sections";
 
 export default async function DashboardPage() {
@@ -28,13 +27,9 @@ export default async function DashboardPage() {
   const displayName = teamDisplayName(team);
 
   return (
-    <div className={pageBodyClassName("space-y-8")}>
-      <Suspense fallback={<SectionSkeleton rows={1} />}>
-        <DashboardSeasonTiles teamId={team.id} />
-      </Suspense>
-
-      <Suspense fallback={<SectionSkeleton rows={1} />}>
-        <DashboardForm teamId={team.id} />
+    <div className={pageBodyClassName("space-y-8 lg:max-w-none")}>
+      <Suspense fallback={<SectionSkeleton rows={2} />}>
+        <DashboardOverviewAndForm teamId={team.id} />
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton />}>
@@ -45,13 +40,18 @@ export default async function DashboardPage() {
         />
       </Suspense>
 
-      <Suspense fallback={<SectionSkeleton rows={2} />}>
-        <DashboardCompetitions team={team} />
-      </Suspense>
-
-      <Suspense fallback={<SectionSkeleton rows={4} />}>
-        <DashboardLeaderboards teamId={team.id} />
-      </Suspense>
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <div className="min-w-0">
+          <Suspense fallback={<SectionSkeleton rows={2} />}>
+            <DashboardCompetitions team={team} />
+          </Suspense>
+        </div>
+        <div className="min-w-0">
+          <Suspense fallback={<SectionSkeleton rows={4} />}>
+            <DashboardPlayers teamId={team.id} />
+          </Suspense>
+        </div>
+      </div>
     </div>
   );
 }

@@ -12,15 +12,13 @@ import {
   ALL_COMPETITIONS,
   ALL_LEAGUE_AND_CUP,
 } from "@/lib/stats/competition-filters";
+import { latestMonthAwards } from "@/lib/stats/dashboard-leaders";
 import { filterResults } from "@/lib/stats/results-view";
 import { seasonTilesFromResults } from "@/lib/stats/season-tiles";
 import type { Team } from "@/lib/supabase/database.types";
-import { DashboardViewSwitch } from "@/components/dashboard/dashboard-view-switch";
 import { Section } from "@/components/shared/section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorBanner } from "@/components/shared/error-banner";
-import { AwardBadge, awardToneForRank } from "@/components/shared/award-badge";
-import { competitionRanks } from "@/lib/stats/ranking";
 import {
   objectListClassName,
   objectListRowClassName,
@@ -44,7 +42,7 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   if (!seasonTilesFromResults(results)) return null;
 
   return (
-    <Section title="Season at a glance">
+    <Section title="Results">
       <SeasonTiles results={results} variant="glance" />
     </Section>
   );
@@ -73,29 +71,33 @@ export async function DashboardFixtures({
   return (
     <div className="space-y-4">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <div className="grid gap-8">
-        <FixtureSection
-          title="Next fixture"
-          teamName={teamName}
-          match={next.data}
-          emptyTitle="No upcoming fixture"
-          emptyAction={
-            canEditMatch ? (
-              <NewFixtureDialog
-                competitions={competitions.data}
-                venues={venues.data}
-                size="sm"
-              />
-            ) : undefined
-          }
-        />
-        <FixtureSection
-          title="Last result"
-          teamName={teamName}
-          match={last.data}
-          emptyTitle="No results yet"
-          emptyDescription="Played matches will show here."
-        />
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <div className="min-w-0">
+          <FixtureSection
+            title="Next fixture"
+            teamName={teamName}
+            match={next.data}
+            emptyTitle="No upcoming fixture"
+            emptyAction={
+              canEditMatch ? (
+                <NewFixtureDialog
+                  competitions={competitions.data}
+                  venues={venues.data}
+                  size="sm"
+                />
+              ) : undefined
+            }
+          />
+        </div>
+        <div className="min-w-0">
+          <FixtureSection
+            title="Last result"
+            teamName={teamName}
+            match={last.data}
+            emptyTitle="No results yet"
+            emptyDescription="Played matches will show here."
+          />
+        </div>
       </div>
     </div>
   );
@@ -147,9 +149,34 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
   );
 }
 
-export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
+/** Results and Form share one stats read. A missing results block does not leave a gap. */
+export async function DashboardOverviewAndForm({ teamId }: { teamId: string }) {
+  const [overview, form] = await Promise.all([
+    DashboardSeasonTiles({ teamId }),
+    DashboardForm({ teamId }),
+  ]);
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+      {overview ? <div className="min-w-0">{overview}</div> : null}
+      <div className={overview ? "min-w-0" : "min-w-0 lg:col-span-2"}>
+        {form}
+      </div>
+    </div>
+  );
+}
+
+type PlayerHighlight = {
+  id: string;
+  personId: string;
+  name: string;
+  valueLabel: string;
+};
+
+export async function DashboardPlayers({ teamId }: { teamId: string }) {
   const data = getDashboardData(teamId);
-  const [scorers, assists, potm, potMonth] = await Promise.all([
+  const [squad, scorers, assists, potm, potMonth] = await Promise.all([
+    data.squadSize,
     data.scorers,
     data.assists,
     data.potm,
@@ -157,91 +184,67 @@ export async function DashboardLeaderboards({ teamId }: { teamId: string }) {
   ]);
 
   const errors = [
+    squad.error,
     scorers.error,
     assists.error,
     potm.error,
     potMonth.error,
   ].filter(Boolean);
 
+  const monthly = latestMonthAwards(potMonth.data)
+    .map((award) => ({
+      id: award.id,
+      personId: award.player.person_id,
+      name: playerDisplayName(award.player),
+      valueLabel: formatAwardMonth(award.month, "month"),
+    }))
+    .sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+
   return (
-    <div className="space-y-8">
+    <Section title="Players">
       {errors.length > 0 ? <ErrorBanner message={errors.join(" ")} /> : null}
-      <DashboardViewSwitch
-        title="Leaderboards"
-        views={[
-          {
-            id: "goals",
-            label: "Goals",
-            content: (
-              <LeaderboardList
-                emptyTitle="No goals yet"
-                emptyDescription="Record goals on played matches to see the table."
-                rows={rankedLeaderboardRows(
-                  scorers.data.map((row) => ({
-                    id: row.playerId,
-                    personId: row.personId,
-                    name: row.name,
-                    valueLabel: formatCountLabel(row.count, "goal", "goals"),
-                    metric: row.count,
-                  })),
-                )}
-              />
-            ),
-          },
-          {
-            id: "assists",
-            label: "Assists",
-            content: (
-              <LeaderboardList
-                emptyTitle="No assists yet"
-                rows={rankedLeaderboardRows(
-                  assists.data.map((row) => ({
-                    id: row.playerId,
-                    personId: row.personId,
-                    name: row.name,
-                    valueLabel: formatCountLabel(
-                      row.count,
-                      "assist",
-                      "assists",
-                    ),
-                    metric: row.count,
-                  })),
-                )}
-              />
-            ),
-          },
-          {
-            id: "match",
-            label: "Player of the match",
-            content: (
-              <LeaderboardList
-                emptyTitle="No awards yet"
-                rows={rankedLeaderboardRows(
-                  potm.data.map((row) => ({
-                    id: row.playerId,
-                    personId: row.personId,
-                    name: row.name,
-                    valueLabel: formatCountLabel(row.count, "award", "awards"),
-                    metric: row.count,
-                  })),
-                )}
-              />
-            ),
-          },
-        ]}
-      />
-      <Section title="Player of the month">
-        <LeaderboardList
-          emptyTitle="No monthly awards yet"
-          rows={potMonth.data.map((award) => ({
-            id: award.id,
-            personId: award.player.person_id,
-            name: playerDisplayName(award.player),
-            valueLabel: formatAwardMonth(award.month),
-          }))}
-        />
-      </Section>
-    </div>
+      <ul
+        className={`${objectListClassName} grid grid-cols-[max-content_minmax(0,1fr)_max-content]`}
+      >
+        <li className={playerRowClassName}>
+          <span className="whitespace-nowrap">Squad size</span>
+          <span />
+          <span className="text-right whitespace-nowrap tabular-nums">
+            {squad.error ? "—" : squad.count}
+          </span>
+        </li>
+        {playerHighlightRows("Player of the month", monthly)}
+        {playerHighlightRows(
+          "Player of the match",
+          potm.data.map((row) => ({
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
+            valueLabel: formatCountLabel(row.count, "award", "awards"),
+          })),
+        )}
+        {playerHighlightRows(
+          "Most goals",
+          scorers.data.map((row) => ({
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
+            valueLabel: formatCountLabel(row.count, "goal", "goals"),
+          })),
+        )}
+        {playerHighlightRows(
+          "Most assists",
+          assists.data.map((row) => ({
+            id: row.playerId,
+            personId: row.personId,
+            name: row.name,
+            valueLabel: formatCountLabel(row.count, "assist", "assists"),
+          })),
+        )}
+      </ul>
+    </Section>
   );
 }
 
@@ -279,70 +282,35 @@ function FixtureSection({
   );
 }
 
-function rankedLeaderboardRows(
-  rows: Array<{
-    id: string;
-    personId: string;
-    name: string;
-    valueLabel: string;
-    metric: number;
-  }>,
-) {
-  // Highest metric first; players sharing a rank are listed alphabetically.
-  const sorted = [...rows].sort(
-    (a, b) =>
-      b.metric - a.metric ||
-      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-  );
-  const ranks = competitionRanks(sorted.map((row) => row.metric));
-  return sorted.map((row, index) => ({
-    id: row.id,
-    personId: row.personId,
-    name: row.name,
-    valueLabel: row.valueLabel,
-    rank: ranks[index]!,
-  }));
-}
+/** Three shared columns: label, player, value. Same row height as competitions. */
+const playerRowClassName =
+  "col-span-3 grid min-h-9 grid-cols-subgrid items-center gap-3 px-3 py-1.5 text-sm";
 
-function LeaderboardList({
-  emptyTitle,
-  emptyDescription,
-  rows,
-}: {
-  emptyTitle: string;
-  emptyDescription?: string;
-  rows: Array<{
-    id: string;
-    personId: string;
-    name: string;
-    valueLabel: string;
-    rank?: number;
-  }>;
-}) {
+function playerHighlightRows(label: string, rows: PlayerHighlight[]) {
   if (rows.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+    return (
+      <li className={playerRowClassName}>
+        <span className="whitespace-nowrap">{label}</span>
+        <span />
+        <span className="text-right whitespace-nowrap">—</span>
+      </li>
+    );
   }
 
-  return (
-    <ol className={objectListClassName}>
-      {rows.map((row) => (
-        <li key={row.id}>
-          <Link
-            href={`/people/${row.personId}`}
-            className={objectListRowClassName("justify-between")}
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <AwardBadge
-                tone={row.rank == null ? "gold" : awardToneForRank(row.rank)}
-              />
-              <span className="truncate font-medium">{row.name}</span>
-            </span>
-            <span className="font-display text-foreground text-lg tabular-nums">
-              {row.valueLabel}
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ol>
-  );
+  return rows.map((row) => (
+    <li key={row.id} className="col-span-3 grid grid-cols-subgrid">
+      <Link
+        href={`/people/${row.personId}`}
+        className={objectListRowClassName(
+          "col-span-3 grid min-h-9 grid-cols-subgrid py-1.5",
+        )}
+      >
+        <span className="whitespace-nowrap">{label}</span>
+        <span className="min-w-0 truncate">{row.name}</span>
+        <span className="text-right whitespace-nowrap tabular-nums">
+          {row.valueLabel}
+        </span>
+      </Link>
+    </li>
+  ));
 }

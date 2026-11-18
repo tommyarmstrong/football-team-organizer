@@ -1,9 +1,13 @@
+import type { ReactNode } from "react";
+
 export function SquadPlayerIdentity({
   name,
   shirtNumber,
+  trailing,
 }: {
   name: string;
   shirtNumber?: number | null;
+  trailing?: ReactNode;
 }) {
   return (
     <>
@@ -13,7 +17,10 @@ export function SquadPlayerIdentity({
       >
         {shirtNumber ?? "—"}
       </span>
-      <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+        {trailing ? <span className="shrink-0">{trailing}</span> : null}
+      </span>
     </>
   );
 }

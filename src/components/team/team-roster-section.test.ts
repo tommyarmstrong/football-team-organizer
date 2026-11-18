@@ -18,6 +18,9 @@ const squadSelection = readFileSync(
 describe("squad rows", () => {
   it("use kit number and name on the team roster and match-day squad", () => {
     expect(roster).toContain("SquadPlayerIdentity");
+    expect(roster).toContain("Inactive");
+    expect(roster).toContain("countInTotal={(entry) => entry.active}");
+    expect(roster).toContain("RoleChip");
     expect(matchDay).toContain("SquadSelectionSection");
     expect(squadSelection).toContain("SquadPlayerIdentity");
     expect(roster).not.toContain("InitialsAvatar");
