@@ -359,7 +359,7 @@ describe("DashboardSeasonTiles", () => {
     const empty = renderToStaticMarkup(
       await DashboardOverviewAndForm({ teamId: "team-1" }),
     );
-    expect(empty).not.toContain(">Overview<");
+    expect(empty).not.toContain(">Results<");
     expect(empty).toContain(">Form<");
     expect(empty).toContain("lg:col-span-2");
     expect(empty).toContain("lg:grid-cols-2");
@@ -377,7 +377,7 @@ describe("DashboardSeasonTiles", () => {
     const both = renderToStaticMarkup(
       await DashboardOverviewAndForm({ teamId: "team-1" }),
     );
-    expect(both.indexOf(">Overview<")).toBeLessThan(both.indexOf(">Form<"));
+    expect(both.indexOf(">Results<")).toBeLessThan(both.indexOf(">Form<"));
     expect(both).not.toContain("lg:col-span-2");
   });
 
@@ -387,7 +387,7 @@ describe("DashboardSeasonTiles", () => {
       "utf8",
     );
     expect(source).toContain("ALL_LEAGUE_AND_CUP");
-    expect(source).toContain('title="Overview"');
+    expect(source).toContain('title="Results"');
     expect(source).toContain('variant="glance"');
     expect(source).not.toContain("ALL_COMPETITIVE");
     expect(source).not.toContain("competitive");
@@ -409,7 +409,7 @@ function glanceTiles(tree: unknown) {
     };
   };
   expect(section.type).toBe(Section);
-  expect(section.props.title).toBe("Overview");
+  expect(section.props.title).toBe("Results");
   expect(section.props.children.type).toBe(SeasonTiles);
   return section.props.children.props;
 }
@@ -451,7 +451,7 @@ describe("DashboardFixtures last result share", () => {
     expect(source).toContain("showAddForm={false}");
     expect(source).toContain("compact");
     expect(source).toContain('title="Players"');
-    expect(source).toContain('title="Overview"');
+    expect(source).toContain('title="Results"');
     expect(source).not.toContain('title="Leaderboards"');
     expect(source).not.toContain('title="Season at a glance"');
     expect(source).not.toContain('title="Awards"');

@@ -42,7 +42,7 @@ export async function DashboardSeasonTiles({ teamId }: { teamId: string }) {
   if (!seasonTilesFromResults(results)) return null;
 
   return (
-    <Section title="Overview">
+    <Section title="Results">
       <SeasonTiles results={results} variant="glance" />
     </Section>
   );
@@ -149,7 +149,7 @@ export async function DashboardCompetitions({ team }: { team: Team }) {
   );
 }
 
-/** Overview and Form share one stats read. A missing overview does not leave a gap. */
+/** Results and Form share one stats read. A missing results block does not leave a gap. */
 export async function DashboardOverviewAndForm({ teamId }: { teamId: string }) {
   const [overview, form] = await Promise.all([
     DashboardSeasonTiles({ teamId }),
